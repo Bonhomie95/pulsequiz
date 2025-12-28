@@ -1,0 +1,24 @@
+export const colors = {
+  dark: {
+    background: '#0B0F1A',
+    surface: '#131A2E',
+    primary: '#5B7CFF',
+    secondary: '#2EF2B3',
+    text: '#FFFFFF',
+    muted: '#A6B0CF',
+    coin: '#FFC94A',
+    danger: '#FF5C5C',
+    success: '#4ADE80',
+  },
+  light: {
+    background: '#FFFFFF',
+    surface: '#F4F6FB',
+    primary: '#5B7CFF',
+    secondary: '#2EF2B3',
+    text: '#0B0F1A',
+    muted: '#6B7280',
+    coin: '#EAB308',
+    danger: '#DC2626',
+    success: '#16A34A',
+  },
+};
