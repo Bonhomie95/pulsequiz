@@ -1,8 +1,8 @@
-export const AVATARS = [
-  require('../../assets/avatars/avatar1.png'),
-  require('../../assets/avatars/avatar2.png'),
-  require('../../assets/avatars/avatar3.png'),
-  require('../../assets/avatars/avatar4.png'),
-  require('../../assets/avatars/avatar5.png'),
-  require('../../assets/avatars/avatar6.png'),
-];
+export const AVATAR_MAP: Record<string, any> = {
+  avatar0: require('../../assets/avatars/avatar1.png'),
+  avatar1: require('../../assets/avatars/avatar2.png'),
+  avatar2: require('../../assets/avatars/avatar3.png'),
+  avatar3: require('../../assets/avatars/avatar4.png'),
+  avatar4: require('../../assets/avatars/avatar5.png'),
+  avatar5: require('../../assets/avatars/avatar6.png'),
+};

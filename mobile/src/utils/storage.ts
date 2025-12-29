@@ -1,17 +1,25 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+
+const TOKEN_KEY = 'auth_token';
+
+const KEYS = {
+  LAST_CATEGORY: 'last_category',
+  TOKEN: 'auth_token',
+};
 
 export const storage = {
-  setLastCategory: async (category: string) => {
-    try {
-      await AsyncStorage.setItem('lastCategory', category);
-    } catch {}
+  /* ---------------- CATEGORY ---------------- */
+  async setLastCategory(category: string) {
+    await AsyncStorage.setItem(KEYS.LAST_CATEGORY, category);
   },
 
-  getLastCategory: async () => {
-    try {
-      return await AsyncStorage.getItem('lastCategory');
-    } catch {
-      return null;
-    }
+  async getLastCategory(): Promise<string | null> {
+    return AsyncStorage.getItem(KEYS.LAST_CATEGORY);
   },
+
+  /* ---------------- AUTH ---------------- */
+  getToken: () => SecureStore.getItemAsync(TOKEN_KEY),
+  setToken: (token: string) => SecureStore.setItemAsync(TOKEN_KEY, token),
+  clearToken: () => SecureStore.deleteItemAsync(TOKEN_KEY),
 };

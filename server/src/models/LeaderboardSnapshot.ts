@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 
-interface LeaderboardEntry {
+export interface LeaderboardEntry {
   userId: string;
   username: string;
   avatar: string;
@@ -20,24 +20,29 @@ const LeaderboardEntrySchema = new Schema<LeaderboardEntry>(
     avatar: { type: String, required: true },
     points: { type: Number, required: true },
   },
-  { _id: false } // important: no nested _id
+  { _id: false }
 );
 
-const LeaderboardSnapshotSchema = new Schema<ILeaderboardSnapshot>({
-  type: {
-    type: String,
-    enum: ['weekly', 'monthly', 'all'],
-    required: true,
+const LeaderboardSnapshotSchema = new Schema<ILeaderboardSnapshot>(
+  {
+    type: {
+      type: String,
+      enum: ['weekly', 'monthly', 'all'],
+      required: true,
+      index: true, // 🔥 add index
+    },
+    data: {
+      type: [LeaderboardEntrySchema], // ✅ THIS fixes the error
+      required: true,
+      default: [], // 🔥 defensive default
+    },
+    generatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  data: {
-    type: [LeaderboardEntrySchema],
-    required: true,
-  },
-  generatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: false }
+);
 
 export default model<ILeaderboardSnapshot>(
   'LeaderboardSnapshot',

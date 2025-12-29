@@ -1,3 +1,4 @@
+import { AVATAR_MAP } from '@/src/constants/avatars';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useProgressStore } from '@/src/store/useProgressStore';
@@ -18,16 +19,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const router = useRouter();
-
-const CATEGORIES = [
-  { id: 'history', label: 'History', icon: '📜' },
-  { id: 'math', label: 'Maths', icon: '➗' },
-  { id: 'physics', label: 'Physics', icon: '⚛️' },
-  { id: 'biology', label: 'Biology', icon: '🧬' },
-  { id: 'chemistry', label: 'Chemistry', icon: '🧪' },
-  { id: 'geography', label: 'Geography', icon: '🌍' },
-];
+function resolveAvatar(key?: string) {
+  return AVATAR_MAP[key ?? 'avatar0'] ?? AVATAR_MAP.avatar0;
+}
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -37,6 +31,8 @@ export default function HomeScreen() {
   const level = 1; // mock for now
   const { streak, checkInToday } = useStreakStore();
   const [lastCategory, setLastCategory] = useState<string | null>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     useCoinStore.getState().hydrate();
@@ -76,10 +72,7 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.profile}>
-            <Image
-              source={require('../../assets/avatars/avatar1.png')}
-              style={styles.avatar}
-            />
+           <Image source={resolveAvatar(user?.avatar)} style={styles.avatar} />
             <View>
               <Text style={[styles.username, { color: theme.colors.text }]}>
                 {user?.username ?? 'Player'}
@@ -113,91 +106,11 @@ export default function HomeScreen() {
 
         {/* Start Quiz */}
         <TouchableOpacity
+          onPress={() => router.push('/quiz/categories')}
           style={[styles.startQuiz, { backgroundColor: theme.colors.primary }]}
         >
           <Text style={styles.startText}>Start Quiz</Text>
         </TouchableOpacity>
-
-        {/* Categories */}
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-          Categories
-        </Text>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingVertical: 12 }}
-        >
-          {CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              activeOpacity={0.85}
-              onPress={() => {
-                router.push({
-                  pathname: '/quiz',
-                  params: { category: cat.id },
-                });
-              }}
-              style={[
-                styles.categoryCard,
-                {
-                  backgroundColor: theme.colors.surface,
-                  shadowColor: theme.colors.primary,
-                },
-              ]}
-            >
-              {lastCategory === cat.id && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    backgroundColor: theme.colors.primary,
-                    paddingHorizontal: 8,
-                    paddingVertical: 2,
-                    borderRadius: 10,
-                  }}
-                >
-                  <Text style={{ color: '#fff', fontSize: 10 }}>
-                    Last Played
-                  </Text>
-                </View>
-              )}
-
-              {/* Icon */}
-              <View
-                style={[
-                  styles.categoryIcon,
-                  { backgroundColor: theme.colors.primary },
-                ]}
-              >
-                <Text style={{ fontSize: 22 }}>{cat.icon}</Text>
-              </View>
-
-              {/* Label */}
-              <Text
-                style={{
-                  color: theme.colors.text,
-                  fontWeight: '600',
-                  marginTop: 8,
-                }}
-              >
-                {cat.label}
-              </Text>
-
-              {/* CTA hint */}
-              <Text
-                style={{
-                  color: theme.colors.muted,
-                  fontSize: 11,
-                  marginTop: 2,
-                }}
-              >
-                Tap to play
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
 
         {/* Get Coins */}
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>

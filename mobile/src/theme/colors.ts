@@ -9,6 +9,7 @@ export const colors = {
     coin: '#FFC94A',
     danger: '#FF5C5C',
     success: '#4ADE80',
+    border: '#1F2937',
   },
   light: {
     background: '#FFFFFF',
@@ -20,5 +21,6 @@ export const colors = {
     coin: '#EAB308',
     danger: '#DC2626',
     success: '#16A34A',
+    border: '#E5E7EB',
   },
 };

@@ -1,11 +1,16 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Redirect, Tabs, useRouter } from 'expo-router';
 import { Home, Play, Settings, Trophy, User } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
 import { useTheme } from '../../src/theme/useTheme';
+import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function TabsLayout() {
   const theme = useTheme();
   const router = useRouter();
+  const { user, hydrated } = useAuthStore();
+
+  if (!hydrated) return null;
+  if (!user) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs
@@ -19,9 +24,7 @@ export default function TabsLayout() {
           height: 72,
           paddingBottom: 12,
         },
-        tabBarLabelStyle: {
-          fontSize: 12,
-        },
+        tabBarLabelStyle: { fontSize: 12 },
       }}
     >
       <Tabs.Screen
@@ -40,14 +43,14 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* PLAY BUTTON (NOT A REAL SCREEN) */}
+      {/* 🔥 Floating Play Button */}
       <Tabs.Screen
         name="__play__"
         options={{
           title: '',
           tabBarButton: () => (
             <TouchableOpacity
-              onPress={() => router.push('/quiz')}
+              onPress={() => router.push('/quiz/categories')}
               style={{
                 marginTop: -24,
                 backgroundColor: theme.colors.primary,
@@ -55,6 +58,7 @@ export default function TabsLayout() {
                 padding: 18,
                 alignItems: 'center',
                 justifyContent: 'center',
+                elevation: 6,
               }}
             >
               <Play size={28} color="#fff" />
@@ -81,3 +85,4 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+

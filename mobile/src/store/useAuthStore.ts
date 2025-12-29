@@ -1,50 +1,53 @@
 import { create } from 'zustand';
+import { storage } from '../utils/storage';
+import { setAuthToken } from '../api/api';
 
-type User = {
+export type UsdtType = 'TRC20' | 'ERC20' | 'BEP20';
+
+export type User = {
   id: string;
   email: string;
-  username?: string;
-  avatar?: string;
+  username?: string | null;
+  avatar?: string | null;
+  usdtType?: UsdtType;
+  usdtAddress?: string;
+  withdrawalEnabled?: boolean;
 };
 
 type AuthState = {
   user: User | null;
-  isAuthenticated: boolean;
-
-  setUser: (user: User) => void;
-  setUsernameAndAvatar: (username: string, avatar: string) => void;
-  mockLogin: () => void;
+  hydrated: boolean;
+  setUser: (u: User) => void;
+  updateUser: (u: Partial<User>) => void;
   logout: () => void;
+  setHydrated: () => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  isAuthenticated: false,
-  mockLogin: () =>
-    set({
-      user: {
-        id: 'local-dev-user',
-        email: 'dev@pulsequiz.app',
-        username: 'pulse_dev',
-        avatar: 'avatar1',
-      },
-      isAuthenticated: true,
-    }),
+  hydrated: false,
 
   setUser: (user) =>
     set({
       user,
-      isAuthenticated: true,
     }),
 
-  setUsernameAndAvatar: (username, avatar) =>
+  // ✅ THIS IS IMPORTANT
+  updateUser: (partial) =>
     set((state) => ({
-      user: state.user ? { ...state.user, username, avatar } : null,
+      user: state.user ? { ...state.user, ...partial } : state.user,
     })),
 
-  logout: () =>
+  logout: async () => {
+    await storage.clearToken();
+    setAuthToken(null);
     set({
       user: null,
-      isAuthenticated: false,
+    });
+  },
+
+  setHydrated: () =>
+    set({
+      hydrated: true,
     }),
 }));

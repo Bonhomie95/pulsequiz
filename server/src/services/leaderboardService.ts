@@ -36,7 +36,7 @@ export async function buildLeaderboard(type: LeaderboardType, limit = 50) {
           { $unwind: '$user' },
           {
             $project: {
-              userId: '$user._id',
+              userId: { $toString: '$user._id' },
               username: '$user.username',
               avatar: '$user.avatar',
               points: '$points',
@@ -64,7 +64,7 @@ export async function buildLeaderboard(type: LeaderboardType, limit = 50) {
           { $unwind: '$user' },
           {
             $project: {
-              userId: '$user._id',
+              userId: { $toString: '$user._id' },
               username: '$user.username',
               avatar: '$user.avatar',
               points: 1,
@@ -73,12 +73,14 @@ export async function buildLeaderboard(type: LeaderboardType, limit = 50) {
         ]);
 
   // Save snapshot (cache)
-  await LeaderboardSnapshot.findOneAndUpdate(
+  await LeaderboardSnapshot.updateOne(
     { type },
     {
-      type,
-      data: aggregated,
-      generatedAt: new Date(),
+      $set: {
+        type,
+        data: aggregated,
+        generatedAt: new Date(),
+      },
     },
     { upsert: true }
   );

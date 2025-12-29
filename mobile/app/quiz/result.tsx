@@ -1,171 +1,135 @@
 import * as Haptics from 'expo-haptics';
-import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Audio } from 'expo-av';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useProgressStore } from '@/src/store/useProgressStore';
-import { QUESTIONS } from '../../src/constants/questions';
-import { useTheme } from '../../src/theme/useTheme';
-import { getLevelFromPoints } from '../../src/utils/level';
+import { useTheme } from '@/src/theme/useTheme';
 
 export default function QuizResult() {
   const theme = useTheme();
-  const { answers } = useLocalSearchParams();
-  const { points, level, addPoints } = useProgressStore();
+  const router = useRouter();
 
-  const [leveledUp, setLeveledUp] = useState(false);
+  const { correct, total, points, level, accuracy, leveledUp } =
+    useLocalSearchParams<{
+      correct: string;
+      total: string;
+      points: string;
+      level: string;
+      accuracy: string;
+      leveledUp?: string;
+    }>();
 
-  /* ---------------- PARSE ANSWERS SAFELY ---------------- */
+  const soundRef = useRef<Audio.Sound | null>(null);
+  const playedRef = useRef(false);
 
-  const parsedAnswers = useMemo(() => {
-    try {
-      return JSON.parse(answers as string) as {
-        questionId: string;
-        selected: number | null;
-      }[];
-    } catch {
-      return [];
-    }
-  }, [answers]);
+  const correctNum = Number(correct);
+  const totalNum = Number(total);
+  const pointsNum = Number(points);
+  const accuracyNum = Number(accuracy);
+  const didLevelUp = leveledUp === 'true';
 
-  /* ---------------- SCORE CALCULATION ---------------- */
+  const perfect = correctNum === totalNum;
 
-  const reviewed = useMemo(() => {
-    let score = 0;
-
-    const mapped = QUESTIONS.map((q) => {
-      const user = parsedAnswers.find((a) => a.questionId === q.id);
-      const correct = user?.selected === q.answer;
-
-      if (correct) score++;
-
-      return {
-        ...q,
-        userAnswer: user?.selected ?? null,
-        correct,
-      };
-    });
-
-    return { mapped, score };
-  }, [parsedAnswers]);
-
-  const bonus = reviewed.score === QUESTIONS.length ? 10 : 0;
-  const total = reviewed.score + bonus;
-
-  const nextLevel = getLevelFromPoints(points + total);
-
-  /* ---------------- APPLY PROGRESS ONCE ---------------- */
-
+  /* ---------------- PLAY SOUND ONCE ---------------- */
   useEffect(() => {
-    if (total <= 0) return;
+    if (playedRef.current) return;
+    playedRef.current = true;
 
-    if (nextLevel > level) {
-      setLeveledUp(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    async function play() {
+      const source = perfect
+        ? require('@/assets/sounds/victory.mp3')
+        : require('@/assets/sounds/fail.mp3');
+
+      const { sound } = await Audio.Sound.createAsync(source);
+      soundRef.current = sound;
+      await sound.playAsync();
+
+      if (perfect) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+
+      if (didLevelUp) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     }
 
-    addPoints(total);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    play();
+
+    return () => {
+      // 🔥 STOP SOUND ON LEAVE
+      soundRef.current?.stopAsync();
+      soundRef.current?.unloadAsync();
+    };
   }, []);
 
   /* ---------------- UI ---------------- */
-
   return (
-    <SafeAreaView
-      edges={['top', 'bottom']}
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          Quiz Over
+        <Text
+          style={{
+            fontSize: 28,
+            fontWeight: '800',
+            color: theme.colors.text,
+          }}
+        >
+          Quiz Complete 🎯
         </Text>
 
-        <Text style={{ color: theme.colors.muted }}>
-          Score: {reviewed.score} / {QUESTIONS.length}
+        <Text style={{ color: theme.colors.muted, marginTop: 6 }}>
+          {correctNum} / {totalNum} correct • {accuracyNum}% accuracy
         </Text>
 
-        {bonus > 0 && (
-          <Text style={{ color: theme.colors.success, marginTop: 8 }}>
-            🎉 Perfect Score! +{bonus} Bonus
+        <View
+          style={{
+            marginTop: 24,
+            padding: 20,
+            borderRadius: 20,
+            backgroundColor: theme.colors.surface,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ color: theme.colors.coin }}>Points Earned</Text>
+          <Text
+            style={{
+              fontSize: 36,
+              fontWeight: '900',
+              color: theme.colors.coin,
+            }}
+          >
+            +{pointsNum}
           </Text>
-        )}
+        </View>
 
-        <Text style={{ color: theme.colors.coin, marginTop: 8 }}>
-          Total Points Earned: {total}
-        </Text>
-
-        {leveledUp && (
+        {didLevelUp && (
           <View
-            style={[styles.levelUp, { backgroundColor: theme.colors.primary }]}
+            style={{
+              marginTop: 20,
+              padding: 16,
+              borderRadius: 18,
+              backgroundColor: theme.colors.primary,
+            }}
           >
-            <Text style={styles.levelUpText}>
-              🎉 Level Up! You are now Level {nextLevel}
-            </Text>
-          </View>
-        )}
-
-        {/* ANSWER REVIEW */}
-        {reviewed.mapped.map((q, i) => (
-          <View
-            key={q.id}
-            style={[styles.review, { backgroundColor: theme.colors.surface }]}
-          >
-            <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
-              {i + 1}. {q.question}
-            </Text>
-
             <Text
               style={{
-                marginTop: 6,
-                color: q.correct ? theme.colors.success : theme.colors.danger,
+                color: '#fff',
+                fontWeight: '800',
+                fontSize: 16,
+                textAlign: 'center',
               }}
             >
-              Your answer:{' '}
-              {q.userAnswer !== null ? q.options[q.userAnswer] : 'No answer'}
+              🚀 Level Up! You’re now Level {level}
             </Text>
-
-            {!q.correct && (
-              <Text style={{ color: theme.colors.success }}>
-                Correct: {q.options[q.answer]}
-              </Text>
-            )}
           </View>
-        ))}
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-/* ---------------- STYLES ---------------- */
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  review: {
-    marginTop: 16,
-    padding: 16,
-    borderRadius: 16,
-  },
-  levelUp: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  levelUpText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-});

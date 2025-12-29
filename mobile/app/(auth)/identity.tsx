@@ -10,14 +10,15 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AVATARS } from '../../src/constants/avatars';
+import { AVATAR_MAP } from '../../src/constants/avatars';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTheme } from '../../src/theme/useTheme';
+import { api } from '@/src/api/api';
 
 export default function IdentityScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const setIdentity = useAuthStore((s) => s.setUsernameAndAvatar);
+  const updateUser = useAuthStore((s) => s.updateUser);
 
   const [username, setUsername] = useState('');
   const [avatar, setAvatar] = useState<number | null>(null);
@@ -25,26 +26,7 @@ export default function IdentityScreen() {
     'idle' | 'checking' | 'taken' | 'available'
   >('idle');
 
-  // Mock availability check
-  useEffect(() => {
-    if (username.length < 3) {
-      setStatus('idle');
-      return;
-    }
-
-    setStatus('checking');
-    const timer = setTimeout(() => {
-      if (['admin', 'pulsequiz', 'test'].includes(username.toLowerCase())) {
-        setStatus('taken');
-      } else {
-        setStatus('available');
-      }
-    }, 600);
-
-    return () => clearTimeout(timer);
-  }, [username]);
-
-  const canContinue = status === 'available' && avatar !== null;
+  const canContinue = username.length >= 3 && avatar !== null;
 
   return (
     <SafeAreaView
@@ -104,7 +86,7 @@ export default function IdentityScreen() {
         </Text>
 
         <FlatList
-          data={AVATARS}
+          data={Object.values(AVATAR_MAP)}
           numColumns={3}
           keyExtractor={(_, i) => i.toString()}
           columnWrapperStyle={{ gap: 16 }}
@@ -128,9 +110,22 @@ export default function IdentityScreen() {
         {/* Continue */}
         <TouchableOpacity
           disabled={!canContinue}
-          onPress={() => {
-            setIdentity(username, `avatar${avatar}`);
-            router.replace('/home');
+          onPress={async () => {
+            try {
+              const r = await api.post('/auth/identity', {
+                username,
+                avatar: `avatar${avatar}`,
+              });
+
+              updateUser({
+                username: r.data.user.username,
+                avatar: r.data.user.avatar,
+              });
+
+              router.replace('/(tabs)/home');
+            } catch (e: any) {
+              setStatus('taken'); // backend said username conflict
+            }
           }}
           style={[
             styles.cta,

@@ -13,21 +13,6 @@ const QuizSchema = z.object({
   total: z.number().min(1),
 });
 
-export async function submitQuiz(req: AuthRequest, res: Response) {
-  if (!req.userId) return res.status(401).json({ message: 'Unauthorized' });
-
-  const parsed = QuizSchema.safeParse(req.body);
-  if (!parsed.success)
-    return res.status(400).json({ message: 'Invalid payload' });
-
-  const result = await applyQuizResult({
-    userId: req.userId,
-    ...parsed.data,
-  });
-
-  return res.json(result);
-}
-
 export async function dailyCheckIn(req: AuthRequest, res: Response) {
   if (!req.userId) return res.status(401).json({ message: 'Unauthorized' });
 

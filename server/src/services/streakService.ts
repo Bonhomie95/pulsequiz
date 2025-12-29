@@ -21,7 +21,7 @@ export async function checkInStreak(userId: string) {
   await streak.save();
 
   // Reward logic
-  const baseReward = 20 * streak.streak;
+  const baseReward = Math.min(20 * streak.streak, 200);
   let milestoneBonus = 0;
 
   if (streak.streak === 10) milestoneBonus = 500;
