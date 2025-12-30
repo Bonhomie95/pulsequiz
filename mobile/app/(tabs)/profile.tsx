@@ -15,10 +15,10 @@ import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { AVATAR_MAP } from '@/src/constants/avatars';
 import { AvatarPickerModal } from '@/src/components/profile/AvatarPickerModal';
-import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
+import { enterImmersiveMode } from '@/src/utils/immersive';
 import { useFocusEffect } from 'expo-router';
 
-function resolveAvatar(key?: string) {
+function resolveAvatar(key?: any) {
   return AVATAR_MAP[key ?? 'avatar0'] ?? AVATAR_MAP.avatar0;
 }
 
@@ -52,12 +52,12 @@ export default function ProfileScreen() {
     });
   }, []);
 
-    useFocusEffect(
-      useCallback(() => {
-        enterImmersiveMode();
-        // return () => exitImmersiveMode();
-      }, [])
-    );
+  useFocusEffect(
+    useCallback(() => {
+      enterImmersiveMode();
+      // return () => exitImmersiveMode();
+    }, [])
+  );
 
   /** ✏️ Enter edit mode */
   const startEditing = () => {
