@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -6,25 +6,42 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Switch,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { api } from '@/src/api/api';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useThemeStore } from '@/src/store/useThemeStore';
+import { useAudioStore } from '@/src/store/useAudioStore';
 import { useTheme } from '@/src/theme/useTheme';
-import { useRouter } from 'expo-router';
+import { soundManager } from '@/src/audio/SoundManager';
+import { enterImmersiveMode } from '@/src/utils/immersive';
+import { useFocusEffect } from 'expo-router';
 
 const USDT_TYPES = ['TRC20', 'ERC20', 'BEP20'] as const;
 
 export default function SettingsScreen() {
   const router = useRouter();
   const theme = useTheme();
+
   const { mode, setMode } = useThemeStore();
   const { user, logout, setUser } = useAuthStore();
 
-  const [usdtType, setUsdtType] = useState<any>(user?.usdtType);
+  const {
+    muted,
+    masterVolume,
+    effectsVolume,
+    setMuted,
+    setMasterVolume,
+    setEffectsVolume,
+  } = useAudioStore();
+
+  const [usdtType, setUsdtType] = useState(user?.usdtType);
   const [address, setAddress] = useState(user?.usdtAddress ?? '');
+  const [showNetworkPicker, setShowNetworkPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const saveWallet = async () => {
@@ -37,11 +54,7 @@ export default function SettingsScreen() {
         usdtAddress: address,
       });
 
-      setUser({
-        ...user!,
-        ...res.data.settings,
-      });
-
+      setUser({ ...user!, ...res.data.settings });
       alert('Wallet saved');
     } catch (e: any) {
       alert(e?.response?.data?.message || 'Invalid wallet');
@@ -50,13 +63,29 @@ export default function SettingsScreen() {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      enterImmersiveMode();
+      // return () => exitImmersiveMode();
+    }, [])
+  );
+
+  useEffect(() => {
+    soundManager.setMuted(muted);
+    soundManager.setMasterVolume(masterVolume);
+    soundManager.setEffectsVolume(effectsVolume);
+
+    // if user un-mutes, restart bg immediately
+    if (!muted) soundManager.startBackground();
+  }, [muted, masterVolume, effectsVolume]);
+
   return (
     <SafeAreaView
       edges={['top']}
       style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
       <View style={styles.container}>
-        {/* Appearance */}
+        {/* APPEARANCE */}
         <Section title="Appearance">
           <Option
             label="Theme"
@@ -74,19 +103,75 @@ export default function SettingsScreen() {
           />
         </Section>
 
-        {/* Wallet */}
-        <Section title="Wallet">
-          <Option
-            label="USDT Network"
-            value={usdtType ?? 'Select'}
-            onPress={() => {
-              const next =
-                USDT_TYPES[
-                  (USDT_TYPES.indexOf(usdtType) + 1) % USDT_TYPES.length
-                ];
-              setUsdtType(next);
-            }}
+        {/* AUDIO */}
+        <Section title="Audio">
+          <View
+            style={[styles.option, { backgroundColor: theme.colors.surface }]}
+          >
+            <Text style={{ color: theme.colors.text }}>Mute sounds</Text>
+            <Switch
+              value={muted}
+              onValueChange={setMuted}
+              thumbColor={theme.colors.primary}
+            />
+          </View>
+
+          <SliderBlock
+            label="Master Volume"
+            value={masterVolume}
+            onChange={setMasterVolume}
           />
+
+          <SliderBlock
+            label="Effects Volume"
+            value={effectsVolume}
+            onChange={setEffectsVolume}
+          />
+        </Section>
+
+        {/* WALLET */}
+        <Section title="Wallet">
+          <TouchableOpacity
+            onPress={() => setShowNetworkPicker((v) => !v)}
+            style={[styles.option, { backgroundColor: theme.colors.surface }]}
+          >
+            <Text style={{ color: theme.colors.text }}>USDT Network</Text>
+            <Text style={{ color: theme.colors.muted }}>
+              {usdtType ?? 'Select'}
+            </Text>
+          </TouchableOpacity>
+
+          {showNetworkPicker && (
+            <View style={{ marginBottom: 8 }}>
+              {USDT_TYPES.map((t) => (
+                <TouchableOpacity
+                  key={t}
+                  onPress={() => {
+                    setUsdtType(t);
+                    setShowNetworkPicker(false);
+                  }}
+                  style={[
+                    styles.option,
+                    {
+                      backgroundColor:
+                        usdtType === t
+                          ? theme.colors.primary
+                          : theme.colors.surface,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      color: usdtType === t ? '#fff' : theme.colors.text,
+                      fontWeight: '700',
+                    }}
+                  >
+                    {t}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
           <View
             style={[styles.option, { backgroundColor: theme.colors.surface }]}
@@ -115,8 +200,8 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </Section>
 
-        {/* Account */}
-        <Section title="Account">
+        {/* ACCOUNT */}
+        <Section title="Logout">
           <TouchableOpacity
             onPress={async () => {
               await logout();
@@ -132,16 +217,42 @@ export default function SettingsScreen() {
   );
 }
 
+/* ---------------- HELPERS ---------------- */
+
+function SliderBlock({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={{ marginBottom: 12 }}>
+      <Text style={{ color: theme.colors.muted, marginBottom: 6 }}>
+        {label} ({Math.round(value * 100)}%)
+      </Text>
+      <Slider
+        minimumValue={0}
+        maximumValue={1}
+        value={value}
+        onValueChange={onChange}
+        minimumTrackTintColor={theme.colors.primary}
+        maximumTrackTintColor={theme.colors.muted}
+        thumbTintColor={theme.colors.primary}
+      />
+    </View>
+  );
+}
+
 function Section({ title, children }: any) {
   const theme = useTheme();
   return (
     <View style={{ marginBottom: 28 }}>
       <Text
-        style={{
-          color: theme.colors.muted,
-          marginBottom: 8,
-          fontSize: 13,
-        }}
+        style={{ color: theme.colors.muted, marginBottom: 8, fontSize: 13 }}
       >
         {title}
       </Text>
@@ -171,24 +282,27 @@ function Option({
   );
 }
 
+/* ---------------- STYLES ---------------- */
+
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
+  container: { padding: 20 },
+
   option: {
     padding: 16,
     borderRadius: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
     alignItems: 'center',
+    marginBottom: 12,
   },
+
   saveBtn: {
     marginTop: 8,
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
   },
+
   logout: {
     padding: 16,
     borderRadius: 16,

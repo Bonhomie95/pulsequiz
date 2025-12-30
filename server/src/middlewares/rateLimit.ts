@@ -3,7 +3,7 @@ import type { AuthRequest } from './auth';
 
 export const quizStartLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 25,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
 

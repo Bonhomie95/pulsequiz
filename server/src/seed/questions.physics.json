@@ -2,223 +2,185 @@
   {
     "category": "Physics",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
+    "question": "What is the SI unit of force?",
+    "options": ["Joule", "Newton", "Pascal", "Watt"],
     "answer": 1
   },
-
   {
     "category": "Physics",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which particle carries a negative electric charge?",
+    "options": ["Proton", "Neutron", "Electron", "Photon"],
     "answer": 2
   },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-
   {
     "category": "Physics",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "What is the speed of light in a vacuum (approximately)?",
+    "options": ["3 × 10^6 m/s", "3 × 10^7 m/s", "3 × 10^8 m/s", "3 × 10^9 m/s"],
     "answer": 2
   },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-
   {
     "category": "Physics",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "question": "Which form of energy is associated with motion?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "Potential energy",
+      "Thermal energy",
+      "Kinetic energy",
+      "Chemical energy"
     ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
     "answer": 2
   },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-
   {
     "category": "Physics",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
+    "question": "What instrument is used to measure temperature?",
+    "options": ["Barometer", "Thermometer", "Ammeter", "Voltmeter"],
     "answer": 1
   },
-
   {
     "category": "Physics",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "question": "Which force pulls objects toward the center of the Earth?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "Magnetic force",
+      "Electric force",
+      "Gravitational force",
+      "Nuclear force"
     ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
     "answer": 2
   },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-
   {
     "category": "Physics",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "question": "What type of wave requires a medium to travel?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "Electromagnetic wave",
+      "Light wave",
+      "Mechanical wave",
+      "Radio wave"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Physics",
+    "difficulty": "easy",
+    "question": "Which physical quantity is measured in watts?",
+    "options": ["Energy", "Power", "Force", "Pressure"],
+    "answer": 1
+  },
+  {
+    "category": "Physics",
+    "difficulty": "medium",
+    "question": "What does Newton’s Second Law relate?",
+    "options": [
+      "Force, mass, and acceleration",
+      "Energy and mass",
+      "Velocity and time",
+      "Pressure and volume"
     ],
     "answer": 0
   },
   {
     "category": "Physics",
     "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which law states that for every action there is an equal and opposite reaction?",
+    "options": [
+      "Newton’s First Law",
+      "Newton’s Second Law",
+      "Newton’s Third Law",
+      "Law of Gravitation"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Physics",
+    "difficulty": "medium",
+    "question": "What happens to the resistance of a conductor as temperature increases (for most metals)?",
+    "options": [
+      "It decreases",
+      "It becomes zero",
+      "It increases",
+      "It remains constant"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Physics",
+    "difficulty": "medium",
+    "question": "Which quantity remains constant in a closed system according to the law of conservation of energy?",
+    "options": ["Mass", "Momentum", "Energy", "Force"],
+    "answer": 2
+  },
+  {
+    "category": "Physics",
+    "difficulty": "medium",
+    "question": "What is the unit of electric current?",
+    "options": ["Volt", "Ohm", "Ampere", "Coulomb"],
+    "answer": 2
+  },
+  {
+    "category": "Physics",
+    "difficulty": "medium",
+    "question": "Which type of lens converges light rays to a focal point?",
+    "options": [
+      "Concave lens",
+      "Convex lens",
+      "Cylindrical lens",
+      "Plane lens"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Physics",
+    "difficulty": "medium",
+    "question": "Which physical quantity is defined as force per unit area?",
+    "options": ["Energy", "Pressure", "Power", "Density"],
+    "answer": 1
+  },
+  {
+    "category": "Physics",
+    "difficulty": "medium",
+    "question": "What phenomenon explains the bending of light when it passes from one medium to another?",
+    "options": ["Reflection", "Diffraction", "Refraction", "Interference"],
     "answer": 2
   },
   {
     "category": "Physics",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "question": "Which equation represents Einstein’s mass-energy equivalence?",
+    "options": ["E = mc^2", "F = ma", "V = IR", "pV = nRT"],
+    "answer": 0
+  },
+  {
+    "category": "Physics",
+    "difficulty": "hard",
+    "question": "What is the SI unit of electric potential difference?",
+    "options": ["Ampere", "Volt", "Ohm", "Coulomb"],
+    "answer": 1
+  },
+  {
+    "category": "Physics",
+    "difficulty": "hard",
+    "question": "Which principle states that it is impossible to determine both the position and momentum of a particle precisely at the same time?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Pauli Exclusion Principle",
+      "Heisenberg Uncertainty Principle",
+      "Principle of Superposition",
+      "Bohr Correspondence Principle"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Physics",
+    "difficulty": "hard",
+    "question": "Which law describes the relationship between pressure and volume of a gas at constant temperature?",
+    "options": [
+      "Charles’s Law",
+      "Boyle’s Law",
+      "Avogadro’s Law",
+      "Gay-Lussac’s Law"
     ],
     "answer": 1
   }

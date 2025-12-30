@@ -8,6 +8,9 @@ import leaderboardRoutes from './routes/leaderboardRoutes';
 import profileRoutes from './routes/profileRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import { startLeaderboardCron } from './cron/leaderboardCron';
+import streakRoutes from './routes/streakRoutes';
+import coinRoutes from './routes/coinRoutes';
+import homeRoutes from './routes/homeRoutes';
 
 const app = express();
 
@@ -25,5 +28,8 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/streak', streakRoutes);
+app.use('/api/coins', coinRoutes);
+app.use('/api/home', homeRoutes);
 
 export default app;

@@ -3,24 +3,18 @@
     "name": "Pulse Quiz",
     "slug": "pulsequiz",
     "version": "1.0.0",
-
     "scheme": "pulsequiz",
-
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "icon": "./assets/images/icon.png",
-
     "runtimeVersion": {
       "policy": "appVersion"
     },
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bonhomie95.pulsequiz"
     },
-
     "android": {
       "package": "com.bonhomie95.pulsequiz",
       "edgeToEdgeEnabled": true,
@@ -30,12 +24,10 @@
         "backgroundColor": "#E6F4FE"
       }
     },
-
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-
     "plugins": [
       "expo-router",
       "expo-secure-store",
@@ -56,14 +48,19 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-7561090708148190~3360649097",
+          "iosAppId": "ca-app-pub-7561090708148190~8055600243"
+        }
       ]
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
-
     "extra": {
       "router": {
         "origin": false
@@ -72,7 +69,6 @@
         "projectId": "91e7781d-86d2-4fcd-b570-087289350411"
       }
     },
-
     "owner": "bonhomie95"
   }
 }

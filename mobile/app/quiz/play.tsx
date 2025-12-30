@@ -1,8 +1,13 @@
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -21,6 +26,8 @@ import { AVATAR_MAP } from '@/src/constants/avatars';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
+import { soundManager } from '@/src/audio/SoundManager';
+import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
 
 const TIME_PER_QUESTION = 15;
 const HINT_COSTS = [10, 20, 50] as const;
@@ -124,8 +131,9 @@ export default function QuizPlay() {
   const { category } = useLocalSearchParams<{ category: string }>();
   const router = useRouter();
   const theme = useTheme();
+  const [hintUsedThisQuestion, setHintUsedThisQuestion] = useState(false);
 
-  const { coins, spendCoins } = useCoinStore();
+  const { coins } = useCoinStore();
   const user = useAuthStore((s) => s.user);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -154,12 +162,20 @@ export default function QuizPlay() {
   const cardAnim = useRef(new Animated.Value(0)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
 
-  // timers & audio
+  // timers
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const beepRef = useRef<Audio.Sound | null>(null);
   const tickingRef = useRef(false);
 
   const q = questions[index];
+
+  // Boot SoundManager once for this screen lifecycle
+  // useEffect(() => {
+  //   soundManager.boot();
+  //   return () => {
+  //     // stop any playing sound as we leave this screen
+  //     soundManager.stop();
+  //   };
+  // }, []);
 
   const avatarSource = useMemo(() => {
     // user.avatar might be "avatar2" or a url; adapt to your app.
@@ -181,38 +197,48 @@ export default function QuizPlay() {
 
   const hintCost = useMemo(() => HINT_COSTS[hintsUsed] ?? 999, [hintsUsed]);
 
-  const playBeep = useCallback(async () => {
-    try {
-      // Put a short beep mp3/wav in assets/sounds/beep.mp3
-      // If you don't have it yet, comment this out or add the file.
-      const source = require('@/assets/sounds/beep.mp3');
-      if (!beepRef.current) {
-        const { sound } = await Audio.Sound.createAsync(source, {
-          shouldPlay: false,
-          volume: 0.9,
-        });
-        beepRef.current = sound;
-      }
-      await beepRef.current.replayAsync();
-    } catch {
-      // no-op if beep asset missing
-    }
-  }, []);
-
-  const stopBeep = useCallback(async () => {
-    try {
-      if (beepRef.current) {
-        await beepRef.current.stopAsync();
-        await beepRef.current.unloadAsync();
-        beepRef.current = null;
-      }
-    } catch {}
-  }, []);
-
   const stopTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
   }, []);
+
+  const handleExtendTime = useCallback(async () => {
+    if (!sessionId || !q || locked) return;
+
+    try {
+      const res: any = await api.post('/quiz/extend-time', {
+        sessionId,
+        questionId: q.id,
+      });
+
+      // 🚨 Need ad
+      if (res.data?.requiresAd) {
+        stopTimer();
+        router.push({
+          pathname: '/earn/ads',
+          params: {
+            source: 'time',
+            sessionId,
+            questionId: q.id,
+          },
+        });
+        return;
+      }
+
+      // ✅ Success
+      if (res.data?.addedSeconds === 10) {
+        setTimeLeft((t) => t + 10);
+
+        if (typeof res.data.coins === 'number') {
+          useCoinStore.getState().setCoins(res.data.coins);
+        }
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+    } catch (e) {
+      console.warn('Extend time failed', e);
+    }
+  }, [sessionId, q, locked]);
 
   const showOverlay = useCallback(
     (type: 'correct' | 'wrong' | 'timeout', message: string) => {
@@ -239,10 +265,13 @@ export default function QuizPlay() {
     setSelected(null);
     setCorrectIndex(null);
     setDisabledOptions([]);
-    setHintsUsed(0);
     setOverlay(null);
+
+    setHintUsedThisQuestion(false);
+
     tickingRef.current = false;
     setTimeLeft(TIME_PER_QUESTION);
+
     cardAnim.setValue(0);
     Animated.timing(cardAnim, {
       toValue: 1,
@@ -250,6 +279,13 @@ export default function QuizPlay() {
       useNativeDriver: true,
     }).start();
   }, [cardAnim]);
+
+  useFocusEffect(
+    useCallback(() => {
+      enterImmersiveMode();
+      return () => exitImmersiveMode();
+    }, [])
+  );
 
   /** Immersive mode while this screen is focused. */
   useFocusEffect(
@@ -290,6 +326,7 @@ export default function QuizPlay() {
         setLocked(false);
         resetPerQuestionUI();
         setLoading(false);
+        setHintsUsed(0);
       })
       .catch((err) => {
         console.error('Quiz start failed', err?.response?.data || err?.message);
@@ -319,7 +356,7 @@ export default function QuizPlay() {
         // vibration + beep for last 5 seconds
         if (next <= 5 && next > 0) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          playBeep();
+          soundManager.play('countdown');
         }
 
         if (next <= 0) {
@@ -340,9 +377,9 @@ export default function QuizPlay() {
   useEffect(() => {
     return () => {
       stopTimer();
-      stopBeep();
+      // soundManager.stop();
     };
-  }, [stopTimer, stopBeep]);
+  }, [stopTimer]);
 
   const finishQuiz = useCallback(async () => {
     if (!sessionId) return;
@@ -353,6 +390,7 @@ export default function QuizPlay() {
         params: res.data,
       });
     } catch (e) {
+      console.error('Finish quiz failed', e);
       router.replace('/(tabs)/home');
     }
   }, [router, sessionId]);
@@ -373,6 +411,7 @@ export default function QuizPlay() {
     lockAndReveal(null, null);
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    soundManager.play('fail');
     showOverlay('timeout', 'Time up ⏳');
 
     // Tell backend (selected: null)
@@ -401,6 +440,7 @@ export default function QuizPlay() {
     async (sel: number) => {
       if (!sessionId || locked || !q) return;
 
+      soundManager.play('click');
       lockAndReveal(sel, null);
 
       try {
@@ -418,6 +458,7 @@ export default function QuizPlay() {
 
         if (data.correct) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          soundManager.play('victory');
           showOverlay('correct', 'Correct ✅');
 
           // proceed to next question
@@ -440,12 +481,14 @@ export default function QuizPlay() {
 
         // WRONG → end game immediately
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        soundManager.play('fail');
         showOverlay('wrong', 'Wrong ❌');
 
         setTimeout(() => {
           finishQuiz();
         }, 1100);
       } catch (e) {
+        console.error('Submit answer failed', e);
         // unlock if request failed
         setLocked(false);
         setSelected(null);
@@ -464,38 +507,6 @@ export default function QuizPlay() {
       hideOverlay,
     ]
   );
-
-  const useHint = useCallback(() => {
-    if (!q || locked) return;
-    if (hintsUsed >= 3) return;
-
-    const cost = hintCost;
-    if (!spendCoins(cost)) return;
-
-    // remove one wrong option that is not the correct index
-    const c = correctIndex ?? -1; // if backend hasn't given, we still can do frontend hint safely (won't remove correct if unknown? we'd rather not)
-    // If we don't know correctIndex yet, hint could accidentally remove the correct one.
-    // So we only allow hints when correctIndex is known OR when we can infer it.
-    // We *can't* infer it without backend, so block until we know correctIndex.
-    if (c < 0) {
-      // refund (since spendCoins already happened)
-      // if your store doesn't support refund, just block earlier instead:
-      // return; (better is to block before spending)
-      return;
-    }
-
-    const candidates = q.options
-      .map((_, i) => i)
-      .filter((i) => i !== c && !disabledOptions.includes(i));
-
-    if (!candidates.length) return;
-
-    const remove = candidates[Math.floor(Math.random() * candidates.length)];
-    setDisabledOptions((p) => [...p, remove]);
-    setHintsUsed((h) => h + 1);
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  }, [q, locked, hintsUsed, hintCost, spendCoins, disabledOptions, correctIndex]);
 
   // when we load a new question, animate it in
   useEffect(() => {
@@ -517,13 +528,74 @@ export default function QuizPlay() {
     return { text, bg };
   }, [q?.difficulty, theme.colors]);
 
+  const handleHint = useCallback(async () => {
+    if (!q || locked) return;
+    if (!sessionId) return;
+    if (hintsUsed >= 3) return;
+    if (hintUsedThisQuestion) return;
+
+    try {
+      const res: any = await api.post('/quiz/hint', {
+        sessionId,
+        questionId: q.id,
+      });
+
+      const {
+        disabledIndex,
+        coins: newCoins,
+        hintsUsed: serverHintsUsed,
+      } = res.data || {};
+
+      // update coins from backend (source of truth)
+      if (typeof newCoins === 'number') {
+        useCoinStore.getState().setCoins(newCoins);
+      }
+
+      // backend can optionally return hintsUsed; if so, trust it
+      if (typeof serverHintsUsed === 'number') {
+        setHintsUsed(serverHintsUsed);
+      } else {
+        // fallback: increment locally
+        if (typeof disabledIndex === 'number') setHintsUsed((h) => h + 1);
+      }
+
+      if (typeof disabledIndex !== 'number') {
+        // 🔥 NOT ENOUGH COINS → GO TO EARN ADS
+        if (res?.data?.message === 'Not enough coins') {
+          stopTimer(); // pause quiz
+          router.push({
+            pathname: '/earn/ads',
+            params: {
+              source: 'hint',
+              sessionId,
+              questionId: q.id,
+            },
+          });
+        }
+        return;
+      }
+
+      setDisabledOptions((prev) =>
+        prev.includes(disabledIndex) ? prev : [...prev, disabledIndex]
+      );
+
+      setHintUsedThisQuestion(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e: any) {
+      console.log(e?.response?.data || e?.message);
+    }
+  }, [q, locked, sessionId, hintsUsed, hintUsedThisQuestion]);
+
   const canHint = useMemo(() => {
     if (!q) return false;
+    if (!sessionId) return false;
     if (locked) return false;
     if (hintsUsed >= 3) return false;
-    if (correctIndex === null) return false; // safe rule (see above)
+    if (hintUsedThisQuestion) return false;
+    // optional UI check: show disabled if user can’t afford
+    if (coins < hintCost) return false;
     return true;
-  }, [q, locked, hintsUsed, correctIndex]);
+  }, [q, sessionId, locked, hintsUsed, hintUsedThisQuestion, coins, hintCost]);
 
   if (loading) {
     return (
@@ -572,14 +644,19 @@ export default function QuizPlay() {
       edges={['top', 'bottom']}
       style={[styles.safe, { backgroundColor: theme.colors.background }]}
     >
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
+      >
         {/* TOP BAR */}
         <View style={styles.topBar}>
           <View style={styles.topLeft}>
             <View
               style={[
                 styles.categoryPill,
-                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
               ]}
             >
               <Text style={{ color: theme.colors.text, fontWeight: '800' }}>
@@ -588,10 +665,7 @@ export default function QuizPlay() {
             </View>
 
             <View
-              style={[
-                styles.diffPill,
-                { backgroundColor: difficultyBadge.bg },
-              ]}
+              style={[styles.diffPill, { backgroundColor: difficultyBadge.bg }]}
             >
               <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>
                 {difficultyBadge.text}
@@ -615,7 +689,10 @@ export default function QuizPlay() {
                 <View
                   style={[
                     styles.avatarFallback,
-                    { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.border,
+                    },
                   ]}
                 >
                   <Text style={{ color: theme.colors.text, fontWeight: '900' }}>
@@ -638,13 +715,15 @@ export default function QuizPlay() {
               styles.timerPill,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: timeLeft <= 5 ? theme.colors.danger : theme.colors.border,
+                borderColor:
+                  timeLeft <= 5 ? theme.colors.danger : theme.colors.border,
               },
             ]}
           >
             <Text
               style={{
-                color: timeLeft <= 5 ? theme.colors.danger : theme.colors.primary,
+                color:
+                  timeLeft <= 5 ? theme.colors.danger : theme.colors.primary,
                 fontWeight: '900',
                 fontSize: 14,
               }}
@@ -676,12 +755,7 @@ export default function QuizPlay() {
             },
           ]}
         >
-          <Text
-            style={[
-              styles.questionText,
-              { color: theme.colors.text },
-            ]}
-          >
+          <Text style={[styles.questionText, { color: theme.colors.text }]}>
             {q.question}
           </Text>
         </Animated.View>
@@ -692,7 +766,8 @@ export default function QuizPlay() {
             const isDisabled = disabledOptions.includes(i);
 
             const hasResult = selected !== null || overlay?.type === 'timeout';
-            const isCorrect = correctIndex !== null ? i === correctIndex : false;
+            const isCorrect =
+              correctIndex !== null ? i === correctIndex : false;
             const isSelected = selected !== null ? i === selected : false;
 
             let bg = theme.colors.surface;
@@ -745,20 +820,33 @@ export default function QuizPlay() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <TouchableOpacity
               disabled={!canHint}
-              onPress={useHint}
+              onPress={handleHint}
               style={[
                 styles.hintBtn,
                 {
-                  backgroundColor: canHint ? theme.colors.primary : theme.colors.surface,
+                  backgroundColor: canHint
+                    ? theme.colors.primary
+                    : theme.colors.surface,
                   borderColor: theme.colors.border,
                   opacity: canHint ? 1 : 0.55,
                 },
               ]}
             >
-              <Text style={{ color: canHint ? '#fff' : theme.colors.muted, fontWeight: '900' }}>
+              <Text
+                style={{
+                  color: canHint ? '#fff' : theme.colors.muted,
+                  fontWeight: '900',
+                }}
+              >
                 Hint
               </Text>
-              <Text style={{ color: canHint ? '#fff' : theme.colors.muted, fontWeight: '700', fontSize: 12 }}>
+              <Text
+                style={{
+                  color: canHint ? '#fff' : theme.colors.muted,
+                  fontWeight: '700',
+                  fontSize: 12,
+                }}
+              >
                 {hintsUsed < 3 ? `${hintCost} coins` : 'Max'}
               </Text>
             </TouchableOpacity>
@@ -766,7 +854,10 @@ export default function QuizPlay() {
             <View
               style={[
                 styles.coinsPill,
-                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
               ]}
             >
               <Text style={{ color: theme.colors.text, fontWeight: '900' }}>
@@ -776,13 +867,37 @@ export default function QuizPlay() {
           </View>
 
           <TouchableOpacity
+            onPress={handleExtendTime}
+            disabled={locked}
+            style={[
+              styles.hintBtn,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
+            <Text style={{ color: theme.colors.text, fontWeight: '900' }}>
+              +10s
+            </Text>
+            <Text style={{ color: theme.colors.muted, fontSize: 12 }}>
+              20 coins
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             onPress={() => router.back()}
             style={[
               styles.exitBtn,
-              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
             ]}
           >
-            <Text style={{ color: theme.colors.muted, fontWeight: '900' }}>Exit</Text>
+            <Text style={{ color: theme.colors.muted, fontWeight: '900' }}>
+              Quit
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -819,7 +934,14 @@ export default function QuizPlay() {
               <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>
                 {overlay.message}
               </Text>
-              <Text style={{ color: '#fff', opacity: 0.9, marginTop: 2, fontWeight: '700' }}>
+              <Text
+                style={{
+                  color: '#fff',
+                  opacity: 0.9,
+                  marginTop: 2,
+                  fontWeight: '700',
+                }}
+              >
                 {overlay.type === 'correct'
                   ? 'Keep going!'
                   : overlay.type === 'timeout'

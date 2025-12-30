@@ -2,218 +2,181 @@
   {
     "category": "Geography",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Geography",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which is the largest continent by land area?",
+    "options": ["Africa", "Europe", "Asia", "North America"],
     "answer": 2
   },
   {
     "category": "Geography",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "difficulty": "easy",
+    "question": "What is the longest river in the world?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Amazon River",
+      "Yangtze River",
+      "Mississippi River",
+      "Nile River"
     ],
+    "answer": 3
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which ocean lies between Africa and Australia?",
+    "options": [
+      "Atlantic Ocean",
+      "Pacific Ocean",
+      "Indian Ocean",
+      "Southern Ocean"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital city of France?",
+    "options": ["Madrid", "Rome", "Berlin", "Paris"],
+    "answer": 3
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country has the largest population in the world?",
+    "options": ["India", "United States", "China", "Indonesia"],
+    "answer": 0
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which desert is the largest hot desert in the world?",
+    "options": [
+      "Gobi Desert",
+      "Kalahari Desert",
+      "Sahara Desert",
+      "Arabian Desert"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which continent is known as the coldest continent?",
+    "options": ["Europe", "Antarctica", "Asia", "North America"],
     "answer": 1
   },
   {
     "category": "Geography",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "question": "Which line divides the Earth into the Northern and Southern Hemispheres?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "Prime Meridian",
+      "Tropic of Cancer",
+      "Equator",
+      "Tropic of Capricorn"
     ],
-    "answer": 0
+    "answer": 2
   },
   {
     "category": "Geography",
     "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which country is completely landlocked?",
+    "options": ["Peru", "Bolivia", "Chile", "Ecuador"],
+    "answer": 1
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which mountain range separates Europe from Asia?",
+    "options": ["Alps", "Himalayas", "Ural Mountains", "Caucasus Mountains"],
+    "answer": 2
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Australia?",
+    "options": ["Sydney", "Melbourne", "Canberra", "Perth"],
+    "answer": 2
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which African country has the most pyramids?",
+    "options": ["Egypt", "Sudan", "Ethiopia", "Libya"],
+    "answer": 1
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which current flows along the western coast of South America?",
+    "options": [
+      "Gulf Stream",
+      "Canary Current",
+      "Humboldt Current",
+      "Kuroshio Current"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country has the longest coastline in the world?",
+    "options": ["Russia", "Australia", "Canada", "Indonesia"],
+    "answer": 2
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What type of climate is characterized by hot, dry summers and mild, wet winters?",
+    "options": [
+      "Tropical climate",
+      "Desert climate",
+      "Mediterranean climate",
+      "Continental climate"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which sea is the saltiest major body of water?",
+    "options": ["Black Sea", "Red Sea", "Caspian Sea", "Dead Sea"],
+    "answer": 3
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which country spans the greatest number of time zones?",
+    "options": ["Russia", "United States", "France", "China"],
     "answer": 2
   },
   {
     "category": "Geography",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "question": "Which plateau is known as the 'Roof of the World'?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Deccan Plateau",
+      "Tibetan Plateau",
+      "Colorado Plateau",
+      "Iranian Plateau"
     ],
     "answer": 1
   },
   {
     "category": "Geography",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "difficulty": "hard",
+    "question": "What is the deepest known point in the Earth's oceans?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "Puerto Rico Trench",
+      "Java Trench",
+      "Mariana Trench",
+      "Tonga Trench"
     ],
-    "answer": 0
-  },
-  {
-    "category": "Geography",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
     "answer": 2
   },
   {
     "category": "Geography",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Geography",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Geography",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which river flows through the most countries?",
+    "options": ["Amazon River", "Nile River", "Danube River", "Congo River"],
     "answer": 2
-  },
-  {
-    "category": "Geography",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Geography",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Geography",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Geography",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Geography",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Geography",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Geography",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Geography",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Geography",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Geography",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   }
 ]

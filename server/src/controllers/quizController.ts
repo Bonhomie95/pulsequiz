@@ -5,6 +5,10 @@ import { startQuizSession } from '../services/quizService';
 import { submitQuizAnswer } from '../services/quizAnswerService';
 import ActiveQuizSession from '../models/ActiveQuizSession';
 import { applyQuizResult } from '../services/progressService';
+import { rebuildLeaderboardSnapshots } from '../services/leaderboardService';
+import { useHintService } from '../services/quizHintService';
+import { extendQuestionTime } from '../services/quizTimeService';
+import User from '../models/User';
 
 const StartSchema = z.object({
   category: z.string().min(2),
@@ -18,6 +22,16 @@ const AnswerSchema = z.object({
 
 const FinishSchema = z.object({
   sessionId: z.string().min(8),
+});
+
+const HintSchema = z.object({
+  sessionId: z.string().min(8),
+  questionId: z.string().min(8),
+});
+
+const ExtendTimeSchema = z.object({
+  sessionId: z.string().min(8),
+  questionId: z.string().min(8),
 });
 
 export async function start(req: AuthRequest, res: Response) {
@@ -69,9 +83,53 @@ export async function finish(req: AuthRequest, res: Response) {
     total,
   });
 
+  await User.updateOne(
+    { _id: req.userId },
+    { $inc: { sessionsSinceLastAd: 1 } }
+  );
+
+  await rebuildLeaderboardSnapshots();
+
   return res.json({
     correct,
     total,
-    ...result,
+    points: result.pointsAdded, // 🔥 THIS FIXES NaN
+    level: result.newLevel,
+    accuracy: result.accuracy,
+    leveledUp: result.leveledUp,
   });
+}
+
+export async function hint(req: AuthRequest, res: Response) {
+  if (!req.userId) return res.status(401).json({ message: 'Unauthorized' });
+
+  const parsed = HintSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: 'Invalid payload' });
+  }
+
+  const data = await useHintService({
+    userId: req.userId,
+    sessionId: parsed.data.sessionId,
+    questionId: parsed.data.questionId,
+  });
+
+  return res.json(data);
+}
+
+export async function extendTime(req: AuthRequest, res: Response) {
+  if (!req.userId) return res.status(401).json({ message: 'Unauthorized' });
+
+  const parsed = ExtendTimeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: 'Invalid payload' });
+  }
+
+  const data = await extendQuestionTime({
+    userId: req.userId,
+    sessionId: parsed.data.sessionId,
+    questionId: parsed.data.questionId,
+  });
+
+  return res.json(data);
 }

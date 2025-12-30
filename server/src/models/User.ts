@@ -17,6 +17,7 @@ export interface IUser {
   usdtAddress?: string;
 
   withdrawalEnabled: boolean;
+  sessionsSinceLastAd: number;
 
   createdAt: Date;
 }
@@ -48,6 +49,10 @@ const UserSchema = new Schema<IUser>(
     withdrawalEnabled: {
       type: Boolean,
       default: false,
+    },
+    sessionsSinceLastAd: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

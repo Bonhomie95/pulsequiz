@@ -1,11 +1,13 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { showInterstitialAd } from '@/src/ads/admob';
+import { soundManager } from '@/src/audio/SoundManager';
 import { useTheme } from '@/src/theme/useTheme';
+import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
 
 export default function QuizResult() {
   const theme = useTheme();
@@ -21,7 +23,6 @@ export default function QuizResult() {
       leveledUp?: string;
     }>();
 
-  const soundRef = useRef<Audio.Sound | null>(null);
   const playedRef = useRef(false);
 
   const correctNum = Number(correct);
@@ -37,35 +38,62 @@ export default function QuizResult() {
     if (playedRef.current) return;
     playedRef.current = true;
 
-    async function play() {
-      const source = perfect
-        ? require('@/assets/sounds/victory.mp3')
-        : require('@/assets/sounds/fail.mp3');
+    (async () => {
+      const raw = await AsyncStorage.getItem('SESSIONS_SINCE_AD');
+      const count = Number(raw ?? 0) + 1;
 
-      const { sound } = await Audio.Sound.createAsync(source);
-      soundRef.current = sound;
-      await sound.playAsync();
-
-      if (perfect) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (count >= 3) {
+        await AsyncStorage.setItem('SESSIONS_SINCE_AD', '0');
+        await showInterstitialAd();
       } else {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        await AsyncStorage.setItem('SESSIONS_SINCE_AD', String(count));
       }
+    })();
 
-      if (didLevelUp) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+    if (didLevelUp) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
 
-    play();
-
     return () => {
-      // 🔥 STOP SOUND ON LEAVE
-      soundRef.current?.stopAsync();
-      soundRef.current?.unloadAsync();
+      // 🔒 Global manager handles cleanup safely
+      // soundManager.stop();
     };
   }, []);
 
+  useEffect(() => {
+    if (playedRef.current) return;
+    playedRef.current = true;
+
+    // 🚫 Stop background music
+    soundManager.enterResultMode();
+
+    if (perfect) {
+      soundManager.play('victory');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      soundManager.play('fail');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    if (didLevelUp) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+
+    return () => {
+      // 🧹 Stop result sound
+      soundManager.stopEffects();
+
+      // ▶️ Resume background music
+      soundManager.exitResultMode();
+    };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      enterImmersiveMode();
+      return () => exitImmersiveMode();
+    }, [])
+  );
   /* ---------------- UI ---------------- */
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>

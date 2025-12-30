@@ -7,6 +7,7 @@ type CoinState = {
   hydrate: () => Promise<void>;
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
+  setCoins: (coins: number) => void;
 };
 
 export const useCoinStore = create<CoinState>((set, get) => ({
@@ -22,6 +23,7 @@ export const useCoinStore = create<CoinState>((set, get) => ({
     AsyncStorage.setItem(STORAGE_KEYS.COINS, String(next));
     set({ coins: next });
   },
+  setCoins: (coins: number) => set({ coins }),
 
   spendCoins: (amount) => {
     const current = get().coins;

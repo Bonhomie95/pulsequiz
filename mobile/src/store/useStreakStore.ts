@@ -8,6 +8,7 @@ type StreakState = {
   lastCheckIn: string | null;
   hydrate: () => Promise<void>;
   checkInToday: () => void;
+  setStreak: (streak: number) => void;
 };
 
 export const useStreakStore = create<StreakState>((set, get) => ({
@@ -15,14 +16,15 @@ export const useStreakStore = create<StreakState>((set, get) => ({
   lastCheckIn: null,
 
   hydrate: async () => {
-    const s = await AsyncStorage.getItem(STORAGE_KEYS.STREAK);
-    const d = await AsyncStorage.getItem(STORAGE_KEYS.LAST_CHECKIN);
+    // const s = await AsyncStorage.getItem(STORAGE_KEYS.STREAK);
+    // const d = await AsyncStorage.getItem(STORAGE_KEYS.LAST_CHECKIN);
 
-    set({
-      streak: s ? Number(s) : 0,
-      lastCheckIn: d,
-    });
+    // set({
+    //   streak: s ? Number(s) : 0,
+    //   lastCheckIn: d,
+    // });
   },
+  setStreak: (streak: number) => set({ streak }),
 
   checkInToday: () => {
     const today = new Date().toDateString();

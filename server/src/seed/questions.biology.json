@@ -2,248 +2,175 @@
   {
     "category": "Biology",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
+    "question": "What is the basic unit of life?",
+    "options": ["Atom", "Cell", "Tissue", "Organ"],
+    "answer": 1
   },
   {
     "category": "Biology",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "difficulty": "easy",
+    "question": "Which organelle is known as the powerhouse of the cell?",
+    "options": ["Nucleus", "Ribosome", "Mitochondrion", "Golgi apparatus"],
     "answer": 2
   },
   {
     "category": "Biology",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "difficulty": "easy",
+    "question": "Which molecule carries genetic information in most living organisms?",
+    "options": ["RNA", "Protein", "DNA", "Lipid"],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which gas is released during photosynthesis?",
+    "options": ["Carbon dioxide", "Nitrogen", "Oxygen", "Hydrogen"],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which blood cells are responsible for oxygen transport?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "White blood cells",
+      "Platelets",
+      "Red blood cells",
+      "Plasma cells"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What type of organism makes its own food using sunlight?",
+    "options": ["Heterotroph", "Decomposer", "Autotroph", "Parasite"],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which body system is primarily responsible for digestion?",
+    "options": [
+      "Respiratory system",
+      "Digestive system",
+      "Circulatory system",
+      "Nervous system"
     ],
     "answer": 1
   },
   {
     "category": "Biology",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "question": "What is the main function of the roots in plants?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "Photosynthesis",
+      "Reproduction",
+      "Absorbing water and minerals",
+      "Producing seeds"
     ],
-    "answer": 0
-  },
-  {
-    "category": "Biology",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
     "answer": 2
   },
   {
     "category": "Biology",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
+    "difficulty": "medium",
+    "question": "Which phase of mitosis involves the alignment of chromosomes at the cell's equator?",
+    "options": ["Prophase", "Metaphase", "Anaphase", "Telophase"],
     "answer": 1
   },
   {
     "category": "Biology",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "difficulty": "medium",
+    "question": "Which enzyme is responsible for breaking down starch into maltose?",
+    "options": ["Lipase", "Protease", "Amylase", "Lactase"],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the primary function of hemoglobin?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "Transport oxygen",
+      "Fight infection",
+      "Clot blood",
+      "Regulate temperature"
     ],
     "answer": 0
   },
   {
     "category": "Biology",
     "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which part of the brain regulates balance and coordination?",
+    "options": ["Cerebrum", "Medulla oblongata", "Cerebellum", "Hypothalamus"],
     "answer": 2
   },
   {
     "category": "Biology",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
+    "difficulty": "medium",
+    "question": "Which macromolecule is primarily responsible for storing genetic information?",
+    "options": ["Carbohydrates", "Lipids", "Proteins", "Nucleic acids"],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the term for programmed cell death?",
+    "options": ["Necrosis", "Apoptosis", "Mitosis", "Cytokinesis"],
     "answer": 1
   },
   {
     "category": "Biology",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
+    "difficulty": "medium",
+    "question": "Which structure controls the movement of substances into and out of the cell?",
+    "options": ["Cell wall", "Cytoplasm", "Plasma membrane", "Nucleus"],
+    "answer": 2
   },
   {
     "category": "Biology",
     "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which process converts glucose into energy in the presence of oxygen?",
+    "options": [
+      "Fermentation",
+      "Photosynthesis",
+      "Aerobic respiration",
+      "Transpiration"
+    ],
     "answer": 2
   },
   {
     "category": "Biology",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Biology",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Biology",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which component of the electron transport chain acts as the final electron acceptor?",
+    "options": ["NADH", "FADH2", "Oxygen", "Cytochrome c"],
     "answer": 2
   },
   {
     "category": "Biology",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "question": "What is the primary function of transfer RNA (tRNA) during protein synthesis?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Transcribing DNA into RNA",
+      "Forming ribosomes",
+      "Carrying amino acids to the ribosome",
+      "Catalyzing peptide bond formation"
     ],
-    "answer": 1
-  },
-  {
-    "category": "Biology",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Biology",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
     "answer": 2
   },
   {
     "category": "Biology",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Biology",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Biology",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which plant hormone is primarily responsible for cell elongation?",
+    "options": ["Cytokinin", "Gibberellin", "Auxin", "Abscisic acid"],
     "answer": 2
   },
   {
     "category": "Biology",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "question": "Which process increases genetic variation during meiosis?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Biology",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Biology",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Biology",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Binary fission",
+      "Crossing over",
+      "DNA replication",
+      "Cytokinesis"
     ],
     "answer": 1
   }

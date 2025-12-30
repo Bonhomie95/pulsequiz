@@ -2,280 +2,181 @@
   {
     "category": "Chemistry",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
+    "question": "What is the chemical symbol for water?",
+    "options": ["O2", "H2O", "CO2", "HO"],
     "answer": 1
   },
   {
     "category": "Chemistry",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
+    "question": "Which element has the atomic number 1?",
+    "options": ["Helium", "Hydrogen", "Oxygen", "Carbon"],
     "answer": 1
   },
   {
     "category": "Chemistry",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
+    "question": "What state of matter has a fixed shape and fixed volume?",
+    "options": ["Solid", "Liquid", "Gas", "Plasma"],
     "answer": 0
   },
   {
     "category": "Chemistry",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "difficulty": "easy",
+    "question": "Which gas is most abundant in Earth's atmosphere?",
+    "options": ["Oxygen", "Carbon dioxide", "Nitrogen", "Hydrogen"],
     "answer": 2
   },
   {
     "category": "Chemistry",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
+    "difficulty": "easy",
+    "question": "What is the pH of a neutral solution at 25°C?",
+    "options": ["0", "7", "10", "14"],
     "answer": 1
   },
   {
     "category": "Chemistry",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which particle carries a negative electric charge?",
+    "options": ["Proton", "Neutron", "Electron", "Positron"],
     "answer": 2
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   },
   {
     "category": "Chemistry",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "question": "What type of bond involves the sharing of electrons?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "Ionic bond",
+      "Metallic bond",
+      "Covalent bond",
+      "Hydrogen bond"
     ],
-    "answer": 0
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
     "answer": 2
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   },
   {
     "category": "Chemistry",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
+    "question": "Which element is represented by the symbol Na?",
+    "options": ["Nitrogen", "Neon", "Sodium", "Nickel"],
+    "answer": 2
   },
   {
     "category": "Chemistry",
     "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which law states that mass is conserved during a chemical reaction?",
+    "options": [
+      "Law of Definite Proportions",
+      "Law of Multiple Proportions",
+      "Law of Conservation of Mass",
+      "Avogadro’s Law"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the molar mass of carbon dioxide (CO2)?",
+    "options": ["28 g/mol", "32 g/mol", "40 g/mol", "44 g/mol"],
+    "answer": 3
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which type of reaction involves the transfer of electrons?",
+    "options": [
+      "Acid-base reaction",
+      "Precipitation reaction",
+      "Redox reaction",
+      "Combustion reaction"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the oxidation number of oxygen in most compounds?",
+    "options": ["-1", "-2", "+1", "+2"],
+    "answer": 1
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which factor increases the rate of a chemical reaction?",
+    "options": [
+      "Lower temperature",
+      "Lower concentration",
+      "Presence of a catalyst",
+      "Smaller surface area"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What type of intermolecular force exists between water molecules?",
+    "options": [
+      "London dispersion forces",
+      "Dipole-dipole forces",
+      "Ionic bonds",
+      "Hydrogen bonds"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which orbital can hold a maximum of six electrons?",
+    "options": ["s orbital", "p orbital", "d orbital", "f orbital"],
+    "answer": 1
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the main component of natural gas?",
+    "options": ["Ethane", "Propane", "Butane", "Methane"],
+    "answer": 3
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which principle explains why increasing pressure shifts equilibrium toward fewer gas molecules?",
+    "options": [
+      "Boyle’s Law",
+      "Charles’s Law",
+      "Le Chatelier’s Principle",
+      "Hess’s Law"
+    ],
     "answer": 2
   },
   {
     "category": "Chemistry",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
+    "question": "What is the hybridization of the carbon atom in ethyne (C2H2)?",
+    "options": ["sp", "sp2", "sp3", "dsp2"],
     "answer": 0
   },
   {
     "category": "Chemistry",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Chemistry",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "question": "Which quantity is equal to the enthalpy change of a reaction at constant pressure?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Work done",
+      "Heat absorbed or released",
+      "Entropy change",
+      "Gibbs free energy"
     ],
     "answer": 1
   },
   {
     "category": "Chemistry",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Chemistry",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "question": "Which spectroscopic technique is primarily used to determine functional groups in organic compounds?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "UV-Vis spectroscopy",
+      "NMR spectroscopy",
+      "Infrared spectroscopy",
+      "Mass spectrometry"
     ],
-    "answer": 1
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
     "answer": 2
-  },
-  {
-    "category": "Chemistry",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   }
 ]

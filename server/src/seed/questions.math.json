@@ -2,342 +2,146 @@
   {
     "category": "Math",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Math",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
+    "question": "What is the value of 7 × 8?",
+    "options": ["54", "56", "48", "64"],
     "answer": 1
   },
   {
     "category": "Math",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "What is the square root of 81?",
+    "options": ["7", "8", "9", "6"],
     "answer": 2
-  },
-  {
-    "category": "Math",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   },
   {
     "category": "Math",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Math",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
+    "question": "Which number is an even number?",
+    "options": ["9", "15", "21", "24"],
+    "answer": 3
   },
   {
     "category": "Math",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "What is 25 divided by 5?",
+    "options": ["4", "6", "5", "8"],
     "answer": 2
-  },
-  {
-    "category": "Math",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   },
   {
     "category": "Math",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
+    "question": "What is the value of π (pi) approximately?",
+    "options": ["3.14", "2.17", "1.62", "4.13"],
     "answer": 0
-  },
-  {
-    "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Math",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   },
   {
     "category": "Math",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "How many sides does a triangle have?",
+    "options": ["4", "5", "3", "6"],
     "answer": 2
-  },
-  {
-    "category": "Math",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   },
   {
     "category": "Math",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Math",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
+    "question": "What is 10% of 200?",
+    "options": ["10", "40", "30", "20"],
+    "answer": 3
   },
   {
     "category": "Math",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
+    "question": "Which number is a prime number?",
+    "options": ["9", "11", "15", "21"],
+    "answer": 1
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the solution to the equation 2x + 5 = 13?",
+    "options": ["3", "5", "4", "6"],
+    "answer": 2
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the area of a rectangle with length 8 and width 5?",
+    "options": ["13", "40", "26", "30"],
+    "answer": 1
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "Which fraction is equivalent to 0.75?",
+    "options": ["1/4", "2/3", "3/4", "4/5"],
+    "answer": 2
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the value of 3³?",
+    "options": ["6", "9", "18", "27"],
+    "answer": 3
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the perimeter of a square with side length 7?",
+    "options": ["21", "49", "28", "14"],
+    "answer": 2
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "If a = 4 and b = 6, what is the value of ab?",
+    "options": ["24", "10", "18", "20"],
     "answer": 0
   },
   {
     "category": "Math",
     "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which angle is greater than 90° but less than 180°?",
+    "options": ["Acute angle", "Right angle", "Reflex angle", "Obtuse angle"],
+    "answer": 3
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the mean of the numbers 2, 4, 6, and 8?",
+    "options": ["4", "6", "5", "8"],
     "answer": 2
   },
   {
     "category": "Math",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
+    "question": "What is the derivative of x² with respect to x?",
+    "options": ["x", "2x", "x²", "2"],
     "answer": 1
   },
   {
     "category": "Math",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "difficulty": "hard",
+    "question": "What is the value of sin(90°)?",
+    "options": ["0", "1", "-1", "0.5"],
+    "answer": 1
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "Which formula represents the quadratic formula?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "x = (-b ± √(b² - 4ac)) / 2a",
+      "x = a² + b²",
+      "x = 2a + b",
+      "x = √(a² + b²)"
     ],
     "answer": 0
   },
   {
     "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Math",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Math",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "What is the sum of the interior angles of a hexagon?",
+    "options": ["540°", "600°", "720°", "900°"],
     "answer": 2
-  },
-  {
-    "category": "Math",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Math",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Math",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "Math",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   }
 ]

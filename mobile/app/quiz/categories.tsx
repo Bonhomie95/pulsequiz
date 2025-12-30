@@ -10,6 +10,7 @@ import { useTheme } from '@/src/theme/useTheme';
 import { useEffect, useState } from 'react';
 import { storage } from '@/src/utils/storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ChevronLeft } from 'lucide-react-native';
 
 const CATEGORIES = [
   { id: 'history', label: 'History', icon: '📜' },
@@ -34,13 +35,24 @@ export default function QuizCategories() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      {/* Header */}
+      {/* Back Home */}
+      <TouchableOpacity
+        onPress={() => router.replace('/')}
+        style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
+      >
+        <ChevronLeft size={18} color={theme.colors.text} />
+        <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
+          Home
+        </Text>
+      </TouchableOpacity>
+
+      {/* Hero Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.colors.text }]}>
           Choose a Category
         </Text>
         <Text style={[styles.subtitle, { color: theme.colors.muted }]}>
-          Pick where you want to start
+          Pick where you want to start your streak
         </Text>
       </View>
 
@@ -72,7 +84,7 @@ export default function QuizCategories() {
                 },
               ]}
             >
-              {/* Last Played Badge */}
+              {/* Last Played */}
               {isLast && (
                 <View
                   style={[
@@ -80,7 +92,7 @@ export default function QuizCategories() {
                     { backgroundColor: theme.colors.primary },
                   ]}
                 >
-                  <Text style={styles.badgeText}>LAST</Text>
+                  <Text style={styles.badgeText}>LAST PLAYED</Text>
                 </View>
               )}
 
@@ -101,7 +113,7 @@ export default function QuizCategories() {
 
               {/* Hint */}
               <Text style={[styles.hint, { color: theme.colors.muted }]}>
-                Tap to play →
+                Tap to start →
               </Text>
             </TouchableOpacity>
           );
@@ -114,82 +126,98 @@ export default function QuizCategories() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 24,
   },
 
+  /* Back */
+  backBtn: {
+    position: 'absolute',
+    top: 44,
+    left: 16,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+
+  /* Header */
   header: {
+    marginTop: 92,
     paddingHorizontal: 20,
-    marginBottom: 18,
+    marginBottom: 24,
   },
 
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
   },
 
   subtitle: {
-    marginTop: 4,
+    marginTop: 6,
     fontSize: 13,
   },
 
+  /* Scroll */
   scroll: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
 
   card: {
-    width: 140,
-    height: 170,
-    borderRadius: 22,
-    marginRight: 16,
-    padding: 14,
+    width: 150,
+    height: 190,
+    borderRadius: 24,
+    marginRight: 18,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 2,
 
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 7,
   },
 
   iconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
 
   icon: {
-    fontSize: 24,
+    fontSize: 26,
   },
 
   label: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
   },
 
   hint: {
-    marginTop: 4,
+    marginTop: 6,
     fontSize: 11,
   },
 
   badge: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    top: 12,
+    right: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
     borderRadius: 999,
   },
 
   badgeText: {
     color: '#fff',
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.6,
   },
 });

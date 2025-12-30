@@ -1,4 +1,6 @@
-export const AVATAR_MAP: Record<string, any> = {
+import { ImageSourcePropType } from 'react-native';
+
+export const AVATAR_MAP: Record<string, ImageSourcePropType> = {
   avatar0: require('../../assets/avatars/avatar1.png'),
   avatar1: require('../../assets/avatars/avatar2.png'),
   avatar2: require('../../assets/avatars/avatar3.png'),

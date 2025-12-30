@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -15,6 +15,8 @@ import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { AVATAR_MAP } from '@/src/constants/avatars';
 import { AvatarPickerModal } from '@/src/components/profile/AvatarPickerModal';
+import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
+import { useFocusEffect } from 'expo-router';
 
 function resolveAvatar(key?: string) {
   return AVATAR_MAP[key ?? 'avatar0'] ?? AVATAR_MAP.avatar0;
@@ -49,6 +51,13 @@ export default function ProfileScreen() {
       setStats(res.data.stats);
     });
   }, []);
+
+    useFocusEffect(
+      useCallback(() => {
+        enterImmersiveMode();
+        // return () => exitImmersiveMode();
+      }, [])
+    );
 
   /** ✏️ Enter edit mode */
   const startEditing = () => {

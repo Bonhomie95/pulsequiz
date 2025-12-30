@@ -54,9 +54,9 @@ export async function applyQuizResult(params: {
     levelAtTime: progress.level,
   });
 
-  /* ---------------- COIN REWARD ---------------- */
-  const coinReward = 20 + progress.level * 5;
-  await CoinWallet.updateOne({ userId }, { $inc: { coins: coinReward } });
+  // /* ---------------- COIN REWARD ---------------- */
+  // const coinReward = 20 + progress.level * 5;
+  // await CoinWallet.updateOne({ userId }, { $inc: { coins: coinReward } });
 
   /* ---------------- RETURN ---------------- */
   return {
@@ -66,6 +66,6 @@ export async function applyQuizResult(params: {
     leveledUp,
     totalQuizzes: progress.totalQuizzes,
     accuracy,
-    coinReward,
+    // coinReward,
   };
 }

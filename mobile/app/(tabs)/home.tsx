@@ -1,14 +1,6 @@
-import { AVATAR_MAP } from '@/src/constants/avatars';
-import { useAuthStore } from '@/src/store/useAuthStore';
-import { useCoinStore } from '@/src/store/useCoinStore';
-import { useProgressStore } from '@/src/store/useProgressStore';
-import { useStreakStore } from '@/src/store/useStreakStore';
-import { useThemeStore } from '@/src/store/useThemeStore';
-import { useTheme } from '@/src/theme/useTheme';
-import { storage } from '@/src/utils/storage';
-import { useRouter } from 'expo-router';
-import { Monitor, Moon, Sun } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Monitor, Moon, Sun, Coins, Flame } from 'lucide-react-native';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -18,21 +10,45 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AdBanner } from '@/src/ads/adBanner';
+import { api } from '@/src/api/api';
+import { HomeSkeleton } from '@/src/components/HomeSkeleton';
+import { AVATAR_MAP } from '@/src/constants/avatars';
+import { useAuthStore } from '@/src/store/useAuthStore';
+import { useCoinStore } from '@/src/store/useCoinStore';
+import { useProgressStore } from '@/src/store/useProgressStore';
+import { useStreakStore } from '@/src/store/useStreakStore';
+import { useThemeStore } from '@/src/store/useThemeStore';
+import { useTheme } from '@/src/theme/useTheme';
+import { timeAgo } from '@/src/utils/timeAgo';
+import { soundManager } from '@/src/audio/SoundManager';
+import { useAudioStore } from '@/src/store/useAudioStore';
+import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
 
-function resolveAvatar(key?: string) {
-  return AVATAR_MAP[key ?? 'avatar0'] ?? AVATAR_MAP.avatar0;
+/* ---------------- HELPERS ---------------- */
+
+function resolveAvatar(key?: string | null) {
+  if (!key) return AVATAR_MAP.avatar0;
+  return AVATAR_MAP[key as keyof typeof AVATAR_MAP] ?? AVATAR_MAP.avatar0;
 }
+
+/* ---------------- SCREEN ---------------- */
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const router = useRouter();
+
   const { user } = useAuthStore();
   const { mode, setMode } = useThemeStore();
-  const { coins, addCoins } = useCoinStore();
-  const level = 1; // mock for now
-  const { streak, checkInToday } = useStreakStore();
-  const [lastCategory, setLastCategory] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { coins } = useCoinStore();
+  const { streak } = useStreakStore();
 
-  const router = useRouter();
+  const [lastCategory, setLastCategory] = useState<string | null>(null);
+  const [lastScore, setLastScore] = useState<number | null>(null);
+  const [lastPlayedAt, setLastPlayedAt] = useState<string | null>(null);
+
+  /* ---------------- HYDRATION ---------------- */
 
   useEffect(() => {
     useCoinStore.getState().hydrate();
@@ -40,9 +56,62 @@ export default function HomeScreen() {
     useStreakStore.getState().hydrate();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+
+      (async () => {
+        try {
+          const res = await api.get('/home/summary');
+          if (!active) return;
+
+          const { coins, streak, lastQuiz } = res.data;
+
+          useCoinStore.getState().setCoins(coins);
+          useStreakStore.getState().setStreak(streak);
+
+          setLastCategory(lastQuiz?.category ?? null);
+          setLastScore(
+            typeof lastQuiz?.score === 'number' ? lastQuiz.score : null
+          );
+          setLastPlayedAt(lastQuiz?.playedAt ?? null);
+        } catch (e) {
+          console.warn('Home summary fetch failed', e);
+        } finally {
+          active && setLoading(false);
+        }
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      enterImmersiveMode();
+      // return () => exitImmersiveMode();
+    }, [])
+  );
+
   useEffect(() => {
-    storage.getLastCategory().then(setLastCategory);
+    soundManager.boot();
   }, []);
+  useEffect(() => {
+    // Boot audio + apply saved settings + start background immediately
+    (async () => {
+      const { muted, masterVolume, effectsVolume } = useAudioStore.getState();
+      await soundManager.boot();
+      soundManager.setMuted(muted);
+      soundManager.setMasterVolume(masterVolume);
+      soundManager.setEffectsVolume(effectsVolume);
+      await soundManager.startBackground();
+    })();
+  }, []);
+
+  /* ---------------- THEME ---------------- */
 
   const cycleTheme = () => {
     if (mode === 'system') setMode('dark');
@@ -52,33 +121,22 @@ export default function HomeScreen() {
 
   const ThemeIcon = mode === 'system' ? Monitor : mode === 'dark' ? Moon : Sun;
 
-  function getAdReward(level: number) {
-    if (level <= 2) return 50;
-    if (level <= 5) return 60;
-    if (level <= 9) return 70;
-    return 100;
-  }
-
   return (
-    <SafeAreaView
-      edges={['top', 'bottom']}
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView
-        style={{ backgroundColor: theme.colors.background }}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
+        {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.profile}>
-           <Image source={resolveAvatar(user?.avatar)} style={styles.avatar} />
+            <Image source={resolveAvatar(user?.avatar)} style={styles.avatar} />
             <View>
               <Text style={[styles.username, { color: theme.colors.text }]}>
                 {user?.username ?? 'Player'}
               </Text>
               <Text style={{ color: theme.colors.muted, fontSize: 12 }}>
-                Level 1
+                Welcome back
               </Text>
             </View>
           </View>
@@ -88,23 +146,68 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Coins */}
-        <View
-          style={[styles.coinsCard, { backgroundColor: theme.colors.surface }]}
-        >
-          <Text style={{ color: theme.colors.muted }}>Coins</Text>
-          <Text
-            style={{
-              color: theme.colors.coin,
-              fontSize: 28,
-              fontWeight: '700',
-            }}
+        {/* WALLET CARD */}
+        {loading ? (
+          <HomeSkeleton />
+        ) : (
+          <View
+            style={[styles.wallet, { backgroundColor: theme.colors.surface }]}
           >
-            250
+            <TouchableOpacity
+              style={styles.walletItem}
+              onPress={() => router.push('/wallet')}
+            >
+              <Coins size={18} color={theme.colors.coin} />
+              <Text style={[styles.walletValue, { color: theme.colors.coin }]}>
+                {coins}
+              </Text>
+              <Text style={{ color: theme.colors.muted }}>Coins</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.walletItem}
+              onPress={() => router.push('/streak')}
+            >
+              <Flame size={18} color={theme.colors.primary} />
+              <Text
+                style={[styles.walletValue, { color: theme.colors.primary }]}
+              >
+                {streak}
+              </Text>
+              <Text style={{ color: theme.colors.muted }}>Day Streak</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* QUICK STATS */}
+        <View style={styles.stats}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+            Quick Stats
           </Text>
+
+          <View
+            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
+          >
+            <Text style={{ color: theme.colors.muted }}>Last Category</Text>
+            <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
+              {lastCategory ?? '—'}
+            </Text>
+          </View>
+
+          <View
+            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
+          >
+            <Text style={{ color: theme.colors.muted }}>Last Score</Text>
+            <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
+              {lastScore !== null ? lastScore : '—'}
+            </Text>
+            <Text style={{ color: theme.colors.muted, fontSize: 12 }}>
+              Played {timeAgo(lastPlayedAt)}
+            </Text>
+          </View>
         </View>
 
-        {/* Start Quiz */}
+        {/* START QUIZ */}
         <TouchableOpacity
           onPress={() => router.push('/quiz/categories')}
           style={[styles.startQuiz, { backgroundColor: theme.colors.primary }]}
@@ -112,39 +215,52 @@ export default function HomeScreen() {
           <Text style={styles.startText}>Start Quiz</Text>
         </TouchableOpacity>
 
-        {/* Get Coins */}
+        {/* EARN */}
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-          Get Coins
+          Earn Rewards
         </Text>
 
         <TouchableOpacity
-          style={[styles.getCoins, { backgroundColor: theme.colors.surface }]}
-          onPress={() => {
-            const reward = getAdReward(level);
-            addCoins(reward);
-            alert(`You earned ${reward} coins`);
-          }}
+          style={[styles.earnCard, { backgroundColor: theme.colors.surface }]}
+          onPress={() => router.push('/earn/ads')}
         >
           <Text style={{ color: theme.colors.text }}>
-            Watch Video → +{getAdReward(level)} coins
+            Watch video → Earn coins
           </Text>
         </TouchableOpacity>
-        {/* Daily Streak */}
+
         <TouchableOpacity
-          style={[styles.getCoins, { backgroundColor: theme.colors.surface }]}
-          onPress={() => {
-            checkInToday();
-            alert(`Daily check-in complete! Current streak: ${streak} days.`);
-          }}
+          style={[styles.earnCard, { backgroundColor: theme.colors.surface }]}
+          onPress={() => router.push('/streak')}
         >
           <Text style={{ color: theme.colors.text }}>
-            Daily Check-In → Current Streak: {streak} days
+            Daily check-in → Keep streak alive
           </Text>
         </TouchableOpacity>
+        {/* SMALL BANNER AD */}
+        <View style={{ marginTop: 14, alignItems: 'center' }}>
+          <View
+            style={{
+              width: '100%',
+              maxWidth: 340,
+              height: 52,
+              borderRadius: 14,
+              overflow: 'hidden',
+              backgroundColor: theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              justifyContent: 'center',
+            }}
+          >
+            <AdBanner />
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
   container: {
@@ -170,14 +286,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  coinsCard: {
+  wallet: {
     marginTop: 20,
-    padding: 20,
     borderRadius: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 20,
+  },
+  walletItem: {
     alignItems: 'center',
   },
+  walletValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  stats: {
+    marginTop: 28,
+  },
+  statCard: {
+    padding: 16,
+    borderRadius: 14,
+    marginTop: 8,
+  },
   startQuiz: {
-    marginTop: 24,
+    marginTop: 28,
     height: 64,
     borderRadius: 32,
     justifyContent: 'center',
@@ -194,34 +327,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  getCoins: {
-    padding: 20,
+  earnCard: {
+    padding: 18,
     borderRadius: 16,
     marginTop: 8,
-  },
-  categoryCard: {
-    width: 120,
-    height: 140,
-    borderRadius: 20,
-    marginRight: 14,
-    padding: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-
-    // iOS shadow
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-
-    // Android elevation
-    elevation: 6,
-  },
-
-  categoryIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

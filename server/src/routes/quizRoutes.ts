@@ -1,7 +1,13 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/auth';
 import { quizStartLimiter } from '../middlewares/rateLimit';
-import { start, answer, finish } from '../controllers/quizController';
+import {
+  start,
+  answer,
+  finish,
+  hint,
+  extendTime,
+} from '../controllers/quizController';
 
 const router = Router();
 
@@ -13,5 +19,7 @@ router.post('/answer', requireAuth, answer);
 
 // finalize + apply points/coins
 router.post('/finish', requireAuth, finish);
+router.post('/hint', requireAuth, hint);
+router.post('/extend-time', requireAuth, extendTime);
 
 export default router;

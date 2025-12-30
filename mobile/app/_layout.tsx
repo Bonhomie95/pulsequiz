@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { storage } from '../src/utils/storage';
 import { api, setAuthToken } from '../src/api/api';
 import { useAuthStore } from '../src/store/useAuthStore';
+// import { soundManager } from '@/src/audio/SoundManager';
 
 export default function RootLayout() {
   const segments = useSegments();
@@ -30,6 +31,38 @@ export default function RootLayout() {
         setHydrated();
       }
     })();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const token = await storage.getToken();
+
+        if (!token) {
+          setHydrated();
+          return;
+        }
+
+        setAuthToken(token);
+
+        const r = await api.get('/auth/me');
+        if (!mounted) return;
+
+        setUser(r.data.user);
+      } catch (e) {
+        console.warn('Auth restore failed, clearing token', e);
+        await storage.clearToken();
+        setAuthToken(null);
+      } finally {
+        if (mounted) setHydrated();
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (!hydrated) {

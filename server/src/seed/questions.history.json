@@ -4,278 +4,199 @@
     "difficulty": "easy",
     "question": "Who was the first President of the United States?",
     "options": [
-      "George Washington",
       "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "John Adams",
+      "George Washington",
+      "James Madison"
     ],
-    "answer": 0
+    "answer": 2
   },
   {
     "category": "History",
-    "difficulty": "medium",
+    "difficulty": "easy",
+    "question": "Which ancient civilization built the pyramids of Giza?",
+    "options": ["Romans", "Greeks", "Egyptians", "Mesopotamians"],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
     "question": "In which year did World War II end?",
     "options": ["1943", "1944", "1945", "1946"],
     "answer": 2
   },
   {
     "category": "History",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "difficulty": "easy",
+    "question": "Who was the first man to walk on the Moon?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Buzz Aldrin",
+      "Yuri Gagarin",
+      "Neil Armstrong",
+      "Michael Collins"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Which empire was ruled by Julius Caesar?",
+    "options": [
+      "Ottoman Empire",
+      "Roman Empire",
+      "Byzantine Empire",
+      "Persian Empire"
     ],
     "answer": 1
   },
   {
     "category": "History",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "History",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which wall divided Berlin from 1961 to 1989?",
+    "options": ["Iron Curtain", "Great Wall", "Berlin Wall", "Maginot Line"],
     "answer": 2
   },
   {
     "category": "History",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "difficulty": "easy",
+    "question": "Who was known as the 'Maid of Orléans'?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Marie Curie",
+      "Joan of Arc",
+      "Catherine the Great",
+      "Eleanor of Aquitaine"
     ],
     "answer": 1
   },
   {
     "category": "History",
     "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
+    "question": "Which ancient city was buried by the eruption of Mount Vesuvius in AD 79?",
+    "options": ["Athens", "Pompeii", "Carthage", "Sparta"],
+    "answer": 1
   },
   {
     "category": "History",
     "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which treaty officially ended World War I?",
+    "options": [
+      "Treaty of Paris",
+      "Treaty of Vienna",
+      "Treaty of Versailles",
+      "Treaty of London"
+    ],
     "answer": 2
   },
   {
     "category": "History",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "difficulty": "medium",
+    "question": "Who was the British Prime Minister during most of World War II?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Neville Chamberlain",
+      "Winston Churchill",
+      "Clement Attlee",
+      "Anthony Eden"
     ],
     "answer": 1
   },
   {
     "category": "History",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "difficulty": "medium",
+    "question": "Which civilization is credited with developing cuneiform writing?",
+    "options": ["Egyptians", "Phoenicians", "Sumerians", "Indus Valley people"],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "The Magna Carta was originally signed in which year?",
+    "options": ["1066", "1215", "1492", "1314"],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which war was fought between the North and South regions of the United States?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "American Revolutionary War",
+      "War of 1812",
+      "American Civil War",
+      "Mexican-American War"
     ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Who was the first emperor of China?",
+    "options": ["Qin Shi Huang", "Confucius", "Han Wudi", "Liu Bang"],
     "answer": 0
   },
   {
     "category": "History",
     "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "History",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "question": "Which event triggered the start of World War I?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Sinking of the Lusitania",
+      "Assassination of Archduke Franz Ferdinand",
+      "German invasion of Poland",
+      "Russian Revolution"
     ],
     "answer": 1
-  },
-  {
-    "category": "History",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
   },
   {
     "category": "History",
     "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "question": "Which empire was known as the 'Sick Man of Europe' in the 19th century?",
+    "options": [
+      "Austro-Hungarian Empire",
+      "Russian Empire",
+      "Ottoman Empire",
+      "Spanish Empire"
+    ],
     "answer": 2
   },
   {
     "category": "History",
     "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
+    "question": "Which battle in 1066 led to the Norman conquest of England?",
     "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
+      "Battle of Stamford Bridge",
+      "Battle of Hastings",
+      "Battle of Agincourt",
+      "Battle of Bannockburn"
     ],
     "answer": 1
   },
   {
     "category": "History",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
+    "difficulty": "hard",
+    "question": "Who was the longest-reigning monarch in British history?",
     "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
+      "Queen Victoria",
+      "King George III",
+      "Queen Elizabeth II",
+      "Henry VIII"
     ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Which document formally dissolved the Soviet Union in 1991?",
+    "options": [
+      "Helsinki Accords",
+      "Treaty of Rome",
+      "Belavezha Accords",
+      "Maastricht Treaty"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Which dynasty ruled China immediately before the establishment of the People's Republic of China in 1949?",
+    "options": ["Qing dynasty", "Han dynasty", "Tang dynasty", "Ming dynasty"],
     "answer": 0
-  },
-  {
-    "category": "History",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "History",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "History",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "History",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "History",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "History",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "History",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "History",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "History",
-    "difficulty": "easy",
-    "question": "Who was the first President of the United States?",
-    "options": [
-      "George Washington",
-      "Thomas Jefferson",
-      "Abraham Lincoln",
-      "John Adams"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "History",
-    "difficulty": "medium",
-    "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
-    "answer": 2
-  },
-  {
-    "category": "History",
-    "difficulty": "hard",
-    "question": "Which treaty formally ended World War I?",
-    "options": [
-      "Treaty of Paris",
-      "Treaty of Versailles",
-      "Treaty of Vienna",
-      "Treaty of London"
-    ],
-    "answer": 1
   }
 ]

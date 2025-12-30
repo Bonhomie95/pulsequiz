@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   FlatList,
@@ -13,6 +13,8 @@ import { Audio } from 'expo-av';
 import { api } from '@/src/api/api';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
+import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
+import { useFocusEffect } from 'expo-router';
 
 type Tab = 'weekly' | 'monthly' | 'all';
 
@@ -41,6 +43,28 @@ export default function LeaderboardScreen() {
   const loseSound = useRef<Audio.Sound | null>(null);
 
   /* ---------------- FETCH ---------------- */
+
+  function getDateRange(type: 'weekly' | 'monthly' | 'all') {
+    const now = new Date();
+
+    if (type === 'all') return 'All time';
+
+    if (type === 'weekly') {
+      const start = new Date(now);
+      start.setDate(now.getDate() - ((now.getDay() + 6) % 7)); // Monday
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+
+      return `${start.toDateString()} – ${end.toDateString()}`;
+    }
+
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    return `${start.toDateString()} – ${end.toDateString()}`;
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -102,10 +126,34 @@ export default function LeaderboardScreen() {
   }, []);
 
   useEffect(() => {
-    if (myIndex === 0) winSound.current?.replayAsync();
-    else if (myIndex != null) loseSound.current?.replayAsync();
+    const play = async () => {
+      try {
+        if (myIndex === 0 && winSound.current) {
+          const status = await winSound.current.getStatusAsync();
+          if (status.isLoaded) {
+            await winSound.current.replayAsync();
+          }
+        } else if (myIndex != null && loseSound.current) {
+          const status = await loseSound.current.getStatusAsync();
+          if (status.isLoaded) {
+            await loseSound.current.replayAsync();
+          }
+        }
+      } catch {
+        // 🔇 silently ignore race conditions
+      }
+    };
+
+    play();
   }, [myIndex]);
 
+
+    useFocusEffect(
+      useCallback(() => {
+        enterImmersiveMode();
+        // return () => exitImmersiveMode();
+      }, [])
+    );
   /* ---------------- SCROLL ---------------- */
 
   const scrollToMe = () => {
@@ -133,6 +181,16 @@ export default function LeaderboardScreen() {
           Leaderboard 🏆
         </Text>
 
+        <Text
+          style={{
+            color: theme.colors.muted,
+            fontSize: 12,
+            marginBottom: 12,
+          }}
+        >
+          {getDateRange(tab)}
+        </Text>
+
         {/* Tabs */}
         <View style={styles.tabs}>
           {(['weekly', 'monthly', 'all'] as Tab[]).map((t) => (
@@ -147,7 +205,12 @@ export default function LeaderboardScreen() {
                 },
               ]}
             >
-              <Text style={{ color: theme.colors.text }}>
+              <Text
+                style={{
+                  color: tab === t ? '#fff' : theme.colors.text,
+                  fontWeight: '700',
+                }}
+              >
                 {t === 'weekly'
                   ? 'Weekly'
                   : t === 'monthly'
@@ -161,7 +224,12 @@ export default function LeaderboardScreen() {
         {/* Podium */}
         <View style={styles.podium}>
           {podium[1] && (
-            <AnimatedPodiumCard place={2} data={podium[1]} anim={podiumAnim} />
+            <AnimatedPodiumCard
+              place={2}
+              data={podium[1]}
+              anim={podiumAnim}
+              theme={theme}
+            />
           )}
 
           {podium[0] && (
@@ -170,11 +238,17 @@ export default function LeaderboardScreen() {
               data={podium[0]}
               anim={podiumAnim}
               crown
+              theme={theme}
             />
           )}
 
           {podium[2] && (
-            <AnimatedPodiumCard place={3} data={podium[2]} anim={podiumAnim} />
+            <AnimatedPodiumCard
+              place={3}
+              data={podium[2]}
+              anim={podiumAnim}
+              theme={theme}
+            />
           )}
         </View>
 
@@ -226,10 +300,19 @@ export default function LeaderboardScreen() {
                     backgroundColor: isMe
                       ? theme.colors.primary
                       : theme.colors.surface,
+                    borderColor: isMe
+                      ? theme.colors.primary
+                      : theme.colors.border,
+                    borderWidth: 1,
                   },
                 ]}
               >
-                <Text style={{ color: theme.colors.text }}>
+                <Text
+                  style={{
+                    color: isMe ? '#fff' : theme.colors.text,
+                    fontWeight: isMe ? '900' : '700',
+                  }}
+                >
                   {rank}. {item.username} {delta}
                 </Text>
                 <Text style={{ color: theme.colors.coin }}>{item.points}</Text>
@@ -249,11 +332,13 @@ function AnimatedPodiumCard({
   data,
   anim,
   crown,
+  theme,
 }: {
   place: 1 | 2 | 3;
   data: Entry;
   anim: Animated.Value;
   crown?: boolean;
+  theme: ReturnType<typeof useTheme>;
 }) {
   const translateY = anim.interpolate({
     inputRange: [0, 1],
@@ -270,6 +355,9 @@ function AnimatedPodiumCard({
       style={[
         styles.podiumCard,
         {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+          borderWidth: 1,
           transform: [{ translateY }, { scale }],
         },
       ]}
@@ -277,8 +365,14 @@ function AnimatedPodiumCard({
       <Text style={{ fontSize: place === 1 ? 28 : 20 }}>
         {crown ? '👑' : place}
       </Text>
-      <Text style={{ fontWeight: '700' }}>{data.username}</Text>
-      <Text style={{ color: '#FFD700' }}>{data.points}</Text>
+
+      <Text style={{ fontWeight: '800', color: theme.colors.text }}>
+        {data.username}
+      </Text>
+
+      <Text style={{ color: theme.colors.coin, fontWeight: '900' }}>
+        {data.points}
+      </Text>
     </Animated.View>
   );
 }

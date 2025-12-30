@@ -6,6 +6,7 @@ export interface IActiveQuizSession {
   userId: Types.ObjectId;
   category: string;
   questions: { questionId: Types.ObjectId; difficulty: Diff }[];
+  // correctIndex: number;
   answers: {
     questionId: Types.ObjectId;
     selected: number | null;
@@ -17,6 +18,10 @@ export interface IActiveQuizSession {
   startedAt: Date;
   expiresAt: Date;
   finished: boolean;
+  hintsUsed: number;
+  hintedQuestions: Types.ObjectId[];
+  timeExtensionsUsed: number; // total in session (max 10)
+  timeExtendedQuestions: Types.ObjectId[]; // once per question
 }
 
 const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
@@ -42,6 +47,12 @@ const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
         },
       },
     ],
+    // correctIndex: {
+    //   type: Number,
+    //   min: 0,
+    //   max: 3,
+    //   required: true,
+    // },
     answers: [
       {
         questionId: {
@@ -58,6 +69,11 @@ const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
     currentIndex: { type: Number, default: 0 },
     startedAt: { type: Date, default: Date.now },
     finished: { type: Boolean, default: false },
+    hintsUsed: { type: Number, default: 0 },
+    hintedQuestions: { type: [Schema.Types.ObjectId], default: [] },
+    timeExtensionsUsed: { type: Number, default: 0 },
+    timeExtendedQuestions: { type: [Schema.Types.ObjectId], default: [] },
+
     expiresAt: {
       type: Date,
       default: () => new Date(Date.now() + 15 * 60 * 1000), // 15 min
