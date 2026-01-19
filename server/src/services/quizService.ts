@@ -16,7 +16,7 @@ const DIFF_TARGET: Record<Diff, number> = {
 
 /* ---------------- UTIL ---------------- */
 
-function shuffle<T>(arr: T[]) {
+function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -31,7 +31,7 @@ async function fetchUnseen(
   userId: string,
   category: string,
   difficulty: Diff,
-  count: number
+  count: number,
 ) {
   const seen = await UserQuestion.find({ userId, category, difficulty })
     .select('questionId')
@@ -39,7 +39,7 @@ async function fetchUnseen(
 
   const seenIds = seen.map((s) => s.questionId);
 
-  let qs = await QuizQuestion.find({
+  const qs = await QuizQuestion.find({
     category,
     difficulty,
     _id: { $nin: seenIds },
@@ -47,10 +47,11 @@ async function fetchUnseen(
     .limit(count)
     .lean();
 
-  // Reset exposure for this difficulty if exhausted
+  // ❌ HARD STOP — no resets, no repeats
   if (qs.length < count) {
-    await UserQuestion.deleteMany({ userId, category, difficulty });
-    qs = await QuizQuestion.find({ category, difficulty }).limit(count).lean();
+    throw new Error(
+      `Question pool exhausted for "${category}" (${difficulty}).`,
+    );
   }
 
   return qs;
@@ -67,61 +68,57 @@ export async function startQuizSession({
 }) {
   const picked: { q: any; difficulty: Diff }[] = [];
 
-  /* 1️⃣ Targeted difficulty pull */
-  for (const diff of Object.keys(DIFF_TARGET) as Diff[]) {
+  /* 1️⃣ Pull EXACT difficulty counts */
+  for (const diff of ['easy', 'medium', 'hard'] as Diff[]) {
     const need = DIFF_TARGET[diff];
     const qs = await fetchUnseen(userId, category, diff, need);
+
     qs.forEach((q) => picked.push({ q, difficulty: diff }));
   }
 
-  /* 2️⃣ Fallback fill (any difficulty, unseen first) */
-  if (picked.length < TOTAL_Q) {
-    const existing = new Set(picked.map((p) => p.q._id.toString()));
-
-    const extra = await QuizQuestion.find({ category }).limit(50).lean();
-
-    for (const q of extra) {
-      if (picked.length >= TOTAL_Q) break;
-      if (existing.has(q._id.toString())) continue;
-
-      picked.push({
-        q,
-        difficulty: (q.difficulty as Diff) ?? 'medium',
-      });
-
-      existing.add(q._id.toString());
-    }
-  }
-
-  /* 3️⃣ Hard guard */
-  if (picked.length < TOTAL_Q) {
+  /* 2️⃣ Hard guard (should never fail if fetchUnseen is strict) */
+  if (picked.length !== TOTAL_Q) {
     throw new Error(
-      `Not enough questions in "${category}". Need ${TOTAL_Q}, found ${picked.length}.`
+      `Invalid quiz build for "${category}". Expected ${TOTAL_Q}, got ${picked.length}.`,
     );
   }
 
-  const randomized = shuffle(picked);
+  /* 3️⃣ Strict ordering: Easy → Medium → Hard (shuffle within only) */
+  const ordered: { q: any; difficulty: Diff }[] = [];
 
-  /* 4️⃣ Exposure tracking */
+  for (const diff of ['easy', 'medium', 'hard'] as Diff[]) {
+    const block = picked.filter((p) => p.difficulty === diff);
+
+    if (block.length !== DIFF_TARGET[diff]) {
+      throw new Error(
+        `Difficulty mismatch for "${category}" (${diff}). Expected ${DIFF_TARGET[diff]}, got ${block.length}.`,
+      );
+    }
+
+    ordered.push(...shuffle(block));
+  }
+
+  /* 4️⃣ Persist exposure (ANTI-REPEAT SOURCE OF TRUTH) */
   await UserQuestion.insertMany(
-    randomized.map(({ q, difficulty }) => ({
+    ordered.map(({ q, difficulty }) => ({
       userId: new Types.ObjectId(userId),
       questionId: q._id,
       category,
       difficulty,
     })),
-    { ordered: false }
-  ).catch(() => {});
+    { ordered: false },
+  ).catch(() => {
+    // ignore duplicate insert errors safely
+  });
 
-  /* 5️⃣ Session */
-  const expiresAt = new Date(
-    Date.now() + TOTAL_Q * TIME_PER_QUESTION * 1000 + 30_000
-  );
+  /* 5️⃣ Create active session */
+  const now = Date.now();
+  const expiresAt = new Date(now + TOTAL_Q * TIME_PER_QUESTION * 1000 + 30_000);
 
   const session = await ActiveQuizSession.create({
     userId,
     category,
-    questions: randomized.map(({ q, difficulty }) => ({
+    questions: ordered.map(({ q, difficulty }) => ({
       questionId: q._id,
       difficulty,
     })),
@@ -130,14 +127,19 @@ export async function startQuizSession({
     startedAt: new Date(),
     expiresAt,
     finished: false,
+
+    // server-authoritative timing
+    currentQuestionId: ordered[0].q._id,
+    questionDeadlineAt: new Date(now + TIME_PER_QUESTION * 1000),
   });
 
+  /* 6️⃣ Return payload (order preserved) */
   return {
     sessionId: session._id.toString(),
     timePerQuestion: TIME_PER_QUESTION,
     totalQuestions: TOTAL_Q,
     expiresAt,
-    questions: randomized.map(({ q, difficulty }) => ({
+    questions: ordered.map(({ q, difficulty }) => ({
       id: q._id.toString(),
       question: q.question,
       options: q.options,

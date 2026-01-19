@@ -23,6 +23,15 @@ import { storage } from '../../src/utils/storage';
 import { useThemeStore } from '../../src/store/useThemeStore';
 import { useTheme } from '../../src/theme/useTheme';
 
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const facebookDiscovery = {
+  authorizationEndpoint: 'https://www.facebook.com/v19.0/dialog/oauth',
+};
+
 /**
  * ✅ BOOTSTRAP (in-file, as requested)
  * - Configures Google Sign-In once.
@@ -152,6 +161,75 @@ export default function LoginScreen() {
     }
   };
 
+  const signInWithFacebook = async () => {
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      const clientId = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID;
+
+      if (!clientId) {
+        Alert.alert('Configuration error', 'Missing Facebook App ID');
+        return;
+      }
+
+      const redirectUri = AuthSession.makeRedirectUri({
+        // useProxy: true, // important for Expo Go
+      });
+
+      const request = new AuthSession.AuthRequest({
+        clientId,
+        scopes: ['public_profile', 'email'],
+        redirectUri,
+        responseType: AuthSession.ResponseType.Token,
+      });
+
+      const result = await request.promptAsync(facebookDiscovery);
+
+      if (result.type !== 'success' || !result.params.access_token) {
+        return;
+      }
+
+      const accessToken = result.params.access_token;
+
+      // Exchange FB access token with backend
+      const r = await api.post('/auth/oauth', {
+        provider: 'facebook',
+        token: accessToken,
+      });
+
+      const { token, user, needsIdentity } = r.data || {};
+
+      if (!token || !user) {
+        Alert.alert('Login failed', 'Invalid server response');
+        return;
+      }
+
+      await storage.setToken(token);
+      setAuthToken(token);
+
+      setUser({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+      });
+
+      if (needsIdentity) {
+        router.replace('/(auth)/identity');
+      } else {
+        router.replace('/(tabs)/home');
+      }
+    } catch (e: any) {
+      Alert.alert(
+        'Facebook Login failed',
+        e?.response?.data?.message || e?.message || 'Try again'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView
       edges={['top', 'bottom']}
@@ -193,9 +271,7 @@ export default function LoginScreen() {
           {/* Placeholder */}
           <AuthButton
             label="Continue with Facebook"
-            onPress={() =>
-              Alert.alert('Coming soon', 'Facebook login will be added next.')
-            }
+            onPress={signInWithFacebook}
             disabled={loading}
             variant="ghost"
           />

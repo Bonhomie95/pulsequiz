@@ -23,7 +23,9 @@ import { useTheme } from '@/src/theme/useTheme';
 import { timeAgo } from '@/src/utils/timeAgo';
 import { soundManager } from '@/src/audio/SoundManager';
 import { useAudioStore } from '@/src/store/useAudioStore';
-import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
+import { enterImmersiveMode } from '@/src/utils/immersive';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '@/src/constants/storageKeys';
 
 /* ---------------- HELPERS ---------------- */
 
@@ -47,6 +49,7 @@ export default function HomeScreen() {
   const [lastCategory, setLastCategory] = useState<string | null>(null);
   const [lastScore, setLastScore] = useState<number | null>(null);
   const [lastPlayedAt, setLastPlayedAt] = useState<string | null>(null);
+  const [showCheckInToast, setShowCheckInToast] = useState(false);
 
   /* ---------------- HYDRATION ---------------- */
 
@@ -63,19 +66,45 @@ export default function HomeScreen() {
 
       (async () => {
         try {
+          const check = await api.post('/streak/check-in');
+
           const res = await api.get('/home/summary');
           if (!active) return;
 
           const { coins, streak, lastQuiz } = res.data;
 
           useCoinStore.getState().setCoins(coins);
-          useStreakStore.getState().setStreak(streak);
+          useStreakStore.getState().setFromBackend(
+            streak,
+            res.data.lastCheckIn, // add this to backend response
+          );
 
           setLastCategory(lastQuiz?.category ?? null);
           setLastScore(
-            typeof lastQuiz?.score === 'number' ? lastQuiz.score : null
+            typeof lastQuiz?.score === 'number' ? lastQuiz.score : null,
           );
           setLastPlayedAt(lastQuiz?.playedAt ?? null);
+          useStreakStore
+            .getState()
+            .setFromBackend(res.data.streak, res.data.lastCheckIn);
+
+          if (!check.data.alreadyCheckedIn) {
+            const today = todayKey();
+
+            const lastShown = await AsyncStorage.getItem(
+              STORAGE_KEYS.CHECKIN_TOAST_DATE,
+            );
+
+            if (lastShown !== today) {
+              await AsyncStorage.setItem(
+                STORAGE_KEYS.CHECKIN_TOAST_DATE,
+                today,
+              );
+
+              setShowCheckInToast(true);
+              setTimeout(() => setShowCheckInToast(false), 3000);
+            }
+          }
         } catch (e) {
           console.warn('Home summary fetch failed', e);
         } finally {
@@ -86,19 +115,27 @@ export default function HomeScreen() {
       return () => {
         active = false;
       };
-    }, [])
+    }, []),
   );
+
+  const todayKey = () => {
+    // use same timezone logic you use for check-in (you said GMT+1 earlier)
+    const now = new Date();
+    const gmt1 = new Date(now.getTime() + 60 * 60 * 1000);
+    return gmt1.toISOString().slice(0, 10); // YYYY-MM-DD
+  };
 
   useFocusEffect(
     useCallback(() => {
       enterImmersiveMode();
       // return () => exitImmersiveMode();
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
     soundManager.boot();
   }, []);
+
   useEffect(() => {
     // Boot audio + apply saved settings + start background immediately
     (async () => {
@@ -110,6 +147,49 @@ export default function HomeScreen() {
       await soundManager.startBackground();
     })();
   }, []);
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     let active = true;
+  //     setLoading(true);
+
+  //     (async () => {
+  //       try {
+  //         // 1️⃣ Auto check-in attempt
+  //         const check = await api.post('/streak/check-in');
+
+  //         if (!check.data?.alreadyCheckedIn) {
+  //           if (check.data.coinsAdded > 0) {
+  //             useCoinStore.getState().addCoins(check.data.coinsAdded);
+  //           }
+  //         }
+
+  //         // 2️⃣ Then fetch summary
+  //         const res = await api.get('/home/summary');
+  //         if (!active) return;
+
+  //         const { coins, streak, lastQuiz } = res.data;
+
+  //         useCoinStore.getState().setCoins(coins);
+  //         // useStreakStore.getState().setStreak(streak);
+
+  //         setLastCategory(lastQuiz?.category ?? null);
+  //         setLastScore(
+  //           typeof lastQuiz?.score === 'number' ? lastQuiz.score : null
+  //         );
+  //         setLastPlayedAt(lastQuiz?.playedAt ?? null);
+  //       } catch (e) {
+  //         console.warn('Home init failed', e);
+  //       } finally {
+  //         active && setLoading(false);
+  //       }
+  //     })();
+
+  //     return () => {
+  //       active = false;
+  //     };
+  //   }, [])
+  // );
 
   /* ---------------- THEME ---------------- */
 
@@ -145,6 +225,21 @@ export default function HomeScreen() {
             <ThemeIcon size={22} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
+
+        {showCheckInToast && (
+          <View
+            style={{
+              backgroundColor: theme.colors.surface,
+              padding: 12,
+              borderRadius: 12,
+              marginBottom: 12,
+            }}
+          >
+            <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
+              ✅ Daily check-in successful
+            </Text>
+          </View>
+        )}
 
         {/* WALLET CARD */}
         {loading ? (
@@ -219,6 +314,13 @@ export default function HomeScreen() {
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
           Earn Rewards
         </Text>
+
+        <TouchableOpacity
+          style={[styles.earnCard, { backgroundColor: theme.colors.surface }]}
+          onPress={() => router.push('/earn/buy')}
+        >
+          <Text style={{ color: theme.colors.text }}>Buy coins</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.earnCard, { backgroundColor: theme.colors.surface }]}

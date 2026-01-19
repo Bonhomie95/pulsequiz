@@ -20,21 +20,30 @@ export async function showRewardedAd(): Promise<boolean> {
   return new Promise((resolve) => {
     const rewarded = RewardedAd.createForAdRequest(rewardedUnitId);
 
-    const unsubscribe = rewarded.addAdEventListener(
+    let earned = false;
+
+    const unsubEarn = rewarded.addAdEventListener(
       RewardedAdEventType.EARNED_REWARD,
       () => {
-        unsubscribe();
-        resolve(true);
-      }
+        earned = true;
+      },
     );
 
-    const unsubscribeClosed = rewarded.addAdEventListener(
-      AdEventType.CLOSED,
+    const unsubLoaded = rewarded.addAdEventListener(
+      RewardedAdEventType.LOADED,
       () => {
-        unsubscribe();
-        unsubscribeClosed();
-        resolve(false);
-      }
+        rewarded.show();
+      },
+    );
+
+    const unsubClosed = rewarded.addAdEventListener(
+      AdEventType.CLOSED, // ✅ THIS IS CORRECT
+      () => {
+        unsubEarn();
+        unsubLoaded();
+        unsubClosed();
+        resolve(earned);
+      },
     );
 
     rewarded.load();
@@ -45,16 +54,22 @@ export async function showRewardedAd(): Promise<boolean> {
 
 export async function showInterstitialAd(): Promise<boolean> {
   return new Promise((resolve) => {
-    const interstitial = InterstitialAd.createForAdRequest(
-      interstitialUnitId
+    const interstitial = InterstitialAd.createForAdRequest(interstitialUnitId);
+
+    const unsubLoaded = interstitial.addAdEventListener(
+      AdEventType.LOADED,
+      () => {
+        interstitial.show();
+      },
     );
 
-    const unsubscribe = interstitial.addAdEventListener(
+    const unsubClosed = interstitial.addAdEventListener(
       AdEventType.CLOSED,
       () => {
-        unsubscribe();
+        unsubLoaded();
+        unsubClosed();
         resolve(true);
-      }
+      },
     );
 
     interstitial.load();

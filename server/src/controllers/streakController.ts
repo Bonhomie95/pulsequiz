@@ -13,6 +13,7 @@ export async function checkIn(req: AuthRequest, res: Response) {
 
   return res.json({
     streak: result.streak,
+    lastCheckIn: result.lastCheckIn,
     coinsAdded: result.coinsAdded,
     milestoneBonus: result.milestoneBonus,
   });

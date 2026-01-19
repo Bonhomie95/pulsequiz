@@ -22,6 +22,8 @@ export interface IActiveQuizSession {
   hintedQuestions: Types.ObjectId[];
   timeExtensionsUsed: number; // total in session (max 10)
   timeExtendedQuestions: Types.ObjectId[]; // once per question
+  currentQuestionId?: Types.ObjectId;
+  questionDeadlineAt?: Date;
 }
 
 const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
@@ -73,6 +75,8 @@ const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
     hintedQuestions: { type: [Schema.Types.ObjectId], default: [] },
     timeExtensionsUsed: { type: Number, default: 0 },
     timeExtendedQuestions: { type: [Schema.Types.ObjectId], default: [] },
+    currentQuestionId: { type: Schema.Types.ObjectId, default: null },
+    questionDeadlineAt: { type: Date, default: null },
 
     expiresAt: {
       type: Date,

@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,6 +18,7 @@ import { AVATAR_MAP } from '@/src/constants/avatars';
 import { AvatarPickerModal } from '@/src/components/profile/AvatarPickerModal';
 import { enterImmersiveMode } from '@/src/utils/immersive';
 import { useFocusEffect } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 function resolveAvatar(key?: any) {
   return AVATAR_MAP[key ?? 'avatar0'] ?? AVATAR_MAP.avatar0;
@@ -32,6 +34,15 @@ export default function ProfileScreen() {
     totalQuizzes: number;
     accuracy: number;
   } | null>(null);
+  const [lastQuizzes, setLastQuizzes] = useState<
+    {
+      category: string;
+      answered: string;
+      accuracy: number;
+      points: number;
+      date: string;
+    }[]
+  >([]);
 
   /** 🔒 SOURCE OF TRUTH (persisted user) */
   const originalUsername = user?.username ?? '';
@@ -49,6 +60,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     api.get('/profile').then((res) => {
       setStats(res.data.stats);
+      setLastQuizzes(res.data.lastQuizzes || []);
     });
   }, []);
 
@@ -56,7 +68,7 @@ export default function ProfileScreen() {
     useCallback(() => {
       enterImmersiveMode();
       // return () => exitImmersiveMode();
-    }, [])
+    }, []),
   );
 
   /** ✏️ Enter edit mode */
@@ -204,6 +216,130 @@ export default function ProfileScreen() {
           </View>
         )}
       </View>
+
+      {/* ================= LAST 10 QUIZZES ================= */}
+      {lastQuizzes.length > 0 && (
+        <View style={{ marginTop: 36, width: '100%', alignItems: 'center' }}>
+          <Text
+            style={{
+              color: theme.colors.muted,
+              marginBottom: 14,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            }}
+          >
+            Last 10 Quizzes
+          </Text>
+
+          <ScrollView
+            style={{ width: '100%' }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {lastQuizzes.map((q, i) => {
+              const perfect = q.accuracy === 100;
+
+              return (
+                <LinearGradient
+                  key={i}
+                  colors={
+                    perfect
+                      ? ['#22c55e', '#16a34a'] // 🌟 perfect
+                      : [theme.colors.surface, theme.colors.background]
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    borderRadius: 22,
+                    padding: 16,
+                    marginBottom: 14,
+                    shadowColor: perfect ? '#22c55e' : '#000',
+                    shadowOpacity: perfect ? 0.35 : 0.15,
+                    shadowRadius: perfect ? 12 : 6,
+                    elevation: perfect ? 8 : 4,
+                  }}
+                >
+                  {/* HEADER */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: perfect ? '#fff' : theme.colors.text,
+                        fontSize: 16,
+                        fontWeight: '700',
+                      }}
+                    >
+                      {q.category}
+                    </Text>
+
+                    {perfect && (
+                      <View
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.2)',
+                          paddingHorizontal: 10,
+                          paddingVertical: 4,
+                          borderRadius: 12,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: '#fff',
+                            fontSize: 11,
+                            fontWeight: '800',
+                            letterSpacing: 0.8,
+                          }}
+                        >
+                          PERFECT
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* META */}
+                  <Text
+                    style={{
+                      color: perfect ? '#dcfce7' : theme.colors.muted,
+                      marginTop: 6,
+                      fontSize: 13,
+                    }}
+                  >
+                    {q.answered} • {q.accuracy}%
+                  </Text>
+
+                  {/* FOOTER */}
+                  <View
+                    style={{
+                      marginTop: 12,
+                      alignSelf: 'flex-end',
+                      backgroundColor: perfect
+                        ? 'rgba(255,255,255,0.25)'
+                        : theme.colors.primary,
+                      paddingHorizontal: 14,
+                      paddingVertical: 6,
+                      borderRadius: 14,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: '#fff',
+                        fontWeight: '800',
+                        fontSize: 13,
+                      }}
+                    >
+                      +{q.points} pts
+                    </Text>
+                  </View>
+                </LinearGradient>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
 
       {/* ================= AVATAR MODAL ================= */}
       <AvatarPickerModal

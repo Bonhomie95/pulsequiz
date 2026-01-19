@@ -28,6 +28,7 @@ import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { soundManager } from '@/src/audio/SoundManager';
 import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
+import { useAppStateStore } from '@/src/store/useAppStateStore';
 
 const TIME_PER_QUESTION = 15;
 const HINT_COSTS = [10, 20, 50] as const;
@@ -132,6 +133,8 @@ export default function QuizPlay() {
   const router = useRouter();
   const theme = useTheme();
   const [hintUsedThisQuestion, setHintUsedThisQuestion] = useState(false);
+  const [timeExtendedThisQuestion, setTimeExtendedThisQuestion] =
+    useState(false);
 
   const { coins } = useCoinStore();
   const user = useAuthStore((s) => s.user);
@@ -139,7 +142,6 @@ export default function QuizPlay() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [index, setIndex] = useState(0);
-
   const [timeLeft, setTimeLeft] = useState(TIME_PER_QUESTION);
   const [loading, setLoading] = useState(true);
 
@@ -211,9 +213,9 @@ export default function QuizPlay() {
         questionId: q.id,
       });
 
-      // 🚨 Need ad
+      // 🧠 ONLY go to ads if backend explicitly says so
       if (res.data?.requiresAd) {
-        stopTimer();
+        stopTimer(); // pause time
         router.push({
           pathname: '/earn/ads',
           params: {
@@ -225,14 +227,17 @@ export default function QuizPlay() {
         return;
       }
 
-      // ✅ Success
+      // ✅ SUCCESS: stay on same question
       if (res.data?.addedSeconds === 10) {
-        setTimeLeft((t) => t + 10);
+        if (typeof res.data.remainingSeconds === 'number') {
+          setTimeLeft(res.data.remainingSeconds);
+        }
 
         if (typeof res.data.coins === 'number') {
           useCoinStore.getState().setCoins(res.data.coins);
         }
 
+        setTimeExtendedThisQuestion(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
     } catch (e) {
@@ -250,7 +255,7 @@ export default function QuizPlay() {
         useNativeDriver: true,
       }).start();
     },
-    [overlayAnim]
+    [overlayAnim],
   );
 
   const hideOverlay = useCallback(() => {
@@ -266,6 +271,7 @@ export default function QuizPlay() {
     setCorrectIndex(null);
     setDisabledOptions([]);
     setOverlay(null);
+    setTimeExtendedThisQuestion(false);
 
     setHintUsedThisQuestion(false);
 
@@ -284,7 +290,7 @@ export default function QuizPlay() {
     useCallback(() => {
       enterImmersiveMode();
       return () => exitImmersiveMode();
-    }, [])
+    }, []),
   );
 
   /** Immersive mode while this screen is focused. */
@@ -308,7 +314,7 @@ export default function QuizPlay() {
           }
         })();
       };
-    }, [])
+    }, []),
   );
 
   /** Start quiz session from backend */
@@ -402,8 +408,15 @@ export default function QuizPlay() {
       if (typeof cIndex === 'number') setCorrectIndex(cIndex);
       stopTimer();
     },
-    [stopTimer]
+    [stopTimer],
   );
+
+  useEffect(() => {
+    useAppStateStore.getState().setPlayingQuiz(true);
+    return () => {
+      useAppStateStore.getState().setPlayingQuiz(false);
+    };
+  }, []);
 
   const onTimeout = useCallback(async () => {
     if (!sessionId || locked || !q) return;
@@ -505,7 +518,7 @@ export default function QuizPlay() {
       finishQuiz,
       showOverlay,
       hideOverlay,
-    ]
+    ],
   );
 
   // when we load a new question, animate it in
@@ -522,8 +535,8 @@ export default function QuizPlay() {
       d === 'hard'
         ? theme.colors.danger
         : d === 'medium'
-        ? theme.colors.primary
-        : theme.colors.success;
+          ? theme.colors.primary
+          : theme.colors.success;
 
     return { text, bg };
   }, [q?.difficulty, theme.colors]);
@@ -576,7 +589,7 @@ export default function QuizPlay() {
       }
 
       setDisabledOptions((prev) =>
-        prev.includes(disabledIndex) ? prev : [...prev, disabledIndex]
+        prev.includes(disabledIndex) ? prev : [...prev, disabledIndex],
       );
 
       setHintUsedThisQuestion(true);
@@ -868,7 +881,7 @@ export default function QuizPlay() {
 
           <TouchableOpacity
             onPress={handleExtendTime}
-            disabled={locked}
+            disabled={locked || timeExtendedThisQuestion}
             style={[
               styles.hintBtn,
               {
@@ -945,8 +958,8 @@ export default function QuizPlay() {
                 {overlay.type === 'correct'
                   ? 'Keep going!'
                   : overlay.type === 'timeout'
-                  ? 'Be faster next time.'
-                  : 'Game over.'}
+                    ? 'Be faster next time.'
+                    : 'Game over.'}
               </Text>
             </View>
           </Animated.View>

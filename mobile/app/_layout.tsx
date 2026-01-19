@@ -5,11 +5,15 @@ import { ActivityIndicator, View } from 'react-native';
 import { storage } from '../src/utils/storage';
 import { api, setAuthToken } from '../src/api/api';
 import { useAuthStore } from '../src/store/useAuthStore';
-// import { soundManager } from '@/src/audio/SoundManager';
+import { startUsageAdTimer } from '@/src/ads/appUsageAd';
 
 export default function RootLayout() {
   const segments = useSegments();
   const { user, hydrated, setUser, setHydrated } = useAuthStore();
+
+  useEffect(() => {
+    startUsageAdTimer();
+  }, []);
 
   useEffect(() => {
     (async () => {

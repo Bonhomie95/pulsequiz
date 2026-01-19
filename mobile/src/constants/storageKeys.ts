@@ -5,4 +5,5 @@ export const STORAGE_KEYS = {
   STREAK: 'pq_streak',
   LAST_CHECKIN: 'pq_last_checkin',
   THEME: 'pq_theme',
+  CHECKIN_TOAST_DATE: 'pq_checkin_toast_date',
 };

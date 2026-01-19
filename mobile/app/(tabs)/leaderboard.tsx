@@ -13,7 +13,7 @@ import { Audio } from 'expo-av';
 import { api } from '@/src/api/api';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
-import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
+import { enterImmersiveMode } from '@/src/utils/immersive';
 import { useFocusEffect } from 'expo-router';
 
 type Tab = 'weekly' | 'monthly' | 'all';
@@ -147,13 +147,12 @@ export default function LeaderboardScreen() {
     play();
   }, [myIndex]);
 
-
-    useFocusEffect(
-      useCallback(() => {
-        enterImmersiveMode();
-        // return () => exitImmersiveMode();
-      }, [])
-    );
+  useFocusEffect(
+    useCallback(() => {
+      enterImmersiveMode();
+      // return () => exitImmersiveMode();
+    }, [])
+  );
   /* ---------------- SCROLL ---------------- */
 
   const scrollToMe = () => {
@@ -181,6 +180,9 @@ export default function LeaderboardScreen() {
           Leaderboard 🏆
         </Text>
 
+        <Text style={{ color: theme.colors.text, fontSize: 10, marginBottom: 10}}>
+          Reward will be shared to leaders Monthly to crypto address
+        </Text>
         <Text
           style={{
             color: theme.colors.muted,

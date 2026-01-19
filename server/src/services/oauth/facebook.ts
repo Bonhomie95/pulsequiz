@@ -29,6 +29,6 @@ export async function verifyFacebookAccessToken(accessToken: string) {
     providerId: p.id,
     email: p.email ?? `fb_${p.id}@pulsequiz.local`, // fallback if FB doesn't provide email
     name: p.name ?? '',
-    picture: p.picture?.data?.url ?? '',
+    avatar: p.picture?.data?.url ?? '',
   };
 }

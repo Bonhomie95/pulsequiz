@@ -18,6 +18,8 @@ export interface IUser {
 
   withdrawalEnabled: boolean;
   sessionsSinceLastAd: number;
+  lastAdRewardAt?: Date | null;
+  adRewardsInWindow: number;
 
   createdAt: Date;
 }
@@ -54,8 +56,16 @@ const UserSchema = new Schema<IUser>(
       type: Number,
       default: 0,
     },
+    lastAdRewardAt: {
+      type: Date,
+      default: null,
+    },
+    adRewardsInWindow: {
+      type: Number,
+      default: 0,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default model<IUser>('User', UserSchema);

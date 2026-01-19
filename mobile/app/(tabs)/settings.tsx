@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 import { api } from '@/src/api/api';
 import { useAuthStore } from '@/src/store/useAuthStore';
@@ -19,13 +19,21 @@ import { useAudioStore } from '@/src/store/useAudioStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { soundManager } from '@/src/audio/SoundManager';
 import { enterImmersiveMode } from '@/src/utils/immersive';
-import { useFocusEffect } from 'expo-router';
+import { Toast } from '@/src/components/Toast';
 
 const USDT_TYPES = ['TRC20', 'ERC20', 'BEP20'] as const;
 
 export default function SettingsScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type?: 'success' | 'error';
+  }>({
+    visible: false,
+    message: '',
+  });
 
   const { mode, setMode } = useThemeStore();
   const { user, logout, setUser } = useAuthStore();
@@ -55,9 +63,17 @@ export default function SettingsScreen() {
       });
 
       setUser({ ...user!, ...res.data.settings });
-      alert('Wallet saved');
+      setToast({
+        visible: true,
+        message: 'Wallet saved successfully',
+        type: 'success',
+      });
     } catch (e: any) {
-      alert(e?.response?.data?.message || 'Invalid wallet');
+      setToast({
+        visible: true,
+        message: e?.response?.data?.message || 'Invalid wallet',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -67,7 +83,7 @@ export default function SettingsScreen() {
     useCallback(() => {
       enterImmersiveMode();
       // return () => exitImmersiveMode();
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
@@ -95,8 +111,8 @@ export default function SettingsScreen() {
                 mode === 'system'
                   ? 'dark'
                   : mode === 'dark'
-                  ? 'light'
-                  : 'system';
+                    ? 'light'
+                    : 'system';
               setMode(next);
               api.patch('/settings', { theme: next });
             }}
@@ -213,6 +229,12 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </Section>
       </View>
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() => setToast((t) => ({ ...t, visible: false }))}
+      />
     </SafeAreaView>
   );
 }

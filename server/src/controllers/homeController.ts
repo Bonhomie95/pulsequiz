@@ -20,10 +20,9 @@ export async function getHomeSummary(req: AuthRequest, res: Response) {
   return res.json({
     coins: wallet?.coins ?? 0,
 
-    // ✅ frontend expects a NUMBER
     streak: streakDoc?.streak ?? 0,
     lastCheckIn: streakDoc?.lastCheckIn ?? null,
-    // ✅ frontend expects flat primitives
+
     lastQuiz: lastSession
       ? {
           category: lastSession.category,

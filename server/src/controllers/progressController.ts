@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { z } from 'zod';
 import { AuthRequest } from '../middlewares/auth';
-import { applyQuizResult } from '../services/progressService';
 import { checkInStreak } from '../services/streakService';
 import CoinWallet from '../models/CoinWallet';
 import Progress from '../models/Progress';

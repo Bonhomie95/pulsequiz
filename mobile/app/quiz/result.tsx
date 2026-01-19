@@ -8,6 +8,7 @@ import { showInterstitialAd } from '@/src/ads/admob';
 import { soundManager } from '@/src/audio/SoundManager';
 import { useTheme } from '@/src/theme/useTheme';
 import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
+import { useAppStateStore } from '@/src/store/useAppStateStore';
 
 export default function QuizResult() {
   const theme = useTheme();
@@ -42,7 +43,7 @@ export default function QuizResult() {
       const raw = await AsyncStorage.getItem('SESSIONS_SINCE_AD');
       const count = Number(raw ?? 0) + 1;
 
-      if (count >= 3) {
+      if (count >= 2) {
         await AsyncStorage.setItem('SESSIONS_SINCE_AD', '0');
         await showInterstitialAd();
       } else {
@@ -92,8 +93,24 @@ export default function QuizResult() {
     useCallback(() => {
       enterImmersiveMode();
       return () => exitImmersiveMode();
-    }, [])
+    }, []),
   );
+
+  useEffect(() => {
+    useAppStateStore.getState().setPlayingQuiz(true);
+    return () => {
+      useAppStateStore.getState().setPlayingQuiz(false);
+    };
+  }, []);
+
+  const goHome = () => {
+    router.replace('/(tabs)/home');
+  };
+
+  const startAnotherQuiz = () => {
+    router.replace('/quiz/categories'); // adjust if your categories route differs
+  };
+
   /* ---------------- UI ---------------- */
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -157,6 +174,46 @@ export default function QuizResult() {
             </Text>
           </View>
         )}
+
+        <View style={{ marginTop: 32, gap: 14 }}>
+          {/* Start Another Quiz */}
+          <View
+            onTouchEnd={startAnotherQuiz}
+            style={{
+              backgroundColor: theme.colors.primary,
+              paddingVertical: 16,
+              borderRadius: 18,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>
+              🔁 Start Another Quiz
+            </Text>
+          </View>
+
+          {/* Back to Home */}
+          <View
+            onTouchEnd={goHome}
+            style={{
+              backgroundColor: theme.colors.surface,
+              paddingVertical: 16,
+              borderRadius: 18,
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.colors.text,
+                fontWeight: '800',
+                fontSize: 15,
+              }}
+            >
+              🏠 Back to Home
+            </Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

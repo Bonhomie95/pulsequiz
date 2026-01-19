@@ -1,9 +1,6 @@
 import ActiveQuizSession from '../models/ActiveQuizSession';
 import QuizQuestion from '../models/QuizQuestion';
 
-const TIME_PER_QUESTION = 15;
-const GRACE_MS = 1500;
-
 export async function submitQuizAnswer(params: {
   userId: string;
   sessionId: string;
@@ -12,46 +9,41 @@ export async function submitQuizAnswer(params: {
 }) {
   const { userId, sessionId, questionId, selected } = params;
 
-  const session = await ActiveQuizSession.findOne({ _id: sessionId, userId });
+  const session = await ActiveQuizSession.findOne({
+    _id: sessionId,
+    userId,
+    finished: false,
+  });
+
   if (!session) throw new Error('Session not found');
-  if (session.finished) throw new Error('Session already finished');
 
-  const idx = session.currentIndex;
-  const expected = session.questions[idx];
-  if (!expected) throw new Error('No more questions');
-
-  // Must answer the current question only (prevents skipping / reordering)
-  if (expected.questionId.toString() !== questionId) {
-    throw new Error('Out-of-order answer attempt');
+  // 🔒 Must answer current question only
+  if (
+    !session.currentQuestionId ||
+    session.currentQuestionId.toString() !== questionId
+  ) {
+    throw new Error('Not current question');
   }
 
-  // No double-submit
-  const already = session.answers.find(
-    (a) => a.questionId.toString() === questionId
-  );
-  if (already) throw new Error('Already answered');
-
-  // Timing check (server authoritative)
-  const lastAnsweredAt =
-    idx === 0
-      ? session.startedAt.getTime()
-      : session.answers[idx - 1].answeredAt.getTime();
-
-  const deadline = lastAnsweredAt + TIME_PER_QUESTION * 1000;
-
-  const now = Date.now();
-
-  // If user submits after deadline, only allow null (timeout), block “late correct”
-  if (now > deadline + GRACE_MS && selected !== null) {
+  // ⏱ SERVER-AUTHORITATIVE DEADLINE
+  if (
+    session.questionDeadlineAt &&
+    Date.now() > session.questionDeadlineAt.getTime()
+  ) {
     throw new Error('Answer too late');
   }
 
-  // Determine correctness
+  // 🔁 No double submit
+  if (session.answers.some((a) => a.questionId.toString() === questionId)) {
+    throw new Error('Already answered');
+  }
+
   const q = await QuizQuestion.findById(questionId).lean();
   if (!q) throw new Error('Question not found');
 
   const isCorrect = selected !== null && selected === q.answer;
 
+  // Save answer
   session.answers.push({
     questionId: q._id,
     selected,
@@ -59,20 +51,48 @@ export async function submitQuizAnswer(params: {
     answeredAt: new Date(),
   });
 
-  session.currentIndex = idx + 1;
+  // ❌ Wrong or timeout ends game immediately (your rule)
+  if (!isCorrect || selected === null) {
+    session.finished = true;
+    await session.save();
 
-  // Auto-finish when done
+    return {
+      correct: false,
+      finished: true,
+      correctIndex: q.answer,
+    };
+  }
+
+  // ✅ Correct → move to next question
+  session.currentIndex += 1;
+
+  // 🏁 Last question
   if (session.currentIndex >= session.questions.length) {
     session.finished = true;
+    await session.save();
+
+    return {
+      correct: true,
+      finished: true,
+      correctIndex: q.answer,
+    };
   }
+
+  // ▶️ Advance to next question
+  const nextQ = session.questions[session.currentIndex].questionId;
+
+  session.currentQuestionId = nextQ;
+
+  // ⏱ Reset deadline for next question
+  session.questionDeadlineAt = new Date(Date.now() + 15_000);
 
   await session.save();
 
   return {
-    correct: isCorrect,
-    finished: session.finished,
-    nextQuestionId: session.finished
-      ? null
-      : session.questions[session.currentIndex].questionId.toString(),
+    correct: true,
+    finished: false,
+    correctIndex: q.answer,
+    nextQuestionId: nextQ.toString(),
+    deadlineAt: session.questionDeadlineAt,
   };
 }

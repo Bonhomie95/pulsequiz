@@ -3,6 +3,7 @@ import { z } from 'zod';
 import User from '../models/User';
 import Progress from '../models/Progress';
 import { AuthRequest } from '../middlewares/auth';
+import QuizSession from '../models/QuizSession';
 
 const UpdateProfileSchema = z.object({
   username: z
@@ -30,6 +31,23 @@ export async function getProfile(req: AuthRequest, res: Response) {
   const total = (progress as any)?.totalAnswers ?? 0;
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
 
+  const sessions = await QuizSession.find({ userId: req.userId })
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .select('category correctAnswers totalQuestions totalPoints createdAt')
+    .lean();
+
+  const lastQuizzes = sessions.map((s) => ({
+    category: s.category,
+    answered: `${s.correctAnswers}/${s.totalQuestions}`,
+    accuracy:
+      s.totalQuestions > 0
+        ? Math.round((s.correctAnswers / s.totalQuestions) * 100)
+        : 0,
+    points: s.totalPoints,
+    date: s.createdAt,
+  }));
+
   return res.json({
     user: {
       id: user._id,
@@ -43,6 +61,7 @@ export async function getProfile(req: AuthRequest, res: Response) {
       totalQuizzes,
       accuracy,
     },
+    lastQuizzes,
   });
 }
 
@@ -62,7 +81,7 @@ export async function updateProfile(req: AuthRequest, res: Response) {
   const updated = await User.findByIdAndUpdate(
     req.userId,
     { username, avatar },
-    { new: true }
+    { new: true },
   );
 
   return res.json({
