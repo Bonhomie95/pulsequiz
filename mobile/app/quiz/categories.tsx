@@ -39,12 +39,12 @@ export default function QuizCategories() {
     >
       {/* Back Home */}
       <TouchableOpacity
-        onPress={() => router.replace('/')}
+        onPress={() => router.replace('/quiz/mode')}
         style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
       >
         <ChevronLeft size={18} color={theme.colors.text} />
         <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
-          Home
+          Back
         </Text>
       </TouchableOpacity>
 

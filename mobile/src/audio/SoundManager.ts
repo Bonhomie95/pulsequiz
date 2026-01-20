@@ -1,7 +1,12 @@
 import { Audio } from 'expo-av';
 import { AppState, AppStateStatus } from 'react-native';
 
-export type SoundKey = 'victory' | 'fail' | 'click' | 'countdown';
+export type SoundKey =
+  | 'victory'
+  | 'fail'
+  | 'click'
+  | 'countdown'
+  | 'match_found';
 
 type SoundConfig = {
   source: any;
@@ -12,6 +17,10 @@ type SoundConfig = {
 const SOUNDS: Record<SoundKey, SoundConfig> = {
   victory: { source: require('@/assets/sounds/victory.mp3'), baseVolume: 1 },
   fail: { source: require('@/assets/sounds/fail.mp3'), baseVolume: 1 },
+  match_found: {
+    source: require('@/assets/sounds/beep.mp3'),
+    baseVolume: 0.9,
+  },
   countdown: {
     source: require('@/assets/sounds/beep.mp3'),
     debounceMs: 200,

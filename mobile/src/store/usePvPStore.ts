@@ -36,6 +36,8 @@ type PvPState = {
   currentIndex: number;
 
   winnerUserId: string | null;
+  opponentIndex: number;
+  opponentFurthest: number;
 
   /* actions */
   setSearching: (category: string) => void;
@@ -62,9 +64,10 @@ export const usePvPStore = create<PvPState>((set, get) => ({
   questions: [],
   currentIndex: 0,
   winnerUserId: null,
+  opponentIndex: 0,
+  opponentFurthest: 0,
 
-  setSearching: (category) =>
-    set({ status: 'searching', category }),
+  setSearching: (category) => set({ status: 'searching', category }),
 
   setMatched: ({ matchId, players, myUserId }) => {
     const me = players.find((p) => p.userId === myUserId)!;
@@ -89,13 +92,17 @@ export const usePvPStore = create<PvPState>((set, get) => ({
     const state = get();
     if (state.me?.userId === userId) {
       set({ currentIndex });
+    } else {
+      set({
+        opponentIndex: currentIndex,
+        opponentFurthest: currentIndex ?? currentIndex,
+      });
     }
   },
 
   setWaiting: () => set({ status: 'waiting' }),
 
-  finishMatch: (winnerUserId) =>
-    set({ status: 'finished', winnerUserId }),
+  finishMatch: (winnerUserId) => set({ status: 'finished', winnerUserId }),
 
   reset: () =>
     set({
