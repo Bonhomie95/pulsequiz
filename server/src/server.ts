@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import http from 'http';
+
 import app from './app';
+import { createSocketServer } from './socket';
 
 dotenv.config();
 
@@ -10,7 +13,16 @@ async function start() {
   await mongoose.connect(process.env.MONGO_URI as string);
   console.log('✅ Mongo connected');
 
-  app.listen(port, () => console.log(`🚀 Server running on :${port}`));
+  // ✅ Create ONE HTTP server
+  const server = http.createServer(app);
+
+  // ✅ Attach Socket.IO to that server
+  createSocketServer(server);
+
+  // ✅ Listen ONLY ONCE
+  server.listen(port, () => {
+    console.log(`🚀 Server + Socket.IO running on :${port}`);
+  });
 }
 
 start().catch((e) => {

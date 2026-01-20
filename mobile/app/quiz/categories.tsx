@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { storage } from '@/src/utils/storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
+import { useQuizModeStore } from '@/src/store/useQuizModeStore';
 
 const CATEGORIES = [
   { id: 'history', label: 'History', icon: '📜' },
@@ -26,6 +27,7 @@ export default function QuizCategories() {
   const theme = useTheme();
 
   const [lastCategory, setLastCategory] = useState<string | null>(null);
+  const mode = useQuizModeStore((s) => s.mode);
 
   useEffect(() => {
     storage.getLastCategory().then(setLastCategory);
@@ -71,6 +73,13 @@ export default function QuizCategories() {
               activeOpacity={0.9}
               onPress={() => {
                 storage.setLastCategory(cat.id);
+                if (mode === 'normal') {
+                  router.push(`/quiz/play?category=${cat.id}`);
+                }
+                if (mode === 'pvp') {
+                  router.push(`/quiz/pvp/search?category=${cat.id}` as any);
+                }
+
                 router.push({
                   pathname: '/quiz/play',
                   params: { category: cat.id },

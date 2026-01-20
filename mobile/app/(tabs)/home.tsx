@@ -304,7 +304,7 @@ export default function HomeScreen() {
 
         {/* START QUIZ */}
         <TouchableOpacity
-          onPress={() => router.push('/quiz/categories')}
+          onPress={() => router.push('/quiz/mode' as any)}
           style={[styles.startQuiz, { backgroundColor: theme.colors.primary }]}
         >
           <Text style={styles.startText}>Start Quiz</Text>
