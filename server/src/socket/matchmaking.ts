@@ -1,86 +1,199 @@
 import { Server, Socket } from 'socket.io';
 import { SOCKET_EVENTS } from './events';
-import { MatchQueueEntry } from './types';
 
 const QUEUE_TIMEOUT_MS = 60_000;
 
-const matchmakingQueue: MatchQueueEntry[] = [];
+export type MatchQueueEntry = {
+  socketId: string;
+  userId: string;
+  category: string;
+  joinedAt: number;
 
-/* ---------------------------------- */
-/* Utils                              */
-/* ---------------------------------- */
+  // optional: force rematch with a specific user
+  rematchWith?: string;
 
-function removeFromQueue(socketId: string) {
-  const idx = matchmakingQueue.findIndex((q) => q.socketId === socketId);
-  if (idx !== -1) matchmakingQueue.splice(idx, 1);
+  // optional: best-of-3 / series continuity
+  seriesId?: string;
+};
+
+export type PairFoundPayload = {
+  pairId: string;
+  category: string;
+  seriesId: string;
+  isRematch: boolean;
+  a: { userId: string; socketId: string };
+  b: { userId: string; socketId: string };
+};
+
+const queue: MatchQueueEntry[] = [];
+const pendingPairs = new Map<string, PairFoundPayload>();
+
+let ioSingleton: Server | null = null;
+
+// optional hook so pvp.handler can be notified immediately
+let onPairFound: ((pair: PairFoundPayload) => void) | null = null;
+
+export function setIoInstance(io: Server) {
+  ioSingleton = io;
 }
 
-function findMatchFor(entry: MatchQueueEntry): MatchQueueEntry | null {
+export function setOnPairFound(fn: (pair: PairFoundPayload) => void) {
+  onPairFound = fn;
+}
+
+export function consumePair(pairId: string): PairFoundPayload | null {
+  const pair = pendingPairs.get(pairId) ?? null;
+  if (!pair) return null;
+  pendingPairs.delete(pairId);
+  return pair;
+}
+
+/* ---------------------------------- */
+/* Helpers                            */
+/* ---------------------------------- */
+
+function makeId(prefix = 'pair') {
+  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function removeFromQueueBySocket(socketId: string) {
+  const idx = queue.findIndex((e) => e.socketId === socketId);
+  if (idx !== -1) queue.splice(idx, 1);
+}
+
+function removeFromQueueByUser(userId: string) {
+  for (let i = queue.length - 1; i >= 0; i--) {
+    if (queue[i].userId === userId) queue.splice(i, 1);
+  }
+}
+
+function findOpponent(entry: MatchQueueEntry): MatchQueueEntry | null {
+  // 🔁 Rematch takes priority (only match same category)
+  if (entry.rematchWith) {
+    return (
+      queue.find(
+        (q) =>
+          q.userId === entry.rematchWith &&
+          q.category === entry.category &&
+          q.userId !== entry.userId,
+      ) ?? null
+    );
+  }
+
+  // 🎯 Normal matchmaking (same category, different user)
   return (
-    matchmakingQueue.find(
-      (q) =>
-        q.category === entry.category &&
-        q.userId !== entry.userId &&
-        q.socketId !== entry.socketId,
+    queue.find(
+      (q) => q.category === entry.category && q.userId !== entry.userId,
     ) ?? null
   );
 }
 
 /* ---------------------------------- */
-/* Main logic                         */
+/* Socket handlers                    */
 /* ---------------------------------- */
 
 export function registerMatchmakingHandlers(io: Server, socket: Socket) {
   const userId = socket.data.userId as string;
 
-  /* ---------- FIND MATCH ---------- */
-  socket.on(SOCKET_EVENTS.MATCH_FIND, ({ category }: { category: string }) => {
-    // prevent duplicate queue entries
-    removeFromQueue(socket.id);
-
-    const entry: MatchQueueEntry = {
-      socketId: socket.id,
-      userId,
+  socket.on(
+    SOCKET_EVENTS.JOIN_QUEUE,
+    ({
       category,
-      joinedAt: Date.now(),
-    };
+      rematchWith,
+      seriesId,
+    }: {
+      category: string;
+      rematchWith?: string;
+      seriesId?: string;
+    }) => {
+      const cat = (category ?? '').trim();
+      if (!cat) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Category required' });
+        return;
+      }
 
-    matchmakingQueue.push(entry);
+      // ensure no duplicate entries (reconnect, double taps, etc.)
+      removeFromQueueBySocket(socket.id);
+      removeFromQueueByUser(userId);
 
-    attemptMatch(io, entry);
+      const entry: MatchQueueEntry = {
+        socketId: socket.id,
+        userId,
+        category: cat,
+        joinedAt: Date.now(),
+        rematchWith,
+        seriesId,
+      };
+
+      queue.push(entry);
+
+      socket.emit(SOCKET_EVENTS.QUEUED, {
+        category: cat,
+        waitMs: QUEUE_TIMEOUT_MS,
+      });
+
+      attemptMatch(io, entry);
+    },
+  );
+
+  socket.on(SOCKET_EVENTS.LEAVE_QUEUE, () => {
+    removeFromQueueBySocket(socket.id);
+    socket.emit(SOCKET_EVENTS.MATCH_CANCELLED, { ok: true });
   });
 
-  /* ---------- DISCONNECT ---------- */
   socket.on('disconnect', () => {
-    removeFromQueue(socket.id);
+    removeFromQueueBySocket(socket.id);
   });
 }
 
 /* ---------------------------------- */
-/* Match attempt loop                 */
+/* Pairing                            */
 /* ---------------------------------- */
 
 function attemptMatch(io: Server, entry: MatchQueueEntry) {
-  const opponent = findMatchFor(entry);
-
+  const opponent = findOpponent(entry);
   if (!opponent) return;
 
-  // 🚫 remove both immediately to avoid race conditions
-  removeFromQueue(entry.socketId);
-  removeFromQueue(opponent.socketId);
+  // remove both immediately to avoid double matches
+  removeFromQueueBySocket(entry.socketId);
+  removeFromQueueBySocket(opponent.socketId);
 
-  // 🔔 notify both clients
-  io.to(entry.socketId).emit(SOCKET_EVENTS.MATCH_FOUND, {
-    opponentSocketId: opponent.socketId,
+  const isRematch = !!entry.rematchWith || !!opponent.rematchWith;
+
+  const seriesId = entry.seriesId || opponent.seriesId || makeId('series');
+
+  const pairId = makeId('pair');
+
+  const pair: PairFoundPayload = {
+    pairId,
     category: entry.category,
+    seriesId,
+    isRematch,
+    a: { userId: entry.userId, socketId: entry.socketId },
+    b: { userId: opponent.userId, socketId: opponent.socketId },
+  };
+
+  pendingPairs.set(pairId, pair);
+
+  // notify both clients to navigate to VS screen
+  io.to(entry.socketId).emit(SOCKET_EVENTS.MATCH_FOUND, {
+    pairId,
+    category: entry.category,
+    seriesId,
+    opponentUserId: opponent.userId,
+    isRematch,
   });
 
   io.to(opponent.socketId).emit(SOCKET_EVENTS.MATCH_FOUND, {
-    opponentSocketId: entry.socketId,
-    category: entry.category,
+    pairId,
+    category: opponent.category,
+    seriesId,
+    opponentUserId: entry.userId,
+    isRematch,
   });
 
-  // ⚠️ next step: create PvP match + lock questions
+  // optional: notify pvp.handler immediately (server-to-server handoff)
+  onPairFound?.(pair);
 }
 
 /* ---------------------------------- */
@@ -90,26 +203,14 @@ function attemptMatch(io: Server, entry: MatchQueueEntry) {
 setInterval(() => {
   const now = Date.now();
 
-  for (let i = matchmakingQueue.length - 1; i >= 0; i--) {
-    const entry = matchmakingQueue[i];
-
+  for (let i = queue.length - 1; i >= 0; i--) {
+    const entry = queue[i];
     if (now - entry.joinedAt >= QUEUE_TIMEOUT_MS) {
-      matchmakingQueue.splice(i, 1);
-
-      // notify client
-      // (safe: socket may already be gone)
-      try {
-        ioSingleton?.to(entry.socketId).emit(SOCKET_EVENTS.MATCH_TIMEOUT);
-      } catch {}
+      queue.splice(i, 1);
+      ioSingleton?.to(entry.socketId).emit(SOCKET_EVENTS.QUEUE_TIMEOUT, {
+        category: entry.category,
+        message: 'No opponent found in time.',
+      });
     }
   }
 }, 1_000);
-
-/**
- * Because setInterval is outside socket scope,
- * we hold a singleton reference to io
- */
-let ioSingleton: Server | null = null;
-export function setIoInstance(io: Server) {
-  ioSingleton = io;
-}
