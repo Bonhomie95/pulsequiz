@@ -12,6 +12,7 @@ import streakRoutes from './routes/streakRoutes';
 import coinRoutes from './routes/coinRoutes';
 import homeRoutes from './routes/homeRoutes';
 import adsRoutes from './routes/adsRoutes';
+import adminAuthRoutes from './routes/adminAuthRoutes'
 import purchaseRoutes from './routes/purchase';
 
 const app = express();
@@ -34,6 +35,8 @@ app.use('/api/streak', streakRoutes);
 app.use('/api/coins', coinRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/ads', adsRoutes);
+app.use('/api/admin', adminAuthRoutes);
+
 // app.use('/api/purchase', purchaseRoutes);
 
 export default app;
