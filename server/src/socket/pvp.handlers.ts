@@ -22,6 +22,9 @@ const FORFEIT_MS = 60_000;
 const DIFF_ORDER: Diff[] = ['easy', 'medium', 'hard'];
 const DIFF_TARGET: Record<Diff, number> = { easy: 4, medium: 4, hard: 2 };
 
+const READY_GRACE_MS = 60_000; // same as forfeit window
+const readyTimers = new Map<string, NodeJS.Timeout>(); // matchId -> timer
+
 /* ---------------------------------- */
 /* In-memory state                    */
 /* ---------------------------------- */
@@ -126,6 +129,44 @@ async function snapshotUser(userId: string) {
   };
 }
 
+// Waiting Functions
+
+function startReadyGrace(io: Server, matchId: string, missingUserId: string) {
+  if (readyTimers.has(matchId)) return;
+
+  readyTimers.set(
+    matchId,
+    setTimeout(async () => {
+      const match = await PvPMatch.findById(matchId);
+      if (!match || match.state === 'FINISHED') return;
+
+      // if missing player still not ready -> forfeit
+      const missing = match.players.find(
+        (p: any) => p.userId.toString() === missingUserId,
+      );
+      if (missing?.ready) return; // they came back
+
+      const winner = match.players.find(
+        (p: any) => p.userId.toString() !== missingUserId,
+      );
+
+      match.state = 'FORFEITED';
+      match.finishedAt = new Date();
+      match.winnerUserId = winner?.userId;
+
+      await match.save();
+
+      io.to(`pvp:${matchId}`).emit(SOCKET_EVENTS.MATCH_FINISHED, {
+        matchId,
+        winnerUserId: winner?.userId?.toString(),
+        reason: 'opponent_not_ready',
+      });
+
+      readyTimers.delete(matchId);
+    }, READY_GRACE_MS),
+  );
+}
+
 /* ---------------------------------- */
 /* Rewards                            */
 /* ---------------------------------- */
@@ -170,8 +211,39 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
   /* ---------- MATCH START ---------- */
   socket.on(SOCKET_EVENTS.MATCH_START, async ({ matchId }) => {
     const match = await PvPMatch.findById(matchId);
-    if (!match) return;
+    if (!match || match.state === 'FINISHED') return;
 
+    const room = `pvp:${matchId}`;
+    socket.join(room);
+
+    const player = match.players.find(
+      (p: any) => p.userId.toString() === userId,
+    );
+    if (!player) return;
+
+    clearDisconnectTimer(userId);
+
+    player.connected = true;
+    player.lastSeenAt = new Date();
+    player.ready = true;
+
+    await match.save();
+
+    const allReady = match.players.every((p: any) => !!p.ready);
+
+    if (!allReady) {
+      const missing = match.players.find((p: any) => !p.ready)!;
+      io.to(room).emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
+      startReadyGrace(io, matchId, missing.userId.toString());
+      return;
+    }
+
+    // ✅ both ready -> cancel grace timer if any
+    const t = readyTimers.get(matchId);
+    if (t) clearTimeout(t);
+    readyTimers.delete(matchId);
+
+    // ✅ NOW pick questions and start match (your existing logic)
     const [pA, pB] = match.players;
 
     const questionSet = await pickSharedUnseenQuestions(
@@ -181,7 +253,6 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
     );
 
     match.questionSet.splice(0);
-
     for (const q of questionSet) {
       match.questionSet.push({
         questionId: new Types.ObjectId(q.id),
@@ -193,28 +264,19 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
     match.state = 'ACTIVE';
     match.startedAt = new Date();
 
-    const existingPlayers = [...match.players];
-
-    match.players.splice(0);
-
-    for (const p of existingPlayers) {
-      const snap = await snapshotUser(p.userId.toString());
-
-      match.players.push({
-        ...snap,
-        connected: true,
-        lastSeenAt: new Date(),
-        currentIndex: 0,
-        furthestIndex: 0,
-        completed: false,
-        answers: [],
-      });
+    // reset gameplay state per player
+    for (const p of match.players as any) {
+      p.currentIndex = 0;
+      p.furthestIndex = 0;
+      p.completed = false;
+      p.answers = [];
+      p.failedAtIndex = undefined;
+      p.startedAt = undefined;
+      p.endedAt = undefined;
+      p.totalTimeMs = undefined;
     }
 
     await match.save();
-
-    const room = `pvp:${matchId}`;
-    socket.join(room);
 
     io.to(room).emit(SOCKET_EVENTS.MATCH_START, {
       matchId,
@@ -229,6 +291,21 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
     });
 
     liveByUser.set(userId, { matchId });
+  });
+
+  socket.on(SOCKET_EVENTS.MATCH_PING, async ({ matchId }) => {
+    const match = await PvPMatch.findById(matchId);
+    if (!match || match.state === 'FINISHED') return;
+
+    const player = match.players.find(
+      (p: any) => p.userId.toString() === userId,
+    );
+    if (!player) return;
+
+    player.lastSeenAt = new Date();
+    player.connected = true;
+
+    await match.save();
   });
 
   /* ---------- ANSWER ---------- */

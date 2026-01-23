@@ -3,7 +3,6 @@ import { Schema, model, Types } from 'mongoose';
 type Store = 'apple' | 'google';
 type PurchaseState =
   | 'PENDING'
-  | 'VERIFIED'
   | 'CREDITED'
   | 'REJECTED'
   | 'REFUNDED';
@@ -50,5 +49,16 @@ const PurchaseSchema = new Schema(
   },
   { timestamps: true },
 );
+
+PurchaseSchema.index(
+  { store: 1, appleTransactionId: 1 },
+  { unique: true, sparse: true },
+);
+
+PurchaseSchema.index(
+  { store: 1, googlePurchaseToken: 1 },
+  { unique: true, sparse: true },
+);
+
 
 export default model('Purchase', PurchaseSchema);

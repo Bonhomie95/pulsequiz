@@ -1,20 +1,22 @@
 export const SOCKET_EVENTS = {
-  // matchmaking
-  QUEUED: 'pvp:queued',
-  QUEUE_TIMEOUT: 'pvp:queue_timeout',
-  JOIN_QUEUE: 'pvp:join_queue',
-  LEAVE_QUEUE: 'pvp:leave_queue',
+  /* -------- MATCHMAKING -------- */
+  JOIN_QUEUE: 'queue:join',
+  LEAVE_QUEUE: 'queue:leave',
+  QUEUED: 'queue:queued',
+  QUEUE_TIMEOUT: 'queue:timeout',
 
-  // match lifecycle
-  MATCHED: 'pvp:matched',
-  START: 'pvp:start',
-  PLAYER_UPDATE: 'pvp:player_update',
-  WAITING: 'pvp:waiting_on_opponent',
-  FINISHED: 'pvp:match_finished',
+  /* -------- MATCH CREATION -------- */
+  MATCH_FOUND: 'match:found',
 
-  // gameplay
-  ANSWER: 'pvp:answer',
+  /* -------- MATCH LIFECYCLE -------- */
+  MATCH_START: 'match:start',
+  PLAYER_UPDATE: 'match:player_update',
+  WAITING: 'match:waiting',
+  MATCH_FINISHED: 'match:finished',
 
-  // errors
-  ERROR: 'pvp:error',
+  /* -------- GAMEPLAY -------- */
+  ANSWER: 'match:answer',
+
+  /* -------- ERRORS -------- */
+  ERROR: 'match:error',
 } as const;

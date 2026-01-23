@@ -14,6 +14,7 @@ import { SOCKET_EVENTS } from '../../../src/socket/events';
 import { usePvPStore } from '@/src/store/usePvPStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { soundManager } from '@/src/audio/SoundManager';
+import { useAuthStore } from '@/src/store/useAuthStore';
 
 const TIPS = [
   'Speed matters more than perfection in PvP',
@@ -74,10 +75,14 @@ export default function PvPSearchScreen() {
     setSearching(category);
     socket.emit(SOCKET_EVENTS.JOIN_QUEUE, { category });
 
-    socket.on(SOCKET_EVENTS.MATCHED, (payload) => {
-      soundManager.play('match_found'); // 🔊 subtle ping
-      usePvPStore.getState().setMatched(payload);
-      router.replace('/quiz/pvp/vs' as const);
+    socket.on(SOCKET_EVENTS.MATCH_FOUND, (payload) => {
+      usePvPStore.getState().setMatched({
+        matchId: payload.pairId,
+        players: payload.players,
+        myUserId: useAuthStore.getState().user!.id,
+      });
+
+      router.replace('/quiz/pvp/vs');
     });
 
     socket.on(SOCKET_EVENTS.QUEUE_TIMEOUT, () => {
@@ -91,8 +96,10 @@ export default function PvPSearchScreen() {
     });
 
     return () => {
-      socket.emit(SOCKET_EVENTS.LEAVE_QUEUE, { category });
-      socket.off(SOCKET_EVENTS.MATCHED);
+      socket.emit(SOCKET_EVENTS.LEAVE_QUEUE);
+      usePvPStore.getState().reset();
+
+      socket.off(SOCKET_EVENTS.MATCH_FOUND);
       socket.off(SOCKET_EVENTS.QUEUE_TIMEOUT);
       socket.off(SOCKET_EVENTS.ERROR);
     };
@@ -101,7 +108,7 @@ export default function PvPSearchScreen() {
   /* ---------------- ACTIONS ---------------- */
 
   const cancelSearch = () => {
-    socket.emit(SOCKET_EVENTS.LEAVE_QUEUE, { category });
+    socket.emit(SOCKET_EVENTS.LEAVE_QUEUE);
     reset();
     router.back();
   };

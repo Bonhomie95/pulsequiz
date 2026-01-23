@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, Animated, Easing } from 'react-native';
+import { View, Text, Image, Animated, Easing, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -10,6 +10,7 @@ import { usePvPStore } from '@/src/store/usePvPStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { AVATAR_MAP } from '@/src/constants/avatars';
 import { soundManager } from '@/src/audio/SoundManager';
+import { connectSocket } from '@/src/socket/connect';
 
 function resolveAvatar(key?: string | null) {
   if (!key) return AVATAR_MAP.avatar0;
@@ -63,9 +64,15 @@ export default function PvPVsScreen() {
     ).start();
   }, []);
 
+  useEffect(() => {
+    socket.emit(SOCKET_EVENTS.MATCH_START, {
+      matchId: usePvPStore.getState().matchId,
+    });
+  }, []);
+
   /* ---------------- MATCH START ---------------- */
   useEffect(() => {
-    socket.on(SOCKET_EVENTS.START, ({ questions }) => {
+    socket.on(SOCKET_EVENTS.MATCH_START, ({ questions }) => {
       soundManager.play('match_found');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -100,8 +107,24 @@ export default function PvPVsScreen() {
     });
 
     return () => {
-      socket.off(SOCKET_EVENTS.START);
+      socket.off(SOCKET_EVENTS.MATCH_START);
     };
+  }, []);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        connectSocket();
+
+        const matchId = usePvPStore.getState().matchId;
+        if (matchId) {
+          // re-ready / rejoin
+          getSocket().emit(SOCKET_EVENTS.MATCH_START, { matchId });
+        }
+      }
+    });
+
+    return () => sub.remove();
   }, []);
 
   if (!me || !opponent) return null;

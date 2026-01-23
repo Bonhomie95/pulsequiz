@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, AppState } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
@@ -10,6 +10,7 @@ import { useTheme } from '@/src/theme/useTheme';
 import { soundManager } from '@/src/audio/SoundManager';
 import { CountdownRing } from '../../../src/components/CountdownRing';
 
+import { connectSocket } from '@/src/socket/connect';
 const TOTAL_Q = 10;
 const TIME_PER_QUESTION = 15;
 const WARNING_TIME = 5;
@@ -86,6 +87,33 @@ export default function PvPPlayScreen() {
     };
   }, [currentIndex]);
 
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        connectSocket();
+
+        const matchId = usePvPStore.getState().matchId;
+        if (matchId) {
+          // re-ready / rejoin
+          getSocket().emit(SOCKET_EVENTS.MATCH_START, { matchId });
+        }
+      }
+    });
+
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    const matchId = usePvPStore.getState().matchId;
+    if (!matchId) return;
+
+    const t = setInterval(() => {
+      getSocket().emit('match:ping', { matchId });
+    }, 7000);
+
+    return () => clearInterval(t);
+  }, []);
+
   const submitTimeout = () => {
     if (!matchId || !question) return;
 
@@ -108,7 +136,7 @@ export default function PvPPlayScreen() {
       usePvPStore.getState().setWaiting();
     });
 
-    socket.on(SOCKET_EVENTS.FINISHED, (payload) => {
+    socket.on(SOCKET_EVENTS.MATCH_FINISHED, (payload) => {
       usePvPStore.getState().finishMatch(payload.winnerUserId);
       router.replace('/quiz/pvp/result' as const);
     });
@@ -116,7 +144,7 @@ export default function PvPPlayScreen() {
     return () => {
       socket.off(SOCKET_EVENTS.PLAYER_UPDATE);
       socket.off(SOCKET_EVENTS.WAITING);
-      socket.off(SOCKET_EVENTS.FINISHED);
+      socket.off(SOCKET_EVENTS.MATCH_FINISHED);
     };
   }, []);
 

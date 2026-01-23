@@ -1,5 +1,7 @@
 import { Schema, model } from 'mongoose';
 
+
+
 type Diff = 'easy' | 'medium' | 'hard';
 
 type PvPState =
@@ -26,6 +28,7 @@ const AnswerSchema = new Schema(
     selected: { type: Number, default: null },
     isCorrect: { type: Boolean, required: true },
     answeredAt: { type: Date, required: true },
+    ready: { type: Boolean, default: false },
   },
   { _id: false },
 );
@@ -47,6 +50,7 @@ const PlayerSchema = new Schema(
     lastSeenAt: { type: Date, default: Date.now },
     disconnectedAt: { type: Date, default: null },
     forfeitAt: { type: Date, default: null },
+    ready: { type: Boolean, default: false },
 
     currentIndex: { type: Number, default: 0 },
     furthestIndex: { type: Number, default: 0 },

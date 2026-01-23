@@ -6,6 +6,15 @@ import { useAuthStore } from '@/src/store/useAuthStore';
 export function registerPvPSocketListeners() {
   const socket = getSocket();
 
+  const onConnect = () => {
+    const matchId = usePvPStore.getState().matchId;
+    if (matchId) {
+      socket.emit(SOCKET_EVENTS.MATCH_START, { matchId });
+    }
+  };
+
+  socket.on('connect', onConnect);
+
   socket.on(SOCKET_EVENTS.QUEUED, () => {
     // optional: show spinner
   });
@@ -14,7 +23,7 @@ export function registerPvPSocketListeners() {
     usePvPStore.getState().reset();
   });
 
-  socket.on(SOCKET_EVENTS.MATCHED, (payload) => {
+  socket.on(SOCKET_EVENTS.MATCH_FOUND, (payload) => {
     const myUserId = useAuthStore.getState().user!.id;
 
     usePvPStore.getState().setMatched({
@@ -24,7 +33,7 @@ export function registerPvPSocketListeners() {
     });
   });
 
-  socket.on(SOCKET_EVENTS.START, (payload) => {
+  socket.on(SOCKET_EVENTS.MATCH_START, (payload) => {
     usePvPStore.getState().startMatch(payload.questions);
   });
 
@@ -36,7 +45,7 @@ export function registerPvPSocketListeners() {
     usePvPStore.getState().setWaiting();
   });
 
-  socket.on(SOCKET_EVENTS.FINISHED, (payload) => {
+  socket.on(SOCKET_EVENTS.MATCH_FINISHED, (payload) => {
     usePvPStore.getState().finishMatch(payload.winnerUserId);
   });
 

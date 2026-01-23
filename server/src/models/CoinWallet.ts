@@ -8,7 +8,7 @@ export interface ICoinWallet {
 
 const CoinWalletSchema = new Schema<ICoinWallet>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', unique: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', unique: true, index: true },
     coins: { type: Number, default: 0 },
   },
   { timestamps: true }

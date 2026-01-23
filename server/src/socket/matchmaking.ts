@@ -8,18 +8,12 @@ export type MatchQueueEntry = {
   userId: string;
   category: string;
   joinedAt: number;
-
-  // optional: force rematch with a specific user
   rematchWith?: string;
-
-  // optional: best-of-3 / series continuity
-  seriesId?: string;
 };
 
 export type PairFoundPayload = {
   pairId: string;
   category: string;
-  seriesId: string;
   isRematch: boolean;
   a: { userId: string; socketId: string };
   b: { userId: string; socketId: string };
@@ -100,7 +94,6 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
     ({
       category,
       rematchWith,
-      seriesId,
     }: {
       category: string;
       rematchWith?: string;
@@ -122,7 +115,6 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
         category: cat,
         joinedAt: Date.now(),
         rematchWith,
-        seriesId,
       };
 
       queue.push(entry);
@@ -160,14 +152,13 @@ function attemptMatch(io: Server, entry: MatchQueueEntry) {
 
   const isRematch = !!entry.rematchWith || !!opponent.rematchWith;
 
-  const seriesId = entry.seriesId || opponent.seriesId || makeId('series');
+  // const seriesId = entry.seriesId || opponent.seriesId || makeId('series');
 
   const pairId = makeId('pair');
 
   const pair: PairFoundPayload = {
     pairId,
     category: entry.category,
-    seriesId,
     isRematch,
     a: { userId: entry.userId, socketId: entry.socketId },
     b: { userId: opponent.userId, socketId: opponent.socketId },
@@ -179,7 +170,6 @@ function attemptMatch(io: Server, entry: MatchQueueEntry) {
   io.to(entry.socketId).emit(SOCKET_EVENTS.MATCH_FOUND, {
     pairId,
     category: entry.category,
-    seriesId,
     opponentUserId: opponent.userId,
     isRematch,
   });
@@ -187,7 +177,6 @@ function attemptMatch(io: Server, entry: MatchQueueEntry) {
   io.to(opponent.socketId).emit(SOCKET_EVENTS.MATCH_FOUND, {
     pairId,
     category: opponent.category,
-    seriesId,
     opponentUserId: entry.userId,
     isRematch,
   });

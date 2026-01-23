@@ -8,6 +8,7 @@ export const SOCKET_EVENTS = {
   /* ---------------- MATCH CREATION ---------------- */
   MATCH_FOUND: 'match:found',
   MATCH_CANCELLED: 'match:cancelled',
+  MATCH_PING: 'match:ping',
 
   /* ---------------- MATCH LIFECYCLE ---------------- */
   MATCH_START: 'match:start',

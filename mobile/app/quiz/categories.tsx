@@ -75,15 +75,13 @@ export default function QuizCategories() {
                 storage.setLastCategory(cat.id);
                 if (mode === 'normal') {
                   router.push(`/quiz/play?category=${cat.id}`);
-                }
-                if (mode === 'pvp') {
-                  router.push(`/quiz/pvp/search?category=${cat.id}` as any);
+                  return;
                 }
 
-                router.push({
-                  pathname: '/quiz/play',
-                  params: { category: cat.id },
-                });
+                if (mode === 'pvp') {
+                  router.push(`/quiz/pvp/search?category=${cat.id}` as const);
+                  return;
+                }
               }}
               style={[
                 styles.card,

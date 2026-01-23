@@ -1,4 +1,3 @@
-// app/quiz/mode.tsx
 import { useQuizModeStore } from '@/src/store/useQuizModeStore';
 import { useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
