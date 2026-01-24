@@ -1,38 +1,45 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../store/adminStore';
-
-/* ---------------------------------- */
-/* Reusable link item (MUST be outside) */
-/* ---------------------------------- */
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  Receipt,
+  Flag,
+  LogOut,
+  Menu,
+  ChevronLeft,
+} from 'lucide-react';
 
 type LinkItemProps = {
   to: string;
   label: string;
+  icon: React.ReactNode;
+  collapsed: boolean;
   onClick?: () => void;
 };
 
-function LinkItem({ to, label, onClick }: LinkItemProps) {
+function LinkItem({ to, label, icon, collapsed, onClick }: LinkItemProps) {
   return (
     <NavLink
       to={to}
       onClick={onClick}
       className={({ isActive }) =>
-        `block px-4 py-2 rounded-lg transition
+        `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} 
+         px-4 py-3 rounded-lg transition
          ${isActive ? 'bg-indigo-600' : 'hover:bg-gray-800'}`
       }
     >
-      {label}
+      {icon}
+      {!collapsed && <span>{label}</span>}
     </NavLink>
   );
 }
 
-/* ---------------------------------- */
-/* Sidebar                             */
-/* ---------------------------------- */
-
 export default function Sidebar() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);        // mobile drawer
+  const [collapsed, setCollapsed] = useState(false); // desktop collapse
   const logout = useAdminStore((s) => s.logout);
   const navigate = useNavigate();
 
@@ -45,10 +52,11 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile top bar */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-800">
-        <button onClick={() => setOpen(true)}>☰</button>
-        <span className="font-bold">Admin</span>
+      {/* Mobile Top Bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 flex items-center px-4 bg-gray-900 border-b border-gray-800 z-40">
+        <button onClick={() => setOpen(true)}>
+          <Menu size={24} />
+        </button>
       </div>
 
       {/* Overlay */}
@@ -63,29 +71,81 @@ export default function Sidebar() {
       <aside
         className={`
           fixed md:static z-50
-          top-0 left-0 h-full w-64
+          top-0 left-0 h-screen
+          ${collapsed ? 'w-16' : 'w-64'}
           bg-gray-900 border-r border-gray-800
-          transform transition-transform
+          flex flex-col justify-between
+          transform transition-all duration-300
           ${open ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0
         `}
       >
-        <div className="p-4 font-extrabold text-lg">PulseQuiz Admin</div>
+        {/* Top Section */}
+        <div>
+          <div className="flex items-center justify-between p-4">
+            {!collapsed && <span className="font-extrabold">PulseQuiz Admin</span>}
 
-        <nav className="flex flex-col gap-1 px-2">
-          <LinkItem to="/" label="Dashboard" onClick={closeMobile} />
-          <LinkItem to="/users" label="Users" onClick={closeMobile} />
-          <LinkItem to="/payouts" label="Payouts" onClick={closeMobile} />
-          <LinkItem to="/purchases" label="Purchases" onClick={closeMobile} />
-          <LinkItem to="/reports" label="Reports" onClick={closeMobile} />
+            {/* Collapse Toggle (desktop only) */}
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="hidden md:block"
+            >
+              <ChevronLeft
+                size={20}
+                className={`transition-transform ${collapsed ? 'rotate-180' : ''}`}
+              />
+            </button>
+          </div>
 
+          <nav className="flex flex-col gap-2 px-2 mt-4">
+            <LinkItem
+              to="/"
+              label="Dashboard"
+              icon={<LayoutDashboard size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/users"
+              label="Users"
+              icon={<Users size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/payouts"
+              label="Payouts"
+              icon={<CreditCard size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/purchases"
+              label="Purchases"
+              icon={<Receipt size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/reports"
+              label="Reports"
+              icon={<Flag size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+          </nav>
+        </div>
+
+        {/* Logout Bottom */}
+        <div className="p-2 border-t border-gray-800">
           <button
             onClick={handleLogout}
-            className="mt-4 text-left px-4 py-2 rounded-lg hover:bg-red-600 transition"
+            className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} w-full px-4 py-3 rounded-lg hover:bg-red-600 transition`}
           >
-            Logout
+            <LogOut size={20} />
+            {!collapsed && <span>Logout</span>}
           </button>
-        </nav>
+        </div>
       </aside>
     </>
   );

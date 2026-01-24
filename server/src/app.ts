@@ -12,7 +12,9 @@ import streakRoutes from './routes/streakRoutes';
 import coinRoutes from './routes/coinRoutes';
 import homeRoutes from './routes/homeRoutes';
 import adsRoutes from './routes/adsRoutes';
-import adminAuthRoutes from './routes/adminAuthRoutes'
+import adminAuthRoutes from './routes/adminAuthRoutes';
+import adminStatsRoutes from './routes/adminStatsRoutes';
+import adminActivityRoutes from './routes/adminActivityRoutes';
 import purchaseRoutes from './routes/purchase';
 
 const app = express();
@@ -36,6 +38,8 @@ app.use('/api/coins', coinRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/ads', adsRoutes);
 app.use('/api/admin', adminAuthRoutes);
+app.use('/api/admin/stats', adminStatsRoutes);
+app.use('/api/admin/activity', adminActivityRoutes);
 
 // app.use('/api/purchase', purchaseRoutes);
 

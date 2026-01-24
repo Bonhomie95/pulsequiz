@@ -7,6 +7,7 @@ import CoinWallet from '../models/CoinWallet';
 import { CoinSku, COIN_PACKS } from '../iap/products';
 import { verifyAppleTransaction } from '../iap/apple';
 import { verifyGooglePurchase } from '../iap/google';
+import { logActivity } from '../utils/activityLogger';
 
 /* -------------------------------------------------- */
 /* Helpers                                             */
@@ -85,6 +86,11 @@ export async function verifyApple(req: AuthRequest, res: Response) {
   }
 
   const uniqueKey = `apple:${transactionId}`;
+
+  await logActivity(userId.toString(), 'PURCHASE', {
+    sku,
+    coins: pack.coins,
+  });
 
   // Create-or-load purchase record (idempotent)
   const purchase = await Purchase.findOneAndUpdate(
@@ -165,6 +171,11 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
   }
 
   const uniqueKey = `google:${purchaseToken}`;
+
+  await logActivity(userId.toString(), 'PURCHASE', {
+    sku,
+    coins: pack.coins,
+  });
 
   // Create-or-load purchase record (idempotent)
   const purchase = await Purchase.findOneAndUpdate(

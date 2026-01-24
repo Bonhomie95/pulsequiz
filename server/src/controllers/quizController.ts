@@ -8,6 +8,7 @@ import { applyQuizResult } from '../services/progressService';
 import { rebuildLeaderboardSnapshots } from '../services/leaderboardService';
 import { useHintService } from '../services/quizHintService';
 import { extendQuestionTime } from '../services/quizTimeService';
+import { logActivity } from '../utils/activityLogger';
 
 import ActiveQuizSession from '../models/ActiveQuizSession';
 import User from '../models/User';
@@ -150,10 +151,15 @@ export async function finish(req: AuthRequest, res: Response) {
     total,
   });
 
+  await logActivity(req.userId, 'QUIZ_FINISH', {
+    score: correct,
+    coinsEarned: result.pointsAdded,
+  });
+
   // 📺 Track sessions for interstitial ads (every 3 sessions)
   await User.updateOne(
     { _id: req.userId },
-    { $inc: { sessionsSinceLastAd: 1 } }
+    { $inc: { sessionsSinceLastAd: 1 } },
   );
 
   await rebuildLeaderboardSnapshots();

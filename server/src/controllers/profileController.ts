@@ -4,6 +4,7 @@ import User from '../models/User';
 import Progress from '../models/Progress';
 import { AuthRequest } from '../middlewares/auth';
 import QuizSession from '../models/QuizSession';
+import { logActivity } from '../utils/activityLogger';
 
 const UpdateProfileSchema = z.object({
   username: z
@@ -83,6 +84,8 @@ export async function updateProfile(req: AuthRequest, res: Response) {
     { username, avatar },
     { new: true },
   );
+
+  await logActivity(req.userId, 'PROFILE_UPDATE');
 
   return res.json({
     user: {
