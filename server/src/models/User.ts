@@ -20,6 +20,8 @@ export interface IUser {
   sessionsSinceLastAd: number;
   lastAdRewardAt?: Date | null;
   adRewardsInWindow: number;
+  lastSeenAt?: Date | null;
+  isBanned: boolean;
 
   createdAt: Date;
 }
@@ -64,6 +66,8 @@ const UserSchema = new Schema<IUser>(
       type: Number,
       default: 0,
     },
+    lastSeenAt: { type: Date, default: null },
+    isBanned: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

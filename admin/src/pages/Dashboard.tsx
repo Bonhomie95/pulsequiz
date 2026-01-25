@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
-import {ActivityItem} from '../types/activity';
+import type { ActivityItem } from '../types/activity';
 
 type StatCardProps = {
   title: string;
@@ -54,17 +54,17 @@ export default function Dashboard() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
-    adminApi.get('/admin/activity').then((res) => setActivity(res.data));
-  }, []);
+    let alive = true;
 
-  useEffect(() => {
-    async function load() {
+    async function loadStats() {
       const [u, c, p, f] = await Promise.all([
         adminApi.get('/admin/stats/users'),
         adminApi.get('/admin/stats/coins'),
         adminApi.get('/admin/stats/purchases-today'),
         adminApi.get('/admin/stats/flags'),
       ]);
+
+      if (!alive) return;
 
       setStats({
         users: u.data.total,
@@ -74,20 +74,28 @@ export default function Dashboard() {
       });
     }
 
-    load();
+    loadStats();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   useEffect(() => {
+    let active = true;
+
     const fetchActivity = async () => {
-      const res = await adminApi.get<ActivityItem[]>('/admin/activity');
-      setActivity(res.data);
+      if (!active) return;
+      const res = await adminApi.get('/admin/activity');
+      if (active) setActivity(res.data);
     };
 
     fetchActivity();
+    const interval = setInterval(fetchActivity, 10000); // 10s safer
 
-    const interval = setInterval(fetchActivity, 5000); // every 5s
-
-    return () => clearInterval(interval);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -106,53 +114,25 @@ export default function Dashboard() {
           title="Total Users"
           value={stats.users.toLocaleString()}
           icon={<Users size={20} />}
-          change="+5.2% this week"
-          positive
         />
-
         <StatCard
           title="Coins Circulating"
           value={stats.coins.toLocaleString()}
           icon={<Coins size={20} />}
-          change="+12% growth"
-          positive
         />
-
         <StatCard
           title="Purchases Today"
-          value={stats.purchases.toString()}
+          value={stats.purchases.toLocaleString()}
           icon={<CreditCard size={20} />}
-          change="+3.1%"
-          positive
         />
-
         <StatCard
           title="Reports / Flags"
-          value={stats.flags.toString()}
+          value={stats.flags.toLocaleString()}
           icon={<AlertTriangle size={20} />}
-          change="-8% vs yesterday"
-          positive={false}
         />
       </div>
 
       {/* Activity Panel */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-        <h2 className="font-bold mb-4">Recent Activity</h2>
-
-        <div className="space-y-2 text-sm">
-          {activity.map((a) => (
-            <div key={a._id} className="flex justify-between text-gray-300">
-              <span>
-                {a.userId?.username} — {a.type}
-              </span>
-              <span className="text-gray-500">
-                {new Date(a.createdAt).toLocaleTimeString()}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
         <h2 className="font-bold mb-4">Live Activity</h2>
 
@@ -167,6 +147,10 @@ export default function Dashboard() {
               </span>
             </div>
           ))}
+
+          {activity.length === 0 && (
+            <div className="text-gray-500">No activity yet.</div>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwt } from '../utils/jwt';
+import User from '../models/User';
 
 /**
  * Extend Express Request safely
@@ -14,7 +15,7 @@ export interface AuthRequest extends Request {
 export function requireAuth(
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const header = req.headers.authorization;
 
@@ -32,6 +33,11 @@ export function requireAuth(
     }
 
     req.userId = decoded.userId;
+
+    User.updateOne({ _id: decoded.userId }, { lastSeenAt: new Date() }).catch(
+      () => {},
+    );
+
     next();
   } catch {
     return res.status(401).json({ message: 'Invalid token' });

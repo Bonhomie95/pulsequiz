@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn src/server.ts",
+    "dev": "ts-node-dev --max-old-space-size=4096 --respawn src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "ts-node seed/importQuestions.ts",
