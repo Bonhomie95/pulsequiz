@@ -23,7 +23,7 @@ export default function QuizModeScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <TouchableOpacity
-        onPress={() => router.replace('/')}
+        onPress={() => router.replace('/(tabs)/home')}
         style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
       >
         <ChevronLeft size={18} color={theme.colors.text} />

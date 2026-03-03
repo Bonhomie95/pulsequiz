@@ -7,10 +7,16 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as IAP from 'react-native-iap';
-import type { Purchase, PurchaseAndroid, PurchaseIOS } from 'react-native-iap';
+import type {
+  ProductPurchase,
+  SubscriptionPurchase,
+  PurchaseError,
+} from 'react-native-iap';
+import { ChevronLeft, ShoppingBag } from 'lucide-react-native';
 
 import { useTheme } from '@/src/theme/useTheme';
 import { COIN_PRODUCTS } from '@/src/iap/products';
@@ -18,125 +24,117 @@ import { api } from '@/src/api/api';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useRouter } from 'expo-router';
 
-/* ---------------- UTIL ---------------- */
-
-function normalizePurchase(
-  result: Purchase | Purchase[] | null,
-): Purchase | null {
-  if (!result) return null;
-  return Array.isArray(result) ? result[0] ?? null : result;
-}
-
-/* ---------------- SCREEN ---------------- */
+type AnyPurchase = ProductPurchase | SubscriptionPurchase;
 
 export default function BuyCoinsScreen() {
   const theme = useTheme();
   const router = useRouter();
   const [loadingSku, setLoadingSku] = useState<string | null>(null);
+  const [storePrices, setStorePrices] = useState<Record<string, string>>({});
 
-  /* ---------------- INIT IAP ---------------- */
-
+  // ── Init & fetch product metadata ─────────────────────────────────────────
   useEffect(() => {
-    IAP.initConnection();
+    let mounted = true;
+
+    (async () => {
+      try {
+        await IAP.initConnection();
+        const skus = COIN_PRODUCTS.map((p) => p.sku);
+        // v12: getProducts returns Product[] with productId, localizedPrice, price
+        const products = await IAP.getProducts({ skus });
+        if (!mounted) return;
+        const prices: Record<string, string> = {};
+        for (const p of products) {
+          prices[p.productId] = p.localizedPrice || p.price;
+        }
+        setStorePrices(prices);
+      } catch (e) {
+        console.warn('[IAP] init/fetch error:', e);
+      }
+    })();
 
     return () => {
+      mounted = false;
       IAP.endConnection();
     };
   }, []);
 
-  /* ---------------- LOAD STORE PRODUCTS ---------------- */
-
+  // ── Purchase listeners ────────────────────────────────────────────────────
   useEffect(() => {
-    (async () => {
-      try {
-        const skus = COIN_PRODUCTS.map((p) => p.sku);
-        await IAP.fetchProducts({ skus });
-      } catch (e) {
-        console.warn('Failed to fetch products', e);
-      }
-    })();
-  }, []);
+    const purchaseSub = IAP.purchaseUpdatedListener(
+      async (purchase: AnyPurchase) => {
+        try {
+          if (Platform.OS === 'ios') {
+            const p = purchase as ProductPurchase;
+            if (!p.transactionId) throw new Error('Missing transaction ID');
+            const res = await api.post('/purchase/apple/verify', {
+              sku: p.productId,
+              transactionId: p.transactionId,
+            });
+            await IAP.finishTransaction({ purchase: p, isConsumable: true });
+            useCoinStore.getState().addCoins(res.data.coinsAdded);
+            Alert.alert(
+              '🎉 Success',
+              `${res.data.coinsAdded} coins added to your account!`,
+            );
+            router.back();
+          }
 
-  /* ---------------- ANDROID PENDING HANDLER ---------------- */
+          if (Platform.OS === 'android') {
+            const p = purchase as ProductPurchase;
+            if (!p.purchaseToken) throw new Error('Invalid Android purchase');
+            const res = await api.post('/purchase/google/verify', {
+              sku: p.productId,
+              purchaseToken: p.purchaseToken,
+              packageName: p.packageNameAndroid,
+            });
+            await IAP.finishTransaction({ purchase: p, isConsumable: true });
+            useCoinStore.getState().addCoins(res.data.coinsAdded);
+            Alert.alert(
+              '🎉 Success',
+              `${res.data.coinsAdded} coins added to your account!`,
+            );
+            router.back();
+          }
+        } catch (e: any) {
+          Alert.alert(
+            'Purchase failed',
+            e?.message || 'Something went wrong. Please contact support.',
+          );
+        } finally {
+          setLoadingSku(null);
+        }
+      },
+    );
 
-  useEffect(() => {
-    const sub = IAP.purchaseUpdatedListener(async (purchase) => {
-      if (
-        Platform.OS === 'android' &&
-        !purchase.isAcknowledgedAndroid
-      ) {
-        Alert.alert(
-          'Purchase pending',
-          'Your purchase is pending approval. Coins will be credited once confirmed.',
-        );
+    const errorSub = IAP.purchaseErrorListener((error: PurchaseError) => {
+      if (error.code !== 'E_USER_CANCELLED') {
+        Alert.alert('Purchase failed', error.message || 'Something went wrong');
       }
+      setLoadingSku(null);
     });
 
-    return () => sub.remove();
+    return () => {
+      purchaseSub.remove();
+      errorSub.remove();
+    };
   }, []);
 
-  /* ---------------- BUY ---------------- */
-
-  const buy = async (sku: string) => {
+  // ── Initiate purchase ─────────────────────────────────────────────────────
+  const buy = (sku: string) => {
     if (loadingSku) return;
-
-    try {
-      setLoadingSku(sku);
-
-      const result = await IAP.requestPurchase({
-        sku,
-        andDangerouslyFinishTransactionAutomaticallyIOS: false,
-      });
-
-      const purchase = normalizePurchase(result);
-      if (!purchase) throw new Error('Purchase cancelled');
-
-      /* -------- iOS -------- */
-      if (Platform.OS === 'ios') {
-        const p = purchase as PurchaseIOS;
-
-        if (!p.transactionId) {
-          throw new Error('Missing transaction ID');
-        }
-
-        const res = await api.post('/purchase/apple/verify', {
-          sku,
-          transactionId: p.transactionId,
-        });
-
-        useCoinStore.getState().addCoins(res.data.coinsAdded);
-        await IAP.finishTransaction({ purchase });
-        router.back();
-        return;
+    setLoadingSku(sku);
+    // v12: requestPurchase does NOT return the purchase — result arrives via listener
+    IAP.requestPurchase({
+      sku,
+      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+    }).catch((e: PurchaseError) => {
+      if (e.code !== 'E_USER_CANCELLED') {
+        Alert.alert('Purchase failed', e.message || 'Something went wrong');
       }
-
-      /* -------- ANDROID -------- */
-      if (Platform.OS === 'android') {
-        const p = purchase as PurchaseAndroid;
-
-        if (!p.purchaseToken || !p.packageNameAndroid) {
-          throw new Error('Invalid Android purchase');
-        }
-
-        const res = await api.post('/purchase/google/verify', {
-          sku,
-          purchaseToken: p.purchaseToken,
-          packageName: p.packageNameAndroid,
-        });
-
-        useCoinStore.getState().addCoins(res.data.coinsAdded);
-        await IAP.finishTransaction({ purchase });
-        router.back();
-      }
-    } catch (e: any) {
-      console.warn('Purchase failed', e);
-      Alert.alert('Purchase failed', e?.message || 'Something went wrong');
-    } finally {
       setLoadingSku(null);
-    }
+    });
   };
-
-  /* ---------------- RESTORE (iOS) ---------------- */
 
   const restorePurchases = async () => {
     try {
@@ -148,34 +146,91 @@ export default function BuyCoinsScreen() {
     }
   };
 
-  /* ---------------- UI ---------------- */
+  const getPrice = (sku: string) =>
+    storePrices[sku] ||
+    COIN_PRODUCTS.find((p) => p.sku === sku)?.priceLabel ||
+    '';
 
+  // ── UI ────────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <View style={styles.container}>
+    <SafeAreaView
+      edges={['top']}
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+    >
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
+        >
+          <ChevronLeft size={20} color={theme.colors.text} />
+        </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.text }]}>
           Buy Coins
         </Text>
+        <View style={{ width: 40 }} />
+      </View>
 
-        <Text style={{ color: theme.colors.muted, marginBottom: 16 }}>
-          Get more coins instantly
-        </Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.hero, { backgroundColor: theme.colors.surface }]}>
+          <ShoppingBag size={36} color={theme.colors.primary} />
+          <Text style={[styles.heroTitle, { color: theme.colors.text }]}>
+            Get More Coins
+          </Text>
+          <Text style={[styles.heroSub, { color: theme.colors.muted }]}>
+            Use coins for hints, wagers, and boosts. One-time purchases, no
+            subscription.
+          </Text>
+        </View>
 
         {COIN_PRODUCTS.map((p) => (
           <TouchableOpacity
             key={p.sku}
             onPress={() => buy(p.sku)}
-            disabled={loadingSku === p.sku}
+            disabled={!!loadingSku}
             style={[
               styles.card,
               {
                 backgroundColor: p.popular
                   ? theme.colors.primary
                   : theme.colors.surface,
+                borderWidth: p.popular ? 0 : 1,
+                borderColor: theme.colors.border,
               },
             ]}
           >
+            {p.popular && (
+              <View style={styles.popularBadge}>
+                <Text style={styles.popularText}>BEST VALUE 🔥</Text>
+              </View>
+            )}
             <View>
+              <Text
+                style={{
+                  color: p.popular ? '#fff' : theme.colors.text,
+                  fontWeight: '800',
+                  fontSize: 18,
+                }}
+              >
+                🪙 {p.coins.toLocaleString()} coins
+              </Text>
+              {p.bonus && (
+                <Text
+                  style={{
+                    color: p.popular ? '#ffffffcc' : theme.colors.muted,
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  Includes bonus coins
+                </Text>
+              )}
+            </View>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+            >
               <Text
                 style={{
                   color: p.popular ? '#fff' : theme.colors.text,
@@ -183,28 +238,13 @@ export default function BuyCoinsScreen() {
                   fontSize: 16,
                 }}
               >
-                {p.coins.toLocaleString()} coins
+                {getPrice(p.sku)}
               </Text>
-
-              {p.bonus && (
-                <Text style={{ color: '#22c55e', fontSize: 12 }}>
-                  Best value 🔥
-                </Text>
-              )}
-            </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text
-                style={{
-                  color: p.popular ? '#fff' : theme.colors.text,
-                  fontWeight: '700',
-                }}
-              >
-                {p.priceLabel}
-              </Text>
-
               {loadingSku === p.sku && (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator
+                  size="small"
+                  color={p.popular ? '#fff' : theme.colors.primary}
+                />
               )}
             </View>
           </TouchableOpacity>
@@ -213,27 +253,55 @@ export default function BuyCoinsScreen() {
         {Platform.OS === 'ios' && (
           <TouchableOpacity
             onPress={restorePurchases}
-            style={{ marginTop: 16 }}
+            style={{ marginTop: 8, padding: 16 }}
           >
-            <Text style={{ color: theme.colors.primary, textAlign: 'center' }}>
+            <Text
+              style={{
+                color: theme.colors.primary,
+                textAlign: 'center',
+                fontWeight: '600',
+              }}
+            >
               Restore Purchases
             </Text>
           </TouchableOpacity>
         )}
-      </View>
+
+        <Text style={[styles.note, { color: theme.colors.muted }]}>
+          Purchases are processed securely via the App Store / Play Store. Coins
+          are non-refundable.
+        </Text>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* ---------------- STYLES ---------------- */
-
 const styles = StyleSheet.create({
-  container: { padding: 20 },
-  title: {
-    fontSize: 22,
-    fontWeight: '900',
-    marginBottom: 4,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: { fontSize: 20, fontWeight: '800' },
+  scroll: { padding: 16, paddingBottom: 60 },
+  hero: {
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  heroTitle: { fontSize: 20, fontWeight: '900' },
+  heroSub: { textAlign: 'center', fontSize: 13, lineHeight: 20 },
   card: {
     padding: 18,
     borderRadius: 18,
@@ -242,4 +310,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  popularBadge: {
+    position: 'absolute',
+    top: -10,
+    right: 16,
+    backgroundColor: '#FFB800',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  popularText: { color: '#000', fontWeight: '800', fontSize: 10 },
+  note: { textAlign: 'center', fontSize: 11, lineHeight: 17, marginTop: 16 },
 });

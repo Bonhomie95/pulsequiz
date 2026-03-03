@@ -1,140 +1,419 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Coins, PlayCircle, ShoppingBag } from 'lucide-react-native';
+import {
+  Coins,
+  PlayCircle,
+  ShoppingBag,
+  Trophy,
+  Clock,
+  CheckCircle,
+  XCircle,
+  ChevronLeft,
+  AlertTriangle,
+  TrendingUp,
+} from 'lucide-react-native';
 import { useTheme } from '@/src/theme/useTheme';
 import { useCoinStore } from '@/src/store/useCoinStore';
+import { useRouter } from 'expo-router';
+import { useEffect, useState, useCallback } from 'react';
+import { api } from '@/src/api/api';
+import { showRewardedAd } from '@/src/ads/admob';
+import { useAppStateStore } from '@/src/store/useAppStateStore';
+import { CoinRewardToast } from '@/src/components/CoinRewardToast';
+
+type Payout = {
+  _id: string;
+  amount: number;
+  rank: number;
+  period: string;
+  periodLabel: string;
+  status: 'pending' | 'sent' | 'confirmed' | 'failed' | 'skipped';
+  txHash?: string;
+  createdAt: string;
+};
+
+type PayoutData = {
+  payouts: Payout[];
+  pendingUSDT: number;
+  totalEarned: number;
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  pending: '#FFC94A',
+  sent: '#5B7CFF',
+  confirmed: '#4ADE80',
+  failed: '#FF5C5C',
+  skipped: '#A6B0CF',
+};
 
 export default function WalletScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { coins } = useCoinStore();
+  const [payoutData, setPayoutData] = useState<PayoutData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [adLoading, setAdLoading] = useState(false);
+  const [coinToast, setCoinToast] = useState({ visible: false, coins: 0 });
+
+  const fetchPayouts = useCallback(async () => {
+    try {
+      const res = await api.get('/payouts/mine');
+      setPayoutData(res.data);
+    } catch (e) {
+      console.warn('Payout fetch failed', e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPayouts();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchPayouts();
+  };
+
+  const handleWatchAd = async () => {
+    setAdLoading(true);
+    try {
+      // Show actual rewarded ad first
+      const success = await showRewardedAd();
+      if (!success) {
+        Alert.alert('Ad unavailable', 'No ad available right now. Try again later.');
+        return;
+      }
+      // Then credit server-side
+      const res = await api.post('/ads/reward');
+      if (res.data?.coins !== undefined) {
+        useCoinStore.getState().setCoins(res.data.coins);
+        useAppStateStore.getState().markRewardedAdWatched();
+        setCoinToast({ visible: true, coins: res.data.coinsEarned ?? 50 });
+      } else if (res.data?.message) {
+        Alert.alert('Try again', res.data.message);
+      }
+    } catch (e: any) {
+      if (e.response?.status === 429) {
+        Alert.alert('Daily limit reached', 'Come back tomorrow for more free coins!');
+      } else {
+        Alert.alert('Error', 'Could not load ad. Try again later.');
+      }
+    } finally {
+      setAdLoading(false);
+    }
+  };
+
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
+  const StatusIcon = ({ status }: { status: string }) => {
+    const color = STATUS_COLOR[status] ?? '#A6B0CF';
+    if (status === 'confirmed' || status === 'sent')
+      return <CheckCircle size={16} color={color} />;
+    if (status === 'failed' || status === 'skipped')
+      return <XCircle size={16} color={color} />;
+    return <Clock size={16} color={color} />;
+  };
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
+      <CoinRewardToast
+        visible={coinToast.visible}
+        coins={coinToast.coins}
+        label="Ad Reward!"
+        onHide={() => setCoinToast({ visible: false, coins: 0 })}
+      />
       {/* HEADER */}
-      <Text style={[styles.title, { color: theme.colors.text }]}>Wallet</Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <ChevronLeft size={22} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Wallet</Text>
+        <View style={{ width: 36 }} />
+      </View>
 
-      {/* BALANCE CARD */}
-      <View
-        style={[styles.balanceCard, { backgroundColor: theme.colors.surface }]}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-        <Coins size={34} color={theme.colors.coin} />
-        <Text style={[styles.balance, { color: theme.colors.text }]}>
-          {coins}
-        </Text>
-        <Text style={{ color: theme.colors.muted }}>Available Coins</Text>
-      </View>
+        {/* COINS CARD */}
+        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+          <Coins size={32} color={theme.colors.coin} />
+          <Text style={[styles.bigValue, { color: theme.colors.coin }]}>
+            {coins}
+          </Text>
+          <Text style={[styles.label, { color: theme.colors.muted }]}>
+            Available Coins
+          </Text>
+        </View>
 
-      {/* ACTIONS */}
-      <View style={styles.actions}>
-        {/* WATCH AD */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          style={[styles.actionCard, { backgroundColor: theme.colors.primary }]}
-          onPress={() => {
-            // hook AdMob / rewarded video here later
-            console.log('Watch ad');
-          }}
-        >
-          <PlayCircle size={22} color="#fff" />
-          <View>
-            <Text style={styles.actionTitle}>Watch Video</Text>
-            <Text style={styles.actionSub}>Earn free coins</Text>
+        {/* USDT EARNINGS CARD */}
+        {payoutData && (
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: theme.colors.surface, marginTop: 12 },
+            ]}
+          >
+            <TrendingUp size={28} color="#4ADE80" />
+            <Text style={[styles.bigValue, { color: '#4ADE80' }]}>
+              ${payoutData.totalEarned.toFixed(2)}
+            </Text>
+            <Text style={[styles.label, { color: theme.colors.muted }]}>
+              Total USDT Earned
+            </Text>
+            {payoutData.pendingUSDT > 0 && (
+              <View
+                style={[styles.pendingBadge, { backgroundColor: '#FFC94A20' }]}
+              >
+                <Clock size={12} color="#FFC94A" />
+                <Text style={{ color: '#FFC94A', fontSize: 12, marginLeft: 4 }}>
+                  ${payoutData.pendingUSDT.toFixed(2)} accumulating toward $5
+                  minimum
+                </Text>
+              </View>
+            )}
           </View>
-        </TouchableOpacity>
+        )}
 
-        {/* BUY COINS */}
-        <TouchableOpacity
-          activeOpacity={0.9}
+        {/* ADDRESS WARNING */}
+        <View
           style={[
-            styles.actionCard,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.primary,
-              borderWidth: 1.5,
-            },
+            styles.warningCard,
+            { backgroundColor: '#FF5C5C15', borderColor: '#FF5C5C40' },
           ]}
-          onPress={() => {
-            // future store / IAP
-            console.log('Open store');
-          }}
         >
-          <ShoppingBag size={22} color={theme.colors.primary} />
-          <View>
-            <Text style={[styles.actionTitle, { color: theme.colors.text }]}>
-              Buy Coins
-            </Text>
-            <Text style={{ color: theme.colors.muted, fontSize: 12 }}>
-              Unlock more power
+          <AlertTriangle size={16} color="#FF5C5C" />
+          <Text
+            style={{
+              color: '#FF5C5C',
+              fontSize: 12,
+              flex: 1,
+              marginLeft: 8,
+              lineHeight: 18,
+            }}
+          >
+            <Text style={{ fontWeight: '800' }}>CONFIRM YOUR USDT ADDRESS</Text>{' '}
+            in Profile → Settings before Saturday or you may forfeit your prize.
+          </Text>
+        </View>
+
+        {/* ACTIONS */}
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+          Earn Coins
+        </Text>
+        <View style={styles.actions}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={[
+              styles.actionCard,
+              { backgroundColor: theme.colors.primary },
+            ]}
+            onPress={handleWatchAd}
+            disabled={adLoading}
+          >
+            {adLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <PlayCircle size={22} color="#fff" />
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.actionTitle}>Watch Video</Text>
+              <Text style={styles.actionSub}>Earn free coins (max 5/day)</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={[
+              styles.actionCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.primary,
+                borderWidth: 1.5,
+              },
+            ]}
+            onPress={() => router.push('/earn/buy')}
+          >
+            <ShoppingBag size={22} color={theme.colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.actionTitle, { color: theme.colors.text }]}>
+                Buy Coins
+              </Text>
+              <Text style={[styles.actionSub, { color: theme.colors.muted }]}>
+                Unlock hints & wager power
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* PAYOUT HISTORY */}
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+          USDT Payout History
+        </Text>
+
+        {loading ? (
+          <ActivityIndicator
+            color={theme.colors.primary}
+            style={{ marginTop: 20 }}
+          />
+        ) : !payoutData || payoutData.payouts.length === 0 ? (
+          <View
+            style={[
+              styles.emptyState,
+              { backgroundColor: theme.colors.surface },
+            ]}
+          >
+            <Trophy size={32} color={theme.colors.muted} />
+            <Text style={[styles.emptyText, { color: theme.colors.muted }]}>
+              No payouts yet. Rank in the top players to earn USDT!
             </Text>
           </View>
-        </TouchableOpacity>
-      </View>
+        ) : (
+          payoutData.payouts.map((p) => (
+            <View
+              key={p._id}
+              style={[
+                styles.payoutRow,
+                { backgroundColor: theme.colors.surface },
+              ]}
+            >
+              <View style={styles.payoutLeft}>
+                <StatusIcon status={p.status} />
+                <View style={{ marginLeft: 10 }}>
+                  <Text
+                    style={[styles.payoutAmount, { color: theme.colors.text }]}
+                  >
+                    ${p.amount.toFixed(2)} USDT
+                  </Text>
+                  <Text style={{ color: theme.colors.muted, fontSize: 12 }}>
+                    Rank #{p.rank} • {p.period} • {p.periodLabel}
+                  </Text>
+                  <Text style={{ color: theme.colors.muted, fontSize: 11 }}>
+                    {formatDate(p.createdAt)}
+                  </Text>
+                </View>
+              </View>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: STATUS_COLOR[p.status] + '20' },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: STATUS_COLOR[p.status],
+                    fontSize: 11,
+                    fontWeight: '700',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {p.status}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
 
-      {/* INFO */}
-      <View style={styles.info}>
-        <Text style={{ color: theme.colors.muted, fontSize: 13 }}>
-          💡 Coins are used for hints, retries, streak boosts and premium
-          features.
+        <Text style={[styles.footerNote, { color: theme.colors.muted }]}>
+          💡 Coins are for hints, wagers & boosts. USDT is earned by ranking in
+          the top players each week/month.
         </Text>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* ---------------- STYLES ---------------- */
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    marginBottom: 24,
-  },
-
-  balanceCard: {
-    borderRadius: 20,
-    paddingVertical: 28,
+  container: { flex: 1 },
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32,
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 8,
   },
-
-  balance: {
-    fontSize: 36,
-    fontWeight: '900',
-    marginVertical: 6,
+  backBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  actions: {
-    gap: 16,
+  title: { fontSize: 20, fontWeight: '800' },
+  scroll: { padding: 16, paddingBottom: 100 },
+  card: { borderRadius: 20, paddingVertical: 24, alignItems: 'center', gap: 6 },
+  bigValue: { fontSize: 36, fontWeight: '900' },
+  label: { fontSize: 13 },
+  pendingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    marginTop: 6,
   },
-
+  warningCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 12,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: 24,
+    marginBottom: 10,
+  },
+  actions: { gap: 12 },
   actionCard: {
     flexDirection: 'row',
     gap: 14,
-    padding: 18,
-    borderRadius: 18,
+    padding: 16,
+    borderRadius: 16,
     alignItems: 'center',
   },
-
-  actionTitle: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
+  actionTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  actionSub: { color: '#ffffffcc', fontSize: 12, marginTop: 2 },
+  emptyState: { borderRadius: 16, padding: 24, alignItems: 'center', gap: 10 },
+  emptyText: { textAlign: 'center', fontSize: 13, lineHeight: 20 },
+  payoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 8,
   },
-
-  actionSub: {
-    color: '#fff',
-    opacity: 0.85,
+  payoutLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  payoutAmount: { fontSize: 15, fontWeight: '700' },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  footerNote: {
     fontSize: 12,
-  },
-
-  info: {
-    marginTop: 32,
+    textAlign: 'center',
+    marginTop: 24,
+    lineHeight: 18,
   },
 });

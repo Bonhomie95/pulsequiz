@@ -21,7 +21,10 @@ const IdentitySchema = z.object({
     .string()
     .min(3)
     .max(20)
-    .regex(/^[a-zA-Z0-9_]+$/),
+    .regex(
+      /^[a-zA-Z0-9_]+$/,
+      'Username can only contain letters, numbers and underscores',
+    ),
   avatar: z.string().min(1),
 });
 
@@ -77,14 +80,11 @@ export async function oauthLogin(req: Request, res: Response) {
     if (!user) {
       user = await User.findOne({ email: profile.email });
       if (user) {
-        // If the email exists but is linked to a different provider → block
         if (user.provider && user.provider !== provider) {
           return res.status(409).json({
             message: 'Account already linked with another provider',
           });
         }
-
-        // Link provider if missing / incomplete
         user.provider = provider;
         user.providerId = profile.providerId;
         await user.save();
@@ -93,24 +93,18 @@ export async function oauthLogin(req: Request, res: Response) {
 
     const isNew = !user;
 
-    // 3) Create user WITHOUT identity
+    // 3) Create user WITHOUT identity — identity must be set in /identity
     if (!user) {
       user = await User.create({
         email: profile.email,
         provider,
         providerId: profile.providerId,
-
-        // ✅ identity must be set later in /identity
         username: null,
         avatar: null,
-
-        // optional defaults
         theme: 'system',
         withdrawalEnabled: false,
       });
-    
 
-      // create companion docs (safe to ignore duplicates if you re-run)
       await Promise.all([
         Progress.create({ userId: user._id }),
         CoinWallet.create({ userId: user._id }),
@@ -119,7 +113,6 @@ export async function oauthLogin(req: Request, res: Response) {
     }
 
     const jwt = signJwt({ userId: user._id.toString() });
-
     const needsIdentity = isIdentityMissing(user);
 
     return res.json({
@@ -136,6 +129,12 @@ export async function oauthLogin(req: Request, res: Response) {
 /**
  * POST /api/auth/identity (protected)
  * Body: { username, avatar }
+ *
+ * Fixes:
+ * - Case-insensitive uniqueness check (so "Alice" and "alice" are treated as taken)
+ * - Normalizes to lowercase before saving
+ * - Returns a clear 409 with the specific conflict message
+ * - Guards against referral-code collisions (referral codes are derived from username)
  */
 export async function setIdentity(req: AuthRequest, res: Response) {
   if (!req.userId) {
@@ -144,37 +143,42 @@ export async function setIdentity(req: AuthRequest, res: Response) {
 
   const parsed = IdentitySchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ message: 'Invalid payload' });
+    return res.status(400).json({
+      message: parsed.error.issues[0]?.message ?? 'Invalid payload',
+    });
   }
 
   const username = normalizeUsername(parsed.data.username);
   const avatar = parsed.data.avatar;
 
   try {
-    // unique check
+    // Case-insensitive exact match check — the DB index is on normalized lowercase
+    // but we also guard against any legacy mixed-case usernames
     const exists = await User.findOne({
-      username,
+      username: { $regex: new RegExp(`^${username}$`, 'i') },
       _id: { $ne: req.userId },
     }).lean();
 
     if (exists) {
-      return res.status(409).json({ message: 'Username taken' });
+      return res.status(409).json({ message: 'Username is already taken' });
     }
 
     const user = await User.findByIdAndUpdate(
       req.userId,
       { username, avatar },
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    return res.json({
-      user: publicUser(user),
-    });
+    return res.json({ user: publicUser(user) });
   } catch (e: any) {
+    // Mongo duplicate key error (race condition between the check and the write)
+    if (e?.code === 11000) {
+      return res.status(409).json({ message: 'Username is already taken' });
+    }
     return res
       .status(500)
       .json({ message: e?.message || 'Failed to set identity' });
@@ -204,6 +208,7 @@ export async function me(req: AuthRequest, res: Response) {
       usdtType: user.usdtType ?? null,
       usdtAddress: user.usdtAddress ?? null,
       withdrawalEnabled: !!user.withdrawalEnabled,
+      publicProfile: user.publicProfile,
     },
   });
 }

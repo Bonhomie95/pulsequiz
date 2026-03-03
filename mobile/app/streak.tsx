@@ -69,15 +69,12 @@ export default function StreakScreen() {
       ? dayjs(res.data.lastCheckIn).tz(TZ).startOf('day')
       : null;
 
-    setCheckedInToday(
-      !!lastCheckIn &&
-        dayjs(lastCheckIn)
-          .tz(TZ)
-          .isSame(dayjs(res.data.lastCheckIn).tz(TZ), 'day')
-    );
-
-    // setCheckedInToday(!!last && last.isSame(now));
-    setMissedYesterday(!!last && last.isBefore(now.subtract(1, 'day')));
+    const nowLagos = dayjs().tz(TZ).startOf('day');
+    const lastCI = res.data.lastCheckIn
+      ? dayjs(res.data.lastCheckIn).tz(TZ).startOf('day')
+      : null;
+    setCheckedInToday(!!lastCI && lastCI.isSame(nowLagos));
+    setMissedYesterday(!!lastCI && lastCI.isBefore(nowLagos.subtract(1, 'day')));
   };
 
   useFocusEffect(
@@ -127,17 +124,12 @@ export default function StreakScreen() {
   /* ---------------- CALENDAR ---------------- */
 
   const days = useMemo(() => {
-    const today = lastCheckIn
-      ? dayjs(lastCheckIn).tz(TZ).startOf('day')
-      : dayjs().tz(TZ).startOf('day');
+    // Always anchor calendar to REAL today in Lagos TZ, not lastCheckIn
+    const today = dayjs().tz(TZ).startOf('day');
 
     return Array.from({ length: CALENDAR_RANGE }).map((_, i) => {
-      const anchor = today;
-
-      const date = anchor.subtract(3 - i, 'day');
-
+      const date = today.subtract(3 - i, 'day');
       const key = date.format('YYYY-MM-DD');
-
       return {
         label: date.format('ddd'),
         date: date.format('DD'),
@@ -153,7 +145,7 @@ export default function StreakScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <TouchableOpacity
-        onPress={() => router.replace('/')}
+        onPress={() => router.replace('/(tabs)/home')}
         style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
       >
         <ChevronLeft size={18} color={theme.colors.text} />

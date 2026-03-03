@@ -17,11 +17,13 @@ export interface IUser {
   usdtAddress?: string;
 
   withdrawalEnabled: boolean;
+  publicProfile: boolean; // whether username appears in "ready to play" carousel
   sessionsSinceLastAd: number;
   lastAdRewardAt?: Date | null;
   adRewardsInWindow: number;
   lastSeenAt?: Date | null;
   isBanned: boolean;
+  hasCompletedFirstQuiz: boolean;
 
   createdAt: Date;
 }
@@ -54,6 +56,10 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    publicProfile: {
+      type: Boolean,
+      default: true, // opt-in by default
+    },
     sessionsSinceLastAd: {
       type: Number,
       default: 0,
@@ -68,6 +74,7 @@ const UserSchema = new Schema<IUser>(
     },
     lastSeenAt: { type: Date, default: null },
     isBanned: { type: Boolean, default: false },
+    hasCompletedFirstQuiz: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

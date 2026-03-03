@@ -3,9 +3,13 @@ import Progress from '../models/Progress';
 import User from '../models/User';
 import LeaderboardSnapshot from '../models/LeaderboardSnapshot';
 
-type Type = 'weekly' | 'monthly' | 'all';
+type LeaderboardType = 'weekly' | 'monthly' | 'all';
 
-function getDateRange(type: Type) {
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+
+function getDateRange(
+  type: LeaderboardType,
+): { start: Date; end: Date } | null {
   const now = new Date();
 
   if (type === 'weekly') {
@@ -27,61 +31,50 @@ function getDateRange(type: Type) {
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     end.setHours(23, 59, 59, 999);
-
     return { start, end };
   }
 
-  return null;
+  return null; // 'all' has no date range
 }
 
+// ─── buildLeaderboard ─────────────────────────────────────────────────────────
+
 /**
- * Build leaderboard dynamically
+ * Computes the leaderboard for the given type, persists a snapshot, and
+ * returns the ranked entries.
+ *
+ * Returns [] if the date range cannot be determined (should not happen in
+ * practice for supported types).
  */
-export async function buildLeaderboard(type: Type) {
-  let rows: { userId: string; points: number }[] = [];
+export async function buildLeaderboard(type: LeaderboardType) {
+  let rows: { userId: string; points: number }[];
 
   if (type === 'all') {
-    const all = await Progress.find().sort({ points: -1 }).limit(100).lean();
+    const all = await Progress.find({ points: { $gt: 0 } })
+      .sort({ points: -1 })
+      .limit(100)
+      .lean();
 
-    rows = all.map((p) => ({
-      userId: p.userId.toString(),
-      points: p.points,
-    }));
+    rows = all.map((p) => ({ userId: p.userId.toString(), points: p.points }));
   } else {
     const range = getDateRange(type);
     if (!range) return [];
 
-    const agg = await QuizSession.aggregate([
-      {
-        $match: {
-          createdAt: {
-            $gte: range.start,
-            $lte: range.end,
-          },
-        },
-      },
-      {
-        $group: {
-          _id: '$userId',
-          points: { $sum: '$totalPoints' },
-        },
-      },
+    const agg = await QuizSession.aggregate<{ _id: string; points: number }>([
+      { $match: { createdAt: { $gte: range.start, $lte: range.end } } },
+      { $group: { _id: '$userId', points: { $sum: '$totalPoints' } } },
       { $sort: { points: -1 } },
       { $limit: 100 },
     ]);
 
-    rows = agg.map((r) => ({
-      userId: r._id.toString(),
-      points: r.points,
-    }));
+    rows = agg.map((r) => ({ userId: r._id.toString(), points: r.points }));
   }
 
+  // Hydrate usernames and avatars in a single query
   const userIds = rows.map((r) => r.userId);
-
   const users = await User.find({ _id: { $in: userIds } })
     .select('username avatar')
     .lean();
-
   const userMap = new Map(users.map((u) => [u._id.toString(), u]));
 
   const data = rows.map((r, index) => {
@@ -95,18 +88,28 @@ export async function buildLeaderboard(type: Type) {
     };
   });
 
-  // cache snapshot
-  await LeaderboardSnapshot.updateOne(
-    { type },
-    { data, generatedAt: new Date() },
-    { upsert: true }
-  );
+  // Persist snapshot — wrap in try/catch so a write failure doesn't lose the result
+  try {
+    await LeaderboardSnapshot.updateOne(
+      { type },
+      { $set: { data, generatedAt: new Date() } },
+      { upsert: true },
+    );
+  } catch (err) {
+    console.error(
+      `❌ Failed to persist leaderboard snapshot (type=${type}):`,
+      err,
+    );
+  }
 
   return data;
 }
 
+// ─── rebuildLeaderboardSnapshots ─────────────────────────────────────────────
+
 /**
- * Rebuild all snapshots (called after quiz finish)
+ * Rebuild all three snapshots — called after a quiz finishes.
+ * Runs sequentially to avoid hammering the DB simultaneously.
  */
 export async function rebuildLeaderboardSnapshots() {
   await buildLeaderboard('weekly');

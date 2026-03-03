@@ -62,11 +62,24 @@ async function run() {
       };
     });
 
-    const result = await QuizQuestion.insertMany(prepared, {
-      ordered: false,
-    });
+    // Upsert each question — skip if identical question+category already exists
+    let inserted = 0;
+    let skipped = 0;
 
-    console.log(`📥 ${file}: ${result.length} inserted`);
+    for (const q of prepared) {
+      const res = await (QuizQuestion as any).updateOne(
+        { question: q.question, category: q.category },
+        { $setOnInsert: q },
+        { upsert: true }
+      );
+      if (res.upsertedCount > 0) {
+        inserted++;
+      } else {
+        skipped++;
+      }
+    }
+
+    console.log(`📥 ${file}: ${inserted} inserted, ${skipped} skipped (already exist)`);
   }
 
   await mongoose.disconnect();

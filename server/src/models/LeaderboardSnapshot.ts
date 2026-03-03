@@ -5,6 +5,8 @@ export interface LeaderboardEntry {
   username: string;
   avatar: string;
   points: number;
+  rank?: number;
+  previousRank?: number;
 }
 
 export interface ILeaderboardSnapshot {
@@ -19,6 +21,8 @@ const LeaderboardEntrySchema = new Schema<LeaderboardEntry>(
     username: { type: String, required: true },
     avatar: { type: String, required: true },
     points: { type: Number, required: true },
+    rank: { type: Number, default: null },
+    previousRank: { type: Number, default: null },
   },
   { _id: false }
 );

@@ -8,6 +8,7 @@ const UpdateSettingsSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']).optional(),
   usdtType: z.enum(['TRC20', 'ERC20', 'BEP20']).optional(),
   usdtAddress: z.string().optional(),
+  publicProfile: z.boolean().optional(),
 });
 
 export async function updateSettings(req: AuthRequest, res: Response) {
@@ -20,7 +21,7 @@ export async function updateSettings(req: AuthRequest, res: Response) {
     return res.status(400).json({ message: 'Invalid payload' });
   }
 
-  const { theme, usdtType, usdtAddress } = parsed.data;
+  const { theme, usdtType, usdtAddress, publicProfile } = parsed.data;
 
   if (usdtAddress && !usdtType) {
     return res.status(400).json({
@@ -45,6 +46,7 @@ export async function updateSettings(req: AuthRequest, res: Response) {
 
   const update: any = {};
   if (theme) update.theme = theme;
+  if (publicProfile !== undefined) update.publicProfile = publicProfile;
 
   if (usdtType) update.usdtType = usdtType;
   if (usdtAddress) {
@@ -62,6 +64,7 @@ export async function updateSettings(req: AuthRequest, res: Response) {
       usdtType: user?.usdtType,
       usdtAddress: user?.usdtAddress,
       withdrawalEnabled: user?.withdrawalEnabled,
+      publicProfile: user?.publicProfile,
     },
   });
 }

@@ -2,6 +2,8 @@ import Progress, { ProgressDoc } from '../models/Progress';
 import CoinWallet from '../models/CoinWallet';
 import QuizSession from '../models/QuizSession';
 import { getLevelFromPoints } from '../utils/level';
+import { isDailyCapExceeded } from './antiCheatService';
+import { getSetting, SETTINGS_KEYS } from '../models/AppSettings';
 import { Types } from 'mongoose';
 
 export async function applyQuizResult(params: {
@@ -18,6 +20,12 @@ export async function applyQuizResult(params: {
   const bonus = correct === total ? 10 : 0;
   const totalPoints = basePoints + bonus;
 
+  /* ---------------- DAILY CAP CHECK ---------------- */
+  const sessionCap = await getSetting(SETTINGS_KEYS.DAILY_SESSION_CAP, 20);
+  const capExceeded = await isDailyCapExceeded(userId, Number(sessionCap));
+  // If cap exceeded, store session with 0 leaderboard points (still records history)
+  const leaderboardPoints = capExceeded ? 0 : totalPoints;
+
   /* ---------------- PROGRESS ---------------- */
   const progress = (await Progress.findOne({ userId })) as ProgressDoc;
   if (!progress) throw new Error('Progress missing');
@@ -25,7 +33,7 @@ export async function applyQuizResult(params: {
 
   const prevLevel = progress.level;
 
-  progress.points += totalPoints;
+  progress.points += leaderboardPoints;
   progress.totalQuizzes += 1;
   progress.correctAnswers += correct;
   progress.totalAnswers += total;
@@ -48,7 +56,7 @@ export async function applyQuizResult(params: {
     category,
     score: basePoints,
     bonus,
-    totalPoints,
+    totalPoints: leaderboardPoints, // 0 if daily cap exceeded
     correctAnswers: correct,
     totalQuestions: total,
     levelAtTime: progress.level,
@@ -60,12 +68,13 @@ export async function applyQuizResult(params: {
 
   /* ---------------- RETURN ---------------- */
   return {
-    pointsAdded: totalPoints,
+    pointsAdded: leaderboardPoints,
+    actualPoints: totalPoints,
+    capExceeded,
     bonus,
     newLevel: progress.level,
     leveledUp,
     totalQuizzes: progress.totalQuizzes,
     accuracy,
-    // coinReward,
   };
 }

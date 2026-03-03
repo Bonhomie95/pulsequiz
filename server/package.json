@@ -7,7 +7,7 @@
     "dev": "ts-node-dev --max-old-space-size=4096 --respawn src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "seed": "ts-node seed/importQuestions.ts",
+    "seed": "ts-node ./src/seed/importQuestions.ts",
     "create-admin": "ts-node src/scripts/createAdmin.ts"
   },
   "keywords": [],

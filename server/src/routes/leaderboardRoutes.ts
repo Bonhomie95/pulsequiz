@@ -1,13 +1,10 @@
 import { Router } from 'express';
-import { getLeaderboard } from '../controllers/leaderboardController';
+import { getLeaderboard, getMyRank } from '../controllers/leaderboardController';
+import { requireAuth } from '../middlewares/auth';
 
 const router = Router();
 
-/**
- * GET /leaderboard/weekly
- * GET /leaderboard/monthly
- * GET /leaderboard/all
- */
+router.get('/my-rank', requireAuth, getMyRank);
 router.get('/:type', getLeaderboard);
 
 export default router;

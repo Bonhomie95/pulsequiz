@@ -1,0 +1,662 @@
+[
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many continents are there on Earth?",
+    "options": ["5", "6", "7", "8"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many days are in a leap year?",
+    "options": ["364", "365", "366", "367"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the largest planet in our solar system?",
+    "options": ["Saturn", "Neptune", "Uranus", "Jupiter"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many colors are in a rainbow?",
+    "options": ["5", "6", "7", "8"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the hardest natural substance on Earth?",
+    "options": ["Ruby", "Diamond", "Sapphire", "Quartz"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the smallest country in the world?",
+    "options": ["Monaco", "San Marino", "Liechtenstein", "Vatican City"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many letters are in the English alphabet?",
+    "options": ["24", "25", "26", "27"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "Which planet is closest to the Sun?",
+    "options": ["Venus", "Earth", "Mars", "Mercury"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the currency of Japan?",
+    "options": ["Yuan", "Won", "Yen", "Baht"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many sides does a hexagon have?",
+    "options": ["5", "6", "7", "8"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "In which direction does the Sun rise?",
+    "options": ["West", "North", "East", "South"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the capital of the United Kingdom?",
+    "options": ["Edinburgh", "Manchester", "Birmingham", "London"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "Which gas do plants absorb during photosynthesis?",
+    "options": ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the largest ocean on Earth?",
+    "options": ["Atlantic", "Indian", "Arctic", "Pacific"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many seconds are in one minute?",
+    "options": ["30", "60", "90", "100"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for gold?",
+    "options": ["Go", "Gd", "Au", "Ag"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many players are on a chess team during a match?",
+    "options": ["1", "2", "4", "8"],
+    "answer": 0
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the name of the force that keeps planets in orbit around the Sun?",
+    "options": [
+      "Magnetic force",
+      "Centrifugal force",
+      "Gravity",
+      "Nuclear force"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "Which is the tallest mountain in the world?",
+    "options": ["K2", "Mont Blanc", "Kilimanjaro", "Mount Everest"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the most spoken language in the world by number of native speakers?",
+    "options": ["English", "Spanish", "Hindi", "Mandarin Chinese"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many hours are in a day?",
+    "options": ["12", "20", "24", "48"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the capital of Australia?",
+    "options": ["Sydney", "Melbourne", "Brisbane", "Canberra"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "Which organ pumps blood through the human body?",
+    "options": ["Lungs", "Kidneys", "Heart", "Liver"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What color do you get when you mix red and blue?",
+    "options": ["Green", "Orange", "Purple", "Brown"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many planets are in our solar system?",
+    "options": ["7", "8", "9", "10"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the longest bone in the human body?",
+    "options": ["Humerus", "Tibia", "Femur", "Fibula"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "Which country is the Eiffel Tower located in?",
+    "options": ["Italy", "Spain", "United Kingdom", "France"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "How many teeth does a healthy adult human have?",
+    "options": ["28", "30", "32", "34"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "Which animal is known as the fastest land animal?",
+    "options": ["Lion", "Horse", "Cheetah", "Gazelle"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "easy",
+    "question": "What is the name of the international date line in the sky?",
+    "options": [
+      "Prime Meridian",
+      "Equator",
+      "Tropic of Cancer",
+      "Greenwich Meridian"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the speed of light approximately in miles per second?",
+    "options": ["100,000", "186,000", "250,000", "300,000"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "Who invented the telephone?",
+    "options": [
+      "Thomas Edison",
+      "Nikola Tesla",
+      "Alexander Graham Bell",
+      "Guglielmo Marconi"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the chemical formula for table salt?",
+    "options": ["NaCl", "KCl", "CaCO3", "MgSO4"],
+    "answer": 0
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "In what year did World War I begin?",
+    "options": ["1912", "1913", "1914", "1915"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the term for animals that eat only plants?",
+    "options": ["Carnivore", "Omnivore", "Herbivore", "Decomposer"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the name of the process by which water vapor turns into liquid water?",
+    "options": ["Evaporation", "Sublimation", "Condensation", "Precipitation"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "Which ancient wonder of the world is still standing today?",
+    "options": [
+      "Hanging Gardens of Babylon",
+      "Colossus of Rhodes",
+      "Great Pyramid of Giza",
+      "Lighthouse of Alexandria"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What does the Roman numeral 'X' represent?",
+    "options": ["5", "10", "50", "100"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the name of the natural satellite that orbits Earth?",
+    "options": ["Io", "Europa", "The Moon", "Titan"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What are the primary colors in the RYB color model?",
+    "options": [
+      "Red, Yellow, Blue",
+      "Red, Green, Blue",
+      "Cyan, Magenta, Yellow",
+      "Red, Orange, Yellow"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the name of the longest river in the Americas?",
+    "options": ["Mississippi", "Orinoco", "Amazon", "Paraná"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the term for a word that reads the same forwards and backwards?",
+    "options": ["Homonym", "Palindrome", "Anagram", "Acronym"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "In what century did the Renaissance begin?",
+    "options": ["12th", "13th", "14th", "15th"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the boiling point of water in Fahrenheit?",
+    "options": ["100°F", "180°F", "212°F", "250°F"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "How many bones are in the adult human body?",
+    "options": ["186", "206", "226", "246"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the name of the galaxy containing our solar system?",
+    "options": ["Andromeda", "Triangulum", "The Milky Way", "Centaurus A"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "Which element has the highest melting point?",
+    "options": ["Iron", "Gold", "Tungsten", "Platinum"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the name of the longest wall ever built?",
+    "options": [
+      "Hadrian's Wall",
+      "Great Wall of China",
+      "Berlin Wall",
+      "Aurelian Wall"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the square root of 144?",
+    "options": ["10", "11", "12", "13"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "In which year did the Berlin Wall fall?",
+    "options": ["1985", "1987", "1989", "1991"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the largest desert in the world (including polar deserts)?",
+    "options": ["Sahara", "Arabian", "Gobi", "Antarctic"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the study of earthquakes called?",
+    "options": ["Geology", "Seismology", "Volcanology", "Tectonics"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "Which scientist developed the theory of general relativity?",
+    "options": ["Isaac Newton", "Niels Bohr", "Max Planck", "Albert Einstein"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "How many chambers does the human heart have?",
+    "options": ["2", "3", "4", "5"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the name of the scale used to measure the intensity of earthquakes?",
+    "options": [
+      "Beaufort scale",
+      "Richter scale",
+      "Fujita scale",
+      "Saffir-Simpson scale"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "In which country is the Amazon rainforest primarily located?",
+    "options": ["Colombia", "Venezuela", "Peru", "Brazil"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the term for the outer layer of the Earth?",
+    "options": ["Mantle", "Inner Core", "Outer Core", "Crust"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the name of the first artificial satellite launched into space?",
+    "options": ["Explorer 1", "Vostok 1", "Apollo 1", "Sputnik 1"],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "What is the name of the protein that carries oxygen in red blood cells?",
+    "options": ["Myosin", "Collagen", "Hemoglobin", "Keratin"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "medium",
+    "question": "In geometry, how many degrees are in a circle?",
+    "options": ["180", "270", "360", "400"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the name of the enzyme that unwinds the DNA double helix during replication?",
+    "options": ["DNA Polymerase", "Helicase", "Ligase", "Primase"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is Avogadro's number?",
+    "options": ["6.022 × 10²³", "6.022 × 10²²", "6.022 × 10²⁴", "3.14 × 10²³"],
+    "answer": 0
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the name of the phenomenon where light bends around massive objects due to gravity?",
+    "options": [
+      "Doppler effect",
+      "Gravitational lensing",
+      "Redshift",
+      "Dark matter"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the Coriolis effect?",
+    "options": [
+      "The bending of ocean currents",
+      "Deflection of moving objects due to Earth's rotation",
+      "The magnetic pole shift",
+      "Tidal forces from the moon"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the name of the theoretical boundary around a black hole beyond which nothing can escape?",
+    "options": [
+      "Photon sphere",
+      "Schwarzschild radius",
+      "Event horizon",
+      "Hawking point"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the Fibonacci sequence?",
+    "options": [
+      "A series where each number is double the previous",
+      "A series where each number is the sum of the two preceding",
+      "A series of prime numbers",
+      "A geometric series"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the name of the chemical process by which cells produce energy from glucose?",
+    "options": [
+      "Photosynthesis",
+      "Fermentation",
+      "Cellular respiration",
+      "Glycolysis only"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the term for the phenomenon of two quantum particles being correlated regardless of distance?",
+    "options": [
+      "Quantum tunneling",
+      "Superposition",
+      "Quantum entanglement",
+      "Wave-particle duality"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the Pythagorean theorem?",
+    "options": ["a+b=c", "a²+b²=c²", "a×b=c", "a/b=c"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the name of the deepest part of the world's oceans?",
+    "options": [
+      "Puerto Rico Trench",
+      "Java Trench",
+      "Tonga Trench",
+      "Challenger Deep (Mariana Trench)"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the correct definition of 'entropy' in thermodynamics?",
+    "options": [
+      "A measure of energy in a system",
+      "A measure of disorder or randomness in a system",
+      "The efficiency of energy conversion",
+      "The rate of heat transfer"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the name of the first element on the periodic table?",
+    "options": ["Helium", "Lithium", "Hydrogen", "Beryllium"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the approximate age of the universe?",
+    "options": [
+      "10 billion years",
+      "13.8 billion years",
+      "15 billion years",
+      "20 billion years"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the name of the force carrier particle for the electromagnetic force?",
+    "options": ["Gluon", "W boson", "Photon", "Z boson"],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is Schrodinger's Cat thought experiment illustrating?",
+    "options": [
+      "Animal psychology",
+      "The paradox of quantum superposition",
+      "Quantum tunneling",
+      "The uncertainty principle"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What does E=mc² represent in Einstein's theory?",
+    "options": [
+      "Energy equals mass times the speed of light",
+      "Energy equals mass times the speed of light squared",
+      "Electromagnetism equals mass times force",
+      "Entropy equals mass times light"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the name of the process by which the Sun generates energy?",
+    "options": [
+      "Nuclear fission",
+      "Chemical combustion",
+      "Nuclear fusion",
+      "Gravitational compression"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the approximate number of neurons in the human brain?",
+    "options": ["10 billion", "100 billion", "500 billion", "1 trillion"],
+    "answer": 1
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the name of the first successful powered airplane flight in 1903?",
+    "options": [
+      "Kitty Hawk Flyer",
+      "Spirit of St. Louis",
+      "Wright Flyer",
+      "Biplane Pioneer"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "General Knowledge",
+    "difficulty": "hard",
+    "question": "What is the study of the origin and development of the universe called?",
+    "options": ["Astronomy", "Astrophysics", "Cosmology", "Cosmography"],
+    "answer": 2
+  }
+]

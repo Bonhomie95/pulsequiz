@@ -6,18 +6,19 @@
     "scheme": "pulsequiz",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "icon": "./assets/images/icon.png",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bonhomie95.pulsequiz"
+      "bundleIdentifier": "com.bonhomie95.pulsequiz",
+      "infoPlist": {
+        "NSUserNotificationUsageDescription": "PulseQuiz sends you streak reminders, prize alerts, and challenge notifications."
+      }
     },
     "android": {
       "package": "com.bonhomie95.pulsequiz",
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -32,6 +33,7 @@
       "expo-router",
       "expo-secure-store",
       "expo-web-browser",
+      "expo-notifications",
       [
         "@react-native-google-signin/google-signin",
         {

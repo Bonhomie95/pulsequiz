@@ -132,7 +132,7 @@ export default function PvPPlayScreen() {
       usePvPStore.getState().updateProgress(payload);
     });
 
-    socket.on(SOCKET_EVENTS.WAITING, () => {
+    socket.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, () => {
       usePvPStore.getState().setWaiting();
     });
 
@@ -143,7 +143,8 @@ export default function PvPPlayScreen() {
 
     return () => {
       socket.off(SOCKET_EVENTS.PLAYER_UPDATE);
-      socket.off(SOCKET_EVENTS.WAITING);
+      socket.off(SOCKET_EVENTS.WAITING_ON_OPPONENT);
+      socket.off(SOCKET_EVENTS.MATCH_DRAW);
       socket.off(SOCKET_EVENTS.MATCH_FINISHED);
     };
   }, []);

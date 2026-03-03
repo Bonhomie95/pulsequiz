@@ -6,4 +6,5 @@ export const STORAGE_KEYS = {
   LAST_CHECKIN: 'pq_last_checkin',
   THEME: 'pq_theme',
   CHECKIN_TOAST_DATE: 'pq_checkin_toast_date',
+  ONBOARDING_DONE: 'pq_onboarding_done',
 };

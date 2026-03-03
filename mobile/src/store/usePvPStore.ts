@@ -28,6 +28,7 @@ type PvPState = {
 
   category: string | null;
   matchId: string | null;
+  wager: number;
 
   me: PlayerSnapshot | null;
   opponent: PlayerSnapshot | null;
@@ -45,6 +46,7 @@ type PvPState = {
     matchId: string;
     players: PlayerSnapshot[];
     myUserId: string;
+    wager?: number;
   }) => void;
   startMatch: (questions: Question[]) => void;
   updateProgress: (payload: any) => void;
@@ -57,6 +59,7 @@ export const usePvPStore = create<PvPState>((set, get) => ({
   status: 'idle',
   category: null,
   matchId: null,
+  wager: 0,
 
   me: null,
   opponent: null,
@@ -69,13 +72,14 @@ export const usePvPStore = create<PvPState>((set, get) => ({
 
   setSearching: (category) => set({ status: 'searching', category }),
 
-  setMatched: ({ matchId, players, myUserId }) => {
-    const me = players.find((p) => p.userId === myUserId)!;
-    const opponent = players.find((p) => p.userId !== myUserId)!;
+  setMatched: ({ matchId, players, myUserId, wager = 0 }) => {
+    const me = players.find((p) => p.userId === myUserId) ?? players[0];
+    const opponent = players.find((p) => p.userId !== myUserId) ?? players[1];
 
     set({
       status: 'matched',
       matchId,
+      wager,
       me,
       opponent,
     });
@@ -109,6 +113,7 @@ export const usePvPStore = create<PvPState>((set, get) => ({
       status: 'idle',
       category: null,
       matchId: null,
+      wager: 0,
       me: null,
       opponent: null,
       questions: [],

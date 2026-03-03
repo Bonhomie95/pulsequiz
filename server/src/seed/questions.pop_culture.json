@@ -1,0 +1,694 @@
+[
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which pop star is known as the 'Queen of Pop'?",
+    "options": ["Beyoncé", "Madonna", "Lady Gaga", "Rihanna"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What is the name of Tony Stark's AI assistant in the Iron Man films?",
+    "options": ["JARVIS", "HAL", "WALL-E", "R2-D2"],
+    "answer": 0
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which TV show features the fictional town of Hawkins, Indiana?",
+    "options": ["The Walking Dead", "Stranger Things", "Dark", "Twin Peaks"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Who played Harry Potter in the film series?",
+    "options": [
+      "Rupert Grint",
+      "Tom Felton",
+      "Daniel Radcliffe",
+      "Eddie Redmayne"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which animated film features the song 'Let It Go'?",
+    "options": ["Tangled", "Brave", "Moana", "Frozen"],
+    "answer": 3
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What social media platform is known for short video content called 'Reels' and 'Stories'?",
+    "options": ["Twitter", "LinkedIn", "Instagram", "Pinterest"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which band sang 'Bohemian Rhapsody'?",
+    "options": ["The Beatles", "Queen", "Led Zeppelin", "The Rolling Stones"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What is the name of the fictional kingdom in 'Frozen'?",
+    "options": ["Narnia", "Arendelle", "Agrabah", "Motunui"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which superhero is known as the 'Man of Steel'?",
+    "options": ["Batman", "Thor", "Superman", "Iron Man"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Who sang 'Shape of You' in 2017?",
+    "options": ["Justin Bieber", "Bruno Mars", "Ed Sheeran", "Sam Smith"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which streaming service produced 'The Crown'?",
+    "options": ["HBO", "Amazon Prime", "Disney+", "Netflix"],
+    "answer": 3
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What color is the Incredible Hulk?",
+    "options": ["Blue", "Red", "Green", "Purple"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which movie features the quote 'May the Force be with you'?",
+    "options": ["Star Trek", "Star Wars", "The Matrix", "Dune"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which singer is known as 'Slay Queen' and released the visual album 'Lemonade'?",
+    "options": ["Rihanna", "Adele", "Beyoncé", "Taylor Swift"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What game involves players trying to survive on a shrinking island?",
+    "options": ["Minecraft", "Call of Duty", "Fortnite", "Among Us"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which film studio created the Marvel Cinematic Universe films?",
+    "options": ["Warner Bros", "Universal", "Disney/Marvel Studios", "Sony"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What is the name of Simba's father in 'The Lion King'?",
+    "options": ["Mufasa", "Scar", "Rafiki", "Timon"],
+    "answer": 0
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which social media platform uses the hashtag system most famously?",
+    "options": ["Facebook", "Twitter/X", "Snapchat", "TikTok"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Who plays Iron Man / Tony Stark in the MCU?",
+    "options": [
+      "Chris Hemsworth",
+      "Chris Evans",
+      "Robert Downey Jr.",
+      "Mark Ruffalo"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which show features the characters Ross, Rachel, Monica, Chandler, Joey, and Phoebe?",
+    "options": ["Seinfeld", "How I Met Your Mother", "Friends", "The Office"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What color pill does Neo take in 'The Matrix'?",
+    "options": ["Blue", "Green", "Red", "Yellow"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which music genre did Elvis Presley help popularize?",
+    "options": ["Jazz", "Rock and roll", "Blues", "Country"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What is the name of the dog in 'Paw Patrol'?",
+    "options": ["Chase", "Rocky", "Rubble", "Zuma"],
+    "answer": 0
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which Disney princess has a magical hair that glows when she sings?",
+    "options": ["Cinderella", "Rapunzel", "Ariel", "Belle"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Who wrote the 'Harry Potter' series?",
+    "options": [
+      "Stephenie Meyer",
+      "J.R.R. Tolkien",
+      "J.K. Rowling",
+      "C.S. Lewis"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What is the name of the coffee shop in 'Friends'?",
+    "options": ["Monk's Café", "The Peach Pit", "Central Perk", "MacLaren's"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which rapper is known as 'Slim Shady'?",
+    "options": ["Jay-Z", "Kanye West", "Eminem", "Drake"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "In which city is the TV show 'Sex and the City' set?",
+    "options": ["Los Angeles", "Chicago", "Miami", "New York City"],
+    "answer": 3
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "What animal is the logo of the WWF (World Wildlife Fund)?",
+    "options": ["Tiger", "Elephant", "Panda", "Lion"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "easy",
+    "question": "Which video game character is known for jumping on Goombas and saving Princess Peach?",
+    "options": ["Link", "Mario", "Sonic", "Kirby"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which artist painted the 'Mona Lisa' and is also referenced in the Jay-Z/Beyoncé album title?",
+    "options": ["Michelangelo", "Raphael", "Leonardo da Vinci", "Donatello"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "What is the name of the fictional high school in 'High School Musical'?",
+    "options": ["East High", "West High", "Rydell High", "Bayside High"],
+    "answer": 0
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which actress played Katniss Everdeen in 'The Hunger Games'?",
+    "options": [
+      "Emma Watson",
+      "Jennifer Lawrence",
+      "Shailene Woodley",
+      "Kristen Stewart"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "What year did the first iPhone launch?",
+    "options": ["2005", "2006", "2007", "2008"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which TV show is set in the fictional town of Stars Hollow?",
+    "options": ["Dawson's Creek", "One Tree Hill", "Gilmore Girls", "Everwood"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Who directed the film 'Get Out'?",
+    "options": ["Spike Lee", "Ryan Coogler", "Jordan Peele", "Ava DuVernay"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which song by Carly Rae Jepsen became a viral hit in 2012?",
+    "options": [
+      "Roar",
+      "Call Me Maybe",
+      "Firework",
+      "Somebody That I Used to Know"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "What is the name of Thor's hammer?",
+    "options": ["Gungnir", "Mjolnir", "Excalibur", "Jarnbjorn"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which reality TV show features the Kardashian family?",
+    "options": [
+      "The Real Housewives",
+      "Keeping Up with the Kardashians",
+      "Big Brother",
+      "Jersey Shore"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "In 'Breaking Bad', what is Walter White's drug of choice to manufacture?",
+    "options": ["Heroin", "Cocaine", "Methamphetamine", "Fentanyl"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which pop group consisted of Scary, Sporty, Baby, Ginger, and Posh?",
+    "options": ["Destiny's Child", "TLC", "Spice Girls", "En Vogue"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "What is the name of Ariana Grande's fragrance line named after one of her hit songs?",
+    "options": ["Thank U, Next", "God is a Woman", "Cloud", "7 Rings"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which movie won the first Best Picture Oscar ever awarded?",
+    "options": [
+      "Wings",
+      "It Happened One Night",
+      "Gone with the Wind",
+      "Casablanca"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Who is the creator of the 'Black Mirror' TV series?",
+    "options": [
+      "Ryan Murphy",
+      "Shonda Rhimes",
+      "Charlie Brooker",
+      "David Fincher"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which hip-hop duo consists of Kanye West and Jay-Z?",
+    "options": ["Run-DMC", "Outkast", "Watch the Throne", "Clipse"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "What is the name of the fictional country in 'Black Panther'?",
+    "options": ["Genosha", "Sokovia", "Wakanda", "Latveria"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which actress starred as Mia in 'La La Land'?",
+    "options": ["Natalie Portman", "Emma Stone", "Amy Adams", "Saoirse Ronan"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "What is the name of the horse in 'Tangled'?",
+    "options": ["Pegasus", "Maximus", "Philippe", "Angus"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which YouTube channel is known for the series 'Good Mythical Morning'?",
+    "options": ["Dude Perfect", "Rhett and Link", "Smosh", "PewDiePie"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which singer released the album 'Thriller' in 1982?",
+    "options": ["Prince", "Michael Jackson", "David Bowie", "Whitney Houston"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "What does 'MCU' stand for?",
+    "options": [
+      "Marvel Comics Universe",
+      "Marvel Cinematic Universe",
+      "Movie Crossover Universe",
+      "Major Character Universe"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which 2019 film became the highest-grossing movie of all time upon release?",
+    "options": [
+      "Infinity War",
+      "The Lion King",
+      "Avengers: Endgame",
+      "Spider-Man: Far From Home"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which pop star legally changed her name to SASHA FIERCE as an alter ego?",
+    "options": ["Lady Gaga", "Katy Perry", "Beyoncé", "Nicki Minaj"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Who voiced Woody in the 'Toy Story' films?",
+    "options": ["Tim Allen", "Tom Hanks", "Bill Murray", "Steve Carell"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which network airs 'Game of Thrones'?",
+    "options": ["Netflix", "Showtime", "HBO", "AMC"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "What is the name of the bar in 'How I Met Your Mother'?",
+    "options": ["Paddy's Pub", "MacLaren's", "McLintock's", "The Spotted Owl"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Who sang 'Hello' and 'Rolling in the Deep'?",
+    "options": ["Lorde", "Adele", "Sam Smith", "Ellie Goulding"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which fictional detective lives at 221B Baker Street?",
+    "options": [
+      "Hercule Poirot",
+      "Miss Marple",
+      "Philip Marlowe",
+      "Sherlock Holmes"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "Which actor plays Captain America in the MCU?",
+    "options": ["Chris Pratt", "Chris Hemsworth", "Chris Evans", "Chris Pine"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "What is Taylor Swift's debut album titled?",
+    "options": ["Fearless", "1989", "Taylor Swift", "Speak Now"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "medium",
+    "question": "In 'The Office', what company does the show take place at?",
+    "options": [
+      "Dunder Mifflin",
+      "Sterling Cooper",
+      "Initech",
+      "Vandelay Industries"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "What is the name of the fictional band in the TV show 'Jem and the Holograms'?",
+    "options": [
+      "The Misfits",
+      "The Stingers",
+      "Jem and the Holograms",
+      "The Limp Lizards"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which director is known for films with non-linear narratives like 'Pulp Fiction' and 'Reservoir Dogs'?",
+    "options": [
+      "David Lynch",
+      "Quentin Tarantino",
+      "Darren Aronofsky",
+      "Christopher Nolan"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "What was Lady Gaga's birth name?",
+    "options": [
+      "Stefani Germanotta",
+      "Alicia Moore",
+      "Robyn Fenty",
+      "Belcalis Almánzar"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which 2003 film starred Bill Murray as a faded movie star filming a whisky commercial in Tokyo?",
+    "options": [
+      "Broken Flowers",
+      "Lost in Translation",
+      "The Life Aquatic",
+      "Rushmore"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "The viral 2012 Gangnam Style video was by which South Korean artist?",
+    "options": ["BTS", "G-Dragon", "PSY", "CL"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which Tarantino film features a chapter called 'The Bonnie Situation'?",
+    "options": [
+      "Kill Bill",
+      "Inglourious Basterds",
+      "Pulp Fiction",
+      "Jackie Brown"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "What is the real name of the rapper Cardi B?",
+    "options": [
+      "Belcalis Almánzar",
+      "Onika Maraj",
+      "Melissa Forde",
+      "Robyn Rihanna Fenty"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "In which year did Destiny's Child officially disband?",
+    "options": ["2003", "2004", "2005", "2006"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which actor played the Joker in 'The Dark Knight'?",
+    "options": [
+      "Joaquin Phoenix",
+      "Jack Nicholson",
+      "Jared Leto",
+      "Heath Ledger"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "What was the first feature-length CGI animated film?",
+    "options": ["A Bug's Life", "Antz", "Toy Story", "Shrek"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which musician's alter ego is Ziggy Stardust?",
+    "options": ["Prince", "Alice Cooper", "David Bowie", "Freddie Mercury"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which 1994 film starring Tom Hanks features the quote 'Life is like a box of chocolates'?",
+    "options": ["Philadelphia", "Cast Away", "Forrest Gump", "Big"],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "What is the name of the fictional newspaper in 'Superman'?",
+    "options": [
+      "The Daily Planet",
+      "The Gotham Gazette",
+      "The Metropolis Times",
+      "The Daily Bugle"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which artist released the critically acclaimed album 'To Pimp a Butterfly' in 2015?",
+    "options": [
+      "J. Cole",
+      "Childish Gambino",
+      "Kendrick Lamar",
+      "Tyler, the Creator"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which actress voiced Princess Fiona in the 'Shrek' franchise?",
+    "options": [
+      "Sandra Bullock",
+      "Cameron Diaz",
+      "Reese Witherspoon",
+      "Drew Barrymore"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "In 'The Truman Show', what is the name of the TV show Truman is unknowingly starring in?",
+    "options": [
+      "The Real World",
+      "The Truman Show",
+      "True Life",
+      "The Truman Story"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which band released the album 'OK Computer' in 1997?",
+    "options": ["Blur", "Radiohead", "Oasis", "Portishead"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Who directed the 1994 film 'The Shawshank Redemption'?",
+    "options": [
+      "David Fincher",
+      "Frank Darabont",
+      "Rob Reiner",
+      "Oliver Stone"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "What is the name of the fictional country ruled by T'Challa in Marvel Comics?",
+    "options": ["Genosha", "Wakanda", "Latveria", "Sokovia"],
+    "answer": 1
+  },
+  {
+    "category": "Pop Culture",
+    "difficulty": "hard",
+    "question": "Which song by Daft Punk features a sample from Edwin Birdsong's 'Cola Bottle Baby'?",
+    "options": [
+      "One More Time",
+      "Harder Better Faster Stronger",
+      "Get Lucky",
+      "Around the World"
+    ],
+    "answer": 1
+  }
+]

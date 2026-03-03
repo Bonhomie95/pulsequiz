@@ -8,6 +8,11 @@ import { applyQuizResult } from '../services/progressService';
 import { rebuildLeaderboardSnapshots } from '../services/leaderboardService';
 import { useHintService } from '../services/quizHintService';
 import { extendQuestionTime } from '../services/quizTimeService';
+import { checkUserForCheating } from '../services/antiCheatService';
+import { updateChallengeProgress } from '../services/challengeService';
+import Referral from '../models/Referral';
+import Tournament from '../models/Tournament';
+import { creditCoins } from '../services/coinService';
 import { logActivity } from '../utils/activityLogger';
 
 import ActiveQuizSession from '../models/ActiveQuizSession';
@@ -19,6 +24,7 @@ import User from '../models/User';
 
 const StartSchema = z.object({
   category: z.string().min(2),
+  tournamentId: z.string().optional(),
 });
 
 const AnswerSchema = z.object({
@@ -57,7 +63,8 @@ export async function start(req: AuthRequest, res: Response) {
 
   const data = await startQuizSession({
     userId: req.userId,
-    category: parsed.data.category,
+    category: parsed.data.category.trim().toLowerCase(),
+    tournamentId: parsed.data.tournamentId,
   });
 
   return res.json(data);
@@ -140,7 +147,7 @@ export async function finish(req: AuthRequest, res: Response) {
     return res.status(404).json({ message: 'Session not found' });
   }
 
-  const correct = session.answers.filter((a) => a.isCorrect).length;
+  const correct = (session.answers as any[]).filter((a) => a.isCorrect).length;
   const total = session.questions.length;
 
   const result = await applyQuizResult({
@@ -162,12 +169,52 @@ export async function finish(req: AuthRequest, res: Response) {
     { $inc: { sessionsSinceLastAd: 1 } },
   );
 
+  // Track challenge progress (async, non-blocking)
+  updateChallengeProgress({ userId: req.userId, correct, total }).catch(console.error);
+
+  // Referral: reward referrer on referred user's FIRST quiz completion
+  (async () => {
+    try {
+      const u = await User.findOne({ _id: req.userId, hasCompletedFirstQuiz: false }).lean();
+      if (u) {
+        await User.updateOne({ _id: req.userId }, { hasCompletedFirstQuiz: true });
+        const ref = await Referral.findOne({ referredId: req.userId, rewardGranted: false });
+        if (ref) {
+          ref.rewardGranted = true;
+          await ref.save();
+          await creditCoins(ref.referrerId.toString(), ref.rewardCoins, 'referral_bonus', {
+            note: `referral_firstquiz:${req.userId}`,
+          });
+        }
+      }
+    } catch { /* non-critical */ }
+  })();
+
   await rebuildLeaderboardSnapshots();
+
+  // Anti-cheat: async check (don't block response)
+  checkUserForCheating(req.userId).catch(console.error);
+
+  // Tournament score submission: if session has tournamentId, update participant score
+  if ((session as any).tournamentId) {
+    Tournament.findOneAndUpdate(
+      {
+        _id: (session as any).tournamentId,
+        status: 'active',
+        'participants.userId': req.userId,
+      },
+      {
+        $inc: { 'participants.$.score': correct },
+      }
+    ).catch(console.error);
+  }
 
   return res.json({
     correct,
     total,
     points: result.pointsAdded,
+    actualPoints: result.actualPoints,
+    capExceeded: result.capExceeded,
     level: result.newLevel,
     accuracy: result.accuracy,
     leveledUp: result.leveledUp,

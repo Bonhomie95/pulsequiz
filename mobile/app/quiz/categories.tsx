@@ -14,12 +14,17 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useQuizModeStore } from '@/src/store/useQuizModeStore';
 
 const CATEGORIES = [
-  { id: 'history', label: 'History', icon: '📜' },
-  { id: 'math', label: 'Maths', icon: '➗' },
-  { id: 'physics', label: 'Physics', icon: '⚛️' },
-  { id: 'biology', label: 'Biology', icon: '🧬' },
-  { id: 'chemistry', label: 'Chemistry', icon: '🧪' },
-  { id: 'geography', label: 'Geography', icon: '🌍' },
+  { id: 'General Knowledge', label: 'General Knowledge', icon: '🧠' },
+  { id: 'History', label: 'History', icon: '📜' },
+  { id: 'Math', label: 'Maths', icon: '➗' },
+  { id: 'Physics', label: 'Physics', icon: '⚛️' },
+  { id: 'Biology', label: 'Biology', icon: '🧬' },
+  { id: 'Chemistry', label: 'Chemistry', icon: '🧪' },
+  { id: 'Geography', label: 'Geography', icon: '🌍' },
+  { id: 'Pop Culture', label: 'Pop Culture', icon: '🎬' },
+  { id: 'Sports', label: 'Sports', icon: '⚽' },
+  { id: 'Technology', label: 'Technology', icon: '💻' },
+  { id: 'Food & Cooking', label: 'Food & Cooking', icon: '🍳' },
 ];
 
 export default function QuizCategories() {
@@ -60,10 +65,10 @@ export default function QuizCategories() {
 
       {/* Categories */}
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
       >
+        <View style={styles.grid}>
         {CATEGORIES.map((cat) => {
           const isLast = lastCategory === cat.id;
 
@@ -125,6 +130,7 @@ export default function QuizCategories() {
             </TouchableOpacity>
           );
         })}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -173,11 +179,15 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 14,
+  },
+
   card: {
-    width: 150,
-    height: 190,
-    borderRadius: 24,
-    marginRight: 18,
+    width: '47%',
+    height: 170,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',

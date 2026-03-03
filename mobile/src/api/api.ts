@@ -2,7 +2,7 @@ import axios from 'axios';
 import { storage } from '@/src/utils/storage';
 
 const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.7:5000/api', // change to prod later
+  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.19:5000/api', // change to prod later
   timeout: 10000,
 });
 

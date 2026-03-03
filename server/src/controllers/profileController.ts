@@ -38,7 +38,7 @@ export async function getProfile(req: AuthRequest, res: Response) {
     .select('category correctAnswers totalQuestions totalPoints createdAt')
     .lean();
 
-  const lastQuizzes = sessions.map((s) => ({
+  const lastQuizzes = (sessions as any[]).map((s) => ({
     category: s.category,
     answered: `${s.correctAnswers}/${s.totalQuestions}`,
     accuracy:

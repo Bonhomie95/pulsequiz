@@ -24,7 +24,10 @@ const TIPS = [
 ];
 
 export default function PvPSearchScreen() {
-  const { category } = useLocalSearchParams<{ category: string }>();
+  const { category, wager: wagerParam, rematchWith, challengeUser, challengeName } = useLocalSearchParams<{
+    category: string; wager?: string; rematchWith?: string; challengeUser?: string; challengeName?: string;
+  }>();
+  const wager = wagerParam ? Number(wagerParam) : 0;
   const router = useRouter();
   const socket = getSocket();
   const theme = useTheme();
@@ -73,13 +76,15 @@ export default function PvPSearchScreen() {
     if (!category) return;
 
     setSearching(category);
-    socket.emit(SOCKET_EVENTS.JOIN_QUEUE, { category });
+    socket.emit(SOCKET_EVENTS.JOIN_QUEUE, { category, wager, rematchWith: rematchWith || undefined });
 
     socket.on(SOCKET_EVENTS.MATCH_FOUND, (payload) => {
+      // payload.matchId is now a real MongoDB ObjectId (not pairId)
       usePvPStore.getState().setMatched({
-        matchId: payload.pairId,
-        players: payload.players,
+        matchId: payload.matchId,
+        players: payload.players ?? [],
         myUserId: useAuthStore.getState().user!.id,
+        wager: payload.wager ?? 0,
       });
 
       router.replace('/quiz/pvp/vs');
@@ -143,10 +148,10 @@ export default function PvPSearchScreen() {
             color: theme.colors.text,
           }}
         >
-          Finding opponent…
+          {rematchWith ? '⚔️ Rematch' : challengeUser ? `Challenging ${challengeName ?? 'Player'}…` : 'Finding opponent…'}
         </Text>
 
-        {/* Category pill */}
+        {/* Category + Wager pill */}
         <View
           style={{
             marginTop: 14,
@@ -156,17 +161,22 @@ export default function PvPSearchScreen() {
             backgroundColor: theme.colors.surface,
             borderWidth: 1,
             borderColor: theme.colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
           }}
         >
-          <Text
-            style={{
-              color: theme.colors.text,
-              fontWeight: '700',
-              fontSize: 13,
-            }}
-          >
+          <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 13 }}>
             {category}
           </Text>
+          {wager > 0 && (
+            <>
+              <Text style={{ color: theme.colors.border }}>•</Text>
+              <Text style={{ color: theme.colors.coin, fontWeight: '700', fontSize: 13 }}>
+                ⚡ {wager} coins
+              </Text>
+            </>
+          )}
         </View>
 
         {/* Tip */}

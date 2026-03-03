@@ -24,6 +24,7 @@ export interface IActiveQuizSession {
   timeExtendedQuestions: Types.ObjectId[]; // once per question
   currentQuestionId?: Types.ObjectId;
   questionDeadlineAt?: Date;
+  tournamentId?: Types.ObjectId;
 }
 
 const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
@@ -77,6 +78,7 @@ const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
     timeExtendedQuestions: { type: [Schema.Types.ObjectId], default: [] },
     currentQuestionId: { type: Schema.Types.ObjectId, default: null },
     questionDeadlineAt: { type: Date, default: null },
+    tournamentId: { type: Schema.Types.ObjectId, ref: 'Tournament', default: null },
 
     expiresAt: {
       type: Date,

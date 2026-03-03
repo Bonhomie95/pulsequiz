@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  ScrollView,
+  ActivityIndicator, Image, ScrollView, StyleSheet,
+  Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Edit3, ChevronRight, Trophy, Target, Zap, Gift } from 'lucide-react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 import { api } from '@/src/api/api';
 import { useAuthStore } from '@/src/store/useAuthStore';
@@ -17,8 +14,7 @@ import { useTheme } from '@/src/theme/useTheme';
 import { AVATAR_MAP } from '@/src/constants/avatars';
 import { AvatarPickerModal } from '@/src/components/profile/AvatarPickerModal';
 import { enterImmersiveMode } from '@/src/utils/immersive';
-import { useFocusEffect } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useCoinStore } from '@/src/store/useCoinStore';
 
 function resolveAvatar(key?: any) {
   return AVATAR_MAP[key ?? 'avatar0'] ?? AVATAR_MAP.avatar0;
@@ -26,37 +22,26 @@ function resolveAvatar(key?: any) {
 
 export default function ProfileScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { user, updateUser } = useAuthStore();
+  const { coins } = useCoinStore();
 
   const [stats, setStats] = useState<{
-    points: number;
-    level: number;
-    totalQuizzes: number;
-    accuracy: number;
+    points: number; level: number; totalQuizzes: number; accuracy: number;
   } | null>(null);
-  const [lastQuizzes, setLastQuizzes] = useState<
-    {
-      category: string;
-      answered: string;
-      accuracy: number;
-      points: number;
-      date: string;
-    }[]
-  >([]);
+  const [lastQuizzes, setLastQuizzes] = useState<{
+    category: string; answered: string; accuracy: number; points: number; date: string;
+  }[]>([]);
 
-  /** 🔒 SOURCE OF TRUTH (persisted user) */
   const originalUsername = user?.username ?? '';
-  const originalAvatar = user?.avatar ?? 'avatar0';
+  const originalAvatar   = user?.avatar ?? 'avatar0';
 
-  /** ✏️ EDIT STATE */
-  const [editing, setEditing] = useState(false);
-  const [username, setUsername] = useState(originalUsername);
-  const [avatar, setAvatar] = useState(originalAvatar);
-
-  const [loading, setLoading] = useState(false);
+  const [editing, setEditing]     = useState(false);
+  const [username, setUsername]   = useState(originalUsername);
+  const [avatar, setAvatar]       = useState(originalAvatar);
+  const [loading, setLoading]     = useState(false);
   const [avatarModal, setAvatarModal] = useState(false);
 
-  /** 📊 Load stats */
   useEffect(() => {
     api.get('/profile').then((res) => {
       setStats(res.data.stats);
@@ -64,44 +49,17 @@ export default function ProfileScreen() {
     });
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      enterImmersiveMode();
-      // return () => exitImmersiveMode();
-    }, []),
-  );
+  useFocusEffect(useCallback(() => { enterImmersiveMode(); }, []));
 
-  /** ✏️ Enter edit mode */
-  const startEditing = () => {
-    setUsername(originalUsername);
-    setAvatar(originalAvatar);
-    setEditing(true);
-  };
+  const startEditing  = () => { setUsername(originalUsername); setAvatar(originalAvatar); setEditing(true); };
+  const cancelEditing = () => { setUsername(originalUsername); setAvatar(originalAvatar); setEditing(false); };
 
-  /** ❌ Cancel edit */
-  const cancelEditing = () => {
-    setUsername(originalUsername);
-    setAvatar(originalAvatar);
-    setEditing(false);
-  };
-
-  /** ✅ Save profile */
   const saveProfile = async () => {
     if (!username || username.length < 3) return;
-
     try {
       setLoading(true);
-
-      const res = await api.patch('/profile', {
-        username,
-        avatar,
-      });
-
-      updateUser({
-        username: res.data.user.username,
-        avatar: res.data.user.avatar,
-      });
-
+      const res = await api.patch('/profile', { username, avatar });
+      updateUser({ username: res.data.user.username, avatar: res.data.user.avatar });
       setEditing(false);
     } catch (e: any) {
       alert(e?.response?.data?.message || 'Update failed');
@@ -110,345 +68,193 @@ export default function ProfileScreen() {
     }
   };
 
+  const levelProgress = stats ? Math.min(((stats.points % 100) / 100) * 100, 100) : 0;
+
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
-    >
-      <View style={styles.container}>
-        {/* ================= AVATAR ================= */}
-        <TouchableOpacity
-          onPress={() => {
-            if (!editing) {
-              setEditing(true);
-            }
-            setAvatarModal(true);
-          }}
-          style={styles.avatarWrap}
-          activeOpacity={0.8}
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* ── HERO ── */}
+        <LinearGradient
+          colors={[theme.colors.primary + '44', theme.colors.background]}
+          style={styles.hero}
         >
-          <Image
-            source={resolveAvatar(editing ? avatar : user?.avatar)}
-            style={styles.avatar}
-          />
+          {/* Avatar */}
+          <TouchableOpacity
+            onPress={() => { if (!editing) setEditing(true); setAvatarModal(true); }}
+            style={styles.avatarWrap}
+            activeOpacity={0.85}
+          >
+            <Image source={resolveAvatar(editing ? avatar : user?.avatar)} style={styles.avatar} />
+            <View style={[styles.editBadge, { backgroundColor: theme.colors.primary }]}>
+              <Edit3 size={12} color="#fff" />
+            </View>
+          </TouchableOpacity>
 
-          <View style={[styles.editBadge, !editing && { opacity: 0.5 }]}>
-            <Text style={styles.editText}>✎</Text>
+          {/* Name */}
+          {editing ? (
+            <TextInput
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              style={[styles.nameInput, { color: theme.colors.text, borderColor: theme.colors.primary + '88', backgroundColor: theme.colors.surface }]}
+            />
+          ) : (
+            <Text style={[styles.name, { color: theme.colors.text }]}>{originalUsername}</Text>
+          )}
+
+          {/* Level badge */}
+          <View style={[styles.levelBadge, { backgroundColor: theme.colors.surface }]}>
+            <Zap size={13} color={theme.colors.primary} />
+            <Text style={[styles.levelText, { color: theme.colors.primary }]}>Level {stats?.level ?? '—'}</Text>
           </View>
-        </TouchableOpacity>
 
-        {/* ================= USERNAME ================= */}
-        {editing ? (
-          <TextInput
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-            style={[
-              styles.input,
-              {
-                color: theme.colors.text,
-                borderColor: theme.colors.surface,
-              },
-            ]}
-          />
-        ) : (
-          <Text style={[styles.username, { color: theme.colors.text }]}>
-            {originalUsername}
-          </Text>
-        )}
+          {/* Level progress bar */}
+          {stats && (
+            <View style={styles.progressWrap}>
+              <View style={[styles.progressTrack, { backgroundColor: theme.colors.border }]}>
+                <View style={[styles.progressFill, { width: `${levelProgress}%` as any, backgroundColor: theme.colors.primary }]} />
+              </View>
+              <Text style={[styles.progressLabel, { color: theme.colors.muted }]}>
+                {stats.points % 100}/100 to next level
+              </Text>
+            </View>
+          )}
 
-        {/* ================= LEVEL ================= */}
-        <Text style={{ color: theme.colors.muted }}>
-          Level {stats?.level ?? '-'}
-        </Text>
+          {/* Edit actions */}
+          {!editing ? (
+            <TouchableOpacity
+              onPress={startEditing}
+              style={[styles.editBtn, { backgroundColor: theme.colors.surface }]}
+            >
+              <Edit3 size={15} color={theme.colors.text} />
+              <Text style={{ color: theme.colors.text, fontWeight: '600' }}>Edit Profile</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.editActions}>
+              <TouchableOpacity onPress={cancelEditing} style={[styles.cancelBtn, { backgroundColor: theme.colors.surface }]}>
+                <Text style={{ color: theme.colors.text }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={saveProfile} disabled={loading} style={[styles.saveBtn, { backgroundColor: theme.colors.primary }]}>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700' }}>Save</Text>}
+              </TouchableOpacity>
+            </View>
+          )}
+        </LinearGradient>
 
-        {/* ================= STATS ================= */}
-        <View style={styles.stats}>
-          <Stat label="Points" value={stats?.points ?? '-'} />
-          <Stat label="Quizzes" value={stats?.totalQuizzes ?? '-'} />
-          <Stat
-            label="Accuracy"
-            value={stats?.accuracy !== undefined ? `${stats.accuracy}%` : '-'}
-          />
+        {/* ── STATS GRID ── */}
+        <View style={styles.statsGrid}>
+          {[
+            { icon: <Trophy size={18} color="#FFB800" />, label: 'Points', value: stats?.points?.toLocaleString() ?? '—' },
+            { icon: <Target size={18} color={theme.colors.primary} />, label: 'Quizzes', value: stats?.totalQuizzes ?? '—' },
+            { icon: <Zap size={18} color={theme.colors.secondary} />, label: 'Accuracy', value: stats?.accuracy !== undefined ? `${stats.accuracy}%` : '—' },
+            { icon: <Text style={{ fontSize: 18 }}>🪙</Text>, label: 'Coins', value: coins.toLocaleString() },
+          ].map((s, i) => (
+            <View key={i} style={[styles.statCard, { backgroundColor: theme.colors.surface }]}>
+              {s.icon}
+              <Text style={[styles.statValue, { color: theme.colors.text }]}>{s.value}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.muted }]}>{s.label}</Text>
+            </View>
+          ))}
         </View>
 
-        {/* ================= ACTIONS ================= */}
-        {!editing && (
-          <TouchableOpacity
-            onPress={startEditing}
-            style={[
-              styles.primaryBtn,
-              { backgroundColor: theme.colors.surface },
-            ]}
-          >
-            <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
-              Edit Profile
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {editing && (
-          <View style={styles.editActions}>
+        {/* ── QUICK LINKS ── */}
+        <View style={[styles.linksBox, { backgroundColor: theme.colors.surface }]}>
+          {[
+            { icon: '🎁', label: 'Referrals', sub: 'Earn 100 coins per friend', route: '/referral' },
+            { icon: '🎯', label: 'Challenges', sub: 'Daily & weekly missions', route: '/challenges' },
+            { icon: '👥', label: 'Friends', sub: 'Play with friends', route: '/friends' },
+            { icon: '💰', label: 'Wallet & Payouts', sub: 'View coin history', route: '/wallet' },
+          ].map((l, i) => (
             <TouchableOpacity
-              onPress={cancelEditing}
-              style={[
-                styles.secondaryBtn,
-                { backgroundColor: theme.colors.surface },
-              ]}
+              key={l.label}
+              onPress={() => router.push(l.route as any)}
+              style={[styles.linkRow, i < 3 && { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
             >
-              <Text style={{ color: theme.colors.text }}>Cancel</Text>
+              <Text style={{ fontSize: 20, width: 32 }}>{l.icon}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[{ fontWeight: '700', fontSize: 14 }, { color: theme.colors.text }]}>{l.label}</Text>
+                <Text style={[{ fontSize: 12 }, { color: theme.colors.muted }]}>{l.sub}</Text>
+              </View>
+              <ChevronRight size={16} color={theme.colors.muted} />
             </TouchableOpacity>
+          ))}
+        </View>
 
-            <TouchableOpacity
-              disabled={loading}
-              onPress={saveProfile}
-              style={[
-                styles.primaryBtn,
-                { backgroundColor: theme.colors.primary },
-              ]}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={{ color: '#fff', fontWeight: '700' }}>Save</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      {/* ================= LAST 10 QUIZZES ================= */}
-      {lastQuizzes.length > 0 && (
-        <View style={{ marginTop: 36, width: '100%', alignItems: 'center' }}>
-          <Text
-            style={{
-              color: theme.colors.muted,
-              marginBottom: 14,
-              fontSize: 13,
-              letterSpacing: 0.5,
-            }}
-          >
-            Last 10 Quizzes
-          </Text>
-
-          <ScrollView
-            style={{ width: '100%' }}
-            contentContainerStyle={{ paddingBottom: 24 }}
-            showsVerticalScrollIndicator={false}
-          >
+        {/* ── RECENT QUIZZES ── */}
+        {lastQuizzes.length > 0 && (
+          <View style={{ marginTop: 8 }}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Recent Quizzes</Text>
             {lastQuizzes.map((q, i) => {
               const perfect = q.accuracy === 100;
-
               return (
                 <LinearGradient
                   key={i}
-                  colors={
-                    perfect
-                      ? ['#22c55e', '#16a34a'] // 🌟 perfect
-                      : [theme.colors.surface, theme.colors.background]
-                  }
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    borderRadius: 22,
-                    padding: 16,
-                    marginBottom: 14,
-                    shadowColor: perfect ? '#22c55e' : '#000',
-                    shadowOpacity: perfect ? 0.35 : 0.15,
-                    shadowRadius: perfect ? 12 : 6,
-                    elevation: perfect ? 8 : 4,
-                  }}
+                  colors={perfect ? ['#22c55e', '#16a34a'] : [theme.colors.surface, theme.colors.surface]}
+                  style={styles.quizCard}
                 >
-                  {/* HEADER */}
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: perfect ? '#fff' : theme.colors.text,
-                        fontSize: 16,
-                        fontWeight: '700',
-                      }}
-                    >
-                      {q.category}
-                    </Text>
-
-                    {perfect && (
-                      <View
-                        style={{
-                          backgroundColor: 'rgba(255,255,255,0.2)',
-                          paddingHorizontal: 10,
-                          paddingVertical: 4,
-                          borderRadius: 12,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: '#fff',
-                            fontSize: 11,
-                            fontWeight: '800',
-                            letterSpacing: 0.8,
-                          }}
-                        >
-                          PERFECT
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  {/* META */}
-                  <Text
-                    style={{
-                      color: perfect ? '#dcfce7' : theme.colors.muted,
-                      marginTop: 6,
-                      fontSize: 13,
-                    }}
-                  >
-                    {q.answered} • {q.accuracy}%
-                  </Text>
-
-                  {/* FOOTER */}
-                  <View
-                    style={{
-                      marginTop: 12,
-                      alignSelf: 'flex-end',
-                      backgroundColor: perfect
-                        ? 'rgba(255,255,255,0.25)'
-                        : theme.colors.primary,
-                      paddingHorizontal: 14,
-                      paddingVertical: 6,
-                      borderRadius: 14,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: '#fff',
-                        fontWeight: '800',
-                        fontSize: 13,
-                      }}
-                    >
-                      +{q.points} pts
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.quizCat, { color: perfect ? '#fff' : theme.colors.text }]}>{q.category}</Text>
+                    <Text style={[styles.quizMeta, { color: perfect ? 'rgba(255,255,255,0.8)' : theme.colors.muted }]}>
+                      {q.answered}  ·  {q.accuracy}%
                     </Text>
                   </View>
+                  <View style={styles.pointsBadge}>
+                    <Text style={{ color: perfect ? '#22c55e' : theme.colors.primary, fontWeight: '800', fontSize: 13 }}>
+                      +{q.points}
+                    </Text>
+                    <Text style={{ color: theme.colors.muted, fontSize: 10 }}>pts</Text>
+                  </View>
+                  {perfect && (
+                    <View style={styles.perfectBadge}>
+                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }}>PERFECT</Text>
+                    </View>
+                  )}
                 </LinearGradient>
               );
             })}
-          </ScrollView>
-        </View>
-      )}
+          </View>
+        )}
+      </ScrollView>
 
-      {/* ================= AVATAR MODAL ================= */}
       <AvatarPickerModal
         visible={avatarModal}
         selected={avatar}
-        onSelect={(a) => {
-          setAvatar(a);
-          setAvatarModal(false);
-        }}
+        onSelect={(a) => { setAvatar(a); setAvatarModal(false); }}
         onClose={() => setAvatarModal(false)}
       />
     </SafeAreaView>
   );
 }
 
-/* ================= STAT CARD ================= */
-function Stat({ label, value }: { label: string; value: any }) {
-  const theme = useTheme();
-  return (
-    <View style={[styles.statCard, { backgroundColor: theme.colors.surface }]}>
-      <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{label}</Text>
-      <Text style={{ color: theme.colors.text, fontWeight: '700' }}>
-        {value}
-      </Text>
-    </View>
-  );
-}
-
-/* ================= STYLES ================= */
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    padding: 20,
-  },
-
-  avatarWrap: {
-    position: 'relative',
-    marginBottom: 12,
-  },
-
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-  },
-
-  editBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#000',
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  editText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-
-  username: {
-    fontSize: 20,
-    fontWeight: '700',
-  },
-
-  input: {
-    fontSize: 18,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginBottom: 6,
-    minWidth: 160,
-    textAlign: 'center',
-  },
-
-  stats: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
-  },
-
-  statCard: {
-    padding: 14,
-    borderRadius: 16,
-    alignItems: 'center',
-    minWidth: 90,
-  },
-
-  editActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 32,
-  },
-
-  primaryBtn: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 22,
-    marginTop: 6,
-  },
-
-  secondaryBtn: {
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    borderRadius: 22,
-  },
+  scroll: { paddingBottom: 100 },
+  hero: { alignItems: 'center', paddingTop: 24, paddingBottom: 28, paddingHorizontal: 20 },
+  avatarWrap: { position: 'relative', marginBottom: 12 },
+  avatar: { width: 96, height: 96, borderRadius: 48 },
+  editBadge: { position: 'absolute', bottom: 2, right: 2, width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center' },
+  name: { fontSize: 22, fontWeight: '800', marginBottom: 6 },
+  nameInput: { fontSize: 18, borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 9, minWidth: 180, textAlign: 'center', marginBottom: 8 },
+  levelBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12, marginBottom: 12 },
+  levelText: { fontWeight: '700', fontSize: 13 },
+  progressWrap: { width: '80%', marginBottom: 16 },
+  progressTrack: { height: 6, borderRadius: 3, overflow: 'hidden', marginBottom: 4 },
+  progressFill: { height: '100%', borderRadius: 3 },
+  progressLabel: { fontSize: 11, textAlign: 'center' },
+  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 11, borderRadius: 20 },
+  editActions: { flexDirection: 'row', gap: 12 },
+  cancelBtn: { paddingVertical: 12, paddingHorizontal: 22, borderRadius: 18 },
+  saveBtn: { paddingVertical: 12, paddingHorizontal: 28, borderRadius: 18 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 16 },
+  statCard: { width: '47%', borderRadius: 18, padding: 16, alignItems: 'center', gap: 6 },
+  statValue: { fontSize: 22, fontWeight: '800' },
+  statLabel: { fontSize: 12 },
+  linksBox: { marginHorizontal: 16, borderRadius: 20, overflow: 'hidden', marginBottom: 24 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 12, paddingHorizontal: 16 },
+  quizCard: { marginHorizontal: 16, borderRadius: 18, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  quizCat: { fontSize: 14, fontWeight: '700' },
+  quizMeta: { fontSize: 12, marginTop: 2 },
+  pointsBadge: { alignItems: 'center' },
+  perfectBadge: { backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginLeft: 8 },
 });

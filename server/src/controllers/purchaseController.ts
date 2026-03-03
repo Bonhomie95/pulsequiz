@@ -9,9 +9,7 @@ import { verifyAppleTransaction } from '../iap/apple';
 import { verifyGooglePurchase } from '../iap/google';
 import { logActivity } from '../utils/activityLogger';
 
-/* -------------------------------------------------- */
-/* Helpers                                             */
-/* -------------------------------------------------- */
+// ─── Atomic coin crediting ─────────────────────────────────────────────────
 
 async function creditCoinsAtomic(params: {
   userId: string;
@@ -46,13 +44,11 @@ async function creditCoinsAtomic(params: {
   }
 }
 
-/**
- * Optional: refund handler (hook later to Apple Server Notifications V2 or cron reconciliation)
- */
+// ─── Apple refund handler (call from Apple Server Notifications webhook) ───
+
 export async function handleAppleRefund(purchase: any) {
-  if (!purchase) return;
-  if (purchase.state === 'REFUNDED') return;
-  if (!purchase.creditedCoins) return;
+  if (!purchase || purchase.state === 'REFUNDED' || !purchase.creditedCoins)
+    return;
 
   await CoinWallet.updateOne(
     { userId: purchase.userId },
@@ -60,39 +56,32 @@ export async function handleAppleRefund(purchase: any) {
   );
 
   purchase.state = 'REFUNDED';
-  purchase.creditedAt = purchase.creditedAt ?? new Date();
   await purchase.save();
 }
 
-/* -------------------------------------------------- */
-/* APPLE VERIFY                                        */
-/* -------------------------------------------------- */
+// ─── Apple verify ──────────────────────────────────────────────────────────
 
 export async function verifyApple(req: AuthRequest, res: Response) {
   const { sku, transactionId } = req.body as {
     sku: CoinSku;
     transactionId: string;
   };
-
   const userId = req.userId!;
-  const pack = COIN_PACKS[sku];
 
-  if (!pack) {
-    return res.status(400).json({ message: 'Invalid SKU' });
+  if (!sku || !transactionId) {
+    return res
+      .status(400)
+      .json({ message: 'sku and transactionId are required' });
   }
 
-  if (!transactionId) {
-    return res.status(400).json({ message: 'transactionId required' });
+  const pack = COIN_PACKS[sku];
+  if (!pack) {
+    return res.status(400).json({ message: `Unknown SKU: ${sku}` });
   }
 
   const uniqueKey = `apple:${transactionId}`;
 
-  await logActivity(userId.toString(), 'PURCHASE', {
-    sku,
-    coins: pack.coins,
-  });
-
-  // Create-or-load purchase record (idempotent)
+  // Idempotent upsert — create the record on first call, load it on retries
   const purchase = await Purchase.findOneAndUpdate(
     { uniqueKey },
     {
@@ -105,35 +94,39 @@ export async function verifyApple(req: AuthRequest, res: Response) {
         uniqueKey,
         appleTransactionId: transactionId,
         state: 'PENDING',
+        ip: req.ip ?? null,
       },
     },
     { upsert: true, new: true },
   );
 
-  // ✅ Anti-replay: same receipt cannot be used by another account
+  // Anti-replay: this transaction ID cannot be used by a different account
   if (purchase.userId.toString() !== userId.toString()) {
     return res.status(403).json({ message: 'Ownership mismatch' });
   }
 
-  // If already credited, be idempotent
+  // Already credited — return success idempotently (mobile retried after a drop)
   if (purchase.state === 'CREDITED') {
-    return res.json({ ok: true, coinsAdded: 0 });
+    return res.json({ ok: true, coinsAdded: 0, message: 'Already credited' });
   }
 
-  // Verify with Apple
+  // Verify with Apple's server
   const apple = await verifyAppleTransaction(transactionId, sku);
-
-  // Must match SKU and be valid
-  if (!apple.valid || apple.productId !== sku) {
-    purchase.state = 'REJECTED';
-    purchase.raw = apple.data ?? null;
-    purchase.verifiedAt = new Date();
-    await purchase.save();
-    return res.status(400).json({ message: 'Invalid transaction' });
-  }
 
   purchase.raw = apple.data ?? null;
   purchase.verifiedAt = new Date();
+
+  if (!apple.valid || apple.productId !== sku) {
+    purchase.state = 'REJECTED';
+    await purchase.save();
+    console.warn(
+      `[Apple IAP] Rejected: txId=${transactionId} sku=${sku} productId=${apple.productId} error=${apple.error}`,
+    );
+    return res
+      .status(400)
+      .json({ message: 'Transaction is invalid or does not match SKU' });
+  }
+
   await purchase.save();
 
   // Credit atomically
@@ -143,12 +136,16 @@ export async function verifyApple(req: AuthRequest, res: Response) {
     coins: pack.coins,
   });
 
+  await logActivity(userId, 'PURCHASE', {
+    store: 'apple',
+    sku,
+    coins: pack.coins,
+  });
+
   return res.json({ ok: true, coinsAdded: pack.coins });
 }
 
-/* -------------------------------------------------- */
-/* GOOGLE VERIFY                                       */
-/* -------------------------------------------------- */
+// ─── Google verify ─────────────────────────────────────────────────────────
 
 export async function verifyGoogle(req: AuthRequest, res: Response) {
   const { sku, purchaseToken, packageName } = req.body as {
@@ -156,28 +153,21 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
     purchaseToken: string;
     packageName: string;
   };
-
   const userId = req.userId!;
-  const pack = COIN_PACKS[sku];
 
-  if (!pack) {
-    return res.status(400).json({ message: 'Invalid SKU' });
-  }
-
-  if (!purchaseToken || !packageName) {
+  if (!sku || !purchaseToken || !packageName) {
     return res
       .status(400)
-      .json({ message: 'purchaseToken and packageName required' });
+      .json({ message: 'sku, purchaseToken, and packageName are required' });
+  }
+
+  const pack = COIN_PACKS[sku];
+  if (!pack) {
+    return res.status(400).json({ message: `Unknown SKU: ${sku}` });
   }
 
   const uniqueKey = `google:${purchaseToken}`;
 
-  await logActivity(userId.toString(), 'PURCHASE', {
-    sku,
-    coins: pack.coins,
-  });
-
-  // Create-or-load purchase record (idempotent)
   const purchase = await Purchase.findOneAndUpdate(
     { uniqueKey },
     {
@@ -190,48 +180,62 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
         uniqueKey,
         googlePurchaseToken: purchaseToken,
         state: 'PENDING',
+        ip: req.ip ?? null,
       },
     },
     { upsert: true, new: true },
   );
 
-  // ✅ Anti-replay: token cannot be reused on another account
   if (purchase.userId.toString() !== userId.toString()) {
     return res.status(403).json({ message: 'Ownership mismatch' });
   }
 
-  // If already credited, be idempotent
   if (purchase.state === 'CREDITED') {
-    return res.json({ ok: true, coinsAdded: 0 });
+    return res.json({ ok: true, coinsAdded: 0, message: 'Already credited' });
   }
 
-  // Verify with Google + acknowledge if needed
   const google = await verifyGooglePurchase({
     packageName,
     productId: sku,
     purchaseToken,
   });
 
-  // Snapshot
   purchase.raw = google.data ?? null;
   purchase.verifiedAt = new Date();
-  await purchase.save();
 
   if (!google.valid) {
     purchase.state = 'REJECTED';
     await purchase.save();
-    return res.status(400).json({ message: 'Invalid purchase' });
+    console.warn(
+      `[Google IAP] Rejected: token=${purchaseToken.slice(0, 20)}… sku=${sku} purchaseState=${google.purchaseState} error=${google.error}`,
+    );
+    return res
+      .status(400)
+      .json({ message: 'Purchase is invalid or already consumed' });
   }
 
-  // Credit atomically
+  await purchase.save();
+
   await creditCoinsAtomic({
     userId,
     purchaseId: purchase._id.toString(),
     coins: pack.coins,
   });
 
+  await logActivity(userId, 'PURCHASE', {
+    store: 'google',
+    sku,
+    coins: pack.coins,
+  });
+
   return res.json({ ok: true, coinsAdded: pack.coins });
 }
+
+// ─── Apple restore ─────────────────────────────────────────────────────────
+//
+// NOTE: consumable in-app purchases (coins) cannot be restored by Apple policy.
+// This endpoint exists only for non-consumables if you add any in future.
+// For coins specifically, we sum all CREDITED purchases as a best-effort restore.
 
 export async function restoreApple(req: AuthRequest, res: Response) {
   const userId = req.userId!;
@@ -240,22 +244,19 @@ export async function restoreApple(req: AuthRequest, res: Response) {
     userId,
     store: 'apple',
     state: 'CREDITED',
-  });
+  }).lean();
 
-  let restoredCoins = 0;
+  const restoredCoins = purchases.reduce(
+    (sum, p) => sum + (p.creditedCoins ?? 0),
+    0,
+  );
 
-  for (const p of purchases) {
-    restoredCoins += p.creditedCoins;
-  }
-
+  // Overwrite wallet with sum of all credited purchases
   await CoinWallet.updateOne(
     { userId },
     { $set: { coins: restoredCoins } },
     { upsert: true },
   );
 
-  return res.json({
-    ok: true,
-    restoredCoins,
-  });
+  return res.json({ ok: true, restoredCoins });
 }

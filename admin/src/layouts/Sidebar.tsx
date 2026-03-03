@@ -7,6 +7,9 @@ import {
   CreditCard,
   Receipt,
   Flag,
+  Trophy,
+  TrendingUp,
+  Activity,
   LogOut,
   Menu,
   ChevronLeft,
@@ -38,7 +41,7 @@ function LinkItem({ to, label, icon, collapsed, onClick }: LinkItemProps) {
 }
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(false);        // mobile drawer
+  const [open, setOpen] = useState(false); // mobile drawer
   const [collapsed, setCollapsed] = useState(false); // desktop collapse
   const logout = useAdminStore((s) => s.logout);
   const navigate = useNavigate();
@@ -83,7 +86,9 @@ export default function Sidebar() {
         {/* Top Section */}
         <div>
           <div className="flex items-center justify-between p-4">
-            {!collapsed && <span className="font-extrabold">PulseQuiz Admin</span>}
+            {!collapsed && (
+              <span className="font-extrabold">PulseQuiz Admin</span>
+            )}
 
             {/* Collapse Toggle (desktop only) */}
             <button
@@ -130,6 +135,27 @@ export default function Sidebar() {
               to="/reports"
               label="Reports"
               icon={<Flag size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/leaderboard"
+              label="Leaderboard"
+              icon={<Trophy size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/analytics"
+              label="Analytics"
+              icon={<TrendingUp size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/activity"
+              label="Activity Log"
+              icon={<Activity size={20} />}
               collapsed={collapsed}
               onClick={closeMobile}
             />

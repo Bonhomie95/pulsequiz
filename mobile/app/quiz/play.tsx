@@ -129,7 +129,7 @@ function ProgressRing({
 }
 
 export default function QuizPlay() {
-  const { category } = useLocalSearchParams<{ category: string }>();
+  const { category, tournamentId } = useLocalSearchParams<{ category: string; tournamentId?: string }>();
   const router = useRouter();
   const theme = useTheme();
   const [hintUsedThisQuestion, setHintUsedThisQuestion] = useState(false);
@@ -323,7 +323,7 @@ export default function QuizPlay() {
 
     setLoading(true);
     api
-      .post('/quiz/start', { category })
+      .post('/quiz/start', { category, ...(tournamentId ? { tournamentId } : {}) })
       .then((res: any) => {
         if (!mounted) return;
         setSessionId(res.data.sessionId);

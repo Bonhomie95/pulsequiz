@@ -12,6 +12,7 @@ export type User = {
   usdtType?: UsdtType;
   usdtAddress?: string;
   withdrawalEnabled?: boolean;
+  publicProfile?: boolean;
 };
 
 type AuthState = {

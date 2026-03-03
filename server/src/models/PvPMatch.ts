@@ -159,6 +159,9 @@ const PvPMatchSchema = new Schema(
     winnerUserId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     finishReason: { type: String, enum: ['normal', 'forfeit'], default: null },
 
+    // Coin wager — both players stake this amount, winner takes full pot
+    wager: { type: Number, default: 0 },
+
     /* ---------------- SERIES (Best-of-3) ---------------- */
 
     // groups all rounds in the same best-of-3

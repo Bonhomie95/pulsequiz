@@ -3,11 +3,12 @@ import { Types } from 'mongoose';
 
 import User from '../models/User';
 import Progress from '../models/Progress';
-import CoinWallet from '../models/CoinWallet';
 import QuizQuestion from '../models/QuizQuestion';
+import QuizSession from '../models/QuizSession';
 import UserQuestion from '../models/UserQuestion';
 import PvPMatch from '../models/PvPMatch';
 import { SOCKET_EVENTS } from './events';
+import { awardWagerToWinner, refundWager } from '../services/coinService';
 
 /* ---------------------------------- */
 /* Constants                          */
@@ -31,6 +32,8 @@ const readyTimers = new Map<string, NodeJS.Timeout>(); // matchId -> timer
 
 const liveByUser = new Map<string, { matchId: string }>();
 const disconnectTimers = new Map<string, NodeJS.Timeout>();
+// userId → socketId for rematch notification routing
+export const userSocketMap = new Map<string, string>();
 
 /* ---------------------------------- */
 /* Utils                              */
@@ -171,13 +174,91 @@ function startReadyGrace(io: Server, matchId: string, missingUserId: string) {
 /* Rewards                            */
 /* ---------------------------------- */
 
-async function applyMatchRewards(winnerId: string, loserId: string) {
-  await Progress.updateOne({ userId: winnerId }, { $inc: { points: 50 } });
-  await CoinWallet.updateOne({ userId: winnerId }, { $inc: { coins: 50 } });
-  await CoinWallet.updateOne({ userId: loserId }, { $inc: { coins: 20 } });
+async function applyMatchRewards(matchId: string, winnerId: string, loserId: string | null) {
+  const match = await PvPMatch.findById(matchId).lean();
+  if (!match) return;
+
+  // Unified point system: each player earns points based on their own answers
+  // Points are computed per-player from their answer records
+  for (const player of match.players) {
+    const uid = player.userId.toString();
+    const correctCount = player.answers.filter((a: any) => a.isCorrect).length;
+    const total = match.questionSet.length;
+    const basePoints = correctCount;
+    const bonus = correctCount === total ? 10 : 0;
+    const totalPoints = basePoints + bonus;
+
+    // Daily cap check (import inline to avoid circular deps)
+    const { isDailyCapExceeded } = await import('../services/antiCheatService');
+    const { getSetting, SETTINGS_KEYS } = await import('../models/AppSettings');
+    const cap = await getSetting(SETTINGS_KEYS.DAILY_SESSION_CAP, 20);
+    const capExceeded = await isDailyCapExceeded(uid, Number(cap));
+    const leaderboardPoints = capExceeded ? 0 : totalPoints;
+
+    if (leaderboardPoints > 0) {
+      await Progress.updateOne({ userId: uid }, { $inc: { points: leaderboardPoints } });
+    }
+    // Log quiz session for leaderboard
+    await QuizSession.create({
+      userId: uid,
+      sessionId: matchId,
+      category: match.category,
+      score: basePoints,
+      bonus,
+      totalPoints: leaderboardPoints,
+      correctAnswers: correctCount,
+      totalQuestions: total,
+      levelAtTime: 1, // approximate
+    }).catch(() => {}); // non-critical if already exists
+  }
+
+  // Handle coin wager — winner takes pot (coins already locked at match creation)
+  if (match.wager && match.wager > 0 && winnerId && loserId) {
+    await awardWagerToWinner(winnerId, match.wager, matchId);
+  }
 
   await User.updateMany(
-    { _id: { $in: [winnerId, loserId] } },
+    { _id: { $in: [winnerId, loserId].filter(Boolean) } },
+    { $inc: { sessionsSinceLastAd: 1 } },
+  );
+}
+
+async function applyDrawRewards(matchId: string) {
+  const match = await PvPMatch.findById(matchId).lean();
+  if (!match) return;
+
+  for (const player of match.players) {
+    const uid = player.userId.toString();
+    const correctCount = player.answers.filter((a: any) => a.isCorrect).length;
+    const total = match.questionSet.length;
+    const basePoints = correctCount;
+    const bonus = correctCount === total ? 10 : 0;
+    const totalPoints = basePoints + bonus;
+
+    const { isDailyCapExceeded } = await import('../services/antiCheatService');
+    const { getSetting, SETTINGS_KEYS } = await import('../models/AppSettings');
+    const cap = await getSetting(SETTINGS_KEYS.DAILY_SESSION_CAP, 20);
+    const capExceeded = await isDailyCapExceeded(uid, Number(cap));
+    const leaderboardPoints = capExceeded ? 0 : totalPoints;
+
+    if (leaderboardPoints > 0) {
+      await Progress.updateOne({ userId: uid }, { $inc: { points: leaderboardPoints } });
+    }
+    await QuizSession.create({
+      userId: uid, sessionId: matchId, category: match.category,
+      score: basePoints, bonus, totalPoints: leaderboardPoints,
+      correctAnswers: correctCount, totalQuestions: total, levelAtTime: 1,
+    }).catch(() => {});
+  }
+
+  // Refund both players' wagers on draw
+  if (match.wager && match.wager > 0) {
+    const [a, b] = match.players;
+    await refundWager(a.userId.toString(), b.userId.toString(), match.wager, matchId);
+  }
+
+  await User.updateMany(
+    { _id: { $in: match.players.map((p: any) => p.userId) } },
     { $inc: { sessionsSinceLastAd: 1 } },
   );
 }
@@ -186,19 +267,30 @@ async function applyMatchRewards(winnerId: string, loserId: string) {
 /* Winner logic                       */
 /* ---------------------------------- */
 
-function computeWinner(match: any) {
+/**
+ * Returns { winner, loser } or { draw: true } when both players
+ * finish with identical correct counts AND identical total time.
+ */
+function computeWinner(match: any): { winner: any; loser: any } | { draw: true } {
   const [a, b] = match.players;
 
-  if (a.furthestIndex !== b.furthestIndex) {
-    return a.furthestIndex > b.furthestIndex ? a : b;
+  const aCorrect = a.answers.filter((x: any) => x.isCorrect).length;
+  const bCorrect = b.answers.filter((x: any) => x.isCorrect).length;
+
+  if (aCorrect !== bCorrect) {
+    const winner = aCorrect > bCorrect ? a : b;
+    const loser  = aCorrect > bCorrect ? b : a;
+    return { winner, loser };
   }
 
   const ta = a.totalTimeMs ?? Number.MAX_SAFE_INTEGER;
   const tb = b.totalTimeMs ?? Number.MAX_SAFE_INTEGER;
 
-  if (ta !== tb) return ta < tb ? a : b;
+  if (ta === tb) return { draw: true };
 
-  return a.userId.toString() < b.userId.toString() ? a : b;
+  const winner = ta < tb ? a : b;
+  const loser  = ta < tb ? b : a;
+  return { winner, loser };
 }
 
 /* ---------------------------------- */
@@ -207,6 +299,44 @@ function computeWinner(match: any) {
 
 export function registerPvpHandlers(io: Server, socket: Socket) {
   const userId = socket.data.userId as string;
+
+  // Track userId → socketId for rematch routing
+  userSocketMap.set(userId, socket.id);
+  socket.on('disconnect', () => {
+    if (userSocketMap.get(userId) === socket.id) userSocketMap.delete(userId);
+  });
+
+  /* ---------- REMATCH REQUEST ---------- */
+  socket.on(SOCKET_EVENTS.REMATCH_REQUEST, ({ opponentId, category, wager }: { opponentId: string; category: string; wager: number }) => {
+    const opponentSocketId = userSocketMap.get(opponentId);
+    if (opponentSocketId) {
+      io.to(opponentSocketId).emit(SOCKET_EVENTS.REMATCH_REQUEST, {
+        fromUserId: userId,
+        category,
+        wager,
+      });
+    }
+  });
+
+  socket.on(SOCKET_EVENTS.REMATCH_ACCEPTED, ({ opponentId, category, wager }: { opponentId: string; category: string; wager: number }) => {
+    // Both join queue with rematchWith set to each other
+    // Emit back to the requester to also join queue
+    const opponentSocketId = userSocketMap.get(opponentId);
+    if (opponentSocketId) {
+      io.to(opponentSocketId).emit(SOCKET_EVENTS.REMATCH_ACCEPTED, {
+        fromUserId: userId,
+        category,
+        wager,
+      });
+    }
+  });
+
+  socket.on(SOCKET_EVENTS.REMATCH_DECLINED, ({ opponentId }: { opponentId: string }) => {
+    const opponentSocketId = userSocketMap.get(opponentId);
+    if (opponentSocketId) {
+      io.to(opponentSocketId).emit(SOCKET_EVENTS.REMATCH_DECLINED, { fromUserId: userId });
+    }
+  });
 
   /* ---------- MATCH START ---------- */
   socket.on(SOCKET_EVENTS.MATCH_START, async ({ matchId }) => {
@@ -384,23 +514,31 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
       return;
     }
 
-    const winner = computeWinner(match);
-    const loser = match.players.find(
-      (p: any) => p.userId.toString() !== winner.userId.toString(),
-    )!;
+    const result = computeWinner(match);
 
-    await applyMatchRewards(winner.userId.toString(), loser.userId.toString());
+    if ('draw' in result) {
+      // Draw — refund wagers, award points to both
+      await applyDrawRewards(matchId);
 
-    match.state = 'FINISHED';
-    match.finishedAt = new Date();
-    match.winnerUserId = winner.userId;
+      match.state = 'FINISHED';
+      match.finishedAt = new Date();
+      await match.save();
 
-    await match.save();
+      io.to(room).emit(SOCKET_EVENTS.MATCH_DRAW, { matchId });
+    } else {
+      const { winner, loser } = result;
+      await applyMatchRewards(matchId, winner.userId.toString(), loser?.userId?.toString() ?? null);
 
-    io.to(room).emit(SOCKET_EVENTS.MATCH_FINISHED, {
-      matchId,
-      winnerUserId: winner.userId.toString(),
-    });
+      match.state = 'FINISHED';
+      match.finishedAt = new Date();
+      match.winnerUserId = winner.userId;
+      await match.save();
+
+      io.to(room).emit(SOCKET_EVENTS.MATCH_FINISHED, {
+        matchId,
+        winnerUserId: winner.userId.toString(),
+      });
+    }
   });
 
   /* ---------- DISCONNECT ---------- */

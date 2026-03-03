@@ -3,6 +3,8 @@ import { SOCKET_EVENTS } from './events';
 import { usePvPStore } from '@/src/store/usePvPStore';
 import { useAuthStore } from '@/src/store/useAuthStore';
 
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+
 export function registerPvPSocketListeners() {
   const socket = getSocket();
 
@@ -11,9 +13,25 @@ export function registerPvPSocketListeners() {
     if (matchId) {
       socket.emit(SOCKET_EVENTS.MATCH_START, { matchId });
     }
+
+    // Start heartbeat: ping server every 60s so lastSeenAt stays fresh
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    heartbeatInterval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit('ping:heartbeat');
+      }
+    }, 60_000);
+  };
+
+  const onDisconnect = () => {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
   };
 
   socket.on('connect', onConnect);
+  socket.on('disconnect', onDisconnect);
 
   socket.on(SOCKET_EVENTS.QUEUED, () => {
     // optional: show spinner
@@ -25,7 +43,6 @@ export function registerPvPSocketListeners() {
 
   socket.on(SOCKET_EVENTS.MATCH_FOUND, (payload) => {
     const myUserId = useAuthStore.getState().user!.id;
-
     usePvPStore.getState().setMatched({
       matchId: payload.matchId,
       players: payload.players,
@@ -41,7 +58,7 @@ export function registerPvPSocketListeners() {
     usePvPStore.getState().updateProgress(payload);
   });
 
-  socket.on(SOCKET_EVENTS.WAITING, () => {
+  socket.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, () => {
     usePvPStore.getState().setWaiting();
   });
 
