@@ -1,6 +1,6 @@
 import { Redirect, Stack, useSegments } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
@@ -11,6 +11,7 @@ import { useAuthStore } from '../src/store/useAuthStore';
 import { usePremiumStore } from '../src/store/usePremiumStore';
 import { startUsageAdTimer } from '@/src/ads/appUsageAd';
 import { STORAGE_KEYS } from '@/src/constants/storageKeys';
+import SplashLoader from '@/src/components/SplashLoader';
 
 // ── Notification display behaviour while app is open ─────────────────────────
 Notifications.setNotificationHandler({
@@ -18,6 +19,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -83,24 +86,25 @@ export default function RootLayout() {
 
         setUser(r.data.user);
         checkPremium();
-
-        // ── Register for push after auth restore ─────────────────────────
-        const pushToken = await registerForPushNotifications();
-        if (pushToken) {
-          // Fire-and-forget; non-critical
-          api
-            .post('/push/register', {
-              token: pushToken,
-              platform: Platform.OS,
-            })
-            .catch(() => {});
-        }
       } catch (e) {
         console.warn('Auth restore failed, clearing token', e);
         await storage.clearToken();
         setAuthToken(null);
       } finally {
-        if (mounted) setHydrated();
+        if (mounted) {
+          setHydrated();
+          // Push is fire-and-forget OUTSIDE auth try/catch
+          // A push error must NEVER wipe the auth token
+          registerForPushNotifications()
+            .then((pt) => {
+              if (pt) {
+                api
+                  .post('/push/register', { token: pt, platform: Platform.OS })
+                  .catch(() => {});
+              }
+            })
+            .catch(() => {});
+        }
       }
     })();
 
@@ -136,11 +140,7 @@ export default function RootLayout() {
   }, []);
 
   if (!hydrated || onboardingDone === null) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
+    return <SplashLoader />;
   }
 
   const inAuthGroup = segments[0] === '(auth)';
