@@ -73,8 +73,8 @@ export default function SplashLoader() {
 
     // Glow pulse
     glowScale.value   = withRepeat(withSequence(
-      withTiming(1.25, { duration: 1800, easing: Easing.inOut(Easing.sine) }),
-      withTiming(1,    { duration: 1800, easing: Easing.inOut(Easing.sine) }),
+      withTiming(1.25, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+      withTiming(1,    { duration: 1800, easing: Easing.inOut(Easing.sin) }),
     ), -1, false);
     glowOpacity.value = withRepeat(withSequence(
       withTiming(0.55, { duration: 1800 }),

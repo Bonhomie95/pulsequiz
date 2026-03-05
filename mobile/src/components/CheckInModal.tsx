@@ -190,7 +190,7 @@ export function CheckInModal({ visible, streak, coinsAdded, milestoneBonus, onCl
             style={[styles.ctaBtn, { backgroundColor: theme.colors.primary }]}
             activeOpacity={0.85}
           >
-            <Text style={styles.ctaText}>Awesome! Let's Play 🎮</Text>
+            <Text style={styles.ctaText}>Awesome! Lets Play 🎮</Text>
           </TouchableOpacity>
 
           <Text style={[styles.footer, { color: theme.colors.muted }]}>

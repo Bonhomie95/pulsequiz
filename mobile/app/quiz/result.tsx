@@ -170,7 +170,7 @@ export default function QuizResult() {
                 textAlign: 'center',
               }}
             >
-              🚀 Level Up! You're now Level {level}
+              🚀 Level Up! You are now Level {level}
             </Text>
           </View>
         )}
