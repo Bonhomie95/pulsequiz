@@ -4,8 +4,15 @@ import { usePvPStore } from '@/src/store/usePvPStore';
 import { useAuthStore } from '@/src/store/useAuthStore';
 
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+// Guard against double registration. Without this, remounting the screen that
+// calls this function stacks duplicate socket.io handlers, so every MATCH_FOUND
+// / PLAYER_UPDATE etc. mutates the store multiple times per event.
+let listenersRegistered = false;
 
 export function registerPvPSocketListeners() {
+  if (listenersRegistered) return;
+  listenersRegistered = true;
+
   const socket = getSocket();
 
   const onConnect = () => {
@@ -42,7 +49,8 @@ export function registerPvPSocketListeners() {
   });
 
   socket.on(SOCKET_EVENTS.MATCH_FOUND, (payload) => {
-    const myUserId = useAuthStore.getState().user!.id;
+    const myUserId = useAuthStore.getState().user?.id;
+    if (!myUserId) return; // stray event after logout — nothing to match
     usePvPStore.getState().setMatched({
       matchId: payload.matchId,
       players: payload.players,

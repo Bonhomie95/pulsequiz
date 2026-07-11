@@ -11,7 +11,6 @@ import {
 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Animated,
   FlatList,
   Image,
   ScrollView,
@@ -26,7 +25,7 @@ import { AdBanner } from '@/src/ads/adBanner';
 import { api } from '@/src/api/api';
 import { HomeSkeleton } from '@/src/components/HomeSkeleton';
 import { CheckInModal } from '@/src/components/CheckInModal';
-import { AVATAR_MAP } from '@/src/constants/avatars';
+import { UserAvatar } from '@/src/components/UserAvatar';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useProgressStore } from '@/src/store/useProgressStore';
@@ -40,11 +39,6 @@ import { useAudioStore } from '@/src/store/useAudioStore';
 import { enterImmersiveMode } from '@/src/utils/immersive';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '@/src/constants/storageKeys';
-
-function resolveAvatar(key?: string | null) {
-  if (!key) return AVATAR_MAP.avatar0;
-  return AVATAR_MAP[key as keyof typeof AVATAR_MAP] ?? AVATAR_MAP.avatar0;
-}
 
 const todayKey = () => {
   const now = new Date();
@@ -96,7 +90,6 @@ function ReadyCarousel({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: 10 }}
         renderItem={({ item }) => {
-          const AvatarImg = resolveAvatar(item.avatar);
           return (
             <TouchableOpacity
               onPress={() => onPress(item)}
@@ -112,7 +105,7 @@ function ReadyCarousel({
                   { backgroundColor: theme.colors.primary + '22' },
                 ]}
               >
-                <Image source={AvatarImg} style={{ width: 38, height: 38 }} />
+                <UserAvatar avatar={item.avatar} size={38} />
               </View>
               <Text
                 style={[styles.carouselName, { color: theme.colors.text }]}
@@ -310,10 +303,7 @@ export default function HomeScreen() {
             <View
               style={[styles.avatarRing, { borderColor: theme.colors.primary }]}
             >
-              <Image
-                source={resolveAvatar(user?.avatar)}
-                style={styles.avatar}
-              />
+              <UserAvatar avatar={user?.avatar} size={45} />
             </View>
             <View>
               <Text style={[styles.greeting, { color: theme.colors.muted }]}>

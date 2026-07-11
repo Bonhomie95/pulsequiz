@@ -40,7 +40,7 @@ export async function setSetting(key: string, value: any, updatedBy?: string) {
   return AppSettings.findOneAndUpdate(
     { key },
     { value, updatedBy },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   );
 }
 

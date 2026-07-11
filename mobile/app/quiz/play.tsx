@@ -22,7 +22,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '@/src/api/api';
-import { AVATAR_MAP } from '@/src/constants/avatars';
+import { UserAvatar } from '@/src/components/UserAvatar';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
@@ -178,19 +178,6 @@ export default function QuizPlay() {
   //     soundManager.stop();
   //   };
   // }, []);
-
-  const avatarSource = useMemo(() => {
-    // user.avatar might be "avatar2" or a url; adapt to your app.
-    const a = user?.avatar;
-    if (!a) return null;
-    if (typeof a === 'string' && a.startsWith('avatar')) {
-      const n = Number(a.replace('avatar', ''));
-      const map = Object.values(AVATAR_MAP);
-      return map[n] ?? null;
-    }
-    // if you ever use remote URL avatars, you'd render with { uri: a }
-    return null;
-  }, [user?.avatar]);
 
   const progress01 = useMemo(() => {
     const total = Math.max(questions.length || TOTAL_Q, 1);
@@ -696,8 +683,8 @@ export default function QuizPlay() {
             />
 
             <View style={styles.avatarWrap}>
-              {avatarSource ? (
-                <Image source={avatarSource} style={styles.avatarImg} />
+              {user?.avatar ? (
+                <UserAvatar avatar={user.avatar} size={44} />
               ) : (
                 <View
                   style={[

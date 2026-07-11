@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { storage } from '../utils/storage';
-import { setAuthToken } from '../api/api';
+import { setAuthToken, setUnauthorizedHandler } from '../api/api';
 
 export type UsdtType = 'TRC20' | 'ERC20' | 'BEP20';
 
@@ -52,3 +52,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       hydrated: true,
     }),
 }));
+
+// Let the API layer force a logout when the server rejects the session
+// (401 expired/invalid token, 403 banned). Guarded so a request that fails
+// while already logged out doesn't loop.
+setUnauthorizedHandler(() => {
+  if (useAuthStore.getState().user) {
+    useAuthStore.getState().logout();
+  }
+});

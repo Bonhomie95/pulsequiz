@@ -19,6 +19,7 @@ import { google } from 'googleapis';
 import { JWT as GoogleJWT } from 'google-auth-library';
 import { AuthRequest } from '../middlewares/auth';
 import Subscription, { SUBSCRIPTION_PLANS, SubscriptionSku } from '../models/Subscription';
+import { resolveTrustedPackageName } from '../iap/google';
 
 // ─── Apple helpers ────────────────────────────────────────────────────────
 
@@ -125,7 +126,7 @@ export async function verifyAppleSub(req: AuthRequest, res: Response) {
   const sub = await Subscription.findOneAndUpdate(
     { appleOriginalTransactionId: origTxId, userId },
     { $set: { userId, store: 'apple', sku, status: 'active', expiresAt, renewedAt: new Date(), raw: result.data, appleOriginalTransactionId: origTxId }, $setOnInsert: { startedAt: new Date() } },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: 'after' },
   );
 
   return res.json({ ok: true, isPremium: true, expiresAt: sub.expiresAt, plan: sku });
@@ -138,9 +139,12 @@ export async function verifyGoogleSub(req: AuthRequest, res: Response) {
   const userId = req.userId!;
   const plan = SUBSCRIPTION_PLANS[sku];
   if (!plan) return res.status(400).json({ message: `Unknown SKU: ${sku}` });
-  if (!purchaseToken || !packageName) return res.status(400).json({ message: 'purchaseToken and packageName required' });
+  if (!purchaseToken) return res.status(400).json({ message: 'purchaseToken required' });
 
-  const result = await verifyGoogleSubscriptionToken(sku, purchaseToken, packageName);
+  const resolved = resolveTrustedPackageName(packageName);
+  if ('error' in resolved) return res.status(400).json({ message: resolved.error });
+
+  const result = await verifyGoogleSubscriptionToken(sku, purchaseToken, resolved.packageName);
   if (!result.valid) return res.status(400).json({ message: 'Invalid or expired subscription', detail: (result as any).error });
 
   const expiresAt = result.expiresAt ?? (() => { const d = new Date(); d.setDate(d.getDate() + plan.durationDays); return d; })();
@@ -148,7 +152,7 @@ export async function verifyGoogleSub(req: AuthRequest, res: Response) {
   const sub = await Subscription.findOneAndUpdate(
     { googlePurchaseToken: purchaseToken, userId },
     { $set: { userId, store: 'google', sku, status: 'active', expiresAt, renewedAt: new Date(), raw: result.data, googlePurchaseToken: purchaseToken }, $setOnInsert: { startedAt: new Date() } },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: 'after' },
   );
 
   return res.json({ ok: true, isPremium: true, expiresAt: sub.expiresAt, plan: sku });

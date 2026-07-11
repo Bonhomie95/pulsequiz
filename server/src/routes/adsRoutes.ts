@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/auth';
+import { sensitiveActionLimiter } from '../middlewares/rateLimit';
 import { rewardAd } from '../controllers/adsController';
-export const router = Router();
 
-router.post('/reward', requireAuth, rewardAd);
+const router = Router();
+
+router.post('/reward', requireAuth, sensitiveActionLimiter, rewardAd);
 
 export default router;

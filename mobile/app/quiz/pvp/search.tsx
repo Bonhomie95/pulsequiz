@@ -24,8 +24,18 @@ const TIPS = [
 ];
 
 export default function PvPSearchScreen() {
-  const { category, wager: wagerParam, rematchWith, challengeUser, challengeName } = useLocalSearchParams<{
-    category: string; wager?: string; rematchWith?: string; challengeUser?: string; challengeName?: string;
+  const {
+    category,
+    wager: wagerParam,
+    rematchWith,
+    challengeUser,
+    challengeName,
+  } = useLocalSearchParams<{
+    category: string;
+    wager?: string;
+    rematchWith?: string;
+    challengeUser?: string;
+    challengeName?: string;
   }>();
   const wager = wagerParam ? Number(wagerParam) : 0;
   const router = useRouter();
@@ -76,7 +86,11 @@ export default function PvPSearchScreen() {
     if (!category) return;
 
     setSearching(category);
-    socket.emit(SOCKET_EVENTS.JOIN_QUEUE, { category, wager, rematchWith: rematchWith || undefined });
+    socket.emit(SOCKET_EVENTS.JOIN_QUEUE, {
+      category,
+      wager,
+      rematchWith: rematchWith || undefined,
+    });
 
     socket.on(SOCKET_EVENTS.MATCH_FOUND, (payload) => {
       // payload.matchId is now a real MongoDB ObjectId (not pairId)
@@ -148,7 +162,11 @@ export default function PvPSearchScreen() {
             color: theme.colors.text,
           }}
         >
-          {rematchWith ? '⚔️ Rematch' : challengeUser ? `Challenging ${challengeName ?? 'Player'}…` : 'Finding opponent…'}
+          {rematchWith
+            ? '⚔️ Rematch'
+            : challengeUser
+              ? `Challenging ${challengeName ?? 'Player'}…`
+              : 'Finding opponent…'}
         </Text>
 
         {/* Category + Wager pill */}
@@ -166,13 +184,25 @@ export default function PvPSearchScreen() {
             gap: 10,
           }}
         >
-          <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 13 }}>
+          <Text
+            style={{
+              color: theme.colors.text,
+              fontWeight: '700',
+              fontSize: 13,
+            }}
+          >
             {category}
           </Text>
           {wager > 0 && (
             <>
               <Text style={{ color: theme.colors.border }}>•</Text>
-              <Text style={{ color: theme.colors.coin, fontWeight: '700', fontSize: 13 }}>
+              <Text
+                style={{
+                  color: theme.colors.coin,
+                  fontWeight: '700',
+                  fontSize: 13,
+                }}
+              >
                 ⚡ {wager} coins
               </Text>
             </>

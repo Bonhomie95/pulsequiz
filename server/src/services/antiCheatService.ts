@@ -1,7 +1,7 @@
 import FlaggedAccount from '../models/FlaggedAccount';
 import QuizSession from '../models/QuizSession';
 import User from '../models/User';
-import { Types } from 'mongoose';
+import { escapeRegex } from '../utils/escapeRegex';
 
 const ACCURACY_THRESHOLD = 0.98; // flag if >98% across 10+ sessions
 const CONSECUTIVE_PERFECT_THRESHOLD = 10;
@@ -47,7 +47,7 @@ async function flagUser(
   // Don't duplicate flags for the same reason within 24h
   const existing = await FlaggedAccount.findOne({
     userId,
-    reason: { $regex: reason.slice(0, 30) },
+    reason: { $regex: `^${escapeRegex(reason.slice(0, 30))}` },
     flaggedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
   });
   if (existing) return;

@@ -5,6 +5,12 @@ import Progress from '../models/Progress';
 import { AuthRequest } from '../middlewares/auth';
 import QuizSession from '../models/QuizSession';
 import { logActivity } from '../utils/activityLogger';
+import { escapeRegex } from '../utils/escapeRegex';
+import {
+  checkAvatar,
+  isTextOffensive,
+  registerModerationStrike,
+} from '../utils/moderation';
 
 const UpdateProfileSchema = z.object({
   username: z
@@ -73,16 +79,39 @@ export async function updateProfile(req: AuthRequest, res: Response) {
   if (!parsed.success)
     return res.status(400).json({ message: 'Invalid payload' });
 
-  const { username, avatar } = parsed.data;
+  // Normalize to lowercase — same rule as identity setup, so the unique
+  // index can't be bypassed with a different casing.
+  const username = parsed.data.username.trim().toLowerCase();
+  const avatar = parsed.data.avatar.trim();
 
-  const exists = await User.findOne({ username, _id: { $ne: req.userId } });
+  // ── Moderation: offensive usernames / avatars are rejected and striked ────
+  const avatarCheck = checkAvatar(avatar);
+  if (avatarCheck.ok === false && avatarCheck.reason === 'invalid') {
+    return res.status(400).json({
+      message: 'Avatar must be one of the presets or a single emoji',
+    });
+  }
+  if (isTextOffensive(username) || avatarCheck.ok === false) {
+    const strike = await registerModerationStrike(
+      req.userId,
+      isTextOffensive(username) ? username : avatar,
+    );
+    return res
+      .status(strike.banned ? 403 : 400)
+      .json({ message: strike.message, strikes: strike.strikes });
+  }
+
+  const exists = await User.findOne({
+    username: { $regex: new RegExp(`^${escapeRegex(username)}$`, 'i') },
+    _id: { $ne: req.userId },
+  });
   if (exists)
     return res.status(409).json({ message: 'Username already taken' });
 
   const updated = await User.findByIdAndUpdate(
     req.userId,
     { username, avatar },
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   await logActivity(req.userId, 'PROFILE_UPDATE');

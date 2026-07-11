@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -15,18 +16,105 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTheme } from '../../src/theme/useTheme';
 import { api } from '@/src/api/api';
 
+const AVATAR_KEYS = Object.keys(AVATAR_MAP);
+const CUSTOM_TILE = '__custom__';
+
+type Status = 'idle' | 'checking' | 'taken' | 'available' | 'offensive';
+
 export default function IdentityScreen() {
   const theme = useTheme();
   const router = useRouter();
   const updateUser = useAuthStore((s) => s.updateUser);
 
   const [username, setUsername] = useState('');
-  const [avatar, setAvatar] = useState<number | null>(null);
-  const [status, setStatus] = useState<
-    'idle' | 'checking' | 'taken' | 'available'
-  >('idle');
+  const [avatar, setAvatar] = useState<string | null>(null); // preset key or emoji
+  const [customEmoji, setCustomEmoji] = useState('');
+  const [showEmojiInput, setShowEmojiInput] = useState(false);
+  const [status, setStatus] = useState<Status>('idle');
+  const [submitting, setSubmitting] = useState(false);
 
-  const canContinue = username.length >= 3 && avatar !== null;
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Live availability check (debounced 500ms) ─────────────────────────────
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const name = username.trim();
+    if (name.length < 3) {
+      setStatus('idle');
+      return;
+    }
+
+    setStatus('checking');
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const r = await api.get('/auth/username-check', {
+          params: { username: name },
+        });
+        if (r.data.allowed === false && r.data.reason === 'offensive') {
+          setStatus('offensive');
+        } else {
+          setStatus(r.data.available ? 'available' : 'taken');
+        }
+      } catch {
+        setStatus('idle'); // network hiccup — the server re-checks on submit
+      }
+    }, 500);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [username]);
+
+  const canContinue =
+    username.trim().length >= 3 &&
+    avatar !== null &&
+    status !== 'taken' &&
+    status !== 'offensive' &&
+    !submitting;
+
+  const submit = async () => {
+    if (!canContinue || !avatar) return;
+    setSubmitting(true);
+    try {
+      const r = await api.post('/auth/identity', {
+        username: username.trim(),
+        avatar,
+      });
+
+      updateUser({
+        username: r.data.user.username,
+        avatar: r.data.user.avatar,
+      });
+
+      router.replace('/(tabs)/home');
+    } catch (e: any) {
+      const msg = e?.response?.data?.message as string | undefined;
+      if (e?.response?.status === 409) {
+        setStatus('taken');
+      } else if (msg) {
+        // Moderation warning or ban message from the server
+        Alert.alert('Not allowed', msg);
+        if (e?.response?.status === 403) {
+          // Account banned — nothing further to do here
+        }
+      } else {
+        Alert.alert('Error', 'Could not save your identity. Try again.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const pickCustomEmoji = () => {
+    const trimmed = customEmoji.trim();
+    if (!trimmed) return;
+    setAvatar(trimmed);
+    setShowEmojiInput(false);
+  };
+
+  const gridData = [...AVATAR_KEYS, CUSTOM_TILE];
+  const isCustomSelected = avatar !== null && !AVATAR_KEYS.includes(avatar);
 
   return (
     <SafeAreaView
@@ -52,25 +140,34 @@ export default function IdentityScreen() {
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
+            autoCorrect={false}
+            maxLength={20}
             style={[
               styles.input,
               {
                 color: theme.colors.text,
                 borderColor:
-                  status === 'taken'
+                  status === 'taken' || status === 'offensive'
                     ? theme.colors.danger
                     : status === 'available'
-                    ? theme.colors.success
-                    : theme.colors.surface,
+                      ? theme.colors.success
+                      : theme.colors.surface,
               },
             ]}
           />
           {status === 'checking' && (
-            <Text style={styles.helper}>Checking…</Text>
+            <Text style={[styles.helper, { color: theme.colors.muted }]}>
+              Checking…
+            </Text>
           )}
           {status === 'taken' && (
             <Text style={[styles.helper, { color: theme.colors.danger }]}>
               Username taken
+            </Text>
+          )}
+          {status === 'offensive' && (
+            <Text style={[styles.helper, { color: theme.colors.danger }]}>
+              This username isn't allowed
             </Text>
           )}
           {status === 'available' && (
@@ -86,47 +183,88 @@ export default function IdentityScreen() {
         </Text>
 
         <FlatList
-          data={Object.values(AVATAR_MAP)}
+          data={gridData}
           numColumns={3}
-          keyExtractor={(_, i) => i.toString()}
+          keyExtractor={(k) => k}
           columnWrapperStyle={{ gap: 16 }}
           contentContainerStyle={{ gap: 16 }}
-          renderItem={({ item, index }) => (
-            <TouchableOpacity
-              onPress={() => setAvatar(index)}
-              style={[
-                styles.avatarWrap,
-                {
-                  borderColor:
-                    avatar === index ? theme.colors.primary : 'transparent',
-                },
-              ]}
-            >
-              <Image source={item} style={styles.avatar} />
-            </TouchableOpacity>
-          )}
+          renderItem={({ item }) =>
+            item === CUSTOM_TILE ? (
+              <TouchableOpacity
+                onPress={() => setShowEmojiInput(true)}
+                style={[
+                  styles.avatarWrap,
+                  styles.customTile,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: isCustomSelected
+                      ? theme.colors.primary
+                      : 'transparent',
+                  },
+                ]}
+              >
+                <Text style={styles.customEmoji}>
+                  {isCustomSelected ? avatar : '➕'}
+                </Text>
+                <Text style={[styles.customLabel, { color: theme.colors.muted }]}>
+                  Custom
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => setAvatar(item)}
+                style={[
+                  styles.avatarWrap,
+                  {
+                    borderColor:
+                      avatar === item ? theme.colors.primary : 'transparent',
+                  },
+                ]}
+              >
+                <Image
+                  source={AVATAR_MAP[item as keyof typeof AVATAR_MAP]}
+                  style={styles.avatar}
+                />
+              </TouchableOpacity>
+            )
+          }
         />
+
+        {/* Custom emoji input */}
+        {showEmojiInput && (
+          <View style={styles.emojiRow}>
+            <TextInput
+              placeholder="Type one emoji 😎"
+              placeholderTextColor={theme.colors.muted}
+              value={customEmoji}
+              onChangeText={setCustomEmoji}
+              maxLength={8}
+              autoFocus
+              style={[
+                styles.input,
+                styles.emojiInput,
+                { color: theme.colors.text, borderColor: theme.colors.surface },
+              ]}
+            />
+            <TouchableOpacity
+              onPress={pickCustomEmoji}
+              style={[styles.emojiBtn, { backgroundColor: theme.colors.primary }]}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700' }}>Use</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Moderation notice */}
+        <Text style={[styles.warning, { color: theme.colors.muted }]}>
+          Offensive or abusive usernames and avatars are not allowed. Repeated
+          attempts will get your account banned.
+        </Text>
 
         {/* Continue */}
         <TouchableOpacity
           disabled={!canContinue}
-          onPress={async () => {
-            try {
-              const r = await api.post('/auth/identity', {
-                username,
-                avatar: `avatar${avatar}`,
-              });
-
-              updateUser({
-                username: r.data.user.username,
-                avatar: r.data.user.avatar,
-              });
-
-              router.replace('/(tabs)/home');
-            } catch (e: any) {
-              setStatus('taken'); // backend said username conflict
-            }
-          }}
+          onPress={submit}
           style={[
             styles.cta,
             {
@@ -137,7 +275,7 @@ export default function IdentityScreen() {
           ]}
         >
           <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
-            Continue
+            {submitting ? 'Saving…' : 'Continue'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -187,10 +325,47 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
   },
+  customTile: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  customEmoji: {
+    fontSize: 30,
+    lineHeight: 36,
+  },
+  customLabel: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+  emojiRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  emojiInput: {
+    flex: 1,
+  },
+  emojiBtn: {
+    height: 54,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  warning: {
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 14,
+    textAlign: 'center',
+  },
   cta: {
     height: 56,
     borderRadius: 28,
-    marginTop: 24,
+    marginTop: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },

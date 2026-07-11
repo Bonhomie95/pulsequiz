@@ -2,27 +2,12 @@ import { Router, Response } from 'express';
 import { AuthRequest } from '../middlewares/auth';
 import { requireAdmin } from '../middlewares/requireAdmin';
 
-// Dynamic import to avoid error if model doesn't exist yet
-let Tournament: any;
-try {
-  Tournament = require('../models/Tournament').default;
-} catch {
-  Tournament = null;
-}
+import Tournament from '../models/Tournament';
 
 const router = Router();
 
-const checkModel = (res: Response) => {
-  if (!Tournament) {
-    res.status(501).json({ message: 'Tournament model not configured. See adminTournamentRoutes.ts for setup.' });
-    return false;
-  }
-  return true;
-};
-
 // GET /admin/tournaments
 router.get('/', requireAdmin, async (req: AuthRequest, res: Response) => {
-  if (!checkModel(res)) return;
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Number(req.query.limit) || 20;
@@ -43,7 +28,6 @@ router.get('/', requireAdmin, async (req: AuthRequest, res: Response) => {
 
 // POST /admin/tournaments
 router.post('/', requireAdmin, async (req: AuthRequest, res: Response) => {
-  if (!checkModel(res)) return;
   try {
     const t = await Tournament.create(req.body);
     return res.status(201).json(t);
@@ -54,9 +38,8 @@ router.post('/', requireAdmin, async (req: AuthRequest, res: Response) => {
 
 // PATCH /admin/tournaments/:id
 router.patch('/:id', requireAdmin, async (req: AuthRequest, res: Response) => {
-  if (!checkModel(res)) return;
   try {
-    const t = await Tournament.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const t = await Tournament.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     if (!t) return res.status(404).json({ message: 'Not found' });
     return res.json(t);
   } catch (e: any) {
@@ -66,7 +49,6 @@ router.patch('/:id', requireAdmin, async (req: AuthRequest, res: Response) => {
 
 // DELETE /admin/tournaments/:id
 router.delete('/:id', requireAdmin, async (req: AuthRequest, res: Response) => {
-  if (!checkModel(res)) return;
   try {
     await Tournament.findByIdAndDelete(req.params.id);
     return res.json({ message: 'Deleted' });

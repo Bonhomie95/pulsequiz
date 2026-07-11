@@ -5,8 +5,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Hash } from 'lucide-react-native';
 import { useTheme } from '@/src/theme/useTheme';
-import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { api } from '@/src/api/api';
 import { getSocket } from '@/src/socket/socket';
 import { SOCKET_EVENTS } from '@/src/socket/events';
@@ -16,7 +16,11 @@ import { usePvPStore } from '@/src/store/usePvPStore';
 export default function JoinRoomScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const [code, setCode] = useState('');
+  // A `code` param can arrive from a room-invite push notification deep link.
+  const { code: codeParam } = useLocalSearchParams<{ code?: string }>();
+  const [code, setCode] = useState(
+    typeof codeParam === 'string' ? codeParam.toUpperCase().slice(0, 6) : '',
+  );
   const [joining, setJoining] = useState(false);
   const socket = getSocket();
 

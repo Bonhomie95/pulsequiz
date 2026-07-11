@@ -114,14 +114,22 @@ export async function answer(req: AuthRequest, res: Response) {
   }
 
   // Delegate correctness + progression to service
-  const data = await submitQuizAnswer({
-    userId: req.userId,
-    sessionId,
-    questionId,
-    selected,
-  });
-
-  return res.json(data);
+  try {
+    const data = await submitQuizAnswer({
+      userId: req.userId,
+      sessionId,
+      questionId,
+      selected,
+    });
+    return res.json(data);
+  } catch (err: any) {
+    // VersionError = a concurrent submit for the same session already won the
+    // race (optimistic concurrency). Treat as a duplicate, not a server error.
+    if (err?.name === 'VersionError' || err?.message === 'Already answered') {
+      return res.status(409).json({ message: 'Already answered' });
+    }
+    throw err;
+  }
 }
 
 /* -------------------------------------------------------------------------- */

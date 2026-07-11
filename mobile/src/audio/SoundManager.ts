@@ -15,7 +15,7 @@ type SoundConfig = {
 };
 
 const SOUNDS: Record<SoundKey, SoundConfig> = {
-  victory: { source: require('@/assets/sounds/victory.mp3'), baseVolume: 1 },
+  victory: { source: require('@/assets/sounds/victory.wav'), baseVolume: 1 },
   fail: { source: require('@/assets/sounds/fail.mp3'), baseVolume: 1 },
   match_found: {
     source: require('@/assets/sounds/beep.mp3'),

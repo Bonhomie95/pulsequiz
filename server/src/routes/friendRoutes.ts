@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/auth';
+import { sensitiveActionLimiter } from '../middlewares/rateLimit';
 import {
   searchUsers,
   sendFriendRequest,
@@ -18,7 +19,7 @@ router.get('/', requireAuth, getMyFriends);
 router.get('/search', requireAuth, searchUsers);
 router.get('/requests', requireAuth, getPendingRequests);
 
-router.post('/request', requireAuth, sendFriendRequest);
+router.post('/request', requireAuth, sensitiveActionLimiter, sendFriendRequest);
 router.post('/accept', requireAuth, acceptRequest);
 router.post('/decline', requireAuth, declineRequest);
 router.post('/unfriend', requireAuth, unfriendUser);

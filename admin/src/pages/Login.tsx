@@ -4,14 +4,16 @@ import { useAdminStore } from '../store/adminStore';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
-  const login = useAdminStore((s) => s.login);
+  const setAdmin = useAdminStore((s) => s.setAdmin);
   const nav = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const submit = async () => {
+    // The server sets the httpOnly auth cookie; the body only carries the
+    // admin profile for the UI.
     const res = await adminApi.post('/admin/login', { email, password });
-    login(res.data);
+    setAdmin(res.data.admin);
     nav('/', { replace: true });
   };
 

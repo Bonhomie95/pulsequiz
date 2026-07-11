@@ -2,8 +2,8 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAdminStore } from '../store/adminStore';
 
 const RequireAdmin = () => {
-  const token = useAdminStore((s) => s.token);
-  if (!token) return <Navigate to="/login" />;
+  const admin = useAdminStore((s) => s.admin);
+  if (!admin) return <Navigate to="/login" />;
   return <Outlet />;
 };
 

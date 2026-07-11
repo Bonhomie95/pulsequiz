@@ -79,7 +79,7 @@ export async function setPrizePool(req: Request, res: Response) {
   const pool = await PrizePool.findOneAndUpdate(
     { type, periodLabel },
     { totalAmount, paidRanks, tiers, setByAdmin: adminUsername },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   );
 
   return res.json({ pool });
@@ -101,6 +101,14 @@ export async function exportPayoutsCSV(req: Request, res: Response) {
     .populate('userId', 'username email')
     .lean();
 
+  // Quote every field and neutralise leading formula characters so the CSV
+  // can't break on commas or execute formulas when opened in a spreadsheet.
+  const csvField = (v: unknown): string => {
+    let s = String(v ?? '');
+    if (/^[=+\-@]/.test(s)) s = `'${s}`;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+
   const header = 'username,email,amount_usdt,rank,period,period_label,status,tx_hash,created_at\n';
   const rows = payouts.map((p: any) => [
     p.userId?.username ?? '',
@@ -112,7 +120,7 @@ export async function exportPayoutsCSV(req: Request, res: Response) {
     p.status,
     p.txHash ?? '',
     new Date(p.createdAt).toISOString(),
-  ].join(',')).join('\n');
+  ].map(csvField).join(',')).join('\n');
 
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename="payouts.csv"');

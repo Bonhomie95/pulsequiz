@@ -55,7 +55,7 @@ export async function updateSettings(req: AuthRequest, res: Response) {
   }
 
   const user = await User.findByIdAndUpdate(req.userId, update, {
-    new: true,
+    returnDocument: 'after',
   });
 
   return res.json({

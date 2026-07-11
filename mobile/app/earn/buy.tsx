@@ -11,11 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as IAP from 'react-native-iap';
-import type {
-  ProductPurchase,
-  SubscriptionPurchase,
-  PurchaseError,
-} from 'react-native-iap';
+import { ErrorCode } from 'react-native-iap';
+import type { Purchase, PurchaseError } from 'react-native-iap';
 import { ChevronLeft, ShoppingBag } from 'lucide-react-native';
 
 import { useTheme } from '@/src/theme/useTheme';
@@ -24,7 +21,15 @@ import { api } from '@/src/api/api';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useRouter } from 'expo-router';
 
-type AnyPurchase = ProductPurchase | SubscriptionPurchase;
+// Prefer the server's authoritative total (`coins`) so the local balance can't
+// drift; fall back to adding the delta only if an older server omits it.
+function syncCoins(data: { coins?: number; coinsAdded?: number }) {
+  if (typeof data?.coins === 'number') {
+    useCoinStore.getState().setCoins(data.coins);
+  } else if (typeof data?.coinsAdded === 'number') {
+    useCoinStore.getState().addCoins(data.coinsAdded);
+  }
+}
 
 export default function BuyCoinsScreen() {
   const theme = useTheme();
@@ -40,12 +45,11 @@ export default function BuyCoinsScreen() {
       try {
         await IAP.initConnection();
         const skus = COIN_PRODUCTS.map((p) => p.sku);
-        // v12: getProducts returns Product[] with productId, localizedPrice, price
-        const products = await IAP.getProducts({ skus });
+        const products = await IAP.fetchProducts({ skus, type: 'in-app' });
         if (!mounted) return;
         const prices: Record<string, string> = {};
-        for (const p of products) {
-          prices[p.productId] = p.localizedPrice || p.price;
+        for (const p of products ?? []) {
+          prices[p.id] = p.displayPrice;
         }
         setStorePrices(prices);
       } catch (e) {
@@ -62,17 +66,16 @@ export default function BuyCoinsScreen() {
   // ── Purchase listeners ────────────────────────────────────────────────────
   useEffect(() => {
     const purchaseSub = IAP.purchaseUpdatedListener(
-      async (purchase: AnyPurchase) => {
+      async (purchase: Purchase) => {
         try {
           if (Platform.OS === 'ios') {
-            const p = purchase as ProductPurchase;
-            if (!p.transactionId) throw new Error('Missing transaction ID');
+            if (!purchase.transactionId) throw new Error('Missing transaction ID');
             const res = await api.post('/purchase/apple/verify', {
-              sku: p.productId,
-              transactionId: p.transactionId,
+              sku: purchase.productId,
+              transactionId: purchase.transactionId,
             });
-            await IAP.finishTransaction({ purchase: p, isConsumable: true });
-            useCoinStore.getState().addCoins(res.data.coinsAdded);
+            await IAP.finishTransaction({ purchase, isConsumable: true });
+            syncCoins(res.data);
             Alert.alert(
               '🎉 Success',
               `${res.data.coinsAdded} coins added to your account!`,
@@ -81,15 +84,14 @@ export default function BuyCoinsScreen() {
           }
 
           if (Platform.OS === 'android') {
-            const p = purchase as ProductPurchase;
-            if (!p.purchaseToken) throw new Error('Invalid Android purchase');
+            if (!purchase.purchaseToken) throw new Error('Invalid Android purchase');
             const res = await api.post('/purchase/google/verify', {
-              sku: p.productId,
-              purchaseToken: p.purchaseToken,
-              packageName: p.packageNameAndroid,
+              sku: purchase.productId,
+              purchaseToken: purchase.purchaseToken,
+              packageName: (purchase as IAP.PurchaseAndroid).packageNameAndroid,
             });
-            await IAP.finishTransaction({ purchase: p, isConsumable: true });
-            useCoinStore.getState().addCoins(res.data.coinsAdded);
+            await IAP.finishTransaction({ purchase, isConsumable: true });
+            syncCoins(res.data);
             Alert.alert(
               '🎉 Success',
               `${res.data.coinsAdded} coins added to your account!`,
@@ -108,7 +110,7 @@ export default function BuyCoinsScreen() {
     );
 
     const errorSub = IAP.purchaseErrorListener((error: PurchaseError) => {
-      if (error.code !== 'E_USER_CANCELLED') {
+      if (error.code !== ErrorCode.UserCancelled) {
         Alert.alert('Purchase failed', error.message || 'Something went wrong');
       }
       setLoadingSku(null);
@@ -124,12 +126,15 @@ export default function BuyCoinsScreen() {
   const buy = (sku: string) => {
     if (loadingSku) return;
     setLoadingSku(sku);
-    // v12: requestPurchase does NOT return the purchase — result arrives via listener
+    // requestPurchase does NOT return the purchase — result arrives via listener
     IAP.requestPurchase({
-      sku,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+      type: 'in-app',
+      request: {
+        apple: { sku, andDangerouslyFinishTransactionAutomatically: false },
+        google: { skus: [sku] },
+      },
     }).catch((e: PurchaseError) => {
-      if (e.code !== 'E_USER_CANCELLED') {
+      if (e.code !== ErrorCode.UserCancelled) {
         Alert.alert('Purchase failed', e.message || 'Something went wrong');
       }
       setLoadingSku(null);
@@ -139,7 +144,7 @@ export default function BuyCoinsScreen() {
   const restorePurchases = async () => {
     try {
       const res = await api.post('/purchase/apple/restore');
-      useCoinStore.getState().setCoins(res.data.restoredCoins);
+      useCoinStore.getState().setCoins(res.data.coins);
       Alert.alert('Restored', 'Your purchases were restored.');
     } catch {
       Alert.alert('Restore failed', 'Could not restore purchases.');

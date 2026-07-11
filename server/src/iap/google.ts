@@ -44,6 +44,31 @@ function getAndroidPublisher() {
   return _androidPublisher;
 }
 
+// ── Package name ───────────────────────────────────────────────────────────
+
+/**
+ * The package name must never be trusted from the client — otherwise a token
+ * bought in a different app with matching product IDs could be verified and
+ * credited here. Set ANDROID_PACKAGE_NAME in the environment; the client
+ * value is only accepted (with a warning) when the env var is missing.
+ */
+export function resolveTrustedPackageName(
+  clientValue?: string,
+): { packageName: string } | { error: string } {
+  const trusted = process.env.ANDROID_PACKAGE_NAME;
+  if (trusted) {
+    if (clientValue && clientValue !== trusted) {
+      return { error: 'Package name mismatch' };
+    }
+    return { packageName: trusted };
+  }
+  if (!clientValue) return { error: 'packageName required' };
+  console.warn(
+    '[Google IAP] ANDROID_PACKAGE_NAME not set — trusting client-supplied packageName. Set it in .env.',
+  );
+  return { packageName: clientValue };
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 type VerifyGoogleParams = {

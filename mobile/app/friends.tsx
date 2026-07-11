@@ -31,12 +31,7 @@ import {
 import { api } from '@/src/api/api';
 import { useTheme } from '@/src/theme/useTheme';
 import { Toast } from '@/src/components/Toast';
-import { AVATAR_MAP } from '@/src/constants/avatars';
-
-function resolveAvatar(key?: string | null) {
-  if (!key) return AVATAR_MAP.avatar0;
-  return AVATAR_MAP[key as keyof typeof AVATAR_MAP] ?? AVATAR_MAP.avatar0;
-}
+import { UserAvatar } from '@/src/components/UserAvatar';
 
 type Friend = {
   _id: string;
@@ -131,7 +126,6 @@ function ProfilePreview({
   theme: any;
 }) {
   if (!user) return null;
-  const AvatarImg = resolveAvatar(user.avatar);
   const alreadyFriend = user.friendStatus === 'accepted';
   const pendingSent = user.friendStatus === 'pending_sent';
   const isBlocked = user.friendStatus === 'blocked';
@@ -162,7 +156,7 @@ function ProfilePreview({
                 { borderColor: theme.colors.primary },
               ]}
             >
-              <Image source={AvatarImg} style={styles.previewAvatarImg} />
+              <UserAvatar avatar={user.avatar} size={74} />
             </View>
             {user.isOnline && (
               <View
@@ -738,7 +732,6 @@ export default function FriendsScreen() {
             </View>
           ) : (
             friends.map((f) => {
-              const AvatarImg = resolveAvatar(f.avatar);
               return (
                 <TouchableOpacity
                   key={f._id}
@@ -758,10 +751,7 @@ export default function FriendsScreen() {
                         { backgroundColor: theme.colors.primary + '22' },
                       ]}
                     >
-                      <Image
-                        source={AvatarImg}
-                        style={{ width: 36, height: 36 }}
-                      />
+                      <UserAvatar avatar={f.avatar} size={36} />
                     </View>
                     {f.isOnline && (
                       <View
@@ -872,7 +862,6 @@ export default function FriendsScreen() {
               ) : null
             }
             renderItem={({ item: u }) => {
-              const AvatarImg = resolveAvatar(u.avatar);
               const isFriend = u.friendStatus === 'accepted';
               const isPending = u.friendStatus === 'pending_sent';
               const isBlocked = u.friendStatus === 'blocked';
@@ -896,10 +885,7 @@ export default function FriendsScreen() {
                         { backgroundColor: theme.colors.primary + '22' },
                       ]}
                     >
-                      <Image
-                        source={AvatarImg}
-                        style={{ width: 36, height: 36 }}
-                      />
+                      <UserAvatar avatar={u.avatar} size={36} />
                     </View>
                     {u.isOnline && !isBlocked && (
                       <View
@@ -983,7 +969,6 @@ export default function FriendsScreen() {
             </View>
           ) : (
             requests.map((req) => {
-              const AvatarImg = resolveAvatar(req.avatar);
               return (
                 <View
                   key={req.friendId}
@@ -998,10 +983,7 @@ export default function FriendsScreen() {
                       { backgroundColor: theme.colors.primary + '22' },
                     ]}
                   >
-                    <Image
-                      source={AvatarImg}
-                      style={{ width: 36, height: 36 }}
-                    />
+                    <UserAvatar avatar={req.avatar} size={36} />
                   </View>
                   <Text
                     style={[

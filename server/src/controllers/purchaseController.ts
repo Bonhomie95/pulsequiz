@@ -6,7 +6,7 @@ import Purchase from '../models/Purchase';
 import CoinWallet from '../models/CoinWallet';
 import { CoinSku, COIN_PACKS } from '../iap/products';
 import { verifyAppleTransaction } from '../iap/apple';
-import { verifyGooglePurchase } from '../iap/google';
+import { verifyGooglePurchase, resolveTrustedPackageName } from '../iap/google';
 import { logActivity } from '../utils/activityLogger';
 
 // ─── Atomic coin crediting ─────────────────────────────────────────────────
@@ -15,9 +15,10 @@ async function creditCoinsAtomic(params: {
   userId: string;
   purchaseId: string;
   coins: number;
-}) {
+}): Promise<number> {
   const { userId, purchaseId, coins } = params;
 
+  let newBalance = 0;
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {
@@ -33,15 +34,23 @@ async function creditCoinsAtomic(params: {
         { session },
       );
 
-      await CoinWallet.updateOne(
+      const wallet = await CoinWallet.findOneAndUpdate(
         { userId },
         { $inc: { coins } },
-        { upsert: true, session },
+        { upsert: true, returnDocument: 'after', session },
       );
+      newBalance = wallet?.coins ?? coins;
     });
   } finally {
     session.endSession();
   }
+  return newBalance;
+}
+
+/** Current wallet balance, or 0 if the wallet doesn't exist yet. */
+async function currentBalance(userId: string): Promise<number> {
+  const wallet = await CoinWallet.findOne({ userId }, { coins: 1 }).lean();
+  return wallet?.coins ?? 0;
 }
 
 // ─── Apple refund handler (call from Apple Server Notifications webhook) ───
@@ -97,7 +106,7 @@ export async function verifyApple(req: AuthRequest, res: Response) {
         ip: req.ip ?? null,
       },
     },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: 'after' },
   );
 
   // Anti-replay: this transaction ID cannot be used by a different account
@@ -107,7 +116,12 @@ export async function verifyApple(req: AuthRequest, res: Response) {
 
   // Already credited — return success idempotently (mobile retried after a drop)
   if (purchase.state === 'CREDITED') {
-    return res.json({ ok: true, coinsAdded: 0, message: 'Already credited' });
+    return res.json({
+      ok: true,
+      coinsAdded: 0,
+      coins: await currentBalance(userId),
+      message: 'Already credited',
+    });
   }
 
   // Verify with Apple's server
@@ -130,7 +144,7 @@ export async function verifyApple(req: AuthRequest, res: Response) {
   await purchase.save();
 
   // Credit atomically
-  await creditCoinsAtomic({
+  const coins = await creditCoinsAtomic({
     userId,
     purchaseId: purchase._id.toString(),
     coins: pack.coins,
@@ -142,7 +156,7 @@ export async function verifyApple(req: AuthRequest, res: Response) {
     coins: pack.coins,
   });
 
-  return res.json({ ok: true, coinsAdded: pack.coins });
+  return res.json({ ok: true, coinsAdded: pack.coins, coins });
 }
 
 // ─── Google verify ─────────────────────────────────────────────────────────
@@ -155,15 +169,20 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
   };
   const userId = req.userId!;
 
-  if (!sku || !purchaseToken || !packageName) {
+  if (!sku || !purchaseToken) {
     return res
       .status(400)
-      .json({ message: 'sku, purchaseToken, and packageName are required' });
+      .json({ message: 'sku and purchaseToken are required' });
   }
 
   const pack = COIN_PACKS[sku];
   if (!pack) {
     return res.status(400).json({ message: `Unknown SKU: ${sku}` });
+  }
+
+  const resolved = resolveTrustedPackageName(packageName);
+  if ('error' in resolved) {
+    return res.status(400).json({ message: resolved.error });
   }
 
   const uniqueKey = `google:${purchaseToken}`;
@@ -183,7 +202,7 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
         ip: req.ip ?? null,
       },
     },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: 'after' },
   );
 
   if (purchase.userId.toString() !== userId.toString()) {
@@ -191,11 +210,16 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
   }
 
   if (purchase.state === 'CREDITED') {
-    return res.json({ ok: true, coinsAdded: 0, message: 'Already credited' });
+    return res.json({
+      ok: true,
+      coinsAdded: 0,
+      coins: await currentBalance(userId),
+      message: 'Already credited',
+    });
   }
 
   const google = await verifyGooglePurchase({
-    packageName,
+    packageName: resolved.packageName,
     productId: sku,
     purchaseToken,
   });
@@ -216,7 +240,7 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
 
   await purchase.save();
 
-  await creditCoinsAtomic({
+  const coins = await creditCoinsAtomic({
     userId,
     purchaseId: purchase._id.toString(),
     coins: pack.coins,
@@ -228,35 +252,28 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
     coins: pack.coins,
   });
 
-  return res.json({ ok: true, coinsAdded: pack.coins });
+  return res.json({ ok: true, coinsAdded: pack.coins, coins });
 }
 
 // ─── Apple restore ─────────────────────────────────────────────────────────
 //
 // NOTE: consumable in-app purchases (coins) cannot be restored by Apple policy.
-// This endpoint exists only for non-consumables if you add any in future.
-// For coins specifically, we sum all CREDITED purchases as a best-effort restore.
+// This endpoint only reports the total previously credited; it must NOT write
+// the wallet — the balance also contains coins earned from quizzes, ads,
+// streaks etc., which a purchase-sum overwrite would destroy.
 
 export async function restoreApple(req: AuthRequest, res: Response) {
   const userId = req.userId!;
 
-  const purchases = await Purchase.find({
-    userId,
-    store: 'apple',
-    state: 'CREDITED',
-  }).lean();
+  const [purchases, wallet] = await Promise.all([
+    Purchase.find({ userId, store: 'apple', state: 'CREDITED' }).lean(),
+    CoinWallet.findOne({ userId }).lean(),
+  ]);
 
   const restoredCoins = purchases.reduce(
     (sum, p) => sum + (p.creditedCoins ?? 0),
     0,
   );
 
-  // Overwrite wallet with sum of all credited purchases
-  await CoinWallet.updateOne(
-    { userId },
-    { $set: { coins: restoredCoins } },
-    { upsert: true },
-  );
-
-  return res.json({ ok: true, restoredCoins });
+  return res.json({ ok: true, restoredCoins, coins: wallet?.coins ?? 0 });
 }

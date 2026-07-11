@@ -1,49 +1,55 @@
-import CoinWallet from '../models/CoinWallet';
+import { Response } from 'express';
 import { AuthRequest } from '../middlewares/auth';
 import User from '../models/User';
-import { Response } from 'express';
+import { getSetting, SETTINGS_KEYS } from '../models/AppSettings';
+import { creditCoins } from '../services/coinService';
+
+const COOLDOWN_MS = Number(process.env.AD_REWARD_COOLDOWN_MS || 30_000);
 
 export async function rewardAd(req: AuthRequest, res: Response) {
   if (!req.userId) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  const REWARD = 50;
-  const COOLDOWN_MS = 30_000; // 30 seconds
-
-  const user = await User.findById(req.userId);
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
-  }
-
-  const now = Date.now();
-
-  if (user.lastAdRewardAt) {
-    const diff = now - user.lastAdRewardAt.getTime();
-
-    if (diff < COOLDOWN_MS) {
-      const remaining = Math.ceil((COOLDOWN_MS - diff) / 1000);
-
-      return res.status(429).json({
-        message: 'Ad cooldown active',
-        remainingSeconds: remaining,
-      });
-    }
-  }
-
-  // ✅ reward allowed
-  user.lastAdRewardAt = new Date(now);
-  await user.save();
-
-  const wallet = await CoinWallet.findOneAndUpdate(
-    { userId: req.userId },
-    { $inc: { coins: REWARD } },
-    { new: true, upsert: true },
+  const reward = Number(
+    await getSetting(SETTINGS_KEYS.DAILY_AD_REWARD_COINS, 50),
   );
 
+  const now = new Date();
+  const cooldownFloor = new Date(now.getTime() - COOLDOWN_MS);
+
+  // Atomic claim: only matches when the cooldown has elapsed, so two
+  // concurrent requests can't both pass the check and double-credit.
+  const user = await User.findOneAndUpdate(
+    {
+      _id: req.userId,
+      $or: [
+        { lastAdRewardAt: null },
+        { lastAdRewardAt: { $lte: cooldownFloor } },
+      ],
+    },
+    { $set: { lastAdRewardAt: now } },
+    { returnDocument: 'after' },
+  );
+
+  if (!user) {
+    const existing = await User.findById(req.userId).select('lastAdRewardAt').lean();
+    if (!existing) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const elapsed = now.getTime() - (existing.lastAdRewardAt?.getTime() ?? 0);
+    const remaining = Math.max(1, Math.ceil((COOLDOWN_MS - elapsed) / 1000));
+    return res.status(429).json({
+      message: 'Ad cooldown active',
+      remainingSeconds: remaining,
+    });
+  }
+
+  const coins = await creditCoins(req.userId, reward, 'ad_reward');
+
   return res.json({
-    coins: wallet.coins,
-    added: REWARD,
-    cooldownSeconds: 30,
+    coins,
+    added: reward,
+    cooldownSeconds: Math.round(COOLDOWN_MS / 1000),
   });
 }

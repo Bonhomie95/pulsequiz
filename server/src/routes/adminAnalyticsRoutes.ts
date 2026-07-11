@@ -1,7 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { requireAdmin } from '../middlewares/requireAdmin';
 import Purchase from '../models/Purchase';
-import Subscription from '../models/Subscription';
+import Subscription, {
+  SUBSCRIPTION_PLANS,
+  type SubscriptionSku,
+} from '../models/Subscription';
 import User from '../models/User';
 
 const router = Router();
@@ -94,21 +97,18 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     ]),
   ]);
 
-  // Map plan revenue using fixed prices (since Subscription model doesn't store priceUsd)
-  const PLAN_PRICES: Record<string, number> = {
-    pq_premium_monthly: 2.99,
-    pq_premium_3month: 7.99,
-    pq_premium_6month: 13.99,
-    pq_premium_yearly: 24.99,
-  };
-
+  // Plan prices come from the single source of truth in the Subscription model
+  // (the model doesn't store priceUsd per document).
   const revenueByPlan = planRevenueAgg
-    .map((p: any) => ({
-      sku: p._id,
-      label: p._id,
-      count: p.count,
-      revenue: (PLAN_PRICES[p._id] ?? 0) * p.count,
-    }))
+    .map((p: any) => {
+      const plan = SUBSCRIPTION_PLANS[p._id as SubscriptionSku];
+      return {
+        sku: p._id,
+        label: plan?.label ?? p._id,
+        count: p.count,
+        revenue: (plan?.usd ?? 0) * p.count,
+      };
+    })
     .sort((a: any, b: any) => b.revenue - a.revenue);
 
   res.json({

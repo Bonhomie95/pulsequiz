@@ -24,6 +24,7 @@ export interface IUser {
   lastSeenAt?: Date | null;
   isBanned: boolean;
   hasCompletedFirstQuiz: boolean;
+  moderationStrikes: number;
 
   createdAt: Date;
 }
@@ -75,6 +76,7 @@ const UserSchema = new Schema<IUser>(
     lastSeenAt: { type: Date, default: null },
     isBanned: { type: Boolean, default: false },
     hasCompletedFirstQuiz: { type: Boolean, default: false },
+    moderationStrikes: { type: Number, default: 0 },
   },
   { timestamps: true },
 );

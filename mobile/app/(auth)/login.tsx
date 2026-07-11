@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Dimensions,
@@ -23,8 +23,6 @@ import Animated, {
   withSequence,
   withSpring,
   withTiming,
-  interpolateColor,
-  useDerivedValue,
 } from 'react-native-reanimated';
 
 import {
@@ -51,12 +49,22 @@ const facebookDiscovery = {
 
 function bootstrapGoogleSignin() {
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
   if (!webClientId) {
-    console.warn('Missing EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in env. Google Sign-In will fail.');
+    console.warn(
+      'Missing EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in env. Google Sign-In will fail.',
+    );
     return;
+  }
+  if (Platform.OS === 'ios' && !iosClientId) {
+    console.warn(
+      'Missing EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID in env. Google Sign-In will fail on iOS.',
+    );
   }
   GoogleSignin.configure({
     webClientId,
+    // iOS needs its own client ID (no GoogleService-Info.plist in this project)
+    ...(iosClientId ? { iosClientId } : {}),
     offlineAccess: true,
     forceCodeForRefreshToken: true,
   });
@@ -65,26 +73,44 @@ function bootstrapGoogleSignin() {
 // ── Floating particle ─────────────────────────────────────────────────────────
 
 function FloatingParticle({
-  x, y, size, delay, color,
+  x,
+  y,
+  size,
+  delay,
+  color,
 }: {
-  x: number; y: number; size: number; delay: number; color: string;
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+  color: string;
 }) {
   const translateY = useSharedValue(0);
-  const opacity    = useSharedValue(0);
+  const opacity = useSharedValue(0);
 
   useEffect(() => {
-    opacity.value = withDelay(delay, withRepeat(
-      withSequence(
-        withTiming(0.6, { duration: 800 }),
-        withTiming(0.15, { duration: 800 }),
-      ), -1, true
-    ));
-    translateY.value = withDelay(delay, withRepeat(
-      withSequence(
-        withTiming(-18, { duration: 2200, easing: Easing.inOut(Easing.sine) }),
-        withTiming(0,   { duration: 2200, easing: Easing.inOut(Easing.sine) }),
-      ), -1, true
-    ));
+    opacity.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(0.6, { duration: 800 }),
+          withTiming(0.15, { duration: 800 }),
+        ),
+        -1,
+        true,
+      ),
+    );
+    translateY.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(-18, { duration: 2200, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 2200, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1,
+        true,
+      ),
+    );
   }, []);
 
   const style = useAnimatedStyle(() => ({
@@ -93,12 +119,20 @@ function FloatingParticle({
   }));
 
   return (
-    <Animated.View style={[{
-      position: 'absolute', left: x, top: y,
-      width: size, height: size,
-      borderRadius: size / 2,
-      backgroundColor: color,
-    }, style]} />
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          left: x,
+          top: y,
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: color,
+        },
+        style,
+      ]}
+    />
   );
 }
 
@@ -106,33 +140,42 @@ function FloatingParticle({
 
 export default function LoginScreen() {
   const router = useRouter();
-  const theme  = useTheme();
+  const theme = useTheme();
   const isDark = theme.colors.background === '#0B0F1A';
   const { mode, setMode } = useThemeStore();
   const setUser = useAuthStore((s) => s.setUser);
 
-  const [loading, setLoading]         = useState(false);
-  const [activeBtn, setActiveBtn]     = useState<'google' | 'fb' | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [activeBtn, setActiveBtn] = useState<'google' | 'fb' | null>(null);
 
   // Entrance animations
-  const heroOpacity  = useSharedValue(0);
-  const heroY        = useSharedValue(30);
-  const cardOpacity  = useSharedValue(0);
-  const cardY        = useSharedValue(40);
-  const btnsOpacity  = useSharedValue(0);
-  const btnsY        = useSharedValue(30);
+  const heroOpacity = useSharedValue(0);
+  const heroY = useSharedValue(30);
+  const cardOpacity = useSharedValue(0);
+  const cardY = useSharedValue(40);
+  const btnsOpacity = useSharedValue(0);
+  const btnsY = useSharedValue(30);
 
   useEffect(() => {
     bootstrapGoogleSignin();
 
     heroOpacity.value = withTiming(1, { duration: 550 });
-    heroY.value       = withTiming(0, { duration: 550, easing: Easing.out(Easing.cubic) });
+    heroY.value = withTiming(0, {
+      duration: 550,
+      easing: Easing.out(Easing.cubic),
+    });
 
     cardOpacity.value = withDelay(180, withTiming(1, { duration: 500 }));
-    cardY.value       = withDelay(180, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+    cardY.value = withDelay(
+      180,
+      withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }),
+    );
 
     btnsOpacity.value = withDelay(340, withTiming(1, { duration: 500 }));
-    btnsY.value       = withDelay(340, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+    btnsY.value = withDelay(
+      340,
+      withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }),
+    );
   }, []);
 
   const heroStyle = useAnimatedStyle(() => ({
@@ -149,19 +192,64 @@ export default function LoginScreen() {
   }));
 
   // Particles config
-  const particles = useMemo(() => [
-    { x: width * 0.08, y: height * 0.18, size: 6,  delay: 0,    color: '#5B7CFF66' },
-    { x: width * 0.85, y: height * 0.12, size: 4,  delay: 300,  color: '#2EF2B366' },
-    { x: width * 0.72, y: height * 0.35, size: 8,  delay: 600,  color: '#5B7CFF44' },
-    { x: width * 0.15, y: height * 0.55, size: 5,  delay: 900,  color: '#2EF2B344' },
-    { x: width * 0.90, y: height * 0.62, size: 6,  delay: 200,  color: '#FFC94A55' },
-    { x: width * 0.05, y: height * 0.78, size: 4,  delay: 750,  color: '#5B7CFF44' },
-    { x: width * 0.78, y: height * 0.82, size: 7,  delay: 450,  color: '#2EF2B333' },
-  ], []);
+  const particles = useMemo(
+    () => [
+      {
+        x: width * 0.08,
+        y: height * 0.18,
+        size: 6,
+        delay: 0,
+        color: '#5B7CFF66',
+      },
+      {
+        x: width * 0.85,
+        y: height * 0.12,
+        size: 4,
+        delay: 300,
+        color: '#2EF2B366',
+      },
+      {
+        x: width * 0.72,
+        y: height * 0.35,
+        size: 8,
+        delay: 600,
+        color: '#5B7CFF44',
+      },
+      {
+        x: width * 0.15,
+        y: height * 0.55,
+        size: 5,
+        delay: 900,
+        color: '#2EF2B344',
+      },
+      {
+        x: width * 0.9,
+        y: height * 0.62,
+        size: 6,
+        delay: 200,
+        color: '#FFC94A55',
+      },
+      {
+        x: width * 0.05,
+        y: height * 0.78,
+        size: 4,
+        delay: 750,
+        color: '#5B7CFF44',
+      },
+      {
+        x: width * 0.78,
+        y: height * 0.82,
+        size: 7,
+        delay: 450,
+        color: '#2EF2B333',
+      },
+    ],
+    [],
+  );
 
   const ThemeIcon = useMemo(
     () => (mode === 'system' ? Monitor : mode === 'dark' ? Moon : Sun),
-    [mode]
+    [mode],
   );
 
   const cycleTheme = () => {
@@ -180,9 +268,13 @@ export default function LoginScreen() {
 
     try {
       if (Platform.OS === 'android') {
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        await GoogleSignin.hasPlayServices({
+          showPlayServicesUpdateDialog: true,
+        });
       }
-      try { await GoogleSignin.signOut(); } catch {}
+      try {
+        await GoogleSignin.signOut();
+      } catch {}
 
       await GoogleSignin.signIn();
       const { idToken } = await GoogleSignin.getTokens();
@@ -192,7 +284,10 @@ export default function LoginScreen() {
         return;
       }
 
-      const r = await api.post('/auth/oauth', { provider: 'google', token: idToken });
+      const r = await api.post('/auth/oauth', {
+        provider: 'google',
+        token: idToken,
+      });
       const { token, user, needsIdentity } = r.data || {};
 
       if (!token || !user) {
@@ -202,13 +297,17 @@ export default function LoginScreen() {
 
       await storage.setToken(token);
       setAuthToken(token);
-      setUser({ id: user.id, email: user.email, username: user.username, avatar: user.avatar });
+      setUser({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+      });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       if (needsIdentity) router.replace('/(auth)/identity');
       else router.replace('/(tabs)/home');
-
     } catch (e: any) {
       const code = e?.code;
       if (code === statusCodes.SIGN_IN_CANCELLED) {
@@ -218,7 +317,10 @@ export default function LoginScreen() {
       } else if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         Alert.alert('Google Play Services', 'Needs an update.');
       } else {
-        Alert.alert('Login failed', e?.response?.data?.message || e?.message || 'Google Sign-In failed.');
+        Alert.alert(
+          'Login failed',
+          e?.response?.data?.message || e?.message || 'Google Sign-In failed.',
+        );
       }
     } finally {
       setLoading(false);
@@ -235,32 +337,50 @@ export default function LoginScreen() {
 
     try {
       const clientId = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID;
-      if (!clientId) { Alert.alert('Configuration error', 'Missing Facebook App ID'); return; }
+      if (!clientId) {
+        Alert.alert('Configuration error', 'Missing Facebook App ID');
+        return;
+      }
 
       const redirectUri = AuthSession.makeRedirectUri();
       const request = new AuthSession.AuthRequest({
-        clientId, scopes: ['public_profile', 'email'],
-        redirectUri, responseType: AuthSession.ResponseType.Token,
+        clientId,
+        scopes: ['public_profile', 'email'],
+        redirectUri,
+        responseType: AuthSession.ResponseType.Token,
       });
       const result = await request.promptAsync(facebookDiscovery);
       if (result.type !== 'success' || !result.params.access_token) return;
 
-      const r = await api.post('/auth/oauth', { provider: 'facebook', token: result.params.access_token });
+      const r = await api.post('/auth/oauth', {
+        provider: 'facebook',
+        token: result.params.access_token,
+      });
       const { token, user, needsIdentity } = r.data || {};
 
-      if (!token || !user) { Alert.alert('Login failed', 'Invalid server response'); return; }
+      if (!token || !user) {
+        Alert.alert('Login failed', 'Invalid server response');
+        return;
+      }
 
       await storage.setToken(token);
       setAuthToken(token);
-      setUser({ id: user.id, email: user.email, username: user.username, avatar: user.avatar });
+      setUser({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+      });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       if (needsIdentity) router.replace('/(auth)/identity');
       else router.replace('/(tabs)/home');
-
     } catch (e: any) {
-      Alert.alert('Facebook Login failed', e?.response?.data?.message || e?.message || 'Try again');
+      Alert.alert(
+        'Facebook Login failed',
+        e?.response?.data?.message || e?.message || 'Try again',
+      );
     } finally {
       setLoading(false);
       setActiveBtn(null);
@@ -276,17 +396,33 @@ export default function LoginScreen() {
       <LinearGradient colors={bg} style={StyleSheet.absoluteFill} />
 
       {/* Floating particles */}
-      {particles.map((p, i) => <FloatingParticle key={i} {...p} />)}
+      {particles.map((p, i) => (
+        <FloatingParticle key={i} {...p} />
+      ))}
 
       {/* Decorative orbs */}
-      <View style={[styles.orb, styles.orbTR, isDark ? styles.orbTRDark : styles.orbTRLight]} />
-      <View style={[styles.orb, styles.orbBL, isDark ? styles.orbBLDark : styles.orbBLLight]} />
+      <View
+        style={[
+          styles.orb,
+          styles.orbTR,
+          isDark ? styles.orbTRDark : styles.orbTRLight,
+        ]}
+      />
+      <View
+        style={[
+          styles.orb,
+          styles.orbBL,
+          isDark ? styles.orbBLDark : styles.orbBLLight,
+        ]}
+      />
 
       <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
-
         {/* Theme toggle */}
         <TouchableOpacity
-          style={[styles.themeBtn, { backgroundColor: isDark ? '#131A2E' : '#F4F6FB' }]}
+          style={[
+            styles.themeBtn,
+            { backgroundColor: isDark ? '#131A2E' : '#F4F6FB' },
+          ]}
           onPress={cycleTheme}
         >
           <ThemeIcon size={18} color={isDark ? '#A6B0CF' : '#6B7280'} />
@@ -298,7 +434,8 @@ export default function LoginScreen() {
           <View style={styles.iconWrap}>
             <LinearGradient
               colors={['#7B9FFF', '#5B7CFF', '#3A5BE8']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
               style={styles.iconBox}
             >
               <Text style={styles.iconEmoji}>⚡</Text>
@@ -307,35 +444,67 @@ export default function LoginScreen() {
             <View style={[styles.iconGlow, { shadowColor: '#5B7CFF' }]} />
           </View>
 
-          <Text style={[styles.appName, { color: isDark ? '#FFFFFF' : '#0B0F1A' }]}>
+          <Text
+            style={[styles.appName, { color: isDark ? '#FFFFFF' : '#0B0F1A' }]}
+          >
             PulseQuiz
           </Text>
-          <Text style={[styles.tagline, { color: isDark ? '#A6B0CF' : '#6B7280' }]}>
+          <Text
+            style={[styles.tagline, { color: isDark ? '#A6B0CF' : '#6B7280' }]}
+          >
             Think fast. Win smarter.
           </Text>
 
           {/* Feature pills */}
           <Animated.View style={[styles.pills, cardStyle]}>
-            {['🏆 Real USDT prizes', '⚡ Live PvP', '🔥 Daily streaks'].map((label) => (
-              <View
-                key={label}
-                style={[styles.pill, { backgroundColor: isDark ? '#131A2E' : '#EEF2FF', borderColor: isDark ? '#1F2937' : '#C7D2FE' }]}
-              >
-                <Text style={[styles.pillText, { color: isDark ? '#A6B0CF' : '#4B5563' }]}>{label}</Text>
-              </View>
-            ))}
+            {['🏆 Real USDT prizes', '⚡ Live PvP', '🔥 Daily streaks'].map(
+              (label) => (
+                <View
+                  key={label}
+                  style={[
+                    styles.pill,
+                    {
+                      backgroundColor: isDark ? '#131A2E' : '#EEF2FF',
+                      borderColor: isDark ? '#1F2937' : '#C7D2FE',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.pillText,
+                      { color: isDark ? '#A6B0CF' : '#4B5563' },
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </View>
+              ),
+            )}
           </Animated.View>
         </Animated.View>
 
         {/* Auth card */}
-        <Animated.View style={[styles.card, btnsStyle, {
-          backgroundColor: isDark ? '#0F1423' : '#FFFFFF',
-          borderColor: isDark ? '#1F2937' : '#E5E7EB',
-        }]}>
-          <Text style={[styles.cardTitle, { color: isDark ? '#FFFFFF' : '#0B0F1A' }]}>
+        <Animated.View
+          style={[
+            styles.card,
+            btnsStyle,
+            {
+              backgroundColor: isDark ? '#0F1423' : '#FFFFFF',
+              borderColor: isDark ? '#1F2937' : '#E5E7EB',
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.cardTitle,
+              { color: isDark ? '#FFFFFF' : '#0B0F1A' },
+            ]}
+          >
             Sign in to play
           </Text>
-          <Text style={[styles.cardSub, { color: isDark ? '#A6B0CF' : '#6B7280' }]}>
+          <Text
+            style={[styles.cardSub, { color: isDark ? '#A6B0CF' : '#6B7280' }]}
+          >
             Join thousands competing for weekly prizes
           </Text>
 
@@ -360,14 +529,15 @@ export default function LoginScreen() {
             />
           </View>
 
-          <Text style={[styles.terms, { color: isDark ? '#2A3350' : '#9CA3AF' }]}>
+          <Text
+            style={[styles.terms, { color: isDark ? '#2A3350' : '#9CA3AF' }]}
+          >
             By continuing you agree to our{' '}
             <Text style={{ color: '#5B7CFF' }}>Terms</Text>
             {' & '}
             <Text style={{ color: '#5B7CFF' }}>Privacy Policy</Text>
           </Text>
         </Animated.View>
-
       </SafeAreaView>
     </View>
   );
@@ -376,12 +546,21 @@ export default function LoginScreen() {
 // ── LoginButton ───────────────────────────────────────────────────────────────
 
 function LoginButton({
-  label, icon, onPress, loading, disabled, isDark, variant,
+  label,
+  icon,
+  onPress,
+  loading,
+  disabled,
+  isDark,
+  variant,
 }: {
-  label: string; icon: string;
+  label: string;
+  icon: string;
   onPress: () => void;
-  loading: boolean; disabled: boolean;
-  isDark: boolean; variant: 'primary' | 'ghost';
+  loading: boolean;
+  disabled: boolean;
+  isDark: boolean;
+  variant: 'primary' | 'ghost';
 }) {
   const scale = useSharedValue(1);
 
@@ -422,10 +601,14 @@ function LoginButton({
         ) : (
           <>
             <Text style={styles.btnIcon}>{icon}</Text>
-            <Text style={[
-              styles.btnLabel,
-              { color: isPrimary ? '#FFFFFF' : (isDark ? '#A6B0CF' : '#374151') },
-            ]}>
+            <Text
+              style={[
+                styles.btnLabel,
+                {
+                  color: isPrimary ? '#FFFFFF' : isDark ? '#A6B0CF' : '#374151',
+                },
+              ]}
+            >
               {label}
             </Text>
           </>
@@ -437,35 +620,60 @@ function LoginButton({
 
 // ── Loading dots ──────────────────────────────────────────────────────────────
 
-function LoadingDots({ isDark, isPrimary }: { isDark: boolean; isPrimary: boolean }) {
-  const dotColor = isPrimary ? '#ffffff' : (isDark ? '#5B7CFF' : '#5B7CFF');
+// Single animated dot — hooks must live in a component, never in a .map() callback
+function SingleDot({ delay, color }: { delay: number; color: string }) {
+  const scale = useSharedValue(0.6);
+  const opacity = useSharedValue(0.3);
 
-  const dots = [0, 1, 2].map((i) => {
-    const scale   = useSharedValue(0.6);
-    const opacity = useSharedValue(0.3);
+  useEffect(() => {
+    scale.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 280, easing: Easing.out(Easing.quad) }),
+          withTiming(0.6, { duration: 280 }),
+        ),
+        -1,
+        false,
+      ),
+    );
+    opacity.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 280 }),
+          withTiming(0.3, { duration: 280 }),
+        ),
+        -1,
+        false,
+      ),
+    );
+  }, []);
 
-    useEffect(() => {
-      const d = i * 160;
-      scale.value   = withDelay(d, withRepeat(withSequence(
-        withTiming(1,   { duration: 280, easing: Easing.out(Easing.quad) }),
-        withTiming(0.6, { duration: 280 }),
-      ), -1, false));
-      opacity.value = withDelay(d, withRepeat(withSequence(
-        withTiming(1,   { duration: 280 }),
-        withTiming(0.3, { duration: 280 }),
-      ), -1, false));
-    }, []);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+    backgroundColor: color,
+  }));
 
-    const style = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }],
-      opacity: opacity.value,
-      backgroundColor: dotColor,
-    }));
+  return <Animated.View style={[styles.dot, style]} />;
+}
 
-    return <Animated.View key={i} style={[styles.dot, style]} />;
-  });
-
-  return <View style={styles.dotsRow}>{dots}</View>;
+function LoadingDots({
+  isDark,
+  isPrimary,
+}: {
+  isDark: boolean;
+  isPrimary: boolean;
+}) {
+  const dotColor = isPrimary ? '#ffffff' : '#5B7CFF';
+  return (
+    <View style={styles.dotsRow}>
+      <SingleDot delay={0} color={dotColor} />
+      <SingleDot delay={160} color={dotColor} />
+      <SingleDot delay={320} color={dotColor} />
+    </View>
+  );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -475,16 +683,22 @@ const styles = StyleSheet.create({
   orb: { position: 'absolute', borderRadius: 999 },
   orbTR: { width: 280, height: 280, top: -80, right: -60 },
   orbBL: { width: 220, height: 220, bottom: -50, left: -60 },
-  orbTRDark:  { backgroundColor: '#5B7CFF', opacity: 0.06 },
+  orbTRDark: { backgroundColor: '#5B7CFF', opacity: 0.06 },
   orbTRLight: { backgroundColor: '#5B7CFF', opacity: 0.1 },
-  orbBLDark:  { backgroundColor: '#2EF2B3', opacity: 0.05 },
+  orbBLDark: { backgroundColor: '#2EF2B3', opacity: 0.05 },
   orbBLLight: { backgroundColor: '#2EF2B3', opacity: 0.08 },
 
   // Theme btn
   themeBtn: {
-    position: 'absolute', top: 14, right: 18, zIndex: 20,
-    width: 42, height: 42, borderRadius: 21,
-    alignItems: 'center', justifyContent: 'center',
+    position: 'absolute',
+    top: 14,
+    right: 18,
+    zIndex: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
     elevation: 2,
   },
 
@@ -499,8 +713,11 @@ const styles = StyleSheet.create({
 
   iconWrap: { position: 'relative', marginBottom: 22 },
   iconBox: {
-    width: 80, height: 80, borderRadius: 24,
-    alignItems: 'center', justifyContent: 'center',
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#5B7CFF',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.6,
@@ -509,7 +726,8 @@ const styles = StyleSheet.create({
   },
   iconEmoji: { fontSize: 40 },
   iconGlow: {
-    position: 'absolute', inset: -10,
+    position: 'absolute',
+    inset: -10,
     borderRadius: 40,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
@@ -581,7 +799,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
   },
-  btnIcon:  { fontSize: 18 },
+  btnIcon: { fontSize: 18 },
   btnLabel: { fontSize: 15, fontWeight: '700' },
 
   dotsRow: {
@@ -590,7 +808,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dot: {
-    width: 8, height: 8, borderRadius: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 
   terms: {

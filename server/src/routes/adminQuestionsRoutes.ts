@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAdmin } from '../middlewares/requireAdmin';
 import QuizQuestion from '../models/QuizQuestion';
+import { escapeRegex } from '../utils/escapeRegex';
 
 const router = Router();
 router.use(requireAdmin);
@@ -14,7 +15,7 @@ router.get('/', async (req: Request, res: Response) => {
   const filter: any = {};
   if (category)   filter.category = category;
   if (difficulty) filter.difficulty = difficulty;
-  if (search)     filter.question = { $regex: search, $options: 'i' };
+  if (search)     filter.question = { $regex: escapeRegex(search), $options: 'i' };
 
   const [questions, total] = await Promise.all([
     QuizQuestion.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
@@ -47,7 +48,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
   if (answer != null) updates.answer = Number(answer);
   if (difficulty) updates.difficulty = difficulty;
 
-  const q = await QuizQuestion.findByIdAndUpdate(req.params.id, updates, { new: true });
+  const q = await QuizQuestion.findByIdAndUpdate(req.params.id, updates, { returnDocument: 'after' });
   if (!q) return res.status(404).json({ message: 'Question not found' });
   res.json({ question: q });
 });

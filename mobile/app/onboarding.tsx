@@ -1,14 +1,14 @@
 import { useRef, useState } from 'react';
 import {
-  Animated, Dimensions, FlatList, StyleSheet,
+  Animated, Dimensions, FlatList,
+  NativeScrollEvent, NativeSyntheticEvent, StyleSheet,
   Text, TouchableOpacity, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/src/theme/useTheme';
-import { STORAGE_KEYS } from '@/src/constants/storageKeys';
+import { useOnboardingStore } from '@/src/store/useOnboardingStore';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -52,16 +52,48 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  // The index must not depend on onMomentumScrollEnd alone: that event is
+  // unreliable for programmatic scrolls on some devices, which left
+  // `currentIndex` stale — tapping the button on the last slide then scrolled
+  // BACK to an earlier slide instead of finishing. Track the index in a ref,
+  // update it optimistically on tap, and confirm it from onScroll.
+  const indexRef = useRef(0);
+  const finishingRef = useRef(false);
   const scrollX = useRef(new Animated.Value(0)).current;
 
+  const setIndex = (idx: number) => {
+    const clamped = Math.max(0, Math.min(SLIDES.length - 1, idx));
+    if (clamped !== indexRef.current) {
+      indexRef.current = clamped;
+      setCurrentIndex(clamped);
+    }
+  };
+
+  const onScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    {
+      useNativeDriver: false,
+      listener: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const width = e.nativeEvent.layoutMeasurement.width || SCREEN_W;
+        setIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+      },
+    },
+  );
+
   const finish = async () => {
-    await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_DONE, 'true');
+    if (finishingRef.current) return; // ignore double-taps
+    finishingRef.current = true;
+    // Flip the shared flag BEFORE navigating, so the root layout sees
+    // onboarding as complete and doesn't redirect back into the flow.
+    await useOnboardingStore.getState().complete();
     router.replace('/(tabs)/home');
   };
 
   const next = () => {
-    if (currentIndex < SLIDES.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+    const idx = indexRef.current;
+    if (idx < SLIDES.length - 1) {
+      flatListRef.current?.scrollToIndex({ index: idx + 1, animated: true });
+      setIndex(idx + 1);
     } else {
       finish();
     }
@@ -78,11 +110,12 @@ export default function OnboardingScreen() {
         pagingEnabled
         scrollEventThrottle={16}
         showsHorizontalScrollIndicator={false}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })}
-        onMomentumScrollEnd={(e) => {
-          const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
-          setCurrentIndex(idx);
-        }}
+        onScroll={onScroll}
+        getItemLayout={(_, index) => ({
+          length: SCREEN_W,
+          offset: SCREEN_W * index,
+          index,
+        })}
         renderItem={({ item: slide }) => (
           <View style={[styles.slide, { width: SCREEN_W }]}>
             {/* Gradient circle */}

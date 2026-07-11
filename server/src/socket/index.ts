@@ -5,11 +5,12 @@ import { registerPvpHandlers } from './pvp.handlers';
 import { registerMatchmakingHandlers, setIoInstance } from './matchmaking';
 import { registerRoomHandlers } from './room.handlers';
 import User from '../models/User';
+import { getAllowedOrigins } from '../app';
 
 export function createSocketServer(server: http.Server) {
   const io = new Server(server, {
     cors: {
-      origin: '*', // tighten in production
+      origin: getAllowedOrigins(),
       methods: ['GET', 'POST'],
     },
   });

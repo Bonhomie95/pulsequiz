@@ -24,14 +24,10 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { api } from '@/src/api/api';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
-import { AVATAR_MAP } from '@/src/constants/avatars';
+import { UserAvatar } from '@/src/components/UserAvatar';
 import { AvatarPickerModal } from '@/src/components/profile/AvatarPickerModal';
 import { enterImmersiveMode } from '@/src/utils/immersive';
 import { useCoinStore } from '@/src/store/useCoinStore';
-
-function resolveAvatar(key?: any) {
-  return AVATAR_MAP[key ?? 'avatar0'] ?? AVATAR_MAP.avatar0;
-}
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -136,10 +132,7 @@ export default function ProfileScreen() {
             style={styles.avatarWrap}
             activeOpacity={0.85}
           >
-            <Image
-              source={resolveAvatar(editing ? avatar : user?.avatar)}
-              style={styles.avatar}
-            />
+            <UserAvatar avatar={editing ? avatar : user?.avatar} size={96} />
             <View
               style={[
                 styles.editBadge,

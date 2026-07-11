@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as IAP from 'react-native-iap';
-import type { SubscriptionPurchase, PurchaseError } from 'react-native-iap';
+import { ErrorCode } from 'react-native-iap';
+import type { Purchase, PurchaseError } from 'react-native-iap';
 import { ChevronLeft, Crown, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
@@ -88,22 +89,11 @@ export default function PremiumScreen() {
     (async () => {
       try {
         await IAP.initConnection();
-        // v12: getSubscriptions returns Subscription[] which has productId, localizedPrice
-        const subs = await IAP.getSubscriptions({ skus: ALL_SKUS });
+        const subs = await IAP.fetchProducts({ skus: ALL_SKUS, type: 'subs' });
         if (!mounted) return;
         const prices: Record<string, string> = {};
-        for (const s of subs) {
-          // TS types for Subscription are inaccurate — cast to any to extract price.
-          // iOS:     s.localizedPrice (e.g. "$2.99")
-          // Android: s.subscriptionOfferDetails[0].pricingPhases.pricingPhaseList[0].formattedPrice
-          const sub = s as any;
-          const price: string =
-            sub.localizedPrice ||
-            sub.price ||
-            sub.subscriptionOfferDetails?.[0]?.pricingPhases
-              ?.pricingPhaseList?.[0]?.formattedPrice ||
-            '';
-          prices[sub.productId] = price;
+        for (const s of subs ?? []) {
+          prices[s.id] = s.displayPrice;
         }
         setStorePrices(prices);
       } catch (e) {
@@ -122,7 +112,7 @@ export default function PremiumScreen() {
   // ── Purchase listeners ─────────────────────────────────────────────────────
   useEffect(() => {
     const purchaseSub = IAP.purchaseUpdatedListener(
-      async (purchase: SubscriptionPurchase) => {
+      async (purchase: Purchase) => {
         const sku = pendingSkuRef.current ?? purchase.productId;
 
         // Ignore if not from this screen
@@ -137,7 +127,8 @@ export default function PremiumScreen() {
             const res = await api.post('/subscription/apple/verify', {
               sku,
               transactionId: purchase.transactionId,
-              originalTransactionId: purchase.originalTransactionIdentifierIOS,
+              originalTransactionId: (purchase as IAP.PurchaseIOS)
+                .originalTransactionIdentifierIOS,
             });
             await IAP.finishTransaction({ purchase, isConsumable: false });
             setPremium({
@@ -158,7 +149,7 @@ export default function PremiumScreen() {
             const res = await api.post('/subscription/google/verify', {
               sku,
               purchaseToken: purchase.purchaseToken,
-              packageName: purchase.packageNameAndroid,
+              packageName: (purchase as IAP.PurchaseAndroid).packageNameAndroid,
             });
             await IAP.finishTransaction({ purchase, isConsumable: false });
             setPremium({
@@ -184,7 +175,7 @@ export default function PremiumScreen() {
     );
 
     const errorSub = IAP.purchaseErrorListener((error: PurchaseError) => {
-      if (error.code !== 'E_USER_CANCELLED') {
+      if (error.code !== ErrorCode.UserCancelled) {
         Alert.alert('Purchase failed', error.message ?? 'Please try again.');
       }
       setLoadingSku(null);
@@ -203,12 +194,15 @@ export default function PremiumScreen() {
     setLoadingSku(sku);
     pendingSkuRef.current = sku;
 
-    // v12: requestSubscription — result arrives via purchaseUpdatedListener
-    IAP.requestSubscription({
-      sku,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+    // requestPurchase — result arrives via purchaseUpdatedListener
+    IAP.requestPurchase({
+      type: 'subs',
+      request: {
+        apple: { sku, andDangerouslyFinishTransactionAutomatically: false },
+        google: { skus: [sku] },
+      },
     }).catch((e: PurchaseError) => {
-      if (e.code !== 'E_USER_CANCELLED') {
+      if (e.code !== ErrorCode.UserCancelled) {
         Alert.alert(
           'Could not start purchase',
           e.message ?? 'Please try again.',
@@ -241,12 +235,13 @@ export default function PremiumScreen() {
       const purchases = await IAP.getAvailablePurchases();
       const subPurchase = purchases.find((p) =>
         ALL_SKUS.includes(p.productId),
-      ) as SubscriptionPurchase | undefined;
+      );
       if (subPurchase) {
         const res2 = await api.post('/subscription/apple/verify', {
           sku: subPurchase.productId,
           transactionId: subPurchase.transactionId,
-          originalTransactionId: subPurchase.originalTransactionIdentifierIOS,
+          originalTransactionId: (subPurchase as IAP.PurchaseIOS)
+            .originalTransactionIdentifierIOS,
         });
         await IAP.finishTransaction({
           purchase: subPurchase,

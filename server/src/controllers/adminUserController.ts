@@ -5,6 +5,7 @@ import CoinWallet from '../models/CoinWallet';
 import QuizSession from '../models/QuizSession';
 import Purchase from '../models/Purchase';
 import Subscription from '../models/Subscription';
+import { escapeRegex } from '../utils/escapeRegex';
 
 export async function listUsers(req: Request, res: Response) {
   const page = Math.max(1, Number(req.query.page) || 1);
@@ -16,9 +17,10 @@ export async function listUsers(req: Request, res: Response) {
   const query: any = {};
 
   if (search) {
+    const safe = escapeRegex(search);
     query.$or = [
-      { username: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
+      { username: { $regex: safe, $options: 'i' } },
+      { email: { $regex: safe, $options: 'i' } },
     ];
   }
   if (filter === 'banned') query.isBanned = true;

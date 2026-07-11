@@ -8,14 +8,9 @@ import { getSocket } from '@/src/socket/socket';
 import { SOCKET_EVENTS } from '../../../src/socket/events';
 import { usePvPStore } from '@/src/store/usePvPStore';
 import { useTheme } from '@/src/theme/useTheme';
-import { AVATAR_MAP } from '@/src/constants/avatars';
+import { UserAvatar } from '@/src/components/UserAvatar';
 import { soundManager } from '@/src/audio/SoundManager';
 import { connectSocket } from '@/src/socket/connect';
-
-function resolveAvatar(key?: string | null) {
-  if (!key) return AVATAR_MAP.avatar0;
-  return AVATAR_MAP[key as keyof typeof AVATAR_MAP] ?? AVATAR_MAP.avatar0;
-}
 
 export default function PvPVsScreen() {
   const theme = useTheme();
@@ -152,10 +147,7 @@ export default function PvPVsScreen() {
               alignItems: 'center',
             }}
           >
-            <Image
-              source={resolveAvatar(me.avatar)}
-              style={{ width: 64, height: 64, borderRadius: 32 }}
-            />
+            <UserAvatar avatar={me.avatar} size={64} />
             <Text style={{ fontWeight: '800', color: theme.colors.text }}>
               {me.username}
             </Text>
@@ -187,10 +179,7 @@ export default function PvPVsScreen() {
               alignItems: 'center',
             }}
           >
-            <Image
-              source={resolveAvatar(opponent.avatar)}
-              style={{ width: 64, height: 64, borderRadius: 32 }}
-            />
+            <UserAvatar avatar={opponent.avatar} size={64} />
             <Text style={{ fontWeight: '800', color: theme.colors.text }}>
               {opponent.username}
             </Text>

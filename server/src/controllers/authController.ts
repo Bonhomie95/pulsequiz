@@ -10,6 +10,12 @@ import { signJwt } from '../utils/jwt';
 import { verifyGoogleIdToken } from '../services/oauth/google';
 import { verifyFacebookAccessToken } from '../services/oauth/facebook';
 import type { AuthRequest } from '../middlewares/auth';
+import { escapeRegex } from '../utils/escapeRegex';
+import {
+  checkAvatar,
+  isTextOffensive,
+  registerModerationStrike,
+} from '../utils/moderation';
 
 const OAuthSchema = z.object({
   provider: z.enum(['google', 'facebook']),
@@ -75,6 +81,10 @@ export async function oauthLogin(req: Request, res: Response) {
 
     // 1) Prefer provider match
     let user = await User.findOne({ provider, providerId: profile.providerId });
+
+    if (user?.isBanned) {
+      return res.status(403).json({ message: 'Account banned' });
+    }
 
     // 2) Fallback by email (optional linking)
     if (!user) {
@@ -149,13 +159,30 @@ export async function setIdentity(req: AuthRequest, res: Response) {
   }
 
   const username = normalizeUsername(parsed.data.username);
-  const avatar = parsed.data.avatar;
+  const avatar = parsed.data.avatar.trim();
+
+  // ── Moderation: offensive usernames / avatars are rejected and striked ────
+  const avatarCheck = checkAvatar(avatar);
+  if (avatarCheck.ok === false && avatarCheck.reason === 'invalid') {
+    return res.status(400).json({
+      message: 'Avatar must be one of the presets or a single emoji',
+    });
+  }
+  if (isTextOffensive(username) || avatarCheck.ok === false) {
+    const strike = await registerModerationStrike(
+      req.userId,
+      isTextOffensive(username) ? username : avatar,
+    );
+    return res
+      .status(strike.banned ? 403 : 400)
+      .json({ message: strike.message, strikes: strike.strikes });
+  }
 
   try {
     // Case-insensitive exact match check — the DB index is on normalized lowercase
     // but we also guard against any legacy mixed-case usernames
     const exists = await User.findOne({
-      username: { $regex: new RegExp(`^${username}$`, 'i') },
+      username: { $regex: new RegExp(`^${escapeRegex(username)}$`, 'i') },
       _id: { $ne: req.userId },
     }).lean();
 
@@ -166,7 +193,7 @@ export async function setIdentity(req: AuthRequest, res: Response) {
     const user = await User.findByIdAndUpdate(
       req.userId,
       { username, avatar },
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     if (!user) {
@@ -183,6 +210,37 @@ export async function setIdentity(req: AuthRequest, res: Response) {
       .status(500)
       .json({ message: e?.message || 'Failed to set identity' });
   }
+}
+
+/**
+ * GET /api/auth/username-check?username=... (protected)
+ *
+ * Live availability + validity check for the identity screen, so users know
+ * BEFORE submitting whether a name is free and allowed.
+ */
+export async function checkUsername(req: AuthRequest, res: Response) {
+  const raw = typeof req.query.username === 'string' ? req.query.username : '';
+  const username = normalizeUsername(raw);
+
+  const validFormat = /^[a-z0-9_]{3,20}$/.test(username);
+  if (!validFormat) {
+    return res.json({ available: false, allowed: false, reason: 'invalid' });
+  }
+
+  // Report "not allowed" without striking — strikes only apply on actual
+  // submission attempts, not while the user is still typing.
+  if (isTextOffensive(username)) {
+    return res.json({ available: false, allowed: false, reason: 'offensive' });
+  }
+
+  const exists = await User.findOne({
+    username: { $regex: new RegExp(`^${escapeRegex(username)}$`, 'i') },
+    _id: { $ne: req.userId },
+  })
+    .select('_id')
+    .lean();
+
+  return res.json({ available: !exists, allowed: true });
 }
 
 /**

@@ -16,7 +16,7 @@ import { api } from '@/src/api/api';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { enterImmersiveMode } from '@/src/utils/immersive';
-import { AVATAR_MAP } from '@/src/constants/avatars';
+import { UserAvatar } from '@/src/components/UserAvatar';
 
 type Tab = 'weekly' | 'monthly' | 'all' | 'friends';
 
@@ -79,8 +79,10 @@ function CountdownBanner({
   );
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Tick every second
+  // Tick every second. Recompute immediately on `type` change so the timer
+  // switches instantly instead of showing the previous tab's value for ~1s.
   useEffect(() => {
+    setRemaining(getNextPayoutDate(type).getTime() - Date.now());
     const id = setInterval(() => {
       setRemaining(getNextPayoutDate(type).getTime() - Date.now());
     }, 1000);
@@ -199,14 +201,8 @@ function AvatarBubble({
   avatar?: string;
   size?: number;
 }) {
-  const src = avatar ? AVATAR_MAP[avatar] : null;
-  if (src) {
-    return (
-      <Image
-        source={src}
-        style={{ width: size, height: size, borderRadius: size / 2 }}
-      />
-    );
+  if (avatar) {
+    return <UserAvatar avatar={avatar} size={size} />;
   }
   return (
     <View
