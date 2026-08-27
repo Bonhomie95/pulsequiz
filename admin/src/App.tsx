@@ -11,6 +11,7 @@ import AntiCheat from './pages/AntiCheat';
 import Settings from './pages/Settings';
 import Questions from './pages/Questions';
 import Tournaments from './pages/Tournaments';
+import Challenges from './pages/Challenges';
 import Subscriptions from './pages/Subscriptions';
 import Leaderboard from './pages/Leaderboard';
 import Analytics from './pages/Analytics';
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/questions" element={<Questions />} />
             <Route path="/tournaments" element={<Tournaments />} />
+          <Route path="/challenges" element={<Challenges />} />
             <Route path="/anticheat" element={<AntiCheat />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/leaderboard" element={<Leaderboard />} />

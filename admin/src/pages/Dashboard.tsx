@@ -53,15 +53,26 @@ export default function Dashboard() {
 
   const [activity, setActivity] = useState<ActivityItem[]>([]);
 
+  type StreakStats = {
+    total: number;
+    active: number;
+    activePercent: number;
+    longestStreak: number;
+    distribution: { label: string; count: number; percent: number }[];
+    top: { userId: string; username: string; streak: number; isBanned: boolean }[];
+  };
+  const [streaks, setStreaks] = useState<StreakStats | null>(null);
+
   useEffect(() => {
     let alive = true;
 
     async function loadStats() {
-      const [u, c, p, f] = await Promise.all([
+      const [u, c, p, f, st] = await Promise.all([
         adminApi.get('/admin/stats/users'),
         adminApi.get('/admin/stats/coins'),
         adminApi.get('/admin/stats/purchases-today'),
         adminApi.get('/admin/stats/flags'),
+        adminApi.get('/admin/stats/streaks'),
       ]);
 
       if (!alive) return;
@@ -72,6 +83,7 @@ export default function Dashboard() {
         purchases: p.data.total,
         flags: f.data.total,
       });
+      setStreaks(st.data);
     }
 
     loadStats();
@@ -131,6 +143,64 @@ export default function Dashboard() {
           icon={<AlertTriangle size={20} />}
         />
       </div>
+
+      {/* Streak retention — the distribution is what makes a streak number
+          mean anything, so the share of players sits beside every band. */}
+      {streaks && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+            <div className="flex items-baseline justify-between mb-4">
+              <h2 className="font-bold">Streak Distribution</h2>
+              <span className="text-xs text-gray-500">
+                {streaks.activePercent}% on an active streak · longest{' '}
+                {streaks.longestStreak}d
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {streaks.distribution.map((b) => (
+                <div key={b.label} className="text-sm">
+                  <div className="flex justify-between text-gray-300">
+                    <span>{b.label}</span>
+                    <span className="text-gray-500">
+                      {b.count.toLocaleString()} · {b.percent}%
+                    </span>
+                  </div>
+                  <div className="mt-1 h-2 rounded bg-gray-800 overflow-hidden">
+                    <div
+                      className="h-full rounded bg-orange-500"
+                      style={{ width: `${b.percent}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+            <h2 className="font-bold mb-4">Top Streaks</h2>
+            <div className="space-y-2 text-sm">
+              {streaks.top.map((t, i) => (
+                <div key={t.userId} className="flex justify-between text-gray-300">
+                  <span className="truncate">
+                    <span className="text-gray-600 mr-2">#{i + 1}</span>
+                    <b>{t.username}</b>
+                    {t.isBanned && (
+                      <span className="ml-2 text-[10px] text-red-400">BANNED</span>
+                    )}
+                  </span>
+                  <span className="shrink-0 text-orange-400 font-semibold">
+                    {t.streak}d
+                  </span>
+                </div>
+              ))}
+              {streaks.top.length === 0 && (
+                <div className="text-gray-500">No active streaks yet.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Activity Panel */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">

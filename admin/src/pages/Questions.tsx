@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
-import { Plus, Search, RefreshCw, Edit3, Trash2, HelpCircle, X } from 'lucide-react';
+import { Plus, Search, RefreshCw, Edit3, Trash2, HelpCircle, X, Download, Upload } from 'lucide-react';
 
 type Question = {
   _id: string;
@@ -150,6 +150,20 @@ export default function Questions() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  type Coverage = {
+    category: string;
+    easy: number;
+    medium: number;
+    hard: number;
+    total: number;
+    healthy?: boolean;
+  };
+  const [coverage, setCoverage] = useState<Coverage[] | null>(null);
+  const [showImport, setShowImport] = useState(false);
+  const [importCsv, setImportCsv] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string | null>(null);
+
   const fetchQuestions = async () => {
     setLoading(true);
     try {
@@ -205,6 +219,62 @@ export default function Questions() {
     }
   };
 
+  /** Per-category health. Thin categories are why players see repeats. */
+  const fetchCoverage = async () => {
+    try {
+      const res = await adminApi.get('/admin/questions/coverage');
+      setCoverage(res.data.coverage ?? res.data);
+    } catch {
+      setCoverage(null);
+    }
+  };
+  useEffect(() => {
+    fetchCoverage();
+  }, []);
+
+  /**
+   * Bulk import. Always dry-run first and show the result — an import that
+   * silently rejects half its rows is worse than one that refuses outright.
+   */
+  const runImport = async (dryRun: boolean) => {
+    if (!importCsv.trim()) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const res = await adminApi.post('/admin/questions/import', {
+        csv: importCsv,
+        dryRun,
+      });
+      const d = res.data;
+      setImportResult(
+        `${dryRun ? 'Dry run' : 'Imported'}: ${d.inserted ?? 0} added, ` +
+          `${d.duplicates ?? 0} duplicates, ${d.rejected?.length ?? d.rejected ?? 0} rejected` +
+          (d.errors?.length ? `
+${d.errors.slice(0, 5).join('\n')}` : ''),
+      );
+      if (!dryRun) {
+        fetchQuestions();
+        fetchCoverage();
+      }
+    } catch (e: any) {
+      setImportResult(e?.response?.data?.message ?? 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const downloadTemplate = async () => {
+    const res = await adminApi.get('/admin/questions/template.csv', {
+      responseType: 'blob',
+    });
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'question-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const deleteQ = async (id: string) => {
     if (!confirm('Delete this question?')) return;
     setDeleting(id);
@@ -229,11 +299,56 @@ export default function Questions() {
           <button onClick={fetchQuestions} className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition">
             <RefreshCw size={14} />
           </button>
+          <button onClick={downloadTemplate} className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition">
+            <Download size={15} /> Template
+          </button>
+          <button onClick={() => setShowImport(true)} className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition">
+            <Upload size={15} /> Import CSV
+          </button>
           <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold transition">
             <Plus size={15} /> New Question
           </button>
         </div>
       </div>
+
+      {/* COVERAGE — which categories can actually sustain play */}
+      {coverage && coverage.length > 0 && (
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 mb-5">
+          <h2 className="font-bold mb-3 text-sm">Category Coverage</h2>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {coverage.map((c) => {
+              // A round needs 4 easy / 4 medium / 2 hard, so the binding
+              // constraint is whichever tier runs out first.
+              const rounds = Math.min(
+                Math.floor(c.easy / 4),
+                Math.floor(c.medium / 4),
+                Math.floor(c.hard / 2),
+              );
+              const thin = rounds < 5;
+              return (
+                <div
+                  key={c.category}
+                  className="flex items-center justify-between rounded-lg bg-gray-800/60 px-3 py-2 text-sm"
+                >
+                  <span className="capitalize truncate">{c.category}</span>
+                  <span className="shrink-0 text-xs">
+                    <span className="text-gray-400">
+                      {c.easy}/{c.medium}/{c.hard}
+                    </span>
+                    <span className={thin ? 'ml-2 text-red-400 font-bold' : 'ml-2 text-green-400'}>
+                      {rounds} rounds
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-[11px] text-gray-500">
+            Counts are easy/medium/hard. A round consumes 4/4/2 — anything under
+            5 rounds means players start seeing repeats quickly.
+          </p>
+        </div>
+      )}
 
       {/* SEARCH + FILTERS */}
       <div className="flex gap-3 mb-5 flex-wrap">
@@ -315,6 +430,51 @@ export default function Questions() {
       </div>
 
       {/* CREATE MODAL */}
+      {showImport && (
+        <Modal
+          title="Import Questions from CSV"
+          onClose={() => {
+            setShowImport(false);
+            setImportResult(null);
+          }}
+        >
+          <p className="text-sm text-gray-400 mb-3">
+            Paste CSV rows, or download the template for the expected columns.
+            Run a dry run first — it reports duplicates and rejects without
+            writing anything.
+          </p>
+          <textarea
+            value={importCsv}
+            onChange={(e) => setImportCsv(e.target.value)}
+            rows={10}
+            spellCheck={false}
+            placeholder="category,difficulty,question,option1,option2,option3,option4,answer"
+            className="w-full rounded-lg bg-gray-800 p-3 font-mono text-xs outline-none border border-gray-700 focus:border-indigo-500"
+          />
+          {importResult && (
+            <pre className="mt-3 whitespace-pre-wrap rounded-lg bg-gray-800/70 p-3 text-xs text-gray-300">
+              {importResult}
+            </pre>
+          )}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={() => runImport(true)}
+              disabled={importing || !importCsv.trim()}
+              className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold hover:bg-gray-700 disabled:opacity-50 transition"
+            >
+              {importing ? 'Checking…' : 'Dry run'}
+            </button>
+            <button
+              onClick={() => runImport(false)}
+              disabled={importing || !importCsv.trim()}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold hover:bg-indigo-500 disabled:opacity-50 transition"
+            >
+              {importing ? 'Importing…' : 'Import'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {showCreate && (
         <Modal title="New Question" onClose={() => setShowCreate(false)}>
           <QuestionForm form={createForm} setForm={setCreateForm} categories={categories} onSave={createQuestion} saving={saving} submitLabel="Create Question" />

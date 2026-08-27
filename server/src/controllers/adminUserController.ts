@@ -9,6 +9,7 @@ import QuizSession from '../models/QuizSession';
 import Purchase from '../models/Purchase';
 import Subscription from '../models/Subscription';
 import Progress from '../models/Progress';
+import Streak from '../models/Streak';
 import FlaggedAccount from '../models/FlaggedAccount';
 import AccumulatedPrize from '../models/AccumulatedPrize';
 import { escapeRegex } from '../utils/escapeRegex';
@@ -68,7 +69,7 @@ export async function listUsers(req: Request, res: Response) {
   ]);
 
   const ids = users.map((u) => u._id);
-  const [wallets, subs, flags] = await Promise.all([
+  const [wallets, subs, flags, progresses, streaks] = await Promise.all([
     CoinWallet.find({ userId: { $in: ids } }).lean(),
     Subscription.find({
       userId: { $in: ids },
@@ -76,18 +77,39 @@ export async function listUsers(req: Request, res: Response) {
       status: { $in: ['active', 'grace'] },
     }).lean(),
     FlaggedAccount.find({ userId: { $in: ids }, resolved: false }).select('userId').lean(),
+    // Score and streak were only reachable by opening a user one at a time,
+    // which makes "who is doing well" and "who stopped playing" invisible in
+    // the list. Both are indexed by userId, so this is two extra lookups.
+    Progress.find({ userId: { $in: ids } })
+      .select('userId points level totalQuizzes correctAnswers totalAnswers rating')
+      .lean(),
+    Streak.find({ userId: { $in: ids } }).select('userId streak lastCheckIn').lean(),
   ]);
 
   const walletMap = new Map(wallets.map((w) => [w.userId.toString(), w.coins]));
   const premiumSet = new Set(subs.map((s) => s.userId.toString()));
   const flaggedSet = new Set(flags.map((f) => f.userId.toString()));
+  const progressMap = new Map(progresses.map((p) => [p.userId.toString(), p]));
+  const streakMap = new Map(streaks.map((s) => [s.userId.toString(), s]));
 
-  const enriched = users.map((u) => ({
-    ...u,
-    coins: walletMap.get(u._id.toString()) ?? 0,
-    isPremium: premiumSet.has(u._id.toString()),
-    isFlagged: flaggedSet.has(u._id.toString()),
-  }));
+  const enriched = users.map((u) => {
+    const key = u._id.toString();
+    const p = progressMap.get(key);
+    const st = streakMap.get(key);
+    return {
+      ...u,
+      coins: walletMap.get(key) ?? 0,
+      isPremium: premiumSet.has(key),
+      isFlagged: flaggedSet.has(key),
+      points: p?.points ?? 0,
+      level: p?.level ?? 1,
+      totalQuizzes: p?.totalQuizzes ?? 0,
+      accuracy: p?.totalAnswers ? Math.round((p.correctAnswers / p.totalAnswers) * 100) : null,
+      rating: p?.rating ?? null,
+      streak: st?.streak ?? 0,
+      lastCheckIn: st?.lastCheckIn ?? null,
+    };
+  });
 
   res.json({ users: enriched, total, page, pages: Math.ceil(total / limit) });
 }
@@ -100,7 +122,7 @@ export async function getUser(req: Request, res: Response) {
   const user = await User.findById(id).lean();
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  const [wallet, sessionCount, purchases, sub, progress, flags, ledgerSum, prize] =
+  const [wallet, sessionCount, purchases, sub, progress, flags, ledgerSum, prize, streak] =
     await Promise.all([
       CoinWallet.findOne({ userId: id }).lean(),
       QuizSession.countDocuments({ userId: id }),
@@ -119,10 +141,27 @@ export async function getUser(req: Request, res: Response) {
         { $group: { _id: null, total: { $sum: '$delta' } } },
       ]),
       AccumulatedPrize.findOne({ userId: id }).lean(),
+      Streak.findOne({ userId: id }).lean(),
     ]);
 
   const coins = wallet?.coins ?? 0;
   const ledgerTotal = ledgerSum[0]?.total ?? 0;
+
+  // Where this player's streak sits against everyone else. A raw number ("7")
+  // means nothing without knowing whether 7 is typical or exceptional, so the
+  // rank and percentile are computed alongside it.
+  const current = streak?.streak ?? 0;
+  const [betterCount, streakTotal] = await Promise.all([
+    Streak.countDocuments({ streak: { $gt: current } }),
+    Streak.estimatedDocumentCount(),
+  ]);
+  const streakRank = betterCount + 1;
+  // "Top X%" — smaller is better. Guard the empty-collection case.
+  const streakPercentile =
+    streakTotal > 0 ? Math.max(1, Math.round((streakRank / streakTotal) * 100)) : null;
+
+  // Check-in history is capped by the model, so this stays cheap.
+  const history = streak?.checkInHistory ?? [];
 
   res.json({
     user: {
@@ -137,6 +176,15 @@ export async function getUser(req: Request, res: Response) {
       // glance rather than only in the nightly reconciliation log.
       ledger: { total: ledgerTotal, drift: coins - ledgerTotal },
       pendingPrizeUSDT: prize?.pendingUSDT ?? 0,
+      streak: {
+        current,
+        lastCheckIn: streak?.lastCheckIn ?? null,
+        checkIns: history.length,
+        rank: streakRank,
+        of: streakTotal,
+        /** Top N% by streak — 1 is the very top. */
+        percentile: streakPercentile,
+      },
     },
     recentPurchases: purchases,
     flags,

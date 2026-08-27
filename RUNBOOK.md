@@ -321,3 +321,41 @@ so this is visible at boot rather than discovered in a full log store.
   verification response, which carries the full base64 receipt.
 
 Behaviour is pinned by `src/__tests__/logging.test.ts`.
+
+---
+
+## Admin panel — capability map
+
+48 admin endpoints, all reachable from the UI. Roles: `MODERATOR` sees
+everything read-only plus bans; anything that **moves money or destroys data**
+is `SUPER_ADMIN` (enforced server-side by `requireSuperAdmin`, not just hidden
+in the UI).
+
+| Area | What you can do | Role |
+| --- | --- | --- |
+| Dashboard | Total players, coins in circulation, purchases today, open flags, banned count, streak distribution, top streaks, live activity | Any |
+| Users | Search/filter (banned, flagged, online, premium); per-row score, level, accuracy, coins, streak | Any |
+| User detail | Score, level, quizzes, accuracy, PvP rating and W/L/D, total sessions, streak + rank + percentile, **coin-ledger drift**, flag history, recent purchases, pending prize | Any |
+| Moderation | **Ban** (revokes sessions instantly, disables withdrawals), unban, **delete** (full anonymisation) | Ban: any · Delete: SUPER |
+| Anti-Cheat | Review queue, resolve flags | Any |
+| Coins | Adjust a balance with a reason (audited) | SUPER |
+| Payouts | Records, prize pools, retry, manual trigger, CSV export | View: any · rest SUPER |
+| Questions | CRUD, per-category coverage, CSV import with dry run, template download | Import: SUPER |
+| Challenges | List/filter, assign to a player, delete | Assign: SUPER |
+| Tournaments, Subscriptions, Purchases, Reports, Leaderboard, Analytics, Activity, Audit, Settings | Full | Audit: SUPER |
+
+### Streak ranking
+
+`GET /api/admin/stats/streaks` returns the distribution in six bands, each with
+its **share of the player base** — a streak of 7 means nothing without knowing
+whether 7 is typical — plus the active-streak percentage, longest streak, and
+top 20 holders. Per-user, `GET /api/admin/users/:id` carries
+`streak.{current,rank,of,percentile}`.
+
+### Ledger drift
+
+User detail shows wallet balance minus the sum of the coin-transaction ledger.
+**Non-zero drift is the first sign of tampering or a crediting bug** and is
+rendered in red. Nightly reconciliation reports the same thing in aggregate.
+
+Covered by `src/__tests__/adminSurface.test.ts`.

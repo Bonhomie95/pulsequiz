@@ -15,6 +15,12 @@ import {
   LogOut,
   Menu,
   ChevronLeft,
+  ShieldAlert,
+  HelpCircle,
+  Swords,
+  Crown,
+  Settings as SettingsIcon,
+  Target,
 } from 'lucide-react';
 
 type LinkItemProps = {
@@ -122,6 +128,13 @@ export default function Sidebar() {
               onClick={closeMobile}
             />
             <LinkItem
+              to="/anticheat"
+              label="Anti-Cheat"
+              icon={<ShieldAlert size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
               to="/payouts"
               label="Payouts"
               icon={<CreditCard size={20} />}
@@ -132,6 +145,34 @@ export default function Sidebar() {
               to="/purchases"
               label="Purchases"
               icon={<Receipt size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/subscriptions"
+              label="Subscriptions"
+              icon={<Crown size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/questions"
+              label="Questions"
+              icon={<HelpCircle size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/tournaments"
+              label="Tournaments"
+              icon={<Swords size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+            <LinkItem
+              to="/challenges"
+              label="Challenges"
+              icon={<Target size={20} />}
               collapsed={collapsed}
               onClick={closeMobile}
             />
@@ -172,6 +213,13 @@ export default function Sidebar() {
                 onClick={closeMobile}
               />
             )}
+            <LinkItem
+              to="/settings"
+              label="Settings"
+              icon={<SettingsIcon size={20} />}
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
           </nav>
         </div>
 

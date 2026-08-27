@@ -11,6 +11,7 @@ import {
   XCircle,
   Coins,
   Star,
+  Flame,
 } from 'lucide-react';
 
 type User = {
@@ -22,11 +23,64 @@ type User = {
   coins: number;
   level?: number;
   streak?: number;
+  points?: number;
+  totalQuizzes?: number;
+  /** Percentage of answers correct, or null when they have never answered. */
+  accuracy?: number | null;
+  rating?: number | null;
+  lastCheckIn?: string | null;
   lastSeenAt?: string;
   createdAt: string;
   usdtAddress?: string;
   withdrawalEnabled: boolean;
   premiumExpiresAt?: string;
+};
+
+/**
+ * The much richer payload from GET /admin/users/:id. The list row alone cannot
+ * answer the questions an admin opens a user to ask — how they score, whether
+ * their balance matches the ledger, what they have been flagged for.
+ */
+type UserDetail = {
+  user: User & {
+    totalSessions?: number;
+    premiumPlan?: string | null;
+    premiumExpiry?: string | null;
+    pendingPrizeUSDT?: number;
+    progress?: {
+      points: number;
+      level: number;
+      totalQuizzes: number;
+      correctAnswers: number;
+      totalAnswers: number;
+      rating: number;
+      pvpWins: number;
+      pvpLosses: number;
+      pvpDraws: number;
+    } | null;
+    ledger?: { total: number; drift: number };
+    streak?: {
+      current: number;
+      lastCheckIn: string | null;
+      checkIns: number;
+      rank: number;
+      of: number;
+      percentile: number | null;
+    };
+  };
+  recentPurchases?: {
+    _id: string;
+    sku: string;
+    state: string;
+    createdAt: string;
+    platform?: string;
+  }[];
+  flags?: {
+    _id: string;
+    reason: string;
+    resolved: boolean;
+    flaggedAt: string;
+  }[];
 };
 
 type Pagination = { page: number; pages: number; total: number };
@@ -99,6 +153,14 @@ function Modal({
   );
 }
 
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-4 mb-1 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+      {children}
+    </div>
+  );
+}
+
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0">
@@ -124,6 +186,9 @@ export default function Users() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [viewUser, setViewUser] = useState<User | null>(null);
+  const [detail, setDetail] = useState<UserDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
   const [editFields, setEditFields] = useState({ username: '' });
@@ -177,6 +242,26 @@ export default function Users() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     setPage(1);
     fetchUsers(search);
+  };
+
+  /**
+   * The list row is a summary; everything worth opening a user for lives on
+   * the detail endpoint. Fetch it when the modal opens rather than showing the
+   * same columns again in a smaller box.
+   */
+  const openUser = async (user: User) => {
+    setViewUser(user);
+    setDetail(null);
+    setDetailError(null);
+    setDetailLoading(true);
+    try {
+      const res = await adminApi.get(`/admin/users/${user._id}`);
+      setDetail(res.data);
+    } catch (e: any) {
+      setDetailError(e?.response?.data?.message ?? 'Could not load details');
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   const toggleBan = async (user: User) => {
@@ -315,6 +400,8 @@ export default function Users() {
               <th className="px-4 py-3 text-left">Status</th>
               <th className="px-4 py-3 text-left">Premium</th>
               <th className="px-4 py-3 text-left">Coins</th>
+              <th className="px-4 py-3 text-left">Score</th>
+              <th className="px-4 py-3 text-left">Streak</th>
               <th className="px-4 py-3 text-left">Online</th>
               <th className="px-4 py-3 text-left">Joined</th>
               <th className="px-4 py-3 text-right">Actions</th>
@@ -363,6 +450,25 @@ export default function Users() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
+                    <div className="font-semibold text-gray-200">
+                      {(u.points ?? 0).toLocaleString()}
+                    </div>
+                    <div className="text-[11px] text-gray-500">
+                      Lv {u.level ?? 1}
+                      {u.accuracy != null && ` · ${u.accuracy}%`}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {u.streak ? (
+                      <span className="flex items-center gap-1 font-semibold text-orange-400">
+                        <Flame size={13} />
+                        {u.streak}
+                      </span>
+                    ) : (
+                      <span className="text-gray-600 text-xs">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
                     <OnlineDot lastSeenAt={u.lastSeenAt} />
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">
@@ -371,7 +477,7 @@ export default function Users() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
                       <button
-                        onClick={() => setViewUser(u)}
+                        onClick={() => openUser(u)}
                         title="View details"
                         className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition"
                       >
@@ -443,7 +549,7 @@ export default function Users() {
       {viewUser && (
         <Modal
           title={`@${viewUser.username}`}
-          onClose={() => setViewUser(null)}
+          onClose={() => { setViewUser(null); setDetail(null); }}
         >
           <Row label="Email" value={viewUser.email} />
           <Row label="Status" value={<StatusBadge user={viewUser} />} />
@@ -500,6 +606,161 @@ export default function Users() {
                 : 'Never'
             }
           />
+
+          {detailLoading && (
+            <div className="py-4 text-center text-sm text-gray-500">
+              Loading details…
+            </div>
+          )}
+          {detailError && (
+            <div className="py-4 text-center text-sm text-red-400">{detailError}</div>
+          )}
+
+          {detail && (
+            <>
+              <SectionHeading>Performance</SectionHeading>
+              <Row label="Score" value={(detail.user.progress?.points ?? 0).toLocaleString()} />
+              <Row label="Level" value={detail.user.progress?.level ?? 1} />
+              <Row
+                label="Quizzes Played"
+                value={(detail.user.progress?.totalQuizzes ?? 0).toLocaleString()}
+              />
+              <Row
+                label="Accuracy"
+                value={
+                  detail.user.progress?.totalAnswers
+                    ? `${Math.round(
+                        (detail.user.progress.correctAnswers /
+                          detail.user.progress.totalAnswers) *
+                          100,
+                      )}%  (${detail.user.progress.correctAnswers}/${
+                        detail.user.progress.totalAnswers
+                      })`
+                    : 'No answers yet'
+                }
+              />
+              <Row label="PvP Rating" value={detail.user.progress?.rating ?? '—'} />
+              <Row
+                label="PvP Record"
+                value={
+                  detail.user.progress
+                    ? `${detail.user.progress.pvpWins}W / ${detail.user.progress.pvpLosses}L / ${detail.user.progress.pvpDraws}D`
+                    : '—'
+                }
+              />
+              <Row label="Total Sessions" value={detail.user.totalSessions ?? 0} />
+
+              <SectionHeading>Streak</SectionHeading>
+              <Row
+                label="Current Streak"
+                value={
+                  <span className="flex items-center justify-end gap-1 text-orange-400">
+                    <Flame size={13} />
+                    {detail.user.streak?.current ?? 0} day
+                    {(detail.user.streak?.current ?? 0) === 1 ? '' : 's'}
+                  </span>
+                }
+              />
+              <Row
+                label="Ranking"
+                value={
+                  detail.user.streak
+                    ? `#${detail.user.streak.rank.toLocaleString()} of ${detail.user.streak.of.toLocaleString()}`
+                    : '—'
+                }
+              />
+              <Row
+                label="Percentile"
+                value={
+                  detail.user.streak?.percentile != null
+                    ? `Top ${detail.user.streak.percentile}%`
+                    : '—'
+                }
+              />
+              <Row label="Total Check-ins" value={detail.user.streak?.checkIns ?? 0} />
+              <Row
+                label="Last Check-in"
+                value={
+                  detail.user.streak?.lastCheckIn
+                    ? new Date(detail.user.streak.lastCheckIn).toLocaleString()
+                    : 'Never'
+                }
+              />
+
+              <SectionHeading>Coin Ledger</SectionHeading>
+              <Row
+                label="Ledger Total"
+                value={(detail.user.ledger?.total ?? 0).toLocaleString()}
+              />
+              <Row
+                label="Drift"
+                value={
+                  // Non-zero drift means the wallet and the transaction log
+                  // disagree — the first sign of tampering or a bug.
+                  <span
+                    className={
+                      detail.user.ledger?.drift
+                        ? 'text-red-400 font-bold'
+                        : 'text-green-400'
+                    }
+                  >
+                    {detail.user.ledger?.drift
+                      ? `${detail.user.ledger.drift > 0 ? '+' : ''}${detail.user.ledger.drift.toLocaleString()} — investigate`
+                      : 'None'}
+                  </span>
+                }
+              />
+              {!!detail.user.pendingPrizeUSDT && (
+                <Row
+                  label="Pending Prize"
+                  value={`$${detail.user.pendingPrizeUSDT.toFixed(2)} USDT`}
+                />
+              )}
+
+              <SectionHeading>
+                Anti-Cheat Flags{detail.flags?.length ? ` (${detail.flags.length})` : ''}
+              </SectionHeading>
+              {detail.flags?.length ? (
+                <ul className="space-y-1 py-1">
+                  {detail.flags.map((f) => (
+                    <li
+                      key={f._id}
+                      className="flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span className={f.resolved ? 'text-gray-500' : 'text-red-400'}>
+                        {f.reason}
+                      </span>
+                      <span className="shrink-0 text-gray-600">
+                        {new Date(f.flaggedAt).toLocaleDateString()}
+                        {f.resolved ? ' · resolved' : ' · OPEN'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="py-2 text-xs text-gray-500">No flags</div>
+              )}
+
+              <SectionHeading>Recent Purchases</SectionHeading>
+              {detail.recentPurchases?.length ? (
+                <ul className="space-y-1 py-1">
+                  {detail.recentPurchases.map((pu) => (
+                    <li
+                      key={pu._id}
+                      className="flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span className="text-gray-300">{pu.sku}</span>
+                      <span className="shrink-0 text-gray-600">
+                        {pu.state} · {new Date(pu.createdAt).toLocaleDateString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="py-2 text-xs text-gray-500">No purchases</div>
+              )}
+            </>
+          )}
         </Modal>
       )}
 

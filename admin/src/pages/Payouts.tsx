@@ -42,6 +42,15 @@ const StatusIcon = ({ status }: { status: string }) => {
   return <Clock size={14} />;
 };
 
+/**
+ * Local-time fallback for the period label, used only until the server's
+ * answer arrives.
+ *
+ * The server computes periods in UTC; this uses the browser's timezone, so the
+ * two disagree around week and year boundaries for anyone not on UTC. A wrong
+ * label here means a prize pool attached to the wrong period, so
+ * /admin/payouts/period-options is fetched on mount and overwrites this.
+ */
 function getCurrentPeriodLabel(type: 'weekly' | 'monthly') {
   const now = new Date();
   if (type === 'monthly') {
@@ -52,6 +61,11 @@ function getCurrentPeriodLabel(type: 'weekly' | 'monthly') {
   const week = Math.ceil((dayOfYear + jan1.getDay() + 1) / 7);
   return `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
 }
+
+type PeriodOptions = {
+  weekly: { current: string; previous: string };
+  monthly: { current: string; previous: string };
+};
 
 export default function Payouts() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
@@ -73,6 +87,7 @@ export default function Payouts() {
   const [saving, setSaving] = useState(false);
   const [triggerType, setTriggerType] = useState<'weekly' | 'monthly'>('weekly');
   const [triggering, setTriggering] = useState(false);
+  const [periods, setPeriods] = useState<PeriodOptions | null>(null);
 
   const fetchPayouts = async () => {
     setLoading(true);
@@ -99,14 +114,45 @@ export default function Payouts() {
   useEffect(() => { fetchPayouts(); }, [page, statusFilter]);
   useEffect(() => { fetchPools(); }, []);
 
+  // One source of truth for period labels — the server's, in UTC.
+  useEffect(() => {
+    adminApi
+      .get('/admin/payouts/period-options')
+      .then((res) => {
+        setPeriods(res.data);
+        setPoolForm((f) => ({
+          ...f,
+          periodLabel: res.data?.[f.type]?.current ?? f.periodLabel,
+        }));
+      })
+      .catch(() => {
+        // Keep the local-time fallback already in state.
+      });
+  }, []);
+
   const retryPayout = async (id: string) => {
     if (!confirm('Retry this failed payout?')) return;
     await adminApi.post(`/admin/payouts/${id}/retry`);
     fetchPayouts();
   };
 
-  const exportCSV = () => {
-    window.open(`${adminApi.defaults.baseURL}/admin/payouts/csv`, '_blank');
+  const exportCSV = async () => {
+    // The route is /export, not /csv — the old path 404'd. Fetching through
+    // adminApi also keeps the httpOnly admin cookie attached, which a bare
+    // window.open to a cross-site API origin cannot be relied on to do.
+    try {
+      const res = await adminApi.get('/admin/payouts/export', { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `payouts-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      alert(e?.response?.status === 403
+        ? 'Export is restricted to SUPER_ADMIN.'
+        : 'Could not export payouts.');
+    }
   };
 
   const updateTier = (rank: number, amount: number) => {
@@ -128,7 +174,11 @@ export default function Payouts() {
   };
 
   const updatePoolType = (type: 'weekly' | 'monthly') => {
-    setPoolForm((f) => ({ ...f, type, periodLabel: getCurrentPeriodLabel(type) }));
+    setPoolForm((f) => ({
+      ...f,
+      type,
+      periodLabel: periods?.[type]?.current ?? getCurrentPeriodLabel(type),
+    }));
   };
 
   const tierSum = poolForm.tiers.reduce((s, t) => s + t.amount, 0);
