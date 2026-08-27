@@ -148,3 +148,12 @@ eas.json
 # macOS
 .DS_Store
 **/.DS_Store
+
+# ── Question bank ───────────────────────────────────────────────────────────
+# Generated question sets live here and are deliberately NOT committed.
+# They are the seed data for a future/production server DB.
+#
+# ⚠ Gitignored means UNBACKED-UP. Copy this directory somewhere durable
+#   (cloud drive, a private repo, an S3 bucket) — regenerating it is not free
+#   and hand-authored questions cannot be recovered if the machine dies.
+server/question-bank/

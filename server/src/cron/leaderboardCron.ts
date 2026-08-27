@@ -29,7 +29,22 @@ import { logger } from '../utils/logger';
  * Wrap a cron task with in-process overlap protection, a cross-process lock and
  * error handling. The lock is what makes it safe to run more than one replica.
  */
-function job(label: string, lockTtlMs: number, fn: () => Promise<void>): () => void {
+/**
+ * A job returns a summary of what it did, or nothing when it did nothing.
+ *
+ * This drives the log level: a tick that found no work is logged at debug, a
+ * tick that changed something is logged at info. The minute-by-minute jobs
+ * would otherwise emit ~4,300 lines a day of "starting… done" on an idle
+ * server, which costs money in a log pipeline and buries the events that
+ * matter.
+ */
+type JobSummary = Record<string, unknown> | void;
+
+function job(
+  label: string,
+  lockTtlMs: number,
+  fn: () => Promise<JobSummary>,
+): () => void {
   let running = false;
   return () => {
     void (async () => {
@@ -41,14 +56,21 @@ function job(label: string, lockTtlMs: number, fn: () => Promise<void>): () => v
       const startedAt = Date.now();
 
       try {
-        const ran = await withJobLock(`cron:${label}`, lockTtlMs, async () => {
-          logger.info('Cron starting', { job: label });
-          await fn();
-          return true;
+        const outcome = await withJobLock(`cron:${label}`, lockTtlMs, async () => {
+          logger.debug('Cron starting', { job: label });
+          return (await fn()) ?? {};
         });
 
-        if (ran) {
-          logger.info('Cron done', { job: label, durationMs: Date.now() - startedAt });
+        // null means the lock was held elsewhere — not our tick to report.
+        if (outcome === null) return;
+
+        const durationMs = Date.now() - startedAt;
+        const didWork = Object.keys(outcome).length > 0;
+
+        if (didWork) {
+          logger.info('Cron done', { job: label, durationMs, ...outcome });
+        } else {
+          logger.debug('Cron done (nothing to do)', { job: label, durationMs });
         }
       } catch (err) {
         logger.error('Cron failed', err, { job: label });
@@ -100,7 +122,8 @@ export function startLeaderboardCron(io?: Server) {
   cron.schedule(
     '* * * * *',
     job('leaderboard-refresh', 2 * MINUTE, async () => {
-      await rebuildLeaderboardSnapshots();
+      const result = await rebuildLeaderboardSnapshots();
+      return result.rebuilt ? { rebuilt: true } : undefined;
     }),
     { timezone: TIMEZONE },
   );
@@ -109,7 +132,8 @@ export function startLeaderboardCron(io?: Server) {
   cron.schedule(
     '0 */6 * * *',
     job('payout-retry', 20 * MINUTE, async () => {
-      await retryFailedPayouts();
+      const retried = await retryFailedPayouts();
+      return retried ? { retried } : undefined;
     }),
     { timezone: TIMEZONE },
   );
@@ -126,6 +150,9 @@ export function startLeaderboardCron(io?: Server) {
           sample: report.samples.slice(0, 10),
         });
       }
+      // Always worth a line — "we checked N wallets and they balance" is the
+      // report, not noise.
+      return { checked: report.checked, drifted: report.drifted };
     }),
     { timezone: TIMEZONE },
   );
@@ -136,7 +163,8 @@ export function startLeaderboardCron(io?: Server) {
   cron.schedule(
     '15 * * * *',
     job('streak-warnings', 10 * MINUTE, async () => {
-      await warnStreaksAtRisk();
+      const sent = await warnStreaksAtRisk();
+      return sent ? { warned: sent } : undefined;
     }),
     { timezone: TIMEZONE },
   );
@@ -192,7 +220,7 @@ export function startLeaderboardCron(io?: Server) {
     job('tournament-status', 5 * MINUTE, async () => {
       const now = new Date();
 
-      await Tournament.updateMany(
+      const started = await Tournament.updateMany(
         { status: 'upcoming', startsAt: { $lte: now } },
         { $set: { status: 'active' } },
       );
@@ -204,15 +232,20 @@ export function startLeaderboardCron(io?: Server) {
         .select('_id')
         .lean();
 
+      let finalised = 0;
       for (const t of ending) {
         try {
           await finaliseTournament(t._id.toString());
+          finalised += 1;
         } catch (err) {
           logger.error('Tournament finalisation failed', err, {
             tournamentId: t._id.toString(),
           });
         }
       }
+
+      if (!started.modifiedCount && !finalised) return;
+      return { started: started.modifiedCount, finalised };
     }),
     { timezone: TIMEZONE },
   );
@@ -227,7 +260,9 @@ export function startLeaderboardCron(io?: Server) {
       '*/2 * * * *',
       job('pvp-sweeper', 3 * MINUTE, async () => {
         const swept = await sweepStaleMatches(io);
-        if (swept > 0) logger.warn('Swept stale PvP matches', { count: swept });
+        if (swept === 0) return;
+        logger.warn('Swept stale PvP matches', { count: swept });
+        return { swept };
       }),
       { timezone: TIMEZONE },
     );
@@ -241,9 +276,7 @@ export function startLeaderboardCron(io?: Server) {
         { finished: false, expiresAt: { $lte: new Date() } },
         { $set: { finished: true } },
       );
-      if (res.modifiedCount) {
-        logger.info('Expired stale quiz sessions', { count: res.modifiedCount });
-      }
+      return res.modifiedCount ? { expired: res.modifiedCount } : undefined;
     }),
     { timezone: TIMEZONE },
   );

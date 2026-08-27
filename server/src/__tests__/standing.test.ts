@@ -168,3 +168,50 @@ describe('buildLeaderboard', () => {
     expect(snap?.periodLabel).toMatch(/^\d{4}-W\d{2}$/);
   });
 });
+
+describe('rebuildLeaderboardSnapshots', () => {
+  it('skips the rebuild when nothing has happened since the last run', async () => {
+    const { rebuildLeaderboardSnapshots } = await import('../services/leaderboardService');
+
+    await seedPlayers(3);
+
+    // First run always rebuilds — there is no baseline to compare against.
+    expect((await rebuildLeaderboardSnapshots()).rebuilt).toBe(true);
+
+    // Nothing has changed, so the next tick must not run three aggregations.
+    const second = await rebuildLeaderboardSnapshots();
+    expect(second.rebuilt).toBe(false);
+    expect(second.reason).toBe('no_activity');
+  });
+
+  it('rebuilds again once a new session lands', async () => {
+    const { rebuildLeaderboardSnapshots } = await import('../services/leaderboardService');
+
+    await seedPlayers(3);
+    await rebuildLeaderboardSnapshots();
+    expect((await rebuildLeaderboardSnapshots()).rebuilt).toBe(false);
+
+    await QuizSession.create({
+      userId: new mongoose.Types.ObjectId(ids[0]),
+      sessionId: new mongoose.Types.ObjectId(),
+      category: 'math',
+      score: 9,
+      bonus: 0,
+      totalPoints: 9,
+      correctAnswers: 9,
+      totalQuestions: 10,
+      levelAtTime: 1,
+    });
+
+    expect((await rebuildLeaderboardSnapshots()).rebuilt).toBe(true);
+  });
+
+  it('can be forced regardless of activity', async () => {
+    const { rebuildLeaderboardSnapshots } = await import('../services/leaderboardService');
+
+    await seedPlayers(2);
+    await rebuildLeaderboardSnapshots();
+
+    expect((await rebuildLeaderboardSnapshots({ force: true })).rebuilt).toBe(true);
+  });
+});

@@ -12,7 +12,13 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
-    "sync-indexes": "ts-node src/scripts/syncIndexes.ts"
+    "sync-indexes": "ts-node src/scripts/syncIndexes.ts",
+    "questions:add": "ts-node src/scripts/addQuestions.ts",
+    "questions:check": "ts-node src/scripts/checkQuestions.ts",
+    "questions:gen-math": "ts-node src/seed/generateMath.ts",
+    "bank:build": "ts-node src/scripts/buildQuestionBank.ts",
+    "bank:verify": "ts-node src/scripts/verifyQuestionBank.ts",
+    "bank:seed": "ts-node src/scripts/seedQuestionBank.ts"
   },
   "keywords": [],
   "author": "",

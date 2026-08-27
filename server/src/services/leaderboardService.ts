@@ -196,15 +196,48 @@ export async function getUserStanding(
   return { rank, points, pointsToPaidTier, pointsToBoard, outsideBoard };
 }
 
+/** When the snapshots were last rebuilt, so an idle minute can be skipped. */
+let lastRebuildAt: Date | null = null;
+
+export interface RebuildResult {
+  rebuilt: boolean;
+  reason?: 'no_activity';
+  newSessions?: number;
+}
+
 /**
  * Rebuild all three snapshots.
  *
  * This is scheduled work, not request work. It used to run synchronously on
  * every quiz completion — three full-collection aggregations per finish, with a
  * cost that grew linearly with total sessions ever played.
+ *
+ * It runs every minute, so on a quiet server most ticks have nothing to do.
+ * Two index-backed counts are far cheaper than three aggregations, and the
+ * boards can only move when a session was recorded (weekly/monthly) or a
+ * Progress row changed (all-time, which challenge rewards also touch).
  */
-export async function rebuildLeaderboardSnapshots() {
+export async function rebuildLeaderboardSnapshots(
+  options: { force?: boolean } = {},
+): Promise<RebuildResult> {
+  const since = lastRebuildAt;
+  const startedAt = new Date();
+
+  if (!options.force && since) {
+    const [newSessions, progressChanges] = await Promise.all([
+      QuizSession.countDocuments({ createdAt: { $gt: since } }),
+      Progress.countDocuments({ updatedAt: { $gt: since } }),
+    ]);
+
+    if (newSessions === 0 && progressChanges === 0) {
+      return { rebuilt: false, reason: 'no_activity' };
+    }
+  }
+
   await buildLeaderboard('weekly');
   await buildLeaderboard('monthly');
   await buildLeaderboard('all');
+
+  lastRebuildAt = startedAt;
+  return { rebuilt: true };
 }

@@ -352,7 +352,7 @@ export async function processPeriodPayouts(
  * so a transfer that actually went through on the first attempt is detected
  * rather than sent again.
  */
-export async function retryFailedPayouts() {
+export async function retryFailedPayouts(): Promise<number> {
   const MAX_RETRIES = 3;
   const failed = await Payout.find({
     status: 'failed',
@@ -363,7 +363,7 @@ export async function retryFailedPayouts() {
 
   if (!failed.length) {
     logger.debug('No failed payouts to retry');
-    return;
+    return 0;
   }
 
   logger.info('Retrying failed payouts', { count: failed.length });
@@ -428,6 +428,8 @@ export async function retryFailedPayouts() {
       ).catch(() => {});
     }
   }
+
+  return failed.length;
 }
 
 // ─── sendWeeklyAddressWarnings ───────────────────────────────────────────────

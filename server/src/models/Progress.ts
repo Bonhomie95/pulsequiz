@@ -42,5 +42,8 @@ const ProgressSchema = new Schema<IProgress>(
 // that eventually trips Mongo's 32MB sort limit.
 ProgressSchema.index({ points: -1 });
 ProgressSchema.index({ rating: -1 });
+// The leaderboard refresh checks "has anything changed since the last run?"
+// against this every minute.
+ProgressSchema.index({ updatedAt: -1 });
 
 export default model<IProgress>('Progress', ProgressSchema);
