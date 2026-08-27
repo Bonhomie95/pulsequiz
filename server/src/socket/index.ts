@@ -51,7 +51,15 @@ export function createSocketServer(server: http.Server) {
     registerRoomHandlers(io, socket);
 
     socket.on('error', (err) => {
-      logger.warn('Socket error', { userId, socketId: socket.id, error: String(err) });
+      // Transport errors are ordinary on mobile networks — a tunnel drops, the
+      // handset switches from wifi to cellular. At warn these were forwarded to
+      // Sentry, so normal connectivity churn burned quota and buried real
+      // faults. Genuine handler failures are reported by safeHandler instead.
+      logger.debug('Socket transport error', {
+        userId,
+        socketId: socket.id,
+        error: String(err),
+      });
     });
   });
 

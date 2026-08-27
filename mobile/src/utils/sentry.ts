@@ -48,6 +48,19 @@ export function setSentryUser(user: { id: string; username?: string | null } | n
   Sentry.setUser(user ? { id: user.id, username: user.username ?? undefined } : null);
 }
 
-// Re-export the wrapper so the root component can be instrumented for
-// navigation/performance without importing Sentry directly elsewhere.
-export const wrapWithSentry = Sentry.wrap;
+/**
+ * Instrument the root component for navigation/performance.
+ *
+ * `initSentry` is a no-op without a DSN (local dev, PR builds), but
+ * `Sentry.wrap` was being applied unconditionally — wrapping without an init
+ * is what produces "App Start Span could not be finished. `Sentry.wrap` was
+ * called before `Sentry.init`" on every cold start. When there is nothing to
+ * report to, hand the component back untouched.
+ *
+ * Reads `initialized` rather than `DSN` so the two can never disagree: if init
+ * ever starts bailing for another reason, wrap follows it.
+ */
+export function wrapWithSentry<C>(Component: C): C {
+  if (!initialized) return Component;
+  return Sentry.wrap(Component as never) as C;
+}

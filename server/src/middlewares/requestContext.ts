@@ -57,10 +57,12 @@ export function requestContext(req: Request, res: Response, next: NextFunction) 
       durationMs: Math.round(ms),
     };
 
-    // 5xx already got a full error record from the error handler; log the
-    // access line at warn so it is still visible without duplicating stacks.
-    if (res.statusCode >= 500) logger.warn('request failed', ctx);
-    else logger.debug('request', ctx);
+    // The error handler already logged the 5xx at error level, with a stack,
+    // and forwarded it to Sentry. Repeating it at warn here logged the same
+    // failure twice and raised a *second*, stackless Sentry event for it
+    // (logger.warn forwards to reportMessage). The status is already in the
+    // access line, so debug is enough.
+    logger.debug('request', ctx);
   });
 
   next();

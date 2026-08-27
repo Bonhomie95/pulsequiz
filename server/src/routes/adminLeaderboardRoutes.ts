@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requireAdmin } from '../middlewares/requireAdmin';
 import { buildLeaderboard } from '../services/leaderboardService';
 import LeaderboardSnapshot from '../models/LeaderboardSnapshot';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.get('/:type', requireAdmin, async (req: Request, res: Response) => {
       cached: false,
     });
   } catch (e) {
-    console.error('Admin leaderboard error', e);
+    logger.error('Admin leaderboard query failed', e);
     return res.status(500).json({ message: 'Server error' });
   }
 });

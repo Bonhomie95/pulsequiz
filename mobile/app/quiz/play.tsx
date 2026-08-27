@@ -1,5 +1,4 @@
 import * as Haptics from 'expo-haptics';
-import * as NavigationBar from 'expo-navigation-bar';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, {
   useCallback,
@@ -280,30 +279,6 @@ export default function QuizPlay() {
     useCallback(() => {
       enterImmersiveMode();
       return () => exitImmersiveMode();
-    }, []),
-  );
-
-  /** Immersive mode while this screen is focused. */
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        if (Platform.OS === 'android') {
-          try {
-            await NavigationBar.setVisibilityAsync('hidden');
-            await NavigationBar.setBehaviorAsync('overlay-swipe');
-          } catch {}
-        }
-      })();
-
-      return () => {
-        (async () => {
-          if (Platform.OS === 'android') {
-            try {
-              await NavigationBar.setVisibilityAsync('visible');
-            } catch {}
-          }
-        })();
-      };
     }, []),
   );
 

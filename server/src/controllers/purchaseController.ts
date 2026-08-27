@@ -199,9 +199,12 @@ export async function verifyApple(req: AuthRequest, res: Response) {
   if (!apple.valid || apple.productId !== sku) {
     purchase.state = 'REJECTED';
     await purchase.save();
-    console.warn(
-      `[Apple IAP] Rejected: txId=${transactionId} sku=${sku} productId=${apple.productId} error=${apple.error}`,
-    );
+    logger.warn('Apple IAP purchase rejected', {
+      transactionId,
+      sku,
+      productId: apple.productId,
+      error: apple.error,
+    });
     return res
       .status(400)
       .json({ message: 'Transaction is invalid or does not match SKU' });
@@ -298,9 +301,14 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
   if (!google.valid) {
     purchase.state = 'REJECTED';
     await purchase.save();
-    console.warn(
-      `[Google IAP] Rejected: token=${purchaseToken.slice(0, 20)}… sku=${sku} purchaseState=${google.purchaseState} error=${google.error}`,
-    );
+    // purchaseToken is in the logger's redaction set — pass it by name so it
+    // is masked, rather than hand-truncating it into the message.
+    logger.warn('Google IAP purchase rejected', {
+      purchaseToken,
+      sku,
+      purchaseState: google.purchaseState,
+      error: google.error,
+    });
     return res
       .status(400)
       .json({ message: 'Purchase is invalid or already consumed' });

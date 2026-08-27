@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
+import { logger } from '../utils/logger';
 
 // ── Lazy initialisation ────────────────────────────────────────────────────
 // We defer parsing the service account JSON until the first call so that
@@ -63,8 +64,12 @@ export function resolveTrustedPackageName(
     return { packageName: trusted };
   }
   if (!clientValue) return { error: 'packageName required' };
-  console.warn(
-    '[Google IAP] ANDROID_PACKAGE_NAME not set — trusting client-supplied packageName. Set it in .env.',
+  // Re-evaluated on every verification, so log it once an hour rather than
+  // once per purchase — the fact does not change until someone sets the var.
+  logger.once(
+    'google-iap-missing-package-name',
+    'warn',
+    'ANDROID_PACKAGE_NAME not set — trusting client-supplied packageName. Set it in .env.',
   );
   return { packageName: clientValue };
 }
@@ -143,10 +148,7 @@ export async function verifyGooglePurchase(
       data: data as Record<string, any>,
     };
   } catch (err: any) {
-    console.error(
-      '[Google IAP] verifyGooglePurchase error:',
-      err?.message ?? err,
-    );
+    logger.error('Google IAP verification threw', err);
     return {
       valid: false,
       purchaseState: -1,

@@ -2,10 +2,10 @@ import { Types } from 'mongoose';
 import QuizQuestion from '../models/QuizQuestion';
 import UserQuestion from '../models/UserQuestion';
 import ActiveQuizSession from '../models/ActiveQuizSession';
+import { TIME_PER_QUESTION } from '../config/quizTiming';
 
 type Diff = 'easy' | 'medium' | 'hard';
 
-const TIME_PER_QUESTION = 15;
 const TOTAL_Q = 10;
 
 const DIFF_TARGET: Record<Diff, number> = {

@@ -2,6 +2,7 @@ import FlaggedAccount from '../models/FlaggedAccount';
 import QuizSession from '../models/QuizSession';
 import User from '../models/User';
 import { escapeRegex } from '../utils/escapeRegex';
+import { logger } from '../utils/logger';
 
 const ACCURACY_THRESHOLD = 0.98; // flag if >98% across 10+ sessions
 const CONSECUTIVE_PERFECT_THRESHOLD = 10;
@@ -62,7 +63,7 @@ async function flagUser(
     resolved: false,
   });
 
-  console.warn(`🚨 Anti-cheat flag: userId=${userId} reason=${reason}`);
+  logger.warn('Anti-cheat flag raised', { userId, reason });
 }
 
 /**

@@ -11,6 +11,7 @@ import { safeHandler } from './safeHandler';
 import { settleMatch, computeWinner } from '../services/pvpService';
 import { isTooFast } from '../services/antiCheatService';
 import { logger } from '../utils/logger';
+import { TIME_PER_QUESTION, ANSWER_GRACE_MS } from '../config/quizTiming';
 
 /* ---------------------------------- */
 /* Constants                          */
@@ -19,9 +20,7 @@ import { logger } from '../utils/logger';
 type Diff = 'easy' | 'medium' | 'hard';
 
 const TOTAL_Q = 10;
-const TIME_PER_QUESTION = 15;
 /** Grace added to the client's countdown for network latency. */
-const ANSWER_GRACE_MS = 2_500;
 const FORFEIT_MS = 60_000;
 const READY_GRACE_MS = 60_000;
 

@@ -7,6 +7,7 @@ import { requireAdmin } from '../middlewares/requireAdmin';
 import { AuthRequest } from '../middlewares/auth';
 import Report from '../models/Report';
 import User from '../models/User';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.get('/', requireAdmin, async (req: AuthRequest, res: Response) => {
 
     return res.json({ reports, total });
   } catch (e) {
-    console.error('Reports list error', e);
+    logger.error('Admin reports list failed', e);
     return res.status(500).json({ message: 'Server error' });
   }
 });
@@ -64,7 +65,7 @@ router.patch('/:id', requireAdmin, async (req: AuthRequest, res: Response) => {
 
     return res.json({ ok: true });
   } catch (e) {
-    console.error('Report update error', e);
+    logger.error('Admin report update failed', e);
     return res.status(500).json({ message: 'Server error' });
   }
 });

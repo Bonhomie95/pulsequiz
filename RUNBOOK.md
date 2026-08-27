@@ -231,3 +231,93 @@ code and expensive to rebuild.
 - [ ] Legal sign-off on the prize/wager model for every launch market
 - [ ] `db.cointransactions` sums match `db.coinwallets` balances (the nightly
       `ledger-reconciliation` job reports this; it should say zero drift)
+
+---
+
+## Native rebuild required (after the SDK 54 dependency fixes)
+
+`expo-apple-authentication` was pinned at `57.0.1` against Expo SDK 54, which
+expects `~8.0.8` — the version number looked like an SDK number but is the
+package's own. The mismatched JS could not find its native view manager, which
+is what produced:
+
+```
+The native view manager for module(ExpoAppleAuthentication) from
+NativeViewManagerAdapter isn't exported by expo-modules-core.
+```
+
+Apple Sign-In is used on the login screen and is **mandatory for App Store
+review** whenever third-party sign-in (Google, Facebook) is offered, so this had
+to be corrected rather than silenced.
+
+`expo-av` was also replaced with `expo-audio` (deprecated in SDK 54, removed in
+55). Both changes touch native modules, so JS reload is not enough:
+
+```bash
+cd mobile && npx expo prebuild --clean && npx pod-install
+```
+
+Then rebuild in Xcode (or `eas build`). Verify afterwards that Apple Sign-In
+appears on the login screen and that quiz sounds play.
+
+## AdMob consent — console configuration, not code
+
+```
+[Ads] consent flow failed: Failed to read publisher's account configuration…
+Received app ID: ca-app-pub-7561090708148190~8055600243
+```
+
+The app ID is read correctly from `app.json`, so this is an AdMob account
+setting: no privacy/consent message has been published for that app. Fix in the
+AdMob console under **Privacy & messaging → GDPR / US states** — create a
+message, attach it to the app, and publish it. Until then the consent flow
+fails and personalised ads cannot be served in the EEA/UK.
+
+Also worth verifying: `androidAppId` and `iosAppId` in `app.json` currently sit
+under **different publisher IDs** (`…3226169062425843` and
+`…7561090708148190`). One AdMob account normally issues one publisher ID for
+both platforms, so confirm both apps really do belong to the intended account.
+
+---
+
+## Log volume
+
+Baseline server logging is quiet by design and the startup banner is five
+lines. The knobs:
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `LOG_LEVEL` | `info` | `debug` includes a line per request — never in production |
+| `LOG_PRETTY` | on unless `NODE_ENV=production` | `1` = human-readable, `0` = single-line JSON |
+| `NODE_ENV` | *(unset)* | **Set to `production` when deploying** |
+
+**Set `NODE_ENV=production` on the server.** With it unset the logger falls
+back to pretty multi-line output, which a log shipper cannot index or filter by
+level — more volume and less usable. The startup banner now reports the format
+in effect (`logFormat: "pretty" | "json"`) and warns when `NODE_ENV` is missing,
+so this is visible at boot rather than discovered in a full log store.
+
+### Rules that keep volume bounded
+
+- **Access logs are `debug`.** At the default `info` they are silent. `/health`
+  and `/metrics` are excluded entirely so a one-second liveness probe cannot
+  drown the stream.
+- **A 5xx logs once.** The error handler records it at `error` with a stack; the
+  access middleware no longer repeats it at `warn`. That duplicate was also
+  raising a second, stackless Sentry event for every 500.
+- **Cron logs `info` only when it did work**, `debug` otherwise. The
+  every-minute leaderboard refresh is silent on an idle server.
+- **`warn` and `error` forward to Sentry; `info` and `debug` do not.** Level
+  choice is therefore a quota decision, not just a formatting one. Routine
+  events belong at `info`: a cancelled OAuth sign-in, a dropped socket, a
+  rejected callback on a public endpoint.
+- **Use `logger.once(key, level, message, ctx, windowMs)`** for a condition
+  re-evaluated per request — a missing optional env var, a degraded-mode
+  fallback. It emits at most once per key per window (default 1h) and its key
+  map is capped, so a key built from request data cannot leak memory.
+- **Never use raw `console.*` in runtime code.** It bypasses level filtering,
+  emits unstructured text, and — most importantly — skips redaction. All 13
+  remaining call sites were converted; one of them was dumping Apple's raw
+  verification response, which carries the full base64 receipt.
+
+Behaviour is pinned by `src/__tests__/logging.test.ts`.

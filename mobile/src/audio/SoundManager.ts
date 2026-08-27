@@ -1,5 +1,23 @@
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import { AppState, AppStateStatus } from 'react-native';
+
+/**
+ * Game audio.
+ *
+ * Migrated from `expo-av`, which is deprecated on SDK 54 and removed in 55.
+ * The public surface is unchanged, so no screen needed touching.
+ *
+ * Two behavioural notes carried over from the old implementation, because both
+ * were load-bearing:
+ *   - Effects are created once and replayed (`seekTo(0)` + `play()`). Creating
+ *     and tearing down a native player on every tap made the phone hot during
+ *     play.
+ *   - Nothing plays while the app is backgrounded; AppState drives that.
+ *
+ * `createAudioPlayer` is synchronous and loads in the background — unlike
+ * `Audio.Sound.loadAsync`, there is nothing to await, so `isLoaded` is checked
+ * before acting on a player rather than tracking load state ourselves.
+ */
 
 export type SoundKey =
   | 'victory'
@@ -33,7 +51,6 @@ const SOUNDS: Record<SoundKey, SoundConfig> = {
   },
 };
 
-// ✅ Add your background music here
 const BG_MUSIC = require('@/assets/sounds/bg.mp3');
 
 class SoundManager {
@@ -46,14 +63,10 @@ class SoundManager {
   private booted = false;
   private appState: AppStateStatus = AppState.currentState;
 
-  // Background music sound (persistent)
-  private bg: Audio.Sound | null = null;
-  private bgLoaded = false;
+  private bg: AudioPlayer | null = null;
 
-  // Preloaded pool of short effect sounds — loaded once and replayed, so we
-  // never load/unload a native player on every tap (that churn heats the
-  // phone during active play).
-  private fxPool: Partial<Record<SoundKey, Audio.Sound>> = {};
+  /** Preloaded short effects, created once and replayed. */
+  private fxPool: Partial<Record<SoundKey, AudioPlayer>> = {};
 
   private muted = false;
   private masterVolume = 1;
@@ -69,31 +82,29 @@ class SoundManager {
     if (this.booted) return;
     this.booted = true;
 
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
+    await setAudioModeAsync({
+      // expo-av called these playsInSilentModeIOS / staysActiveInBackground /
+      // shouldDuckAndroid. Same intent, new names.
+      playsInSilentMode: true,
+      shouldPlayInBackground: false,
+      interruptionMode: 'duckOthers',
     });
 
-    await this.preloadEffects();
+    this.preloadEffects();
 
     AppState.addEventListener('change', this.onAppStateChange);
   }
 
-  /** Load every short effect once so `play()` can just replay it. */
-  private async preloadEffects() {
-    await Promise.all(
-      (Object.keys(SOUNDS) as SoundKey[]).map(async (key) => {
-        if (this.fxPool[key]) return;
-        try {
-          const s = new Audio.Sound();
-          await s.loadAsync(SOUNDS[key].source, { shouldPlay: false });
-          this.fxPool[key] = s;
-        } catch {
-          // Leave it out of the pool; play() will lazily load it on demand.
-        }
-      }),
-    );
+  /** Create every short effect once so `play()` can just replay it. */
+  private preloadEffects() {
+    for (const key of Object.keys(SOUNDS) as SoundKey[]) {
+      if (this.fxPool[key]) continue;
+      try {
+        this.fxPool[key] = createAudioPlayer(SOUNDS[key].source);
+      } catch {
+        // Leave it out of the pool; play() will create it on demand.
+      }
+    }
   }
 
   /* ---------------- SETTINGS ---------------- */
@@ -121,19 +132,21 @@ class SoundManager {
   /* ---------------- GAME STATES ---------------- */
 
   async enterResultMode() {
-    // Stop background completely
     await this.stopBackground();
   }
 
   async exitResultMode() {
-    // Resume background immediately
     await this.startBackground();
   }
 
   private applyVolumes() {
-    // background uses master only
-    if (this.bg && this.bgLoaded && !this.muted) {
-      this.bg.setVolumeAsync(this.masterVolume).catch(() => {});
+    // Background music follows master volume only.
+    if (this.bg && !this.muted) {
+      try {
+        this.bg.volume = this.masterVolume;
+      } catch {
+        // Player was removed underneath us.
+      }
     }
   }
 
@@ -145,39 +158,33 @@ class SoundManager {
     if (this.appState !== 'active') return;
 
     try {
-      if (!this.bg) this.bg = new Audio.Sound();
-
-      if (!this.bgLoaded) {
-        await this.bg.loadAsync(BG_MUSIC, {
-          shouldPlay: false,
-          isLooping: true,
-          volume: this.masterVolume,
-        });
-        this.bgLoaded = true;
+      if (!this.bg) {
+        this.bg = createAudioPlayer(BG_MUSIC);
+        this.bg.loop = true;
       }
 
-      const status: any = await this.bg.getStatusAsync();
-      if (!status?.isPlaying) {
-        await this.bg.setIsLoopingAsync(true);
-        await this.bg.setVolumeAsync(this.masterVolume);
-        await this.bg.playAsync();
+      if (!this.bg.playing) {
+        this.bg.loop = true;
+        this.bg.volume = this.masterVolume;
+        this.bg.play();
       }
     } catch {
-      this.bgLoaded = false;
+      // Drop the handle so the next call builds a fresh one.
+      this.bg = null;
     }
   }
 
   async stopBackground() {
     if (!this.bg) return;
     try {
-      const st: any = await this.bg.getStatusAsync();
-      if (st?.isLoaded) {
-        if (st.isPlaying) await this.bg.stopAsync();
-        await this.bg.unloadAsync();
-      }
-    } catch {}
+      this.bg.pause();
+      // `remove` releases the native player — the expo-audio equivalent of
+      // unloadAsync. Skipping it leaks a player per start/stop cycle.
+      this.bg.remove();
+    } catch {
+      // Already gone.
+    }
     this.bg = null;
-    this.bgLoaded = false;
   }
 
   /* ---------------- EFFECTS ---------------- */
@@ -198,30 +205,39 @@ class SoundManager {
     try {
       let s = this.fxPool[key];
       if (!s) {
-        // Not preloaded (or a prior load failed) — load once and keep it.
-        s = new Audio.Sound();
-        await s.loadAsync(cfg.source, { shouldPlay: false });
+        s = createAudioPlayer(cfg.source);
         this.fxPool[key] = s;
       }
 
-      const vol =
-        (cfg.baseVolume ?? 1) * this.masterVolume * this.effectsVolume;
-      await s.setVolumeAsync(vol);
-      // replayAsync rewinds to 0 and plays — no per-tap load/unload churn.
-      await s.replayAsync();
+      // Loading is asynchronous and un-awaitable. A tap in the first moments
+      // after boot would otherwise throw; skipping one click beats a crash.
+      if (!s.isLoaded) return;
+
+      s.volume = (cfg.baseVolume ?? 1) * this.masterVolume * this.effectsVolume;
+      // Rewind and replay — no per-tap create/destroy churn.
+      await s.seekTo(0);
+      s.play();
     } catch {
-      // Pooled instance is in a bad state — drop it so the next call reloads.
+      // Pooled player is in a bad state — drop it so the next call rebuilds.
+      const dead = this.fxPool[key];
       this.fxPool[key] = undefined;
+      try {
+        dead?.remove();
+      } catch {
+        // Best effort.
+      }
     }
   }
 
   async stopEffects() {
-    // Stop any playing effects but keep them loaded for reuse.
-    await Promise.all(
-      Object.values(this.fxPool).map((s) =>
-        s?.stopAsync().catch(() => {}),
-      ),
-    );
+    // Pause but keep them loaded for reuse.
+    for (const s of Object.values(this.fxPool)) {
+      try {
+        s?.pause();
+      } catch {
+        // Best effort.
+      }
+    }
   }
 
   /* ---------------- APP STATE ---------------- */
@@ -232,7 +248,6 @@ class SoundManager {
       this.stopBackground();
       this.stopEffects();
     } else {
-      // resume background if needed
       this.startBackground().catch(() => {});
     }
   };

@@ -4,7 +4,7 @@ import 'dotenv/config';
 import mongoose from 'mongoose';
 import http from 'http';
 
-import { logger } from './utils/logger';
+import { logger, logConfig } from './utils/logger';
 import { initObservability, installCrashGuards } from './utils/observability';
 
 const REQUIRED_ENV = ['MONGO_URI', 'JWT_SECRET', 'ADMIN_JWT_SECRET'] as const;
@@ -129,7 +129,19 @@ async function start() {
   }
 
   server.listen(port, () => {
-    logger.info(`Server + Socket.IO listening`, { port, env: process.env.NODE_ENV });
+    logger.info(`Server + Socket.IO listening`, {
+      port,
+      env: process.env.NODE_ENV,
+      logLevel: logConfig.level,
+      logFormat: logConfig.pretty ? 'pretty' : 'json',
+    });
+
+    if (!logConfig.nodeEnvSet) {
+      logger.warn(
+        'NODE_ENV is not set — logs are in pretty format, which a log shipper ' +
+          'cannot index. Set NODE_ENV=production (or LOG_PRETTY=0) when deploying.',
+      );
+    }
   });
 }
 

@@ -30,7 +30,13 @@ router.post('/apple', async (req: Request, res: Response) => {
 
   const verified = verifyAppleJws(signedPayload);
   if (!verified.valid) {
-    logger.warn('Rejected Apple notification', { reason: verified.reason });
+    logger.once(
+      `apple-webhook-rejected:${verified.reason}`,
+      'warn',
+      'Rejected Apple notification',
+      { reason: verified.reason },
+      5 * 60 * 1000,
+    );
     // 200 so Apple stops retrying something that will never verify.
     return res.status(200).send('rejected');
   }
@@ -81,7 +87,13 @@ async function verifyGoogleCaller(req: Request): Promise<boolean> {
 
 router.post('/google', async (req: Request, res: Response) => {
   if (!(await verifyGoogleCaller(req))) {
-    logger.warn('Rejected Google RTDN — caller not verified');
+    logger.once(
+      'google-rtdn-rejected',
+      'warn',
+      'Rejected Google RTDN — caller not verified',
+      undefined,
+      5 * 60 * 1000,
+    );
     return res.status(401).send('unauthorized');
   }
 

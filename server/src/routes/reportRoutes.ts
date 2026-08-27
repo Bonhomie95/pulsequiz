@@ -55,7 +55,7 @@ router.post(
 
       return res.status(201).json({ ok: true, id: doc._id });
     } catch (e) {
-      console.error('Report create error', e);
+      logger.error('Question report create failed', e);
       return res.status(500).json({ message: 'Server error' });
     }
   },

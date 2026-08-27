@@ -87,7 +87,8 @@
           "userTrackingUsageDescription": "This lets us show ads that are more relevant to you. Your data is never sold."
         }
       ],
-      "@sentry/react-native/expo"
+      "@sentry/react-native/expo",
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true,

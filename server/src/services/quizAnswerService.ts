@@ -1,5 +1,6 @@
 import ActiveQuizSession from '../models/ActiveQuizSession';
 import QuizQuestion from '../models/QuizQuestion';
+import { TIME_PER_QUESTION, isAnswerTooLate } from '../config/quizTiming';
 
 export async function submitQuizAnswer(params: {
   userId: string;
@@ -25,11 +26,8 @@ export async function submitQuizAnswer(params: {
     throw new Error('Not current question');
   }
 
-  // ⏱ SERVER-AUTHORITATIVE DEADLINE
-  if (
-    session.questionDeadlineAt &&
-    Date.now() > session.questionDeadlineAt.getTime()
-  ) {
+  // ⏱ SERVER-AUTHORITATIVE DEADLINE (with round-trip grace — see quizTiming)
+  if (isAnswerTooLate(session.questionDeadlineAt)) {
     throw new Error('Answer too late');
   }
 
@@ -84,7 +82,7 @@ export async function submitQuizAnswer(params: {
   session.currentQuestionId = nextQ;
 
   // ⏱ Reset deadline for next question
-  session.questionDeadlineAt = new Date(Date.now() + 15_000);
+  session.questionDeadlineAt = new Date(Date.now() + TIME_PER_QUESTION * 1000);
 
   await session.save();
 

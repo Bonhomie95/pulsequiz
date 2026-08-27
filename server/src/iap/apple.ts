@@ -1,6 +1,7 @@
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import { verifyAppleJws } from '../services/storeNotifications';
+import { logger } from '../utils/logger';
 
 const APPLE_ISSUER_ID = process.env.APPLE_ISSUER_ID!;
 const APPLE_KEY_ID = process.env.APPLE_KEY_ID!;
@@ -71,10 +72,13 @@ export async function verifyAppleTransaction(
     );
 
     if (response.status !== 200) {
-      console.error(
-        `[Apple IAP] Non-200 status ${response.status}:`,
-        response.data,
-      );
+      // Apple's body carries `latest_receipt` — the full base64 receipt — so
+      // it must not be dumped raw. `status` is the part that identifies the
+      // failure; the logger redacts the rest.
+      logger.error('Apple IAP verification returned non-200', undefined, {
+        httpStatus: response.status,
+        appleStatus: response.data?.status,
+      });
       return {
         valid: false,
         productId: null,
@@ -92,7 +96,7 @@ export async function verifyAppleTransaction(
     if (typeof signedTransaction === 'string') {
       const verified = verifyAppleJws(signedTransaction);
       if (!verified.valid) {
-        console.error(`[Apple IAP] JWS verification failed: ${verified.reason}`);
+        logger.warn('Apple IAP JWS verification failed', { reason: verified.reason });
         return {
           valid: false,
           productId: null,
@@ -120,10 +124,7 @@ export async function verifyAppleTransaction(
       data: t,
     };
   } catch (err: any) {
-    console.error(
-      '[Apple IAP] verifyAppleTransaction error:',
-      err?.message ?? err,
-    );
+    logger.error('Apple IAP verification threw', err);
     return {
       valid: false,
       productId: null,

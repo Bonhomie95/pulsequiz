@@ -61,7 +61,16 @@ export async function admobSsvCallback(req: Request, res: Response) {
   const result = await verifyAdmobSsv(rawQuery, params);
 
   if (!result.valid) {
-    logger.warn('Rejected AdMob SSV callback', { reason: result.reason });
+    // This endpoint is public, so the volume here is chosen by whoever is
+    // calling it. Rejection is the system working; keep it visible in the log
+    // but rate-limited, so a scripted flood can't fill the log or Sentry.
+    logger.once(
+      `ssv-rejected:${result.reason}`,
+      'warn',
+      'Rejected AdMob SSV callback',
+      { reason: result.reason },
+      5 * 60 * 1000,
+    );
     // Google retries on non-2xx; a bad signature will never become good, so
     // acknowledge it and drop it rather than inviting an infinite retry loop.
     return res.status(200).send('rejected');

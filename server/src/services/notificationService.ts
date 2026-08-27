@@ -1,5 +1,6 @@
 import axios from 'axios';
 import PushToken from '../models/PushToken';
+import { logger } from '../utils/logger';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
@@ -19,7 +20,7 @@ async function sendExpoPush(messages: ExpoPushMessage[]) {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     });
   } catch (err) {
-    console.error('Push notification error:', err);
+    logger.error('Push notification failed', err);
   }
 }
 

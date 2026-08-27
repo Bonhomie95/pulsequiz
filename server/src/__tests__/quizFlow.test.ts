@@ -12,6 +12,7 @@ import { applyQuizResult } from '../services/progressService';
 import { useHintService } from '../services/quizHintService';
 import { getBalance } from '../services/coinService';
 import { ensureIndexes } from './setup';
+import { ANSWER_GRACE_MS } from '../config/quizTiming';
 
 const CATEGORY = 'math';
 
@@ -50,10 +51,16 @@ describe('quiz answering', () => {
     const userId = await makeUser();
     const session = await startQuizSession({ userId, category: CATEGORY });
 
-    // Push the deadline into the past — the client's own clock is irrelevant.
+    // Push the deadline clear of the round-trip grace — the client's own clock
+    // is irrelevant. (Inside the grace it is accepted on purpose; that edge is
+    // covered in quizAnswerDeadline.test.ts.)
     await ActiveQuizSession.updateOne(
       { _id: session.sessionId },
-      { $set: { questionDeadlineAt: new Date(Date.now() - 1000) } },
+      {
+        $set: {
+          questionDeadlineAt: new Date(Date.now() - ANSWER_GRACE_MS - 1_000),
+        },
+      },
     );
 
     await expect(

@@ -146,7 +146,10 @@ export async function oauthLogin(req: Request, res: Response) {
       isNew,
     });
   } catch (e: any) {
-    logger.warn('OAuth login failed', { provider, error: e?.message });
+    // A cancelled sign-in, an expired id_token or a clock-skewed device all
+    // land here. That is user-facing friction, not a server fault, and at warn
+    // every cancellation raised a Sentry event.
+    logger.info('OAuth login failed', { provider, error: e?.message });
     return res.status(401).json({ message: 'Sign-in failed. Please try again.' });
   }
 }

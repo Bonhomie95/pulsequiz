@@ -16,6 +16,7 @@ import { logger } from '../utils/logger';
 
 import ActiveQuizSession from '../models/ActiveQuizSession';
 import User from '../models/User';
+import { isAnswerTooLate } from '../config/quizTiming';
 
 /* -------------------------------------------------------------------------- */
 /*                                   SCHEMAS                                  */
@@ -104,11 +105,10 @@ export async function answer(req: AuthRequest, res: Response) {
     return res.status(400).json({ message: 'Not current question' });
   }
 
-  // ⏱ Deadline validation
-  if (
-    session.questionDeadlineAt &&
-    Date.now() > new Date(session.questionDeadlineAt).getTime()
-  ) {
+  // ⏱ Deadline validation, with the same round-trip grace the service uses.
+  // These two checks must agree: this one runs first, so a stricter check here
+  // would reject answers the service would have accepted.
+  if (isAnswerTooLate(session.questionDeadlineAt)) {
     return res.status(400).json({ message: 'answer too late' });
   }
 
