@@ -33,4 +33,12 @@ const QuizSessionSchema = new Schema<IQuizSession>(
   { timestamps: true }
 );
 
+// ── Indexes ──────────────────────────────────────────────────────────────────
+// This is the largest, fastest-growing collection and the source of every
+// leaderboard. Without these, leaderboard aggregations, the daily-cap check and
+// every per-user history read are full collection scans.
+QuizSessionSchema.index({ userId: 1, createdAt: -1 }); // profile history, daily cap
+QuizSessionSchema.index({ createdAt: -1 });            // weekly/monthly leaderboard $match
+QuizSessionSchema.index({ userId: 1, sessionId: 1 }, { unique: true }); // one row per session per user
+
 export default model<IQuizSession>('QuizSession', QuizSessionSchema);

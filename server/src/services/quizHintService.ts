@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import ActiveQuizSession from '../models/ActiveQuizSession';
 import QuizQuestion from '../models/QuizQuestion';
-import CoinWallet from '../models/CoinWallet';
+import { debitCoins, getBalance } from './coinService';
 
 const HINT_COSTS = [10, 20, 50] as const;
 
@@ -65,31 +65,53 @@ export async function useHintService(params: {
   const disabledIndex =
     wrongIndexes[Math.floor(Math.random() * wrongIndexes.length)];
 
-  // ✅ Deduct coins on backend (secure)
   const cost = HINT_COSTS[session.hintsUsed] ?? 999;
 
-  const wallet = await CoinWallet.findOne({ userId });
-  if (!wallet) throw new Error('Wallet missing');
+  // Claim the hint slot BEFORE taking payment. The conditional update means
+  // two concurrent requests can't both consume the same slot, so we never
+  // charge twice for one hint.
+  const claimed = await ActiveQuizSession.findOneAndUpdate(
+    {
+      _id: sessionId,
+      userId,
+      finished: false,
+      hintsUsed: session.hintsUsed,
+      hintedQuestions: { $ne: qIdObj },
+    },
+    { $inc: { hintsUsed: 1 }, $push: { hintedQuestions: qIdObj } },
+    { returnDocument: 'after' },
+  );
 
-  if (wallet.coins < cost) {
+  if (!claimed) {
     return {
       disabledIndex: null,
-      coins: wallet.coins,
+      coins: await getBalance(userId),
+      message: 'Hint already used for this question',
+    };
+  }
+
+  // Atomic conditional debit through the ledger. This used to be a
+  // read-modify-write straight onto the wallet, which both lost concurrent
+  // writes and left no CoinTransaction row to reconcile against.
+  const debit = await debitCoins(userId, cost, 'hint_used', { sessionId });
+
+  if (!debit.success) {
+    // Give the hint slot back — they didn't get one.
+    await ActiveQuizSession.updateOne(
+      { _id: sessionId },
+      { $inc: { hintsUsed: -1 }, $pull: { hintedQuestions: qIdObj } },
+    );
+    return {
+      disabledIndex: null,
+      coins: debit.balance,
       message: 'Not enough coins',
     };
   }
 
-  wallet.coins -= cost;
-  await wallet.save();
-
-  // persist hint usage
-  session.hintsUsed += 1;
-  session.hintedQuestions.push(qIdObj);
-  await session.save();
-
   return {
     disabledIndex,
-    coins: wallet.coins,
-    hintsUsed: session.hintsUsed,
+    coins: debit.balance,
+    cost,
+    hintsUsed: claimed.hintsUsed,
   };
 }

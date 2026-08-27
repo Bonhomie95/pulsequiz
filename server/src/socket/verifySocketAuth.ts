@@ -1,8 +1,15 @@
 import type { Socket } from 'socket.io';
-import jwt from 'jsonwebtoken';
+import { verifyAccessToken } from '../utils/jwt';
+import User from '../models/User';
 
 type Next = (err?: any) => void;
 
+/**
+ * Socket handshake auth. Mirrors the REST `requireAuth` middleware: the
+ * signature must be valid, the account must exist and not be banned or
+ * deleted, and the token version must still match — otherwise a revoked
+ * session could keep a live socket open indefinitely.
+ */
 export async function verifySocketAuth(socket: Socket, next: Next) {
   try {
     const token =
@@ -14,11 +21,18 @@ export async function verifySocketAuth(socket: Socket, next: Next) {
 
     if (!token) return next(new Error('Unauthorized'));
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const decoded = verifyAccessToken(token);
 
-    if (!decoded?.userId) return next(new Error('Unauthorized'));
+    const user = await User.findById(decoded.userId, {
+      isBanned: 1,
+      tokenVersion: 1,
+      deletedAt: 1,
+    }).lean();
 
-    // attach userId to socket
+    if (!user || user.deletedAt) return next(new Error('Unauthorized'));
+    if ((user.tokenVersion ?? 0) !== decoded.tv) return next(new Error('Session expired'));
+    if (user.isBanned) return next(new Error('Account banned'));
+
     (socket.data as any).userId = decoded.userId;
 
     return next();

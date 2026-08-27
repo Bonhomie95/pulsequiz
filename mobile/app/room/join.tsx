@@ -73,7 +73,10 @@ export default function JoinRoomScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.text }]}>Join Room</Text>
@@ -112,7 +115,10 @@ export default function JoinRoomScreen() {
             }]}
             onPress={joinRoom}
             disabled={joining || code.length !== 6}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Join Game"
+            hitSlop={8}>
             {joining
               ? <ActivityIndicator color='#fff' />
               : <Text style={styles.joinBtnText}>Join Game</Text>

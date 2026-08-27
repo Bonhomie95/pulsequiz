@@ -40,6 +40,18 @@ type PvPState = {
   opponentIndex: number;
   opponentFurthest: number;
 
+  /** A transient, per-action problem (rejected answer, network blip). Shown
+   *  in-place rather than ending the match. */
+  error: string | null;
+
+  /**
+   * The server's deadline for the current question, as an epoch millisecond
+   * value. The countdown is derived from this rather than restarted at 15s,
+   * so a player reconnecting mid-question sees the time they actually have
+   * left instead of a full clock the server will not honour.
+   */
+  deadlineAt: number | null;
+
   /* actions */
   setSearching: (category: string) => void;
   setMatched: (data: {
@@ -48,16 +60,24 @@ type PvPState = {
     myUserId: string;
     wager?: number;
   }) => void;
-  startMatch: (questions: Question[]) => void;
-  updateProgress: (payload: any) => void;
+  startMatch: (
+    questions: Question[],
+    resumedAtIndex?: number,
+    deadlineAt?: string | number | null,
+  ) => void;
+  updateProgress: (payload: { userId: string; currentIndex: number }) => void;
   setWaiting: () => void;
   finishMatch: (winnerUserId: string) => void;
+  setError: (message: string | null) => void;
+  setDeadline: (deadlineAt: string | number | null | undefined) => void;
   reset: () => void;
 };
 
 export const usePvPStore = create<PvPState>((set, get) => ({
   status: 'idle',
   category: null,
+  error: null,
+  deadlineAt: null,
   matchId: null,
   wager: 0,
 
@@ -85,11 +105,17 @@ export const usePvPStore = create<PvPState>((set, get) => ({
     });
   },
 
-  startMatch: (questions) =>
+  // `resumedAtIndex` is the server's view of where this player actually is.
+  // On a reconnect it is non-zero, and honouring it matters: hard-resetting to
+  // 0 made the client answer a question the server had already moved past, so
+  // every submission came back "Invalid question" and the match was stuck.
+  startMatch: (questions, resumedAtIndex = 0, deadlineAt = null) =>
     set({
       status: 'playing',
+      error: null,
+      deadlineAt: deadlineAt ? new Date(deadlineAt).getTime() : null,
       questions,
-      currentIndex: 0,
+      currentIndex: Math.min(Math.max(resumedAtIndex, 0), Math.max(questions.length - 1, 0)),
     }),
 
   updateProgress: ({ userId, currentIndex }) => {
@@ -99,12 +125,19 @@ export const usePvPStore = create<PvPState>((set, get) => ({
     } else {
       set({
         opponentIndex: currentIndex,
-        opponentFurthest: currentIndex ?? currentIndex,
+        opponentFurthest: Math.max(state.opponentFurthest, currentIndex),
       });
     }
   },
 
   setWaiting: () => set({ status: 'waiting' }),
+
+  setError: (message) => set({ error: message }),
+
+  setDeadline: (deadlineAt) =>
+    set({
+      deadlineAt: deadlineAt ? new Date(deadlineAt).getTime() : null,
+    }),
 
   finishMatch: (winnerUserId) => set({ status: 'finished', winnerUserId }),
 
@@ -112,6 +145,8 @@ export const usePvPStore = create<PvPState>((set, get) => ({
     set({
       status: 'idle',
       category: null,
+      error: null,
+      deadlineAt: null,
       matchId: null,
       wager: 0,
       me: null,

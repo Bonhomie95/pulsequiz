@@ -5,15 +5,14 @@ import { AuthRequest } from '../middlewares/auth';
 import { startQuizSession } from '../services/quizService';
 import { submitQuizAnswer } from '../services/quizAnswerService';
 import { applyQuizResult } from '../services/progressService';
-import { rebuildLeaderboardSnapshots } from '../services/leaderboardService';
 import { useHintService } from '../services/quizHintService';
 import { extendQuestionTime } from '../services/quizTimeService';
 import { checkUserForCheating } from '../services/antiCheatService';
 import { updateChallengeProgress } from '../services/challengeService';
-import Referral from '../models/Referral';
+import { grantReferralOnFirstQuiz } from './referralController';
 import Tournament from '../models/Tournament';
-import { creditCoins } from '../services/coinService';
 import { logActivity } from '../utils/activityLogger';
+import { logger } from '../utils/logger';
 
 import ActiveQuizSession from '../models/ActiveQuizSession';
 import User from '../models/User';
@@ -146,13 +145,35 @@ export async function finish(req: AuthRequest, res: Response) {
     return res.status(400).json({ message: 'Invalid payload' });
   }
 
-  const session = await ActiveQuizSession.findOne({
-    _id: parsed.data.sessionId,
-    userId: req.userId,
-  }).lean();
+  // Claim the scoring. Scoring is a one-shot transition, so a duplicate
+  // request (double-tap, retry after a dropped response) can't award twice.
+  //
+  // The claim is on `resultAppliedAt`, NOT `finished` — the answer handler
+  // already sets `finished` the moment a run ends, so by the time the client
+  // calls this endpoint the session is normally finished already. Claiming on
+  // `finished` would send every real quiz down the "already scored" branch.
+  const session = await ActiveQuizSession.findOneAndUpdate(
+    { _id: parsed.data.sessionId, userId: req.userId, resultAppliedAt: null },
+    { $set: { resultAppliedAt: new Date(), finished: true } },
+    { returnDocument: 'after' },
+  ).lean();
 
   if (!session) {
-    return res.status(404).json({ message: 'Session not found' });
+    // Either it doesn't exist, or it was already scored. Replay the stored
+    // result instead of erroring, so a retry is harmless.
+    const done = await ActiveQuizSession.findOne({
+      _id: parsed.data.sessionId,
+      userId: req.userId,
+    }).lean();
+
+    if (!done) return res.status(404).json({ message: 'Session not found' });
+
+    const already = (done.answers as any[]).filter((a) => a.isCorrect).length;
+    return res.json({
+      correct: already,
+      total: done.questions.length,
+      alreadyFinished: true,
+    });
   }
 
   const correct = (session.answers as any[]).filter((a) => a.isCorrect).length;
@@ -178,30 +199,31 @@ export async function finish(req: AuthRequest, res: Response) {
   );
 
   // Track challenge progress (async, non-blocking)
-  updateChallengeProgress({ userId: req.userId, correct, total }).catch(console.error);
+  updateChallengeProgress({ userId: req.userId, correct, total }).catch((err) =>
+    logger.error('Challenge progress update failed', err, { userId: req.userId }),
+  );
 
-  // Referral: reward referrer on referred user's FIRST quiz completion
+  // Referral: pay the referrer on the referred player's FIRST completion.
+  // Claiming hasCompletedFirstQuiz conditionally makes this fire exactly once.
   (async () => {
-    try {
-      const u = await User.findOne({ _id: req.userId, hasCompletedFirstQuiz: false }).lean();
-      if (u) {
-        await User.updateOne({ _id: req.userId }, { hasCompletedFirstQuiz: true });
-        const ref = await Referral.findOne({ referredId: req.userId, rewardGranted: false });
-        if (ref) {
-          ref.rewardGranted = true;
-          await ref.save();
-          await creditCoins(ref.referrerId.toString(), ref.rewardCoins, 'referral_bonus', {
-            note: `referral_firstquiz:${req.userId}`,
-          });
-        }
-      }
-    } catch { /* non-critical */ }
-  })();
+    const claimed = await User.findOneAndUpdate(
+      { _id: req.userId, hasCompletedFirstQuiz: { $ne: true } },
+      { $set: { hasCompletedFirstQuiz: true } },
+    );
+    if (claimed) await grantReferralOnFirstQuiz(req.userId!);
+  })().catch((err) =>
+    logger.error('Referral grant failed', err, { userId: req.userId }),
+  );
 
-  await rebuildLeaderboardSnapshots();
+  // NOTE: the leaderboard is NOT rebuilt here. It used to be — three
+  // full-collection aggregations inside every quiz-finish request, with a cost
+  // that grew with total sessions ever played. The cron refreshes it on a
+  // one-minute cadence instead.
 
   // Anti-cheat: async check (don't block response)
-  checkUserForCheating(req.userId).catch(console.error);
+  checkUserForCheating(req.userId).catch((err) =>
+    logger.error('Anti-cheat check failed', err, { userId: req.userId }),
+  );
 
   // Tournament score submission: if session has tournamentId, update participant score
   if ((session as any).tournamentId) {
@@ -214,7 +236,11 @@ export async function finish(req: AuthRequest, res: Response) {
       {
         $inc: { 'participants.$.score': correct },
       }
-    ).catch(console.error);
+    ).catch((err) =>
+      logger.error('Tournament score update failed', err, {
+        tournamentId: String((session as any).tournamentId),
+      }),
+    );
   }
 
   return res.json({

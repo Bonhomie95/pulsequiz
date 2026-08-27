@@ -6,25 +6,41 @@ import QuizSession from '../models/QuizSession';
 import LeaderboardSnapshot from '../models/LeaderboardSnapshot';
 import PrizePool from '../models/PrizePool';
 import User from '../models/User';
-import { getPeriodLabel } from '../services/payoutService';
+import Progress from '../models/Progress';
+import { currentPeriodLabel } from '../utils/dateRanges';
+import { getUserStanding } from '../services/leaderboardService';
 import { seedChallengesForUser } from '../services/challengeService';
+import { getAdRewardConfig } from '../services/adRewardService';
+
+/** Rank within a snapshot, or null when the user isn't in the stored top N. */
+function rankIn(snapshot: { data: any[] } | null, userId: string): number | null {
+  if (!snapshot) return null;
+  const idx = snapshot.data.findIndex((e: any) => e.userId === userId);
+  return idx >= 0 ? idx + 1 : null;
+}
 
 export async function getHomeSummary(req: AuthRequest, res: Response) {
   const userId = req.userId!;
 
-  // Auto-seed daily/weekly challenges if none exist for this period (fire-and-forget)
+  // Auto-seed daily/weekly challenges if none exist for this period.
   seedChallengesForUser(userId).catch(() => {});
+
+  const weeklyLabel = currentPeriodLabel('weekly');
 
   const [
     wallet,
     streakDoc,
+    progress,
     lastSession,
     weeklySnapshot,
     monthlySnapshot,
     allSnapshot,
+    weeklyPool,
+    adConfig,
   ] = await Promise.all([
-    CoinWallet.findOne({ userId }).lean(),
+    CoinWallet.findOne({ userId }).select('coins').lean(),
     Streak.findOne({ userId }).lean(),
+    Progress.findOne({ userId }).select('points level totalQuizzes').lean(),
     QuizSession.findOne({ userId })
       .sort({ createdAt: -1 })
       .select('category score createdAt')
@@ -32,49 +48,53 @@ export async function getHomeSummary(req: AuthRequest, res: Response) {
     LeaderboardSnapshot.findOne({ type: 'weekly' }).lean(),
     LeaderboardSnapshot.findOne({ type: 'monthly' }).lean(),
     LeaderboardSnapshot.findOne({ type: 'all' }).lean(),
+    PrizePool.findOne({ type: 'weekly', periodLabel: weeklyLabel }).lean(),
+    getAdRewardConfig(),
   ]);
 
-  // My current weekly rank (null if not in top 100)
-  let myWeeklyRank: number | null = null;
-  if (weeklySnapshot) {
-    const idx = weeklySnapshot.data.findIndex((e: any) => e.userId === userId);
-    myWeeklyRank = idx >= 0 ? idx + 1 : null;
+  const paidRanks = weeklyPool?.paidRanks ?? null;
+
+  const myWeeklyRank = rankIn(weeklySnapshot, userId);
+
+  // The number that motivates a player who isn't on the board yet. Only worth
+  // computing when they aren't already ranked — and it costs one index-backed
+  // read plus the snapshot we've already loaded, not a period-wide scan.
+  let standing: Awaited<ReturnType<typeof getUserStanding>> | null = null;
+  if (myWeeklyRank === null) {
+    standing = await getUserStanding(userId, 'weekly', paidRanks);
   }
 
-  let myMonthlyRank: number | null = null;
-  if (monthlySnapshot) {
-    const idx = monthlySnapshot.data.findIndex((e: any) => e.userId === userId);
-    myMonthlyRank = idx >= 0 ? idx + 1 : null;
-  }
-
-  let myAllTimeRank: number | null = null;
-  if (allSnapshot) {
-    const idx = allSnapshot.data.findIndex((e: any) => e.userId === userId);
-    myAllTimeRank = idx >= 0 ? idx + 1 : null;
-  }
-
-  // Paid ranks for current weekly period (how many top spots get prizes)
-  let weeklyPaidRanks: number | null = null;
-  try {
-    const periodLabel = getPeriodLabel('weekly');
-    const pool = await PrizePool.findOne({
-      type: 'weekly',
-      periodLabel,
-    }).lean();
-    weeklyPaidRanks = pool?.paidRanks ?? null;
-  } catch {
-    /* non-critical */
-  }
+  const pointsToPaidTier =
+    myWeeklyRank !== null && paidRanks
+      ? myWeeklyRank <= paidRanks
+        ? 0
+        : null
+      : (standing?.pointsToPaidTier ?? null);
 
   return res.json({
     coins: wallet?.coins ?? 0,
     streak: streakDoc?.streak ?? 0,
     lastCheckIn: streakDoc?.lastCheckIn ?? null,
 
-    myWeeklyRank, // user's current rank this week (null = not in top 100)
-    myMonthlyRank, // user's current rank this month
-    myAllTimeRank, // user's all-time rank
-    weeklyPaidRanks, // how many players get prizes this week (null = no pool set)
+    level: progress?.level ?? 1,
+    points: progress?.points ?? 0,
+    totalQuizzes: progress?.totalQuizzes ?? 0,
+
+    myWeeklyRank,
+    myMonthlyRank: rankIn(monthlySnapshot, userId),
+    myAllTimeRank: rankIn(allSnapshot, userId),
+    weeklyPaidRanks: paidRanks,
+    // How many points from the prize tier, or 0 when already inside it.
+    pointsToPaidTier,
+    weeklyPoints: standing?.points ?? null,
+    pointsToBoard: standing?.pointsToBoard ?? null,
+
+    // The client renders the reward the server will actually pay, rather than
+    // a hardcoded number that can drift out of sync with the settings.
+    adReward: {
+      coinsPerAd: adConfig.coinsPerAd,
+      dailyMax: adConfig.dailyMax,
+    },
 
     lastQuiz: lastSession
       ? {
@@ -88,32 +108,35 @@ export async function getHomeSummary(req: AuthRequest, res: Response) {
 
 /**
  * GET /home/ready-players
- * Returns recently active public users for the "ready to play" carousel.
- * Excludes the calling user and users who set publicProfile = false.
+ *
+ * Recently active public users for the "ready to play" carousel.
+ *
+ * Reads from `User.lastSeenAt` (indexed) rather than aggregating the whole
+ * QuizSession collection — the old version ran an unindexed full scan on every
+ * home-screen load.
  */
 export async function getReadyPlayers(req: AuthRequest, res: Response) {
   const userId = req.userId!;
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000); // active in last 24h
-
-  // Find users who played recently and have publicProfile enabled
-  const recentSessions = await QuizSession.aggregate([
-    { $match: { createdAt: { $gte: since } } },
-    { $group: { _id: '$userId' } },
-    { $limit: 100 },
-  ]);
-  const recentUserIds = recentSessions
-    .map((s) => s._id.toString())
-    .filter((id) => id !== userId);
+  const since = new Date(Date.now() - 30 * 60 * 1000); // active in last 30 min
 
   const users = await User.find({
-    _id: { $in: recentUserIds },
+    _id: { $ne: userId },
+    lastSeenAt: { $gte: since },
     publicProfile: { $ne: false },
-    isBanned: false,
+    isBanned: { $ne: true },
+    deletedAt: null,
     username: { $ne: null },
   })
-    .select('username avatar')
+    .select('username avatar lastSeenAt')
+    .sort({ lastSeenAt: -1 })
     .limit(20)
     .lean();
 
-  return res.json({ players: users });
+  return res.json({
+    players: users.map((u) => ({
+      _id: u._id.toString(),
+      username: u.username,
+      avatar: u.avatar,
+    })),
+  });
 }

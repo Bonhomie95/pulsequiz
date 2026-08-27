@@ -61,6 +61,17 @@ const PlayerSchema = new Schema(
     endedAt: { type: Date, default: null },
     totalTimeMs: { type: Number, default: null },
 
+    // Server-authoritative deadline for this player's current question. The
+    // client's countdown is cosmetic; this is what decides a timeout.
+    questionDeadlineAt: { type: Date, default: null },
+    // When the current question was served, used to reject impossibly fast
+    // answers and to accumulate true per-question elapsed time.
+    questionServedAt: { type: Date, default: null },
+    // Sum of server-measured per-question times. Used for the tiebreak instead
+    // of the wall-clock gap between a player's first and last answer, which a
+    // modified client could drive to near zero.
+    answeredMs: { type: Number, default: 0 },
+
     answers: { type: [AnswerSchema], default: [] },
 
     // what this player earned in THIS round (match)
@@ -157,7 +168,16 @@ const PvPMatchSchema = new Schema(
     forfeitWindowSeconds: { type: Number, default: 60 },
 
     winnerUserId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
-    finishReason: { type: String, enum: ['normal', 'forfeit'], default: null },
+    finishReason: {
+      type: String,
+      enum: ['normal', 'draw', 'forfeit', 'not_ready', 'abandoned', 'cancelled'],
+      default: null,
+    },
+
+    // Settlement guard. Every terminal path claims the match by conditionally
+    // stamping this field, so wagers and points can only ever be paid once no
+    // matter how many code paths (answer, forfeit, sweeper) race to finish it.
+    settledAt: { type: Date, default: null },
 
     // Coin wager — both players stake this amount, winner takes full pot
     wager: { type: Number, default: 0 },
@@ -211,5 +231,9 @@ PvPMatchSchema.index({ category: 1, state: 1 });
 // Helpful indexes for series/rematch lookups
 PvPMatchSchema.index({ seriesId: 1, roundIndex: 1 });
 PvPMatchSchema.index({ 'rematch.status': 1, finishedAt: -1 });
+
+// Per-user match history and the stale-match sweeper.
+PvPMatchSchema.index({ 'players.userId': 1, createdAt: -1 });
+PvPMatchSchema.index({ state: 1, matchmakingExpiresAt: 1 });
 
 export default model('PvPMatch', PvPMatchSchema);

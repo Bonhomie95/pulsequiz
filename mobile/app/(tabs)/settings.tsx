@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
+  Platform,
+  KeyboardAvoidingView,
   ActivityIndicator,
   ScrollView,
   StyleSheet,
@@ -110,6 +112,11 @@ export default function SettingsScreen() {
       edges={['top']}
       style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -136,7 +143,10 @@ export default function SettingsScreen() {
               api.patch('/settings', { theme: next });
             }}
             style={styles.cardRow}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Change theme"
+            hitSlop={8}>
             <ThemeIcon size={18} color={theme.colors.primary} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.rowLabel, { color: theme.colors.text }]}>
@@ -239,7 +249,10 @@ export default function SettingsScreen() {
               styles.rowBorder,
               { borderBottomColor: theme.colors.border },
             ]}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Choose USDT network"
+            hitSlop={8}>
             <Text style={{ fontSize: 18 }}>🌐</Text>
             <View style={{ flex: 1 }}>
               <Text style={[styles.rowLabel, { color: theme.colors.text }]}>
@@ -275,6 +288,9 @@ export default function SettingsScreen() {
               {USDT_TYPES.map((t) => (
                 <TouchableOpacity
                   key={t}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`Use the ${t} network`}
+                  accessibilityState={{ selected: usdtType === t }}
                   onPress={() => {
                     setUsdtType(t);
                     setNetworkOpen(false);
@@ -288,7 +304,7 @@ export default function SettingsScreen() {
                           : 'transparent',
                     },
                   ]}
-                >
+            hitSlop={8}>
                   <Text
                     style={[
                       styles.networkLabel,
@@ -335,7 +351,10 @@ export default function SettingsScreen() {
               styles.saveWalletBtn,
               { backgroundColor: theme.colors.primary },
             ]}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Save Wallet"
+            hitSlop={8}>
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
@@ -434,7 +453,10 @@ export default function SettingsScreen() {
               borderColor: theme.colors.danger + '44',
             },
           ]}
-        >
+        
+            accessibilityRole="button"
+            accessibilityLabel="Log Out"
+            hitSlop={8}>
           <LogOut size={18} color={theme.colors.danger} />
           <Text style={[styles.logoutText, { color: theme.colors.danger }]}>
             Log Out
@@ -445,6 +467,7 @@ export default function SettingsScreen() {
           PulseQuiz v1.0
         </Text>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <Toast
         visible={toast.visible}

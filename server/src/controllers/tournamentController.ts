@@ -1,8 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middlewares/auth';
 import Tournament, { ITournamentParticipant } from '../models/Tournament';
-import User from '../models/User';
-import { debitCoins, creditCoins } from '../services/coinService';
+import { joinTournament as joinTournamentService } from '../services/tournamentService';
 
 export async function getActiveTournaments(req: AuthRequest, res: Response) {
   const tournaments = await Tournament.find({
@@ -18,38 +17,28 @@ export async function getTournamentById(req: AuthRequest, res: Response) {
   return res.json({ tournament });
 }
 
+const JOIN_ERRORS: Record<string, { status: number; message: string }> = {
+  not_found:          { status: 404, message: 'Tournament not found' },
+  closed:             { status: 400, message: 'Tournament is not open for joining' },
+  already_joined:     { status: 400, message: "You've already joined this tournament" },
+  full:               { status: 400, message: 'Tournament is full' },
+  insufficient_coins: { status: 400, message: 'Not enough coins for the entry fee' },
+};
+
 export async function joinTournament(req: AuthRequest, res: Response) {
-  const tournament = await Tournament.findById(req.params.id);
-  if (!tournament) return res.status(404).json({ message: 'Tournament not found' });
-  if (tournament.status !== 'upcoming' && tournament.status !== 'active') {
-    return res.status(400).json({ message: 'Tournament is not open for joining' });
+  // The membership, capacity and fee checks all live in the service as a
+  // single conditional update — the previous read-check-write version let two
+  // parallel requests both charge the entry fee.
+  const result = await joinTournamentService(req.params.id, req.userId!);
+
+  if (!result.ok) {
+    const mapped = JOIN_ERRORS[result.error ?? ''] ?? {
+      status: 400,
+      message: 'Could not join tournament',
+    };
+    return res.status(mapped.status).json({ message: mapped.message });
   }
 
-  const alreadyJoined = tournament.participants.some(
-    (p: ITournamentParticipant) => p.userId.toString() === req.userId
-  );
-  if (alreadyJoined) return res.status(400).json({ message: 'Already joined' });
-
-  if (tournament.participants.length >= tournament.maxParticipants) {
-    return res.status(400).json({ message: 'Tournament is full' });
-  }
-
-  // Deduct entry fee
-  if (tournament.entryFeeCoins > 0) {
-    const result = await debitCoins(req.userId!, tournament.entryFeeCoins, 'tournament_entry');
-    if (!result.success) return res.status(400).json({ message: 'Insufficient coins for entry fee' });
-  }
-
-  const user = await User.findById(req.userId).select('username avatar').lean();
-  tournament.participants.push({
-    userId: req.userId as any,
-    usernameSnapshot: user?.username ?? 'Player',
-    avatarSnapshot: user?.avatar ?? 'avatar0',
-    score: 0,
-    joinedAt: new Date(),
-  });
-
-  await tournament.save();
   return res.json({ ok: true });
 }
 

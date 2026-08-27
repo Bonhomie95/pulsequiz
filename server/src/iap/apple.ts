@@ -1,5 +1,6 @@
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
+import { verifyAppleJws } from '../services/storeNotifications';
 
 const APPLE_ISSUER_ID = process.env.APPLE_ISSUER_ID!;
 const APPLE_KEY_ID = process.env.APPLE_KEY_ID!;
@@ -48,11 +49,10 @@ export interface AppleVerifyResult {
 /**
  * Verify a StoreKit 2 transactionId against Apple's server.
  *
- * Apple returns a signed JWT (JWS) for the transaction. We decode it
- * without verifying the Apple signature here (the server API endpoint
- * itself is authoritative — if it returns 200 the transaction is real).
- * For maximum security you can also verify the JWS against Apple's
- * certificate chain, but that's rarely done in practice for consumables.
+ * Apple returns the transaction as a signed JWS. The authenticated HTTPS call
+ * is one trust anchor, but we also verify the JWS signature and certificate
+ * chain — so a compromised APPLE_BASE_URL, a proxy, or a DNS hijack can't
+ * hand us a forged "you bought 20,000 coins" payload.
  */
 export async function verifyAppleTransaction(
   transactionId: string,
@@ -84,15 +84,24 @@ export async function verifyAppleTransaction(
       };
     }
 
-    // The response is a signed JWS — decode the payload (middle segment)
+    // The response is a signed JWS.
     const signedTransaction: string =
       response.data.signedTransactionInfo ?? response.data;
     let t: Record<string, any>;
 
     if (typeof signedTransaction === 'string') {
-      // Base64url-decode the payload segment of the JWS
-      const payload = signedTransaction.split('.')[1];
-      t = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+      const verified = verifyAppleJws(signedTransaction);
+      if (!verified.valid) {
+        console.error(`[Apple IAP] JWS verification failed: ${verified.reason}`);
+        return {
+          valid: false,
+          productId: null,
+          environment: null,
+          data: null,
+          error: `jws_${verified.reason}`,
+        };
+      }
+      t = verified.payload;
     } else {
       // Already decoded (sandbox sometimes returns plain JSON)
       t = signedTransaction as any;

@@ -5,6 +5,7 @@ export interface IReferral {
   referredId: Types.ObjectId;
   rewardGranted: boolean;
   rewardCoins: number;
+  grantedAt?: Date | null;
   createdAt: Date;
 }
 
@@ -14,6 +15,7 @@ const ReferralSchema = new Schema<IReferral>(
     referredId: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
     rewardGranted: { type: Boolean, default: false },
     rewardCoins: { type: Number, default: 100 },
+    grantedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

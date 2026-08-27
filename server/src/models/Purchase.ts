@@ -43,6 +43,10 @@ const PurchaseSchema = new Schema(
     creditedAt: { type: Date, default: null },
     creditedCoins: { type: Number, default: 0 },
 
+    // refund / clawback (driven by store server notifications)
+    refundedAt: { type: Date, default: null },
+    refundReason: { type: String, default: null },
+
     // anti-replay / security
     deviceId: { type: String, default: null },
     ip: { type: String, default: null },
@@ -59,6 +63,9 @@ PurchaseSchema.index(
   { store: 1, googlePurchaseToken: 1 },
   { unique: true, sparse: true },
 );
+
+PurchaseSchema.index({ userId: 1, createdAt: -1 });
+PurchaseSchema.index({ state: 1, createdAt: -1 });
 
 
 export default model('Purchase', PurchaseSchema);

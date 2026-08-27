@@ -25,7 +25,10 @@ export default function QuizModeScreen() {
       <TouchableOpacity
         onPress={() => router.replace('/(tabs)/home')}
         style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
-      >
+      
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={8}>
         <ChevronLeft size={18} color={theme.colors.text} />
         <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
           Home
@@ -67,7 +70,10 @@ export default function QuizModeScreen() {
               borderWidth: 1,
               borderColor: theme.colors.border,
             }}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Normal Quiz"
+            hitSlop={8}>
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}
             >
@@ -129,7 +135,10 @@ export default function QuizModeScreen() {
               borderRadius: 22,
               padding: 20,
             }}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Real opponent • Same questions • Speed matters"
+            hitSlop={8}>
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}
             >

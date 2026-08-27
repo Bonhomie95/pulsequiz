@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Platform,
+  KeyboardAvoidingView,
   Alert,
   FlatList,
   Image,
@@ -18,6 +20,23 @@ import { api } from '@/src/api/api';
 
 const AVATAR_KEYS = Object.keys(AVATAR_MAP);
 const CUSTOM_TILE = '__custom__';
+
+/**
+ * Accept a single emoji glyph (which may be a multi-codepoint ZWJ sequence like
+ * 👨‍👩‍👧) while rejecting letters, digits, whitespace, and multiple emoji. The
+ * server still moderates, but this stops obvious garbage at the source.
+ */
+function isSingleEmoji(value: string): boolean {
+  if (/[A-Za-z0-9]/.test(value) || /\s/.test(value)) return false;
+  if (!/\p{Extended_Pictographic}/u.test(value)) return false;
+  // Split on grapheme boundaries when available; fall back to a codepoint cap.
+  const Segmenter = (Intl as any)?.Segmenter;
+  if (Segmenter) {
+    const seg = new Segmenter(undefined, { granularity: 'grapheme' });
+    return [...seg.segment(value)].length === 1;
+  }
+  return Array.from(value).length <= 8;
+}
 
 type Status = 'idle' | 'checking' | 'taken' | 'available' | 'offensive';
 
@@ -109,6 +128,13 @@ export default function IdentityScreen() {
   const pickCustomEmoji = () => {
     const trimmed = customEmoji.trim();
     if (!trimmed) return;
+    if (!isSingleEmoji(trimmed)) {
+      Alert.alert(
+        'Pick one emoji',
+        'Your avatar must be a single emoji — no letters, numbers, or spaces.',
+      );
+      return;
+    }
     setAvatar(trimmed);
     setShowEmojiInput(false);
   };
@@ -121,6 +147,10 @@ export default function IdentityScreen() {
       edges={['top', 'bottom']}
       style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
       <View
         style={[styles.container, { backgroundColor: theme.colors.background }]}
       >
@@ -167,7 +197,7 @@ export default function IdentityScreen() {
           )}
           {status === 'offensive' && (
             <Text style={[styles.helper, { color: theme.colors.danger }]}>
-              This username isn't allowed
+              This username isn&apos;t allowed
             </Text>
           )}
           {status === 'available' && (
@@ -202,7 +232,10 @@ export default function IdentityScreen() {
                       : 'transparent',
                   },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Choose a custom emoji avatar"
+            hitSlop={8}>
                 <Text style={styles.customEmoji}>
                   {isCustomSelected ? avatar : '➕'}
                 </Text>
@@ -213,6 +246,9 @@ export default function IdentityScreen() {
             ) : (
               <TouchableOpacity
                 onPress={() => setAvatar(item)}
+                accessibilityRole="radio"
+                accessibilityLabel={`Avatar ${item}`}
+                accessibilityState={{ selected: avatar === item }}
                 style={[
                   styles.avatarWrap,
                   {
@@ -220,7 +256,7 @@ export default function IdentityScreen() {
                       avatar === item ? theme.colors.primary : 'transparent',
                   },
                 ]}
-              >
+            hitSlop={8}>
                 <Image
                   source={AVATAR_MAP[item as keyof typeof AVATAR_MAP]}
                   style={styles.avatar}
@@ -249,7 +285,10 @@ export default function IdentityScreen() {
             <TouchableOpacity
               onPress={pickCustomEmoji}
               style={[styles.emojiBtn, { backgroundColor: theme.colors.primary }]}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="Use"
+            hitSlop={8}>
               <Text style={{ color: '#fff', fontWeight: '700' }}>Use</Text>
             </TouchableOpacity>
           </View>
@@ -264,6 +303,9 @@ export default function IdentityScreen() {
         {/* Continue */}
         <TouchableOpacity
           disabled={!canContinue}
+          accessibilityRole="button"
+          accessibilityLabel="Continue"
+          accessibilityState={{ disabled: !canContinue }}
           onPress={submit}
           style={[
             styles.cta,
@@ -273,12 +315,13 @@ export default function IdentityScreen() {
                 : theme.colors.surface,
             },
           ]}
-        >
+            hitSlop={8}>
           <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
             {submitting ? 'Saving…' : 'Continue'}
           </Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

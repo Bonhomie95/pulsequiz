@@ -126,7 +126,10 @@ export default function CreateRoomScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.text }]}>
@@ -164,6 +167,9 @@ export default function CreateRoomScreen() {
                 {CATEGORIES.map((c) => (
                   <TouchableOpacity
                     key={c}
+                    accessibilityRole="radio"
+                    accessibilityLabel={`${c} category`}
+                    accessibilityState={{ selected: category === c }}
                     onPress={() => setCategory(c)}
                     style={[
                       styles.pill,
@@ -178,7 +184,7 @@ export default function CreateRoomScreen() {
                             : theme.colors.border,
                       },
                     ]}
-                  >
+            hitSlop={8}>
                     <Text
                       style={{
                         color: category === c ? '#fff' : theme.colors.text,
@@ -216,7 +222,10 @@ export default function CreateRoomScreen() {
                         wager === w ? theme.colors.coin : theme.colors.border,
                     },
                   ]}
-                >
+                
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Open your wallet">
                   <Coins
                     size={12}
                     color={wager === w ? theme.colors.coin : theme.colors.muted}
@@ -242,7 +251,10 @@ export default function CreateRoomScreen() {
               ]}
               onPress={createRoom}
               disabled={creating}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="Create Room"
+            hitSlop={8}>
               {creating ? (
                 <ActivityIndicator color="#fff" />
               ) : (
@@ -265,7 +277,10 @@ export default function CreateRoomScreen() {
                 styles.codeCard,
                 { backgroundColor: theme.colors.surface },
               ]}
-            >
+            
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Copy to clipboard">
               <Text style={[styles.code, { color: theme.colors.primary }]}>
                 {roomCode}
               </Text>
@@ -305,7 +320,10 @@ export default function CreateRoomScreen() {
             <TouchableOpacity
               onPress={cancelRoom}
               style={[styles.cancelBtn, { borderColor: theme.colors.border }]}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="Cancel Room"
+            hitSlop={8}>
               <Text style={{ color: theme.colors.muted, fontWeight: '600' }}>
                 Cancel Room
               </Text>

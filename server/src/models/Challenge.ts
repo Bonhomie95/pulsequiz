@@ -1,7 +1,8 @@
 import { Schema, model, Types } from 'mongoose';
 
 export type ChallengeType = 'daily' | 'weekly';
-export type ChallengeStatus = 'active' | 'completed' | 'expired';
+export type ChallengeStatus = 'active' | 'completed' | 'claimed' | 'expired';
+export type ChallengeMetric = 'quizzes_played' | 'correct_answers' | 'perfect_scores';
 
 export interface IChallenge {
   userId: Types.ObjectId;
@@ -9,11 +10,17 @@ export interface IChallenge {
   title: string;
   description: string;
   category?: string;
+  /** What the challenge counts. Was written by the seeder but missing from the
+   *  schema, so Mongoose strict mode dropped it on insert — which meant
+   *  progress tracking could never match a metric and no challenge ever
+   *  advanced past 0. */
+  metric: ChallengeMetric;
   targetValue: number;  // e.g. answer 10 questions correctly
   currentValue: number;
   rewardCoins: number;
   rewardPoints: number;
   status: ChallengeStatus;
+  claimedAt?: Date | null;
   periodLabel: string;  // e.g. "2024-W05" or "2024-02"
   completedAt?: Date;
   expiresAt: Date;
@@ -27,12 +34,24 @@ const ChallengeSchema = new Schema<IChallenge>(
     type: { type: String, enum: ['daily', 'weekly'], required: true },
     title: { type: String, required: true },
     description: { type: String, required: true },
+    metric: {
+      type: String,
+      enum: ['quizzes_played', 'correct_answers', 'perfect_scores'],
+      required: true,
+    },
     category: { type: String, default: null },
     targetValue: { type: Number, required: true },
     currentValue: { type: Number, default: 0 },
     rewardCoins: { type: Number, default: 0 },
     rewardPoints: { type: Number, default: 0 },
-    status: { type: String, enum: ['active', 'completed', 'expired'], default: 'active' },
+    // 'claimed' is distinct from 'expired': it records that the reward was
+    // paid, which is what makes the claim guard idempotent.
+    status: {
+      type: String,
+      enum: ['active', 'completed', 'claimed', 'expired'],
+      default: 'active',
+    },
+    claimedAt: { type: Date, default: null },
     periodLabel: { type: String, required: true },
     completedAt: { type: Date, default: null },
     expiresAt: { type: Date, required: true },

@@ -1,10 +1,12 @@
 import { Router } from 'express';
-import { requireAdmin } from '../middlewares/requireAdmin';
+import { requireAdmin, requireSuperAdmin } from '../middlewares/requireAdmin';
 import { getFlaggedAccounts, resolveFlag } from '../controllers/adminAntiCheatController';
 
 const router = Router();
 
 router.get('/', requireAdmin, getFlaggedAccounts);
-router.post('/:id/resolve', requireAdmin, resolveFlag);
+// Resolving a flag re-enables payouts for that account, so it is a
+// money-adjacent action rather than plain moderation.
+router.post('/:id/resolve', requireAdmin, requireSuperAdmin, resolveFlag);
 
 export default router;

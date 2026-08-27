@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Dimensions,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { LINKS } from '../../src/constants/links';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Monitor, Moon, Sun } from 'lucide-react-native';
@@ -30,9 +32,10 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 
-import { api, setAuthToken } from '../../src/api/api';
+import * as AppleAuthentication from 'expo-apple-authentication';
+
+import { api, errorMessage } from '../../src/api/api';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import { storage } from '../../src/utils/storage';
 import { useThemeStore } from '../../src/store/useThemeStore';
 import { useTheme } from '../../src/theme/useTheme';
 
@@ -144,9 +147,22 @@ export default function LoginScreen() {
   const isDark = theme.colors.background === '#0B0F1A';
   const { mode, setMode } = useThemeStore();
   const setUser = useAuthStore((s) => s.setUser);
+  const setSession = useAuthStore((s) => s.setSession);
 
   const [loading, setLoading] = useState(false);
-  const [activeBtn, setActiveBtn] = useState<'google' | 'fb' | null>(null);
+  const [activeBtn, setActiveBtn] = useState<'google' | 'fb' | 'apple' | null>(
+    null,
+  );
+  // Sign in with Apple is required by App Store guideline 4.8 whenever another
+  // third-party login is offered, and is only available on iOS 13+.
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    AppleAuthentication.isAvailableAsync()
+      .then(setAppleAvailable)
+      .catch(() => setAppleAvailable(false));
+  }, []);
 
   // Entrance animations
   const heroOpacity = useSharedValue(0);
@@ -260,6 +276,70 @@ export default function LoginScreen() {
   };
 
   // ── Google Sign-In ─────────────────────────────────────────────────────────
+  /**
+   * Exchange a provider token for a PulseQuiz session.
+   *
+   * The server now returns an access token AND a refresh token — access
+   * tokens are short-lived, and the API layer silently refreshes them, so both
+   * must be stored together.
+   */
+  const completeSignIn = async (
+    provider: 'google' | 'facebook' | 'apple',
+    providerToken: string,
+  ) => {
+    const r = await api.post('/auth/oauth', { provider, token: providerToken });
+    const { token, refreshToken, user, needsIdentity } = r.data || {};
+
+    if (!token || !user) {
+      Alert.alert('Sign-in failed', 'The server sent an unexpected response. Please try again.');
+      return;
+    }
+
+    await setSession(token, refreshToken);
+    setUser({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      avatar: user.avatar,
+    });
+
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    if (needsIdentity) router.replace('/(auth)/identity');
+    else router.replace('/(tabs)/home');
+  };
+
+  // ── Sign in with Apple ─────────────────────────────────────────────────────
+  const signInWithApple = async () => {
+    if (loading) return;
+    setLoading(true);
+    setActiveBtn('apple');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        Alert.alert('Sign-in failed', 'Apple did not return an identity token.');
+        return;
+      }
+
+      await completeSignIn('apple', credential.identityToken);
+    } catch (e: any) {
+      // The user dismissing the sheet is not an error worth a dialog.
+      if (e?.code === 'ERR_REQUEST_CANCELED') return;
+      Alert.alert('Apple sign-in failed', errorMessage(e));
+    } finally {
+      setLoading(false);
+      setActiveBtn(null);
+    }
+  };
+
   const signInWithGoogle = async () => {
     if (loading) return;
     setLoading(true);
@@ -284,30 +364,7 @@ export default function LoginScreen() {
         return;
       }
 
-      const r = await api.post('/auth/oauth', {
-        provider: 'google',
-        token: idToken,
-      });
-      const { token, user, needsIdentity } = r.data || {};
-
-      if (!token || !user) {
-        Alert.alert('Login failed', 'Invalid server response. Try again.');
-        return;
-      }
-
-      await storage.setToken(token);
-      setAuthToken(token);
-      setUser({
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        avatar: user.avatar,
-      });
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      if (needsIdentity) router.replace('/(auth)/identity');
-      else router.replace('/(tabs)/home');
+      await completeSignIn('google', idToken);
     } catch (e: any) {
       const code = e?.code;
       if (code === statusCodes.SIGN_IN_CANCELLED) {
@@ -317,10 +374,7 @@ export default function LoginScreen() {
       } else if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         Alert.alert('Google Play Services', 'Needs an update.');
       } else {
-        Alert.alert(
-          'Login failed',
-          e?.response?.data?.message || e?.message || 'Google Sign-In failed.',
-        );
+        Alert.alert('Google sign-in failed', errorMessage(e));
       }
     } finally {
       setLoading(false);
@@ -352,35 +406,9 @@ export default function LoginScreen() {
       const result = await request.promptAsync(facebookDiscovery);
       if (result.type !== 'success' || !result.params.access_token) return;
 
-      const r = await api.post('/auth/oauth', {
-        provider: 'facebook',
-        token: result.params.access_token,
-      });
-      const { token, user, needsIdentity } = r.data || {};
-
-      if (!token || !user) {
-        Alert.alert('Login failed', 'Invalid server response');
-        return;
-      }
-
-      await storage.setToken(token);
-      setAuthToken(token);
-      setUser({
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        avatar: user.avatar,
-      });
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      if (needsIdentity) router.replace('/(auth)/identity');
-      else router.replace('/(tabs)/home');
+      await completeSignIn('facebook', result.params.access_token);
     } catch (e: any) {
-      Alert.alert(
-        'Facebook Login failed',
-        e?.response?.data?.message || e?.message || 'Try again',
-      );
+      Alert.alert('Facebook sign-in failed', errorMessage(e));
     } finally {
       setLoading(false);
       setActiveBtn(null);
@@ -424,6 +452,8 @@ export default function LoginScreen() {
             { backgroundColor: isDark ? '#131A2E' : '#F4F6FB' },
           ]}
           onPress={cycleTheme}
+          accessibilityRole="button"
+          accessibilityLabel="Change theme"
         >
           <ThemeIcon size={18} color={isDark ? '#A6B0CF' : '#6B7280'} />
         </TouchableOpacity>
@@ -527,15 +557,38 @@ export default function LoginScreen() {
               isDark={isDark}
               variant="ghost"
             />
+            {appleAvailable && (
+              <LoginButton
+                label="Continue with Apple"
+                icon=""
+                onPress={signInWithApple}
+                loading={activeBtn === 'apple'}
+                disabled={loading}
+                isDark={isDark}
+                variant="ghost"
+              />
+            )}
           </View>
 
           <Text
             style={[styles.terms, { color: isDark ? '#2A3350' : '#9CA3AF' }]}
           >
             By continuing you agree to our{' '}
-            <Text style={{ color: '#5B7CFF' }}>Terms</Text>
+            <Text
+              style={{ color: '#5B7CFF' }}
+              onPress={() => Linking.openURL(LINKS.TERMS)}
+              accessibilityRole="link"
+            >
+              Terms
+            </Text>
             {' & '}
-            <Text style={{ color: '#5B7CFF' }}>Privacy Policy</Text>
+            <Text
+              style={{ color: '#5B7CFF' }}
+              onPress={() => Linking.openURL(LINKS.PRIVACY)}
+              accessibilityRole="link"
+            >
+              Privacy Policy
+            </Text>
           </Text>
         </Animated.View>
       </SafeAreaView>
@@ -584,6 +637,9 @@ function LoginButton({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled, busy: loading }}
         style={({ pressed }) => [
           styles.loginBtn,
           isPrimary
@@ -595,7 +651,7 @@ function LoginButton({
               },
           (disabled || pressed) && { opacity: 0.72 },
         ]}
-      >
+            hitSlop={8}>
         {loading ? (
           <LoadingDots isDark={isDark} isPrimary={isPrimary} />
         ) : (

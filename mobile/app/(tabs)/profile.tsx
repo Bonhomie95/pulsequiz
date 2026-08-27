@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Platform,
+  KeyboardAvoidingView,
   ActivityIndicator,
   Image,
   ScrollView,
@@ -114,6 +116,11 @@ export default function ProfileScreen() {
       edges={['top']}
       style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -131,7 +138,10 @@ export default function ProfileScreen() {
             }}
             style={styles.avatarWrap}
             activeOpacity={0.85}
-          >
+          
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Edit">
             <UserAvatar avatar={editing ? avatar : user?.avatar} size={96} />
             <View
               style={[
@@ -212,7 +222,10 @@ export default function ProfileScreen() {
                 styles.editBtn,
                 { backgroundColor: theme.colors.surface },
               ]}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="Edit Profile"
+            hitSlop={8}>
               <Edit3 size={15} color={theme.colors.text} />
               <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
                 Edit Profile
@@ -226,7 +239,10 @@ export default function ProfileScreen() {
                   styles.cancelBtn,
                   { backgroundColor: theme.colors.surface },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Cancel"
+            hitSlop={8}>
                 <Text style={{ color: theme.colors.text }}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -236,7 +252,10 @@ export default function ProfileScreen() {
                   styles.saveBtn,
                   { backgroundColor: theme.colors.primary },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Save"
+            hitSlop={8}>
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
@@ -329,7 +348,10 @@ export default function ProfileScreen() {
                   borderBottomColor: theme.colors.border,
                 },
               ]}
-            >
+            
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Next">
               <Text style={{ fontSize: 20, width: 32 }}>{l.icon}</Text>
               <View style={{ flex: 1 }}>
                 <Text
@@ -423,6 +445,7 @@ export default function ProfileScreen() {
           </View>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <AvatarPickerModal
         visible={avatarModal}

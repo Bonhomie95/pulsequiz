@@ -1,4 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import {
   Monitor,
   Moon,
@@ -8,11 +9,13 @@ import {
   Trophy,
   PlayCircle,
   Crown,
+  HelpCircle,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,9 +25,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AdBanner } from '@/src/ads/adBanner';
-import { api } from '@/src/api/api';
+import { api, errorMessage } from '@/src/api/api';
 import { HomeSkeleton } from '@/src/components/HomeSkeleton';
 import { CheckInModal } from '@/src/components/CheckInModal';
+import { RulesSheet } from '@/src/components/RulesSheet';
 import { UserAvatar } from '@/src/components/UserAvatar';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useCoinStore } from '@/src/store/useCoinStore';
@@ -58,16 +62,18 @@ function ReadyCarousel({
   const theme = useTheme();
   const listRef = useRef<FlatList>(null);
   const indexRef = useRef(0);
+  // Pause auto-scroll when Home isn't the focused tab (it stays mounted).
+  const isFocused = useIsFocused();
 
   useEffect(() => {
-    if (players.length <= 1) return;
+    if (!isFocused || players.length <= 1) return;
     const iv = setInterval(() => {
       const next = (indexRef.current + 1) % players.length;
       indexRef.current = next;
       listRef.current?.scrollToIndex({ index: next, animated: true });
     }, 2800);
     return () => clearInterval(iv);
-  }, [players.length]);
+  }, [players.length, isFocused]);
 
   if (players.length === 0) return null;
 
@@ -93,12 +99,14 @@ function ReadyCarousel({
           return (
             <TouchableOpacity
               onPress={() => onPress(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`Challenge ${item.username} to a match`}
               style={[
                 styles.carouselCard,
                 { backgroundColor: theme.colors.surface },
               ]}
               activeOpacity={0.8}
-            >
+            hitSlop={8}>
               <View
                 style={[
                   styles.carouselAvatar,
@@ -156,6 +164,8 @@ export default function HomeScreen() {
     'weekly',
   );
   const [readyPlayers, setReadyPlayers] = useState<ReadyPlayer[]>([]);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     useCoinStore.getState().hydrate();
@@ -163,12 +173,13 @@ export default function HomeScreen() {
     useStreakStore.getState().hydrate();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      setLoading(true);
-      (async () => {
-        try {
+  const [homeError, setHomeError] = useState<string | null>(null);
+
+  const loadHome = useCallback(
+    async (opts: { showSpinner?: boolean } = {}) => {
+      if (opts.showSpinner !== false) setLoading(true);
+      setHomeError(null);
+      try {
           const check = await api.post('/streak/check-in');
           const [res, playersRes] = await Promise.all([
             api.get('/home/summary'),
@@ -176,8 +187,6 @@ export default function HomeScreen() {
               .get('/home/ready-players')
               .catch(() => ({ data: { players: [] } })),
           ]);
-          if (!active) return;
-
           useCoinStore.getState().setCoins(res.data.coins);
           useStreakStore
             .getState()
@@ -224,16 +233,25 @@ export default function HomeScreen() {
               });
             }
           }
-        } catch (e) {
-          console.warn('Home summary failed', e);
-        } finally {
-          if (active) setLoading(false);
-        }
+      } catch (e) {
+        setHomeError(errorMessage(e, "Couldn't refresh your home screen."));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        if (active) await loadHome();
       })();
       return () => {
         active = false;
       };
-    }, []),
+    }, [loadHome]),
   );
 
   useFocusEffect(
@@ -281,6 +299,9 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      {/* ── How the game works ── */}
+      <RulesSheet visible={rulesOpen} onClose={() => setRulesOpen(false)} />
+
       {/* ── Daily Check-In Modal ── */}
       <CheckInModal
         visible={checkInModal.visible}
@@ -293,12 +314,28 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              setRefreshing(true);
+              try {
+                await loadHome({ showSpinner: false });
+              } finally {
+                setRefreshing(false);
+              }
+            }}
+            tintColor={theme.colors.primary}
+          />
+        }
       >
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => router.push('/(tabs)/profile')}
             style={styles.profileRow}
+            accessibilityRole="button"
+            accessibilityLabel="Open your profile"
           >
             <View
               style={[styles.avatarRing, { borderColor: theme.colors.primary }]}
@@ -318,6 +355,8 @@ export default function HomeScreen() {
             {/* Premium badge / upsell */}
             <TouchableOpacity
               onPress={() => router.push('/premium' as any)}
+              accessibilityRole="button"
+              accessibilityLabel={isPremium ? 'Premium active' : 'Get premium'}
               style={[
                 styles.premiumBtn,
                 {
@@ -339,6 +378,8 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={cycleTheme}
+              accessibilityRole="button"
+              accessibilityLabel="Change theme"
               style={[
                 styles.themeBtn,
                 { backgroundColor: theme.colors.surface },
@@ -359,7 +400,10 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.statItem}
               onPress={() => router.push('/wallet')}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="Open your wallet"
+            hitSlop={8}>
               <Coins size={18} color={theme.colors.coin} />
               <Text style={[styles.statValue, { color: theme.colors.coin }]}>
                 {coins.toLocaleString()}
@@ -374,7 +418,10 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.statItem}
               onPress={() => router.push('/streak')}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="View your daily streak"
+            hitSlop={8}>
               <Flame size={18} color="#FF6B35" />
               <Text style={[styles.statValue, { color: theme.colors.text }]}>
                 {streak}
@@ -394,7 +441,10 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={styles.statItem}
                   onPress={() => router.push('/(tabs)/leaderboard')}
-                >
+                
+            accessibilityRole="button"
+            accessibilityLabel="Open the weekly leaderboard"
+            hitSlop={8}>
                   <Trophy size={18} color="#FFB800" />
                   <Text style={[styles.statValue, { color: '#FFB800' }]}>
                     #{myWeeklyRank}
@@ -416,7 +466,10 @@ export default function HomeScreen() {
             activeOpacity={0.9}
             onPress={() => router.push('/(tabs)/leaderboard')}
             style={[styles.rankCard, { backgroundColor: theme.colors.surface }]}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Open the leaderboard"
+            hitSlop={8}>
             <View style={styles.rankCardTop}>
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
@@ -432,6 +485,9 @@ export default function HomeScreen() {
                 {(['weekly', 'monthly', 'all'] as const).map((t) => (
                   <TouchableOpacity
                     key={t}
+                    accessibilityRole="tab"
+                    accessibilityLabel={`Show ${t} rank`}
+                    accessibilityState={{ selected: rankTab === t }}
                     onPress={(e) => {
                       e.stopPropagation?.();
                       setRankTab(t);
@@ -443,7 +499,7 @@ export default function HomeScreen() {
                           rankTab === t ? theme.colors.primary : 'transparent',
                       },
                     ]}
-                  >
+            hitSlop={8}>
                     <Text
                       style={{
                         color: rankTab === t ? '#fff' : theme.colors.muted,
@@ -514,6 +570,34 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {homeError && (
+          <View
+            style={{
+              backgroundColor: theme.colors.danger + '15',
+              borderColor: theme.colors.danger + '40',
+              borderWidth: 1.5,
+              borderRadius: 14,
+              padding: 12,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ color: theme.colors.danger, fontWeight: '700', fontSize: 13 }}>
+              {homeError}
+            </Text>
+            <TouchableOpacity
+              onPress={() => loadHome()}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading your home screen"
+              hitSlop={8}
+              style={{ marginTop: 8 }}
+            >
+              <Text style={{ color: theme.colors.primary, fontWeight: '800' }}>
+                Try again
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* READY TO PLAY CAROUSEL */}
         {!loading && (
           <ReadyCarousel
@@ -522,11 +606,35 @@ export default function HomeScreen() {
           />
         )}
 
+        {/* HOW IT WORKS — the rules have real consequences (one wrong answer
+            ends a run, the daily cap zeroes points) and were never explained. */}
+        <TouchableOpacity
+          onPress={() => setRulesOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Read how PulseQuiz works"
+          hitSlop={8}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            alignSelf: 'flex-start',
+            marginBottom: 14,
+          }}
+        >
+          <HelpCircle size={14} color={theme.colors.muted} />
+          <Text style={{ color: theme.colors.muted, fontSize: 13, fontWeight: '700' }}>
+            How it works
+          </Text>
+        </TouchableOpacity>
+
         {/* MAIN PLAY CARD */}
         <TouchableOpacity
           onPress={() => router.push('/quiz/mode' as any)}
           activeOpacity={0.9}
-        >
+        
+            accessibilityRole="button"
+            accessibilityLabel="Start a Quiz"
+            hitSlop={8}>
           <LinearGradient
             colors={[theme.colors.primary, theme.colors.secondary + 'BB']}
             start={{ x: 0, y: 0 }}
@@ -589,13 +697,15 @@ export default function HomeScreen() {
           ].map((a) => (
             <TouchableOpacity
               key={a.label}
+              accessibilityRole="button"
+              accessibilityLabel={a.label}
               onPress={() => router.push(a.route as any)}
               style={[
                 styles.actionCard,
                 { backgroundColor: theme.colors.surface },
               ]}
               activeOpacity={0.85}
-            >
+            hitSlop={8}>
               <View
                 style={[styles.actionIcon, { backgroundColor: a.color + '22' }]}
               >
@@ -672,12 +782,14 @@ export default function HomeScreen() {
           ].map((e) => (
             <TouchableOpacity
               key={e.label}
+              accessibilityRole="button"
+              accessibilityLabel={e.label}
               onPress={() => router.push(e.route as any)}
               style={[
                 styles.earnCard,
                 { backgroundColor: theme.colors.surface },
               ]}
-            >
+            hitSlop={8}>
               <Text style={{ fontSize: 22 }}>{e.icon}</Text>
               <Text
                 style={{

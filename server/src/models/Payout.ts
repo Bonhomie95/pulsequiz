@@ -15,6 +15,9 @@ export interface IPayout {
   txHash?: string;
   retries: number;
   nowpaymentsPaymentId?: string;
+  /** Stable reference sent to the payment provider so a retry after a lost
+   *  response reconciles instead of sending a second transfer. */
+  idempotencyKey: string;
   failReason?: string;
   lastAttemptAt?: Date;
   createdAt: Date;
@@ -35,6 +38,7 @@ const PayoutSchema = new Schema<IPayout>(
     txHash: { type: String },
     retries: { type: Number, default: 0 },
     nowpaymentsPaymentId: { type: String },
+    idempotencyKey: { type: String, unique: true, sparse: true },
     failReason: { type: String },
     lastAttemptAt: { type: Date },
     sentAt: { type: Date },
@@ -44,5 +48,9 @@ const PayoutSchema = new Schema<IPayout>(
 );
 
 PayoutSchema.index({ period: 1, periodLabel: 1, userId: 1 }, { unique: true });
+
+// retryFailedPayouts scans by status; the user-facing list reads by user.
+PayoutSchema.index({ status: 1, retries: 1 });
+PayoutSchema.index({ userId: 1, createdAt: -1 });
 
 export default model<IPayout>('Payout', PayoutSchema);

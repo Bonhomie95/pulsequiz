@@ -351,8 +351,10 @@ export default function PvPResultScreen() {
               </View>
               <TouchableOpacity
                 onPress={declineRematch}
+                accessibilityRole="button"
+                accessibilityLabel="Decline rematch"
                 style={styles.rematchIconBtn}
-              >
+            hitSlop={8}>
                 <X size={16} color="#FF5C5C" />
               </TouchableOpacity>
               <TouchableOpacity
@@ -361,7 +363,10 @@ export default function PvPResultScreen() {
                   styles.rematchIconBtn,
                   { backgroundColor: theme.colors.primary },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Confirm">
                 <Check size={16} color="#fff" />
               </TouchableOpacity>
             </View>
@@ -384,7 +389,10 @@ export default function PvPResultScreen() {
                   clearRematchTimer();
                   setRematchState('idle');
                 }}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Cancel"
+            hitSlop={8}>
                 <Text
                   style={{ color: '#FF5C5C', fontWeight: '700', fontSize: 13 }}
                 >
@@ -405,7 +413,10 @@ export default function PvPResultScreen() {
                   styles.btnPrimary,
                   { backgroundColor: theme.colors.primary },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Request Rematch"
+            hitSlop={8}>
                 <RotateCcw size={18} color="#fff" />
                 <Text style={styles.btnPrimaryText}>Request Rematch</Text>
               </TouchableOpacity>
@@ -422,7 +433,10 @@ export default function PvPResultScreen() {
                   borderColor: theme.colors.border,
                 },
               ]}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="New Match"
+            hitSlop={8}>
               <Swords size={18} color={theme.colors.text} />
               <Text
                 style={[styles.btnSecondaryText, { color: theme.colors.text }]}
@@ -432,7 +446,10 @@ export default function PvPResultScreen() {
             </TouchableOpacity>
 
             {/* HOME */}
-            <TouchableOpacity onPress={goHome} style={styles.homeLink}>
+            <TouchableOpacity onPress={goHome} style={styles.homeLink}
+            accessibilityRole="button"
+            accessibilityLabel="Back to Home"
+            hitSlop={8}>
               <Home size={16} color={theme.colors.muted} />
               <Text
                 style={[styles.homeLinkText, { color: theme.colors.muted }]}

@@ -17,4 +17,6 @@ const StreakSchema = new Schema<IStreak>(
   { timestamps: true }
 );
 
+StreakSchema.index({ lastCheckIn: -1 });
+
 export default model<IStreak>('Streak', StreakSchema);

@@ -2,6 +2,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import { showInterstitialAd } from './admob';
 import { useAppStateStore } from '@/src/store/useAppStateStore';
 import { usePremiumStore } from '@/src/store/usePremiumStore';
+import { logger } from '../utils/logger';
 
 let timer: ReturnType<typeof setInterval> | null = null;
 let appState: AppStateStatus = AppState.currentState;
@@ -47,7 +48,7 @@ export function startUsageAdTimer() {
     try {
       await showInterstitialAd();
     } catch (e) {
-      console.warn('[InterstitialAd] failed', e);
+      logger.warn('Interstitial ad failed', { error: String(e) });
     }
 
     startedAt = Date.now();

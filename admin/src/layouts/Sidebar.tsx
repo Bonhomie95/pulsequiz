@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../store/adminStore';
+import { useAdminRole } from '../auth/useAdminRole';
 import {
+  ShieldCheck,
   LayoutDashboard,
   Users,
   CreditCard,
@@ -44,6 +46,8 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false); // mobile drawer
   const [collapsed, setCollapsed] = useState(false); // desktop collapse
   const logout = useAdminStore((s) => s.logout);
+  const admin = useAdminStore((s) => s.admin);
+  const { canViewAudit } = useAdminRole();
   const navigate = useNavigate();
 
   const closeMobile = () => setOpen(false);
@@ -159,11 +163,34 @@ export default function Sidebar() {
               collapsed={collapsed}
               onClick={closeMobile}
             />
+            {canViewAudit && (
+              <LinkItem
+                to="/audit"
+                label="Audit Log"
+                icon={<ShieldCheck size={20} />}
+                collapsed={collapsed}
+                onClick={closeMobile}
+              />
+            )}
           </nav>
         </div>
 
-        {/* Logout Bottom */}
+        {/* Identity + Logout */}
         <div className="p-2 border-t border-gray-800">
+          {!collapsed && admin && (
+            <div className="px-4 pb-2 pt-1">
+              <div className="truncate text-sm text-gray-300">{admin.email}</div>
+              <div
+                className={`mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide ${
+                  admin.role === 'SUPER_ADMIN'
+                    ? 'bg-indigo-900/60 text-indigo-300'
+                    : 'bg-gray-800 text-gray-400'
+                }`}
+              >
+                {admin.role}
+              </div>
+            </div>
+          )}
           <button
             onClick={handleLogout}
             className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} w-full px-4 py-3 rounded-lg hover:bg-red-600 transition`}

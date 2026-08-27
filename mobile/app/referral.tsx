@@ -1,6 +1,8 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  Platform,
+  KeyboardAvoidingView,
   ActivityIndicator,
   Alert,
   Share,
@@ -91,13 +93,21 @@ export default function ReferralScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
-        >
+        
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={20} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.text }]}>Referrals</Text>
         <View style={{ width: 40 }} />
       </View>
 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+        style={{ flex: 1 }}
+      >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Hero banner */}
         <LinearGradient
@@ -129,14 +139,20 @@ export default function ReferralScreen() {
             <Text style={[styles.sectionLabel, { color: theme.colors.muted }]}>Your Referral Code</Text>
             <View style={styles.codeRow}>
               <Text style={[styles.code, { color: theme.colors.primary }]}>{myCode}</Text>
-              <TouchableOpacity onPress={copyCode} style={[styles.iconBtn, { backgroundColor: theme.colors.background }]}>
+              <TouchableOpacity onPress={copyCode} style={[styles.iconBtn, { backgroundColor: theme.colors.background }]}
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Copy to clipboard">
                 <Copy size={18} color={theme.colors.primary} />
               </TouchableOpacity>
             </View>
             <TouchableOpacity
               onPress={shareCode}
               style={[styles.shareBtn, { backgroundColor: theme.colors.primary }]}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="Share with Friends"
+            hitSlop={8}>
               <Share2 size={18} color="#fff" />
               <Text style={styles.shareBtnText}>Share with Friends</Text>
             </TouchableOpacity>
@@ -155,7 +171,7 @@ export default function ReferralScreen() {
           <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
             <Text style={[styles.sectionLabel, { color: theme.colors.muted }]}>Enter a Referral Code</Text>
             <Text style={{ color: theme.colors.muted, fontSize: 12, marginBottom: 12 }}>
-              Have a friend's code? Enter it below and they'll get coins when you finish your first quiz.
+              Have a friend&apos;s code? Enter it below and they&apos;ll get coins when you finish your first quiz.
             </Text>
             <View style={styles.inputRow}>
               <TextInput
@@ -170,7 +186,10 @@ export default function ReferralScreen() {
                 onPress={applyCode}
                 disabled={applying || !inputCode.trim()}
                 style={[styles.applyBtn, { backgroundColor: theme.colors.primary, opacity: inputCode.trim() ? 1 : 0.5 }]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Apply"
+            hitSlop={8}>
                 {applying
                   ? <ActivityIndicator color="#fff" size="small" />
                   : <Text style={{ color: '#fff', fontWeight: '700' }}>Apply</Text>
@@ -205,6 +224,7 @@ export default function ReferralScreen() {
           ))}
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <Toast
         visible={toast.visible}

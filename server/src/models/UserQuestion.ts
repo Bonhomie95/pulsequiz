@@ -34,4 +34,7 @@ const UserQuestionSchema = new Schema<IUserQuestion>(
 // One exposure per user per question
 UserQuestionSchema.index({ userId: 1, questionId: 1 }, { unique: true });
 
+// Question selection filters by user + category + difficulty on every quiz start.
+UserQuestionSchema.index({ userId: 1, category: 1, difficulty: 1 });
+
 export default model<IUserQuestion>('UserQuestion', UserQuestionSchema);

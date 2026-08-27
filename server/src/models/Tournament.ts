@@ -24,6 +24,8 @@ export interface ITournament {
   endsAt: Date;
   winnersCount: number;    // how many top players get prizes
   prizeDistribution: { rank: number; coins: number }[];
+  /** Set once prizes have been paid. Guards against paying a tournament twice. */
+  settledAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,11 +69,13 @@ const TournamentSchema = new Schema<ITournament>(
     endsAt: { type: Date, required: true },
     winnersCount: { type: Number, default: 3 },
     prizeDistribution: { type: [PrizeDistributionSchema], default: [] },
+    settledAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
 
 TournamentSchema.index({ status: 1, startsAt: 1 });
 TournamentSchema.index({ 'participants.userId': 1 });
+TournamentSchema.index({ status: 1, endsAt: 1 });
 
 export default model<ITournament>('Tournament', TournamentSchema);

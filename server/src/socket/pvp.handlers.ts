@@ -4,11 +4,13 @@ import { Types } from 'mongoose';
 import User from '../models/User';
 import Progress from '../models/Progress';
 import QuizQuestion from '../models/QuizQuestion';
-import QuizSession from '../models/QuizSession';
 import UserQuestion from '../models/UserQuestion';
 import PvPMatch from '../models/PvPMatch';
 import { SOCKET_EVENTS } from './events';
-import { awardWagerToWinner, refundWager } from '../services/coinService';
+import { safeHandler } from './safeHandler';
+import { settleMatch, computeWinner } from '../services/pvpService';
+import { isTooFast } from '../services/antiCheatService';
+import { logger } from '../utils/logger';
 
 /* ---------------------------------- */
 /* Constants                          */
@@ -18,22 +20,53 @@ type Diff = 'easy' | 'medium' | 'hard';
 
 const TOTAL_Q = 10;
 const TIME_PER_QUESTION = 15;
+/** Grace added to the client's countdown for network latency. */
+const ANSWER_GRACE_MS = 2_500;
 const FORFEIT_MS = 60_000;
+const READY_GRACE_MS = 60_000;
 
 const DIFF_ORDER: Diff[] = ['easy', 'medium', 'hard'];
 const DIFF_TARGET: Record<Diff, number> = { easy: 4, medium: 4, hard: 2 };
 
-const READY_GRACE_MS = 60_000; // same as forfeit window
-const readyTimers = new Map<string, NodeJS.Timeout>(); // matchId -> timer
+/**
+ * Cap on how many previously-seen question ids we exclude. An unbounded $nin
+ * grows with every game a player finishes until the query itself exceeds
+ * Mongo's 16MB document limit.
+ */
+const MAX_SEEN_EXCLUSIONS = 300;
 
 /* ---------------------------------- */
 /* In-memory state                    */
 /* ---------------------------------- */
+/* These are per-process. The stale-match sweeper in pvpService is the durable
+ * backstop that settles anything a restart strands. */
 
-const liveByUser = new Map<string, { matchId: string }>();
-const disconnectTimers = new Map<string, NodeJS.Timeout>();
-// userId → socketId for rematch notification routing
-export const userSocketMap = new Map<string, string>();
+const readyTimers = new Map<string, NodeJS.Timeout>();      // matchId -> timer
+const liveByUser = new Map<string, { matchId: string }>();   // userId -> live match
+const disconnectTimers = new Map<string, NodeJS.Timeout>();  // userId -> timer
+export const userSocketMap = new Map<string, string>();      // userId -> socketId
+
+function clearReadyTimer(matchId: string) {
+  const t = readyTimers.get(matchId);
+  if (t) clearTimeout(t);
+  readyTimers.delete(matchId);
+}
+
+function clearDisconnectTimer(userId: string) {
+  const t = disconnectTimers.get(userId);
+  if (t) clearTimeout(t);
+  disconnectTimers.delete(userId);
+}
+
+/** Release every per-match handle so a long-lived process doesn't grow forever. */
+function releaseMatch(matchId: string, players: { userId: any }[]) {
+  clearReadyTimer(matchId);
+  for (const p of players) {
+    const uid = p.userId.toString();
+    if (liveByUser.get(uid)?.matchId === matchId) liveByUser.delete(uid);
+    clearDisconnectTimer(uid);
+  }
+}
 
 /* ---------------------------------- */
 /* Utils                              */
@@ -48,53 +81,103 @@ function shuffle<T>(arr: T[]) {
   return a;
 }
 
-function clearDisconnectTimer(userId: string) {
-  const t = disconnectTimers.get(userId);
-  if (t) clearTimeout(t);
-  disconnectTimers.delete(userId);
-}
-
 /* ---------------------------------- */
 /* Question selection                 */
 /* ---------------------------------- */
 
-async function pickSharedUnseenQuestions(
-  userA: string,
-  userB: string,
-  category: string,
-) {
+/**
+ * Pick a shared question set both players are unlikely to have seen.
+ *
+ * Unlike the previous version this never throws on an exhausted pool. A thrown
+ * error inside a socket handler used to take the whole process down, and with
+ * small category pools it was reachable within a couple of games. Instead we
+ * degrade: unseen questions first, then the least-recently-seen ones, then
+ * anything in the category.
+ */
+async function pickSharedQuestions(userA: string, userB: string, category: string) {
   const [seenA, seenB] = await Promise.all([
-    UserQuestion.find({ userId: userA, category }).select('questionId').lean(),
-    UserQuestion.find({ userId: userB, category }).select('questionId').lean(),
+    UserQuestion.find({ userId: userA, category })
+      .select('questionId')
+      .sort({ createdAt: -1 })
+      .limit(MAX_SEEN_EXCLUSIONS)
+      .lean(),
+    UserQuestion.find({ userId: userB, category })
+      .select('questionId')
+      .sort({ createdAt: -1 })
+      .limit(MAX_SEEN_EXCLUSIONS)
+      .lean(),
   ]);
 
-  const seen = new Set(
-    [...seenA, ...seenB].map((s) => s.questionId.toString()),
-  );
-
+  const seenIds = [...seenA, ...seenB].map((s) => s.questionId);
   const picked: any[] = [];
+  const usedIds = new Set<string>();
 
+  const take = (pool: any[], need: number) => {
+    for (const q of shuffle(pool)) {
+      if (picked.length >= TOTAL_Q) break;
+      const id = q._id.toString();
+      if (usedIds.has(id)) continue;
+      usedIds.add(id);
+      picked.push(q);
+      if (--need <= 0) break;
+    }
+  };
+
+  // Pass 1 — unseen, respecting the difficulty mix.
   for (const diff of DIFF_ORDER) {
     const need = DIFF_TARGET[diff];
-
     const pool = await QuizQuestion.find({
       category,
+      disabled: { $ne: true },
       difficulty: diff,
-      _id: { $nin: [...seen].map((id) => new Types.ObjectId(id)) },
+      _id: { $nin: seenIds },
     })
       .limit(need * 6)
       .lean();
-
-    if (pool.length < need) {
-      throw new Error(`Question pool exhausted (${category}/${diff})`);
-    }
-
-    picked.push(...shuffle(pool).slice(0, need));
+    take(pool, need);
   }
 
-  const ordered = picked.slice(0, TOTAL_Q);
+  // Pass 2 — top up from anything unseen in the category, any difficulty.
+  if (picked.length < TOTAL_Q) {
+    const pool = await QuizQuestion.find({
+      category,
+      disabled: { $ne: true },
+      _id: { $nin: [...seenIds, ...[...usedIds].map((id) => new Types.ObjectId(id))] },
+    })
+      .limit(TOTAL_Q * 3)
+      .lean();
+    take(pool, TOTAL_Q - picked.length);
+  }
 
-  // 🔒 lock exposure for BOTH players
+  // Pass 3 — the category pool is genuinely too small, so recycle. Repeats are
+  // a content problem to fix by seeding more questions, not a reason to fail
+  // the match.
+  if (picked.length < TOTAL_Q) {
+    logger.warn('PvP question pool exhausted — recycling seen questions', {
+      category,
+      picked: picked.length,
+    });
+    const pool = await QuizQuestion.find({
+      category,
+      disabled: { $ne: true },
+      _id: { $nin: [...usedIds].map((id) => new Types.ObjectId(id)) },
+    })
+      .limit(TOTAL_Q * 3)
+      .lean();
+    take(pool, TOTAL_Q - picked.length);
+  }
+
+  if (picked.length === 0) {
+    throw new Error(`No questions seeded for category "${category}"`);
+  }
+
+  // Order easy → medium → hard so the difficulty curve still reads correctly
+  // even when the mix had to be relaxed.
+  const ordered = [...picked].sort(
+    (x, y) => DIFF_ORDER.indexOf(x.difficulty) - DIFF_ORDER.indexOf(y.difficulty),
+  );
+
+  // Record exposure for both players. Duplicates are expected on recycle.
   await UserQuestion.insertMany(
     ordered.flatMap((q) => [
       { userId: userA, questionId: q._id, category, difficulty: q.difficulty },
@@ -109,188 +192,48 @@ async function pickSharedUnseenQuestions(
     options: q.options,
     difficulty: q.difficulty,
     order: i,
-    answer: q.answer, // server-only
   }));
 }
 
 /* ---------------------------------- */
-/* Snapshot                           */
+/* Ready grace                        */
 /* ---------------------------------- */
-
-async function snapshotUser(userId: string) {
-  const [u, p] = await Promise.all([
-    User.findById(userId).lean(),
-    Progress.findOne({ userId }).lean(),
-  ]);
-
-  return {
-    userId: new Types.ObjectId(userId),
-    usernameSnapshot: u?.username ?? 'Player',
-    avatarSnapshot: u?.avatar ?? 'avatar0',
-    levelSnapshot: p?.level ?? 1,
-    allTimeRankSnapshot: 0,
-  };
-}
-
-// Waiting Functions
 
 function startReadyGrace(io: Server, matchId: string, missingUserId: string) {
   if (readyTimers.has(matchId)) return;
 
   readyTimers.set(
     matchId,
-    setTimeout(async () => {
-      const match = await PvPMatch.findById(matchId);
-      if (!match || match.state === 'FINISHED') return;
+    setTimeout(() => {
+      void (async () => {
+        readyTimers.delete(matchId);
 
-      // if missing player still not ready -> forfeit
-      const missing = match.players.find(
-        (p: any) => p.userId.toString() === missingUserId,
+        const match = await PvPMatch.findById(matchId).lean();
+        if (!match || match.settledAt) return;
+
+        const missing = (match.players as any[]).find(
+          (p) => p.userId.toString() === missingUserId,
+        );
+        if (missing?.ready) return; // they came back
+
+        const winner = (match.players as any[]).find(
+          (p) => p.userId.toString() !== missingUserId,
+        );
+        if (!winner) return;
+
+        // This used to end the match without settling, which destroyed both
+        // players' staked coins.
+        await settleMatch(io, matchId, {
+          kind: 'winner',
+          winnerUserId: winner.userId.toString(),
+          reason: 'not_ready',
+        });
+        releaseMatch(matchId, match.players as any[]);
+      })().catch((err) =>
+        logger.error('Ready-grace settlement failed', err, { matchId }),
       );
-      if (missing?.ready) return; // they came back
-
-      const winner = match.players.find(
-        (p: any) => p.userId.toString() !== missingUserId,
-      );
-
-      match.state = 'FORFEITED';
-      match.finishedAt = new Date();
-      match.winnerUserId = winner?.userId;
-
-      await match.save();
-
-      io.to(`pvp:${matchId}`).emit(SOCKET_EVENTS.MATCH_FINISHED, {
-        matchId,
-        winnerUserId: winner?.userId?.toString(),
-        reason: 'opponent_not_ready',
-      });
-
-      readyTimers.delete(matchId);
     }, READY_GRACE_MS),
   );
-}
-
-/* ---------------------------------- */
-/* Rewards                            */
-/* ---------------------------------- */
-
-async function applyMatchRewards(matchId: string, winnerId: string, loserId: string | null) {
-  const match = await PvPMatch.findById(matchId).lean();
-  if (!match) return;
-
-  // Unified point system: each player earns points based on their own answers
-  // Points are computed per-player from their answer records
-  for (const player of match.players) {
-    const uid = player.userId.toString();
-    const correctCount = player.answers.filter((a: any) => a.isCorrect).length;
-    const total = match.questionSet.length;
-    const basePoints = correctCount;
-    const bonus = correctCount === total ? 10 : 0;
-    const totalPoints = basePoints + bonus;
-
-    // Daily cap check (import inline to avoid circular deps)
-    const { isDailyCapExceeded } = await import('../services/antiCheatService');
-    const { getSetting, SETTINGS_KEYS } = await import('../models/AppSettings');
-    const cap = await getSetting(SETTINGS_KEYS.DAILY_SESSION_CAP, 20);
-    const capExceeded = await isDailyCapExceeded(uid, Number(cap));
-    const leaderboardPoints = capExceeded ? 0 : totalPoints;
-
-    if (leaderboardPoints > 0) {
-      await Progress.updateOne({ userId: uid }, { $inc: { points: leaderboardPoints } });
-    }
-    // Log quiz session for leaderboard
-    await QuizSession.create({
-      userId: uid,
-      sessionId: matchId,
-      category: match.category,
-      score: basePoints,
-      bonus,
-      totalPoints: leaderboardPoints,
-      correctAnswers: correctCount,
-      totalQuestions: total,
-      levelAtTime: 1, // approximate
-    }).catch(() => {}); // non-critical if already exists
-  }
-
-  // Handle coin wager — winner takes pot (coins already locked at match creation)
-  if (match.wager && match.wager > 0 && winnerId && loserId) {
-    await awardWagerToWinner(winnerId, match.wager, matchId);
-  }
-
-  await User.updateMany(
-    { _id: { $in: [winnerId, loserId].filter(Boolean) } },
-    { $inc: { sessionsSinceLastAd: 1 } },
-  );
-}
-
-async function applyDrawRewards(matchId: string) {
-  const match = await PvPMatch.findById(matchId).lean();
-  if (!match) return;
-
-  for (const player of match.players) {
-    const uid = player.userId.toString();
-    const correctCount = player.answers.filter((a: any) => a.isCorrect).length;
-    const total = match.questionSet.length;
-    const basePoints = correctCount;
-    const bonus = correctCount === total ? 10 : 0;
-    const totalPoints = basePoints + bonus;
-
-    const { isDailyCapExceeded } = await import('../services/antiCheatService');
-    const { getSetting, SETTINGS_KEYS } = await import('../models/AppSettings');
-    const cap = await getSetting(SETTINGS_KEYS.DAILY_SESSION_CAP, 20);
-    const capExceeded = await isDailyCapExceeded(uid, Number(cap));
-    const leaderboardPoints = capExceeded ? 0 : totalPoints;
-
-    if (leaderboardPoints > 0) {
-      await Progress.updateOne({ userId: uid }, { $inc: { points: leaderboardPoints } });
-    }
-    await QuizSession.create({
-      userId: uid, sessionId: matchId, category: match.category,
-      score: basePoints, bonus, totalPoints: leaderboardPoints,
-      correctAnswers: correctCount, totalQuestions: total, levelAtTime: 1,
-    }).catch(() => {});
-  }
-
-  // Refund both players' wagers on draw
-  if (match.wager && match.wager > 0) {
-    const [a, b] = match.players;
-    await refundWager(a.userId.toString(), b.userId.toString(), match.wager, matchId);
-  }
-
-  await User.updateMany(
-    { _id: { $in: match.players.map((p: any) => p.userId) } },
-    { $inc: { sessionsSinceLastAd: 1 } },
-  );
-}
-
-/* ---------------------------------- */
-/* Winner logic                       */
-/* ---------------------------------- */
-
-/**
- * Returns { winner, loser } or { draw: true } when both players
- * finish with identical correct counts AND identical total time.
- */
-function computeWinner(match: any): { winner: any; loser: any } | { draw: true } {
-  const [a, b] = match.players;
-
-  const aCorrect = a.answers.filter((x: any) => x.isCorrect).length;
-  const bCorrect = b.answers.filter((x: any) => x.isCorrect).length;
-
-  if (aCorrect !== bCorrect) {
-    const winner = aCorrect > bCorrect ? a : b;
-    const loser  = aCorrect > bCorrect ? b : a;
-    return { winner, loser };
-  }
-
-  const ta = a.totalTimeMs ?? Number.MAX_SAFE_INTEGER;
-  const tb = b.totalTimeMs ?? Number.MAX_SAFE_INTEGER;
-
-  if (ta === tb) return { draw: true };
-
-  const winner = ta < tb ? a : b;
-  const loser  = ta < tb ? b : a;
-  return { winner, loser };
 }
 
 /* ---------------------------------- */
@@ -300,56 +243,39 @@ function computeWinner(match: any): { winner: any; loser: any } | { draw: true }
 export function registerPvpHandlers(io: Server, socket: Socket) {
   const userId = socket.data.userId as string;
 
-  // Track userId → socketId for rematch routing
   userSocketMap.set(userId, socket.id);
-  socket.on('disconnect', () => {
-    if (userSocketMap.get(userId) === socket.id) userSocketMap.delete(userId);
-  });
 
-  /* ---------- REMATCH REQUEST ---------- */
-  socket.on(SOCKET_EVENTS.REMATCH_REQUEST, ({ opponentId, category, wager }: { opponentId: string; category: string; wager: number }) => {
-    const opponentSocketId = userSocketMap.get(opponentId);
-    if (opponentSocketId) {
-      io.to(opponentSocketId).emit(SOCKET_EVENTS.REMATCH_REQUEST, {
-        fromUserId: userId,
-        category,
-        wager,
-      });
-    }
-  });
+  const on = (event: string, fn: (...args: any[]) => Promise<void> | void) =>
+    socket.on(event, safeHandler(socket, event, fn));
 
-  socket.on(SOCKET_EVENTS.REMATCH_ACCEPTED, ({ opponentId, category, wager }: { opponentId: string; category: string; wager: number }) => {
-    // Both join queue with rematchWith set to each other
-    // Emit back to the requester to also join queue
-    const opponentSocketId = userSocketMap.get(opponentId);
-    if (opponentSocketId) {
-      io.to(opponentSocketId).emit(SOCKET_EVENTS.REMATCH_ACCEPTED, {
-        fromUserId: userId,
-        category,
-        wager,
-      });
-    }
-  });
+  /* ---------- REMATCH ---------- */
 
-  socket.on(SOCKET_EVENTS.REMATCH_DECLINED, ({ opponentId }: { opponentId: string }) => {
-    const opponentSocketId = userSocketMap.get(opponentId);
-    if (opponentSocketId) {
-      io.to(opponentSocketId).emit(SOCKET_EVENTS.REMATCH_DECLINED, { fromUserId: userId });
-    }
-  });
+  const relay = (event: string) =>
+    on(event, ({ opponentId, category, wager }: any) => {
+      const opponentSocketId = userSocketMap.get(opponentId);
+      if (!opponentSocketId) return;
+      io.to(opponentSocketId).emit(event, { fromUserId: userId, category, wager });
+    });
+
+  relay(SOCKET_EVENTS.REMATCH_REQUEST);
+  relay(SOCKET_EVENTS.REMATCH_ACCEPTED);
+  relay(SOCKET_EVENTS.REMATCH_DECLINED);
 
   /* ---------- MATCH START ---------- */
-  socket.on(SOCKET_EVENTS.MATCH_START, async ({ matchId }) => {
+
+  on(SOCKET_EVENTS.MATCH_START, async ({ matchId }: { matchId: string }) => {
+    if (!Types.ObjectId.isValid(matchId)) return;
+
     const match = await PvPMatch.findById(matchId);
-    if (!match || match.state === 'FINISHED') return;
+    if (!match || match.settledAt) return;
 
     const room = `pvp:${matchId}`;
     socket.join(room);
 
-    const player = match.players.find(
-      (p: any) => p.userId.toString() === userId,
+    const player = (match.players as any[]).find(
+      (p) => p.userId.toString() === userId,
     );
-    if (!player) return;
+    if (!player) return; // not a participant — ignore silently
 
     clearDisconnectTimer(userId);
 
@@ -357,216 +283,304 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
     player.lastSeenAt = new Date();
     player.ready = true;
 
+    // Reconnect into an already-running match: replay state rather than
+    // restarting it. Without this an in-flight match would be reset by a
+    // client that dropped and came back.
+    if (match.state === 'ACTIVE' || match.state === 'WAITING_ON_OPPONENT') {
+      await match.save();
+
+      const questionIds = (match.questionSet as any[]).map((q) => q.questionId);
+      const docs = await QuizQuestion.find({ _id: { $in: questionIds } })
+        .select('question options difficulty')
+        .lean();
+      const byId = new Map(docs.map((d) => [d._id.toString(), d]));
+
+      socket.emit(SOCKET_EVENTS.MATCH_START, {
+        matchId,
+        timePerQuestion: TIME_PER_QUESTION,
+        resumedAtIndex: player.currentIndex,
+        deadlineAt: player.questionDeadlineAt,
+        questions: (match.questionSet as any[]).map((ref, i) => {
+          const q = byId.get(ref.questionId.toString());
+          return {
+            id: ref.questionId.toString(),
+            question: q?.question ?? '',
+            options: q?.options ?? [],
+            difficulty: ref.difficulty,
+            order: i,
+          };
+        }),
+      });
+
+      liveByUser.set(userId, { matchId });
+      return;
+    }
+
     await match.save();
 
-    const allReady = match.players.every((p: any) => !!p.ready);
-
+    const allReady = (match.players as any[]).every((p) => !!p.ready);
     if (!allReady) {
-      const missing = match.players.find((p: any) => !p.ready)!;
+      const missing = (match.players as any[]).find((p) => !p.ready)!;
       io.to(room).emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
       startReadyGrace(io, matchId, missing.userId.toString());
       return;
     }
 
-    // ✅ both ready -> cancel grace timer if any
-    const t = readyTimers.get(matchId);
-    if (t) clearTimeout(t);
-    readyTimers.delete(matchId);
+    clearReadyTimer(matchId);
 
-    // ✅ NOW pick questions and start match (your existing logic)
-    const [pA, pB] = match.players;
-
-    const questionSet = await pickSharedUnseenQuestions(
+    const [pA, pB] = match.players as any[];
+    const questionSet = await pickSharedQuestions(
       pA.userId.toString(),
       pB.userId.toString(),
       match.category,
     );
 
-    match.questionSet.splice(0);
-    for (const q of questionSet) {
-      match.questionSet.push({
-        questionId: new Types.ObjectId(q.id),
-        difficulty: q.difficulty,
-        order: q.order,
-      });
-    }
+    const now = new Date();
+    const deadline = new Date(now.getTime() + TIME_PER_QUESTION * 1000 + ANSWER_GRACE_MS);
 
-    match.state = 'ACTIVE';
-    match.startedAt = new Date();
+    // Claim the start transition so two simultaneous MATCH_START events (both
+    // players readying at once) can't each deal a different question set.
+    const started = await PvPMatch.findOneAndUpdate(
+      { _id: matchId, state: { $in: ['MATCHED', 'WAITING'] }, settledAt: null },
+      {
+        $set: {
+          state: 'ACTIVE',
+          startedAt: now,
+          questionSet: questionSet.map((q) => ({
+            questionId: new Types.ObjectId(q.id),
+            difficulty: q.difficulty,
+            order: q.order,
+          })),
+          'players.$[].currentIndex': 0,
+          'players.$[].furthestIndex': 0,
+          'players.$[].completed': false,
+          'players.$[].answers': [],
+          'players.$[].failedAtIndex': null,
+          'players.$[].startedAt': now,
+          'players.$[].endedAt': null,
+          'players.$[].totalTimeMs': null,
+          'players.$[].answeredMs': 0,
+          'players.$[].questionServedAt': now,
+          'players.$[].questionDeadlineAt': deadline,
+        },
+      },
+      { returnDocument: 'after' },
+    ).lean();
 
-    // reset gameplay state per player
-    for (const p of match.players as any) {
-      p.currentIndex = 0;
-      p.furthestIndex = 0;
-      p.completed = false;
-      p.answers = [];
-      p.failedAtIndex = undefined;
-      p.startedAt = undefined;
-      p.endedAt = undefined;
-      p.totalTimeMs = undefined;
-    }
-
-    await match.save();
+    if (!started) return; // someone else already started it
 
     io.to(room).emit(SOCKET_EVENTS.MATCH_START, {
       matchId,
       timePerQuestion: TIME_PER_QUESTION,
-      questions: questionSet.map((q) => ({
-        id: q.id,
-        question: q.question,
-        options: q.options,
-        difficulty: q.difficulty,
-        order: q.order,
-      })),
+      deadlineAt: deadline,
+      questions: questionSet,
     });
 
-    liveByUser.set(userId, { matchId });
+    for (const p of started.players as any[]) {
+      liveByUser.set(p.userId.toString(), { matchId });
+    }
   });
 
-  socket.on(SOCKET_EVENTS.MATCH_PING, async ({ matchId }) => {
-    const match = await PvPMatch.findById(matchId);
-    if (!match || match.state === 'FINISHED') return;
+  /* ---------- KEEPALIVE ---------- */
 
-    const player = match.players.find(
-      (p: any) => p.userId.toString() === userId,
+  on(SOCKET_EVENTS.MATCH_PING, async ({ matchId }: { matchId: string }) => {
+    if (!Types.ObjectId.isValid(matchId)) return;
+    // Targeted update — no full document read-modify-write.
+    await PvPMatch.updateOne(
+      { _id: matchId, 'players.userId': new Types.ObjectId(userId) },
+      { $set: { 'players.$.lastSeenAt': new Date(), 'players.$.connected': true } },
     );
-    if (!player) return;
-
-    player.lastSeenAt = new Date();
-    player.connected = true;
-
-    await match.save();
   });
 
   /* ---------- ANSWER ---------- */
-  socket.on(SOCKET_EVENTS.ANSWER, async ({ matchId, questionId, selected }) => {
-    const match = await PvPMatch.findById(matchId);
-    if (!match || match.state === 'FINISHED') return;
 
-    const room = `pvp:${matchId}`;
-    socket.join(room);
-
-    const player = match.players.find(
-      (p: any) => p.userId.toString() === userId,
-    );
-    if (!player) return;
-
-    clearDisconnectTimer(userId);
-
-    const qRef = match.questionSet[player.currentIndex];
-    if (!qRef || qRef.questionId.toString() !== questionId) {
-      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Invalid question' });
-      return;
-    }
-
-    const qq = await QuizQuestion.findById(questionId).lean();
-    if (!qq) return;
-
-    const isCorrect = selected !== null && selected === qq.answer;
-
-    if (!player.startedAt) player.startedAt = new Date();
-
-    player.answers.push({
-      questionId: qq._id,
+  on(
+    SOCKET_EVENTS.ANSWER,
+    async ({
+      matchId,
+      questionId,
       selected,
-      isCorrect,
-      answeredAt: new Date(),
-    });
+    }: {
+      matchId: string;
+      questionId: string;
+      selected: number | null;
+    }) => {
+      if (!Types.ObjectId.isValid(matchId) || !Types.ObjectId.isValid(questionId)) return;
+      if (selected !== null && (!Number.isInteger(selected) || selected < 0 || selected > 3)) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Invalid answer' });
+        return;
+      }
 
-    if (!isCorrect || selected === null) {
-      player.failedAtIndex = player.currentIndex;
-      player.endedAt = new Date();
-    } else {
-      player.currentIndex++;
-      player.furthestIndex = Math.max(
-        player.furthestIndex,
-        player.currentIndex,
+      const match = await PvPMatch.findById(matchId);
+      if (!match || match.settledAt || match.state === 'FINISHED') return;
+
+      const room = `pvp:${matchId}`;
+      socket.join(room);
+
+      const player = (match.players as any[]).find(
+        (p) => p.userId.toString() === userId,
+      );
+      if (!player) return;
+
+      clearDisconnectTimer(userId);
+
+      // Already ended this run — ignore late duplicates.
+      if (player.completed || typeof player.failedAtIndex === 'number') return;
+
+      const qRef = (match.questionSet as any[])[player.currentIndex];
+      if (!qRef || qRef.questionId.toString() !== questionId) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Invalid question' });
+        return;
+      }
+
+      const now = new Date();
+      const servedAt: Date = player.questionServedAt ?? match.startedAt ?? now;
+
+      // ── Server-authoritative timing ────────────────────────────────────────
+      // The client countdown is cosmetic. A late answer is a timeout regardless
+      // of what the client claims, and an impossibly fast one is rejected.
+      const deadline: Date | null = player.questionDeadlineAt ?? null;
+      const expired = deadline ? now.getTime() > deadline.getTime() : false;
+
+      if (!expired && selected !== null && isTooFast(now, servedAt)) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Answer submitted too quickly' });
+        return;
+      }
+
+      const qq = await QuizQuestion.findById(questionId).select('answer').lean();
+      if (!qq) return;
+
+      const isCorrect = !expired && selected !== null && selected === qq.answer;
+
+      // Elapsed time is measured entirely from server timestamps, and clamped
+      // so a stalled client can't bank an arbitrarily small (or huge) number.
+      const elapsedMs = Math.min(
+        Math.max(now.getTime() - servedAt.getTime(), 0),
+        TIME_PER_QUESTION * 1000 + ANSWER_GRACE_MS,
       );
 
-      if (player.currentIndex >= TOTAL_Q) {
-        player.completed = true;
-        player.endedAt = new Date();
-      }
-    }
-
-    if (player.endedAt && player.startedAt) {
-      player.totalTimeMs =
-        player.endedAt.getTime() - player.startedAt.getTime();
-    }
-
-    await match.save();
-
-    io.to(room).emit(SOCKET_EVENTS.PLAYER_UPDATE, {
-      userId,
-      currentIndex: player.currentIndex,
-      furthestIndex: player.furthestIndex,
-      ended: !!player.endedAt,
-    });
-
-    const allEnded = match.players.every(
-      (p: any) => p.completed || typeof p.failedAtIndex === 'number',
-    );
-
-    if (!allEnded) {
-      match.state = 'WAITING_ON_OPPONENT';
-      await match.save();
-      io.to(room).emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
-      return;
-    }
-
-    const result = computeWinner(match);
-
-    if ('draw' in result) {
-      // Draw — refund wagers, award points to both
-      await applyDrawRewards(matchId);
-
-      match.state = 'FINISHED';
-      match.finishedAt = new Date();
-      await match.save();
-
-      io.to(room).emit(SOCKET_EVENTS.MATCH_DRAW, { matchId });
-    } else {
-      const { winner, loser } = result;
-      await applyMatchRewards(matchId, winner.userId.toString(), loser?.userId?.toString() ?? null);
-
-      match.state = 'FINISHED';
-      match.finishedAt = new Date();
-      match.winnerUserId = winner.userId;
-      await match.save();
-
-      io.to(room).emit(SOCKET_EVENTS.MATCH_FINISHED, {
-        matchId,
-        winnerUserId: winner.userId.toString(),
+      player.answers.push({
+        questionId: qq._id,
+        selected: expired ? null : selected,
+        isCorrect,
+        answeredAt: now,
       });
-    }
-  });
+      player.answeredMs = (player.answeredMs ?? 0) + elapsedMs;
+
+      if (!player.startedAt) player.startedAt = servedAt;
+
+      if (!isCorrect) {
+        player.failedAtIndex = player.currentIndex;
+        player.endedAt = now;
+        player.questionDeadlineAt = null;
+      } else {
+        player.currentIndex += 1;
+        player.furthestIndex = Math.max(player.furthestIndex, player.currentIndex);
+
+        if (player.currentIndex >= (match.questionSet as any[]).length) {
+          player.completed = true;
+          player.endedAt = now;
+          player.questionDeadlineAt = null;
+        } else {
+          // Serve the next question with a fresh server-side deadline.
+          player.questionServedAt = now;
+          player.questionDeadlineAt = new Date(
+            now.getTime() + TIME_PER_QUESTION * 1000 + ANSWER_GRACE_MS,
+          );
+        }
+      }
+
+      if (player.endedAt && player.startedAt) {
+        player.totalTimeMs = player.endedAt.getTime() - player.startedAt.getTime();
+      }
+
+      try {
+        await match.save();
+      } catch (err: any) {
+        // Optimistic-concurrency loss: another answer for this player won the
+        // race. Dropping it is correct — it was a duplicate submit.
+        if (err?.name === 'VersionError') return;
+        throw err;
+      }
+
+      socket.emit(SOCKET_EVENTS.PLAYER_UPDATE, {
+        userId,
+        currentIndex: player.currentIndex,
+        furthestIndex: player.furthestIndex,
+        ended: !!player.endedAt,
+        correct: isCorrect,
+        correctIndex: qq.answer,
+        deadlineAt: player.questionDeadlineAt,
+        timedOut: expired,
+      });
+
+      socket.to(room).emit(SOCKET_EVENTS.PLAYER_UPDATE, {
+        userId,
+        currentIndex: player.currentIndex,
+        furthestIndex: player.furthestIndex,
+        ended: !!player.endedAt,
+      });
+
+      const allEnded = (match.players as any[]).every(
+        (p) => p.completed || typeof p.failedAtIndex === 'number',
+      );
+
+      if (!allEnded) {
+        io.to(room).emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
+        return;
+      }
+
+      const result = computeWinner(match);
+      const outcome =
+        'draw' in result
+          ? ({ kind: 'draw' } as const)
+          : ({
+              kind: 'winner',
+              winnerUserId: result.winner.userId.toString(),
+              reason: 'normal',
+            } as const);
+
+      await settleMatch(io, matchId, outcome);
+      releaseMatch(matchId, match.players as any[]);
+    },
+  );
 
   /* ---------- DISCONNECT ---------- */
-  socket.on('disconnect', async () => {
+
+  socket.on('disconnect', () => {
+    if (userSocketMap.get(userId) === socket.id) userSocketMap.delete(userId);
+
     const live = liveByUser.get(userId);
     if (!live) return;
 
     disconnectTimers.set(
       userId,
-      setTimeout(async () => {
-        const match = await PvPMatch.findById(live.matchId);
-        if (!match || match.state === 'FINISHED') return;
+      setTimeout(() => {
+        void (async () => {
+          disconnectTimers.delete(userId);
 
-        const winner = match.players.find(
-          (p: any) => p.userId.toString() !== userId,
+          const match = await PvPMatch.findById(live.matchId).lean();
+          if (!match || match.settledAt) {
+            liveByUser.delete(userId);
+            return;
+          }
+
+          const winner = (match.players as any[]).find(
+            (p) => p.userId.toString() !== userId,
+          );
+          if (!winner) return;
+
+          // Previously this ended the match without paying out, burning both
+          // stakes on every dropped connection.
+          await settleMatch(io, live.matchId, {
+            kind: 'winner',
+            winnerUserId: winner.userId.toString(),
+            reason: 'forfeit',
+          });
+          releaseMatch(live.matchId, match.players as any[]);
+        })().catch((err) =>
+          logger.error('Forfeit settlement failed', err, { matchId: live.matchId, userId }),
         );
-
-        match.state = 'FORFEITED';
-        match.finishedAt = new Date();
-        match.winnerUserId = winner?.userId;
-
-        await match.save();
-
-        io.to(`pvp:${live.matchId}`).emit(SOCKET_EVENTS.MATCH_FINISHED, {
-          matchId: live.matchId,
-          winnerUserId: winner?.userId?.toString(),
-          reason: 'forfeit',
-        });
       }, FORFEIT_MS),
     );
   });

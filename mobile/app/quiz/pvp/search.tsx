@@ -234,7 +234,10 @@ export default function PvPSearchScreen() {
             borderColor: theme.colors.border,
             backgroundColor: theme.colors.surface,
           }}
-        >
+        
+            accessibilityRole="button"
+            accessibilityLabel="Leave queue"
+            hitSlop={8}>
           <Text
             style={{
               color: theme.colors.text,

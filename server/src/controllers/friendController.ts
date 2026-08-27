@@ -1,4 +1,7 @@
 import { Response } from 'express';
+import { Types } from 'mongoose';
+import { z } from 'zod';
+
 import { AuthRequest } from '../middlewares/auth';
 import Friend, { IFriend } from '../models/Friend';
 import User from '../models/User';
@@ -11,70 +14,100 @@ import {
   sendFriendAcceptedNotification,
   sendFriendRequestNotification,
 } from '../services/notificationService';
+import { logger } from '../utils/logger';
+
+const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
+const IN_GAME_STATES = ['MATCHED', 'ACTIVE', 'WAITING_ON_OPPONENT'] as const;
+
+const TargetSchema = z.object({
+  userId: z.string().refine(Types.ObjectId.isValid, 'Invalid user id'),
+});
+
+const FriendIdSchema = z.object({
+  friendId: z.string().refine(Types.ObjectId.isValid, 'Invalid request id'),
+});
+
+/** Who is mid-game right now, from the two places a game can live. */
+async function loadInGame(ids: Types.ObjectId[]): Promise<Set<string>> {
+  const [solo, pvp] = await Promise.all([
+    ActiveQuizSession.find({ userId: { $in: ids }, finished: false })
+      .select('userId')
+      .lean(),
+    PvPMatch.find({
+      'players.userId': { $in: ids },
+      state: { $in: IN_GAME_STATES },
+      settledAt: null,
+    })
+      .select('players.userId')
+      .lean(),
+  ]);
+
+  const inGame = new Set(solo.map((s) => s.userId.toString()));
+  for (const match of pvp) {
+    for (const player of (match as any).players ?? []) {
+      inGame.add(player.userId.toString());
+    }
+  }
+  return inGame;
+}
+
+function isOnline(lastSeenAt: Date | null | undefined, now: number): boolean {
+  return lastSeenAt != null && now - new Date(lastSeenAt).getTime() < ONLINE_THRESHOLD_MS;
+}
 
 // ─── searchUsers ─────────────────────────────────────────────────────────────
 
 export async function searchUsers(req: AuthRequest, res: Response) {
-  const { q } = req.query;
-  if (!q || typeof q !== 'string' || q.trim().length < 3) {
-    return res
-      .status(400)
-      .json({ message: 'Query must be at least 3 characters' });
+  const raw = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  if (raw.length < 3) {
+    return res.status(400).json({ message: 'Type at least 3 characters to search' });
+  }
+  if (raw.length > 20) {
+    return res.status(400).json({ message: 'That search is too long' });
   }
 
+  // Usernames are stored lowercase, so lowercasing the query lets us drop the
+  // 'i' flag — a case-insensitive regex cannot use an index, an anchored
+  // case-sensitive one can.
+  const prefix = raw.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   const users = await User.find({
-    $and: [
-      { username: { $ne: null } },
-      {
-        username: {
-          $regex: new RegExp(
-            `^${q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
-            'i',
-          ),
-        },
-      },
-    ],
+    username: { $regex: `^${prefix}` },
+    // Banned and deleted accounts must not be discoverable.
+    isBanned: { $ne: true },
+    deletedAt: null,
     _id: { $ne: req.userId },
   })
     .select('username avatar publicProfile lastSeenAt')
     .limit(20)
     .lean();
 
-  const userIds = users.map((u) => u._id.toString());
-  const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
+  if (!users.length) return res.json({ users: [] });
 
-  const [
-    friendships,
-    progressDocs,
-    sessionCounts,
-    allSnapshot,
-    activeSoloSessions,
-    activePvpMatches,
-  ] = await Promise.all([
-    Friend.find({
-      $or: [
-        { requesterId: req.userId, recipientId: { $in: userIds } },
-        { requesterId: { $in: userIds }, recipientId: req.userId },
-      ],
-    }).lean(),
-    Progress.find({ userId: { $in: userIds } })
-      .select('userId level')
-      .lean(),
-    QuizSession.aggregate<{ _id: string; count: number }>([
-      { $match: { userId: { $in: userIds } } },
-      { $group: { _id: '$userId', count: { $sum: 1 } } },
-    ]),
-    LeaderboardSnapshot.findOne({ type: 'all' }).select('data').lean(),
-    ActiveQuizSession.find({ userId: { $in: userIds }, finished: false })
-      .select('userId')
-      .lean(),
-    PvPMatch.find({
-      'players.userId': { $in: userIds },
-      state: { $in: ['MATCHED', 'ACTIVE', 'WAITING_ON_OPPONENT'] },
-    })
-      .select('players.userId')
-      .lean(),
-  ]);
+  const userOids = users.map((u) => u._id);
+  const userIds = userOids.map((id) => id.toString());
+
+  const [friendships, progressDocs, sessionCounts, allSnapshot, inGame] =
+    await Promise.all([
+      Friend.find({
+        $or: [
+          { requesterId: req.userId, recipientId: { $in: userOids } },
+          { requesterId: { $in: userOids }, recipientId: req.userId },
+        ],
+      }).lean(),
+      Progress.find({ userId: { $in: userOids } })
+        .select('userId level')
+        .lean(),
+      // NOTE: an aggregation $match is NOT cast against the schema the way
+      // find() is, so these must be real ObjectIds. Passing strings here
+      // silently matched nothing and every user showed 0 sessions played.
+      QuizSession.aggregate<{ _id: Types.ObjectId; count: number }>([
+        { $match: { userId: { $in: userOids } } },
+        { $group: { _id: '$userId', count: { $sum: 1 } } },
+      ]),
+      LeaderboardSnapshot.findOne({ type: 'all' }).select('data').lean(),
+      loadInGame(userOids),
+    ]);
 
   const statusMap = new Map<string, string>();
   for (const f of friendships as IFriend[]) {
@@ -87,9 +120,11 @@ export async function searchUsers(req: AuthRequest, res: Response) {
         ? 'accepted'
         : f.status === 'blocked'
           ? 'blocked'
-          : f.requesterId.toString() === req.userId
-            ? 'pending_sent'
-            : 'pending_received';
+          : f.status === 'declined'
+            ? 'none' // a decline is not permanent — they may ask again
+            : f.requesterId.toString() === req.userId
+              ? 'pending_sent'
+              : 'pending_received';
     statusMap.set(otherId, status);
   }
 
@@ -101,54 +136,54 @@ export async function searchUsers(req: AuthRequest, res: Response) {
   );
 
   const rankMap = new Map<string, number>();
-  if (allSnapshot?.data) {
-    (allSnapshot.data as Array<{ userId: string }>).forEach((entry, idx) => {
-      rankMap.set(entry.userId.toString(), idx + 1);
-    });
-  }
-
-  const inGameSolo = new Set(
-    activeSoloSessions.map((s) => s.userId.toString()),
-  );
-  const inGamePvp = new Set<string>();
-  for (const match of activePvpMatches) {
-    for (const player of (match as any).players ?? []) {
-      inGamePvp.add(player.userId.toString());
-    }
+  for (const [idx, entry] of ((allSnapshot?.data ?? []) as { userId: string }[]).entries()) {
+    rankMap.set(entry.userId.toString(), idx + 1);
   }
 
   const now = Date.now();
 
-  const result = users.map((u) => {
-    const uid = u._id.toString();
-    const isInGame = inGameSolo.has(uid) || inGamePvp.has(uid);
-    const isOnline =
-      u.lastSeenAt != null &&
-      now - new Date(u.lastSeenAt).getTime() < ONLINE_THRESHOLD_MS;
-    return {
-      _id: uid,
-      username: u.username,
-      avatar: u.avatar,
-      friendStatus: statusMap.get(uid) ?? 'none',
-      level: levelMap.get(uid) ?? 1,
-      totalSessions: sessionMap.get(uid) ?? 0,
-      allTimeRank: rankMap.get(uid) ?? null,
-      isOnline,
-      isInGame,
-      isReadyToPlay: !!u.publicProfile,
-    };
+  return res.json({
+    users: users
+      // Someone who blocked you shouldn't surface in your search results.
+      .filter((u) => statusMap.get(u._id.toString()) !== 'blocked')
+      .map((u) => {
+        const uid = u._id.toString();
+        return {
+          _id: uid,
+          username: u.username,
+          avatar: u.avatar,
+          friendStatus: statusMap.get(uid) ?? 'none',
+          level: levelMap.get(uid) ?? 1,
+          totalSessions: sessionMap.get(uid) ?? 0,
+          allTimeRank: rankMap.get(uid) ?? null,
+          isOnline: isOnline(u.lastSeenAt, now),
+          isInGame: inGame.has(uid),
+          isReadyToPlay: !!u.publicProfile,
+        };
+      }),
   });
-
-  return res.json({ users: result });
 }
 
 // ─── sendFriendRequest ────────────────────────────────────────────────────────
 
 export async function sendFriendRequest(req: AuthRequest, res: Response) {
-  const recipientId = req.body.targetUserId ?? req.body.userId;
-  if (!recipientId) return res.status(400).json({ message: 'userId required' });
-  if (recipientId === req.userId)
-    return res.status(400).json({ message: 'Cannot friend yourself' });
+  const target = req.body?.targetUserId ?? req.body?.userId;
+  const parsed = TargetSchema.safeParse({ userId: target });
+  if (!parsed.success) {
+    return res.status(400).json({ message: 'Pick someone to add' });
+  }
+
+  const recipientId = parsed.data.userId;
+  if (recipientId === req.userId) {
+    return res.status(400).json({ message: "You can't add yourself" });
+  }
+
+  const recipient = await User.findById(recipientId)
+    .select('username isBanned deletedAt')
+    .lean();
+  if (!recipient || recipient.deletedAt || recipient.isBanned) {
+    return res.status(404).json({ message: 'That player is no longer available' });
+  }
 
   const existing = await Friend.findOne({
     $or: [
@@ -159,154 +194,175 @@ export async function sendFriendRequest(req: AuthRequest, res: Response) {
 
   if (existing) {
     if (existing.status === 'blocked') {
+      // Don't confirm the block — that just tells them they were blocked.
       return res.status(403).json({ message: 'Unable to send friend request' });
     }
-    return res.status(400).json({ message: 'Friend request already exists' });
+    if (existing.status === 'accepted') {
+      return res.status(400).json({ message: "You're already friends" });
+    }
+    if (existing.status === 'pending') {
+      // If they already asked us, treat this as accepting.
+      if (existing.recipientId.toString() === req.userId) {
+        existing.status = 'accepted';
+        await existing.save();
+        return res.json({ ok: true, status: 'accepted' });
+      }
+      return res.status(400).json({ message: 'Request already sent' });
+    }
+
+    // A previous decline must not lock the pair out forever — reopen it,
+    // normalised so the new asker is the requester.
+    existing.status = 'pending';
+    (existing as any).requesterId = new Types.ObjectId(req.userId);
+    (existing as any).recipientId = new Types.ObjectId(recipientId);
+    await existing.save();
+  } else {
+    try {
+      await Friend.create({ requesterId: req.userId, recipientId });
+    } catch (err: any) {
+      // Lost a race against a concurrent request in the other direction.
+      if (err?.code === 11000) {
+        return res.status(400).json({ message: 'Request already exists' });
+      }
+      throw err;
+    }
   }
 
-  const friend = await Friend.create({ requesterId: req.userId, recipientId });
+  const sender = await User.findById(req.userId).select('username').lean();
+  if (sender?.username) {
+    sendFriendRequestNotification(recipientId, sender.username).catch((err) =>
+      logger.error('Friend request notification failed', err),
+    );
+  }
 
-  // Non-blocking: fetch sender username then push notification
-  User.findById(req.userId)
-    .select('username')
-    .lean()
-    .then((sender) => {
-      if (sender?.username) {
-        sendFriendRequestNotification(recipientId, sender.username).catch(
-          () => {},
-        );
-      }
-    })
-    .catch(() => {});
-
-  return res.json({ ok: true, friend });
+  return res.json({ ok: true, status: 'pending' });
 }
 
-// ─── respondToRequest ─────────────────────────────────────────────────────────
+// ─── Responding to a request ──────────────────────────────────────────────────
+
+/**
+ * Accept or decline, claimed atomically so a double-tap can't both accept and
+ * decline the same request depending on which write lands last.
+ */
+async function resolveRequest(
+  userId: string,
+  friendId: string,
+  accept: boolean,
+): Promise<{ ok: boolean; status?: string; error?: string }> {
+  const request = await Friend.findOneAndUpdate(
+    { _id: friendId, recipientId: userId, status: 'pending' },
+    { $set: { status: accept ? 'accepted' : 'declined' } },
+    { returnDocument: 'after' },
+  );
+
+  if (!request) return { ok: false, error: 'Friend request not found' };
+
+  if (accept) {
+    const accepter = await User.findById(userId).select('username').lean();
+    if (accepter?.username) {
+      sendFriendAcceptedNotification(
+        request.requesterId.toString(),
+        accepter.username,
+      ).catch((err) => logger.error('Friend accepted notification failed', err));
+    }
+  }
+
+  return { ok: true, status: request.status };
+}
 
 export async function respondToRequest(req: AuthRequest, res: Response) {
-  const { friendId } = req.params;
-  const { accept } = req.body;
+  const parsed = FriendIdSchema.safeParse({ friendId: req.params.friendId });
+  if (!parsed.success) return res.status(400).json({ message: 'Invalid request id' });
 
-  const request = await Friend.findOne({
-    _id: friendId,
-    recipientId: req.userId,
-    status: 'pending',
-  });
-  if (!request)
-    return res.status(404).json({ message: 'Friend request not found' });
-
-  request.status = accept ? 'accepted' : 'declined';
-  await request.save();
-
-  return res.json({ ok: true, status: request.status });
+  const result = await resolveRequest(req.userId!, parsed.data.friendId, !!req.body?.accept);
+  if (!result.ok) return res.status(404).json({ message: result.error });
+  return res.json({ ok: true, status: result.status });
 }
 
-// ─── acceptRequest ────────────────────────────────────────────────────────────
-
 export async function acceptRequest(req: AuthRequest, res: Response) {
-  const { friendId } = req.body;
-  if (!friendId) return res.status(400).json({ message: 'friendId required' });
+  const parsed = FriendIdSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: 'Invalid request id' });
 
-  const request = await Friend.findOne({
-    _id: friendId,
-    recipientId: req.userId,
-    status: 'pending',
-  });
-  if (!request)
-    return res.status(404).json({ message: 'Friend request not found' });
-
-  const requesterId = request.requesterId.toString();
-  request.status = 'accepted';
-  await request.save();
-
-  // Non-blocking: fetch accepter username then push notification
-  User.findById(req.userId)
-    .select('username')
-    .lean()
-    .then((accepter) => {
-      if (accepter?.username) {
-        sendFriendAcceptedNotification(requesterId, accepter.username).catch(
-          () => {},
-        );
-      }
-    })
-    .catch(() => {});
-
+  const result = await resolveRequest(req.userId!, parsed.data.friendId, true);
+  if (!result.ok) return res.status(404).json({ message: result.error });
   return res.json({ ok: true, status: 'accepted' });
 }
 
-// ─── declineRequest ───────────────────────────────────────────────────────────
-
 export async function declineRequest(req: AuthRequest, res: Response) {
-  const { friendId } = req.body;
-  if (!friendId) return res.status(400).json({ message: 'friendId required' });
+  const parsed = FriendIdSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: 'Invalid request id' });
 
-  const request = await Friend.findOne({
-    _id: friendId,
-    recipientId: req.userId,
-    status: 'pending',
-  });
-  if (!request)
-    return res.status(404).json({ message: 'Friend request not found' });
-
-  request.status = 'declined';
-  await request.save();
-
+  const result = await resolveRequest(req.userId!, parsed.data.friendId, false);
+  if (!result.ok) return res.status(404).json({ message: result.error });
   return res.json({ ok: true, status: 'declined' });
 }
 
 // ─── unfriendUser ─────────────────────────────────────────────────────────────
 
 export async function unfriendUser(req: AuthRequest, res: Response) {
-  const { userId: targetId } = req.body;
-  if (!targetId) return res.status(400).json({ message: 'userId required' });
+  const parsed = TargetSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: 'Invalid user id' });
+
+  const targetId = parsed.data.userId;
 
   const result = await Friend.deleteOne({
-    $or: [
-      { requesterId: req.userId, recipientId: targetId, status: 'accepted' },
-      { requesterId: targetId, recipientId: req.userId, status: 'accepted' },
-    ],
-  });
-
-  if (result.deletedCount === 0) {
-    return res.status(404).json({ message: 'Friendship not found' });
-  }
-
-  return res.json({ ok: true });
-}
-
-// ─── blockUser ────────────────────────────────────────────────────────────────
-//
-// If a relationship already exists (pending / accepted / declined) it is
-// updated to blocked. If none exists a new record is created so the target
-// cannot send a request in the future. Blocker is normalised as requesterId.
-
-export async function blockUser(req: AuthRequest, res: Response) {
-  const { userId: targetId } = req.body;
-  if (!targetId) return res.status(400).json({ message: 'userId required' });
-  if (targetId === req.userId)
-    return res.status(400).json({ message: 'Cannot block yourself' });
-
-  const existing = await Friend.findOne({
+    status: 'accepted',
     $or: [
       { requesterId: req.userId, recipientId: targetId },
       { requesterId: targetId, recipientId: req.userId },
     ],
   });
 
-  if (existing) {
-    existing.status = 'blocked';
-    // Normalise direction so blocker is always requesterId
-    (existing as any).requesterId = req.userId;
-    (existing as any).recipientId = targetId;
-    await existing.save();
-  } else {
-    await Friend.create({
-      requesterId: req.userId,
-      recipientId: targetId,
-      status: 'blocked',
-    });
+  if (result.deletedCount === 0) {
+    return res.status(404).json({ message: "You aren't friends with that player" });
+  }
+
+  return res.json({ ok: true });
+}
+
+// ─── blockUser ────────────────────────────────────────────────────────────────
+
+export async function blockUser(req: AuthRequest, res: Response) {
+  const parsed = TargetSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: 'Invalid user id' });
+
+  const targetId = parsed.data.userId;
+  if (targetId === req.userId) {
+    return res.status(400).json({ message: "You can't block yourself" });
+  }
+
+  // The unique index is on (requesterId, recipientId) in one direction, so a
+  // pair can legitimately have a row each way. Clear both, then write a single
+  // canonical block with the blocker as requester — otherwise "normalising the
+  // direction" on an existing row could collide with its mirror.
+  await Friend.deleteMany({
+    $or: [
+      { requesterId: req.userId, recipientId: targetId },
+      { requesterId: targetId, recipientId: req.userId },
+    ],
+  });
+
+  await Friend.create({
+    requesterId: req.userId,
+    recipientId: targetId,
+    status: 'blocked',
+  });
+
+  return res.json({ ok: true });
+}
+
+export async function unblockUser(req: AuthRequest, res: Response) {
+  const parsed = TargetSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: 'Invalid user id' });
+
+  const result = await Friend.deleteOne({
+    requesterId: req.userId,
+    recipientId: parsed.data.userId,
+    status: 'blocked',
+  });
+
+  if (result.deletedCount === 0) {
+    return res.status(404).json({ message: "You haven't blocked that player" });
   }
 
   return res.json({ ok: true });
@@ -315,63 +371,39 @@ export async function blockUser(req: AuthRequest, res: Response) {
 // ─── getMyFriends ─────────────────────────────────────────────────────────────
 
 export async function getMyFriends(req: AuthRequest, res: Response) {
-  const friends = await Friend.find({
-    $or: [
-      { requesterId: req.userId, status: 'accepted' },
-      { recipientId: req.userId, status: 'accepted' },
-    ],
-  }).lean();
+  const friends = (await Friend.find({
+    status: 'accepted',
+    $or: [{ requesterId: req.userId }, { recipientId: req.userId }],
+  }).lean()) as IFriend[];
 
-  const ids = (friends as IFriend[]).map((f) =>
+  const ids = friends.map((f) =>
     f.requesterId.toString() === req.userId ? f.recipientId : f.requesterId,
   );
 
-  const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
+  if (!ids.length) return res.json({ friends: [] });
 
-  const [users, activeSoloSessions, activePvpMatches] = await Promise.all([
-    User.find({ _id: { $in: ids } })
+  const [users, inGame] = await Promise.all([
+    User.find({ _id: { $in: ids }, deletedAt: null })
       .select('username avatar publicProfile lastSeenAt')
       .lean(),
-    ActiveQuizSession.find({ userId: { $in: ids }, finished: false })
-      .select('userId')
-      .lean(),
-    PvPMatch.find({
-      'players.userId': { $in: ids },
-      state: { $in: ['MATCHED', 'ACTIVE', 'WAITING_ON_OPPONENT'] },
-    })
-      .select('players.userId')
-      .lean(),
+    loadInGame(ids as Types.ObjectId[]),
   ]);
-
-  const inGameSolo = new Set(
-    activeSoloSessions.map((s) => s.userId.toString()),
-  );
-  const inGamePvp = new Set<string>();
-  for (const match of activePvpMatches) {
-    for (const player of (match as any).players ?? []) {
-      inGamePvp.add(player.userId.toString());
-    }
-  }
 
   const now = Date.now();
 
-  const result = users.map((u) => {
-    const uid = u._id.toString();
-    const isInGame = inGameSolo.has(uid) || inGamePvp.has(uid);
-    const isOnline =
-      u.lastSeenAt != null &&
-      now - new Date(u.lastSeenAt).getTime() < ONLINE_THRESHOLD_MS;
-    return {
-      _id: uid,
-      username: u.username,
-      avatar: u.avatar,
-      isOnline,
-      isInGame,
-      isReadyToPlay: !!u.publicProfile,
-    };
+  return res.json({
+    friends: users.map((u) => {
+      const uid = u._id.toString();
+      return {
+        _id: uid,
+        username: u.username,
+        avatar: u.avatar,
+        isOnline: isOnline(u.lastSeenAt, now),
+        isInGame: inGame.has(uid),
+        isReadyToPlay: !!u.publicProfile,
+      };
+    }),
   });
-
-  return res.json({ friends: result });
 }
 
 // ─── getPendingRequests ───────────────────────────────────────────────────────
@@ -380,18 +412,41 @@ export async function getPendingRequests(req: AuthRequest, res: Response) {
   const requests = (await Friend.find({
     recipientId: req.userId,
     status: 'pending',
-  }).lean()) as IFriend[];
+  })
+    .sort({ createdAt: -1 })
+    .lean()) as IFriend[];
 
-  const ids = requests.map((r) => r.requesterId);
+  if (!requests.length) return res.json({ requests: [] });
 
-  const users = await User.find({ _id: { $in: ids } })
-    .select('username avatar')
+  const users = await User.find({
+    _id: { $in: requests.map((r) => r.requesterId) },
+    deletedAt: null,
+  })
+    .select('username avatar lastSeenAt')
     .lean();
 
+  // Join on id, NOT array position. Mongo does not promise that a $in query
+  // returns documents in the order of the input array, and a since-deleted
+  // requester makes the two arrays different lengths — the previous
+  // index-based zip attached each request id to whichever user happened to
+  // land in that slot, so accepting one request could befriend someone else.
+  const userById = new Map(users.map((u) => [u._id.toString(), u]));
+  const now = Date.now();
+
   return res.json({
-    requests: users.map((u, i) => ({
-      ...u,
-      friendId: requests[i]._id,
-    })),
+    requests: requests
+      .map((r) => {
+        const u = userById.get(r.requesterId.toString());
+        if (!u) return null; // requester deleted their account
+        return {
+          _id: u._id.toString(),
+          username: u.username,
+          avatar: u.avatar,
+          isOnline: isOnline(u.lastSeenAt, now),
+          friendId: r._id.toString(),
+          requestedAt: (r as any).createdAt,
+        };
+      })
+      .filter(Boolean),
   });
 }

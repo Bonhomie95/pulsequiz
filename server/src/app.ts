@@ -7,8 +7,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 
 import { globalApiLimiter } from './middlewares/rateLimit';
-import { startLeaderboardCron } from './cron/leaderboardCron';
-import { initDefaultSettings } from './models/AppSettings';
+import { requestContext } from './middlewares/requestContext';
+import { logger } from './utils/logger';
+import { getHealth, getMetrics } from './controllers/healthController';
 
 // User routes
 import authRoutes from './routes/authRoutes';
@@ -31,6 +32,7 @@ import referralRoutes from './routes/referralRoutes';
 import tournamentRoutes from './routes/tournamentRoutes';
 import pushTokenRoutes from './routes/pushTokenRoutes';
 import reportRoutes from './routes/reportRoutes';
+import webhookRoutes from './routes/webhookRoutes';
 
 // Admin routes
 import adminAuthRoutes from './routes/adminAuthRoutes';
@@ -48,6 +50,7 @@ import adminTournamentRoutes from './routes/adminTournamentRoutes';
 import adminReportRoutes from './routes/adminReportRoutes';
 import adminAnalyticsRoutes from './routes/adminAnalyticsRoutes';
 import adminLeaderboardRoutes from './routes/adminLeaderboardRoutes';
+import adminAuditRoutes from './routes/adminAuditRoutes';
 
 /**
  * FRONTEND_ORIGIN supports a comma-separated list, e.g.
@@ -56,7 +59,15 @@ import adminLeaderboardRoutes from './routes/adminLeaderboardRoutes';
  */
 export function getAllowedOrigins(): string[] | '*' {
   const raw = (process.env.FRONTEND_ORIGIN ?? '').trim();
-  if (!raw || raw === '*') return '*';
+  if (!raw || raw === '*') {
+    // server.ts refuses to boot in production with this configuration; in
+    // development we allow everything so the Expo dev client and the Vite
+    // admin can both connect without extra setup.
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FRONTEND_ORIGIN must be set to an explicit origin list in production');
+    }
+    return '*';
+  }
   return raw
     .split(',')
     .map((s) => s.trim())
@@ -65,8 +76,14 @@ export function getAllowedOrigins(): string[] | '*' {
 
 const app = express();
 
-app.set('trust proxy', 1);
+// How many reverse proxies sit in front of us. Getting this wrong either
+// breaks IP-based rate limiting (too low) or lets a client spoof
+// X-Forwarded-For and bypass it entirely (too high). Set it to the real hop
+// count for your deployment.
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1));
+app.disable('x-powered-by');
 app.use(helmet());
+app.use(requestContext);
 // credentials:true is required for the admin SPA's httpOnly cookie. When
 // FRONTEND_ORIGIN is unset ('*') we reflect the request origin (origin:true)
 // rather than send a literal '*', which browsers reject alongside credentials.
@@ -77,12 +94,23 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json({ limit: '1mb' }));
+// Store the raw body for the webhook routes, which must verify a signature
+// over the exact bytes the provider sent.
+app.use(
+  express.json({
+    limit: '256kb',
+    verify: (req, _res, buf) => {
+      (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+    },
+  }),
+);
 
-initDefaultSettings().catch(console.error);
-startLeaderboardCron();
+app.get('/health', getHealth);
+app.get('/metrics', getMetrics);
 
-app.get('/health', (_, res) => res.json({ ok: true }));
+// Store/ad-network callbacks authenticate by signature, not by session, so
+// they sit outside the per-user limiter.
+app.use('/api/webhooks', webhookRoutes);
 
 app.use('/api', globalApiLimiter);
 
@@ -124,6 +152,7 @@ app.use('/api/admin/tournaments',    adminTournamentRoutes);
 app.use('/api/admin/reports',        adminReportRoutes);
 app.use('/api/admin/analytics',      adminAnalyticsRoutes);
 app.use('/api/admin/leaderboard',    adminLeaderboardRoutes);
+app.use('/api/admin/audit',          adminAuditRoutes);
 
 // ── Fallthrough handlers ─────────────────────────────────────────────────────
 app.use((_, res) => res.status(404).json({ message: 'Not found' }));
@@ -132,8 +161,24 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   if (err?.type === 'entity.parse.failed') {
     return res.status(400).json({ message: 'Invalid JSON body' });
   }
-  console.error(`Unhandled error on ${req.method} ${req.path}:`, err);
-  return res.status(500).json({ message: 'Server error' });
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({ message: 'Request body too large' });
+  }
+  // A malformed ObjectId in a path param is a client error, not a server fault.
+  if (err?.name === 'CastError') {
+    return res.status(400).json({ message: 'Invalid identifier' });
+  }
+  if (err?.name === 'ValidationError') {
+    return res.status(400).json({ message: 'Invalid payload' });
+  }
+
+  const requestId = (req as Request & { id?: string }).id;
+  logger.error('Unhandled request error', err, {
+    method: req.method,
+    path: req.path,
+    requestId,
+  });
+  return res.status(500).json({ message: 'Server error', requestId });
 });
 
 export default app;

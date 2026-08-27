@@ -14,7 +14,10 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(isoWeek);
 
-const TZ = 'Africa/Lagos';
+// Challenge periods are UTC so every player's day and week roll over at the
+// same instant — a per-user boundary would make "this week's" leaderboard and
+// "this week's" challenges disagree.
+const TZ = process.env.CHALLENGE_TZ || 'UTC';
 
 /* ────────────────────────── Period labels ────────────────────────── */
 
@@ -120,20 +123,34 @@ export async function updateChallengeProgress(params: {
   });
 
   for (const ch of challenges) {
-    const metric = (ch as any).metric as Metric;
+    const metric = ch.metric;
     let delta = 0;
     if (metric === 'quizzes_played')   delta = 1;
     if (metric === 'correct_answers')  delta = correct;
     if (metric === 'perfect_scores')   delta = isPerfect ? 1 : 0;
     if (delta === 0) continue;
 
-    ch.currentValue = Math.min(ch.currentValue + delta, ch.targetValue);
-    if (ch.currentValue >= ch.targetValue) {
-      ch.status = 'completed';
-      ch.completedAt = new Date();
-      // Reward claimed manually by user (with interstitial ad gate)
+    // Atomic increment, clamped to the target. Two quizzes finishing at once
+    // previously lost one of the increments to a read-modify-write race.
+    const updated = await Challenge.findOneAndUpdate(
+      { _id: ch._id, status: 'active' },
+      { $inc: { currentValue: delta } },
+      { returnDocument: 'after' },
+    );
+    if (!updated) continue;
+
+    if (updated.currentValue >= updated.targetValue) {
+      await Challenge.updateOne(
+        { _id: ch._id, status: 'active' },
+        {
+          $set: {
+            currentValue: updated.targetValue,
+            status: 'completed',
+            completedAt: new Date(),
+          },
+        },
+      );
     }
-    await ch.save();
   }
 }
 
@@ -143,13 +160,24 @@ export async function claimChallengeReward(
   userId: string,
   challengeId: string,
 ): Promise<{ rewardCoins: number; rewardPoints: number }> {
-  const ch = await Challenge.findOne({ _id: challengeId, userId });
-  if (!ch) throw new Error('Challenge not found');
-  if (ch.status !== 'completed') throw new Error('Challenge not yet completed');
+  // The state transition IS the guard. The previous read-check-write version
+  // let N parallel requests all observe status='completed' and all pay out —
+  // ten concurrent claims collected ten times the reward.
+  const ch = await Challenge.findOneAndUpdate(
+    { _id: challengeId, userId, status: 'completed' },
+    { $set: { status: 'claimed', claimedAt: new Date() } },
+    { returnDocument: 'after' },
+  );
 
-  // Mark consumed so it can't be claimed again
-  ch.status = 'expired';
-  await ch.save();
+  if (!ch) {
+    // Distinguish "doesn't exist" from "already claimed" for a useful message.
+    const existing = await Challenge.findOne({ _id: challengeId, userId })
+      .select('status')
+      .lean();
+    if (!existing) throw new Error('Challenge not found');
+    if (existing.status === 'claimed') throw new Error('Reward already claimed');
+    throw new Error('Challenge not yet completed');
+  }
 
   if (ch.rewardCoins > 0) {
     await creditCoins(userId, ch.rewardCoins, 'challenge_reward', {

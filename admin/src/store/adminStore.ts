@@ -25,6 +25,10 @@ type AdminState = {
   setAdmin: (admin: AdminUser) => void;
   clearSession: () => void; // local-only (used by the 401 interceptor)
   logout: () => Promise<void>; // clears the server cookie + local state
+  /** Re-read the identity from the server. localStorage is a cache the user
+   *  can edit; the role that actually matters is the one on the token, so the
+   *  UI refreshes it on load rather than trusting the stored copy. */
+  refresh: () => Promise<void>;
 };
 
 export const useAdminStore = create<AdminState>((set) => ({
@@ -38,6 +42,20 @@ export const useAdminStore = create<AdminState>((set) => ({
   clearSession: () => {
     localStorage.removeItem(STORED_ADMIN);
     set({ admin: null });
+  },
+
+  refresh: async () => {
+    try {
+      const { adminApi } = await import('../api/client');
+      const res = await adminApi.get('/admin/me');
+      const admin = res.data?.admin;
+      if (admin?.email && admin?.role) {
+        localStorage.setItem(STORED_ADMIN, JSON.stringify(admin));
+        set({ admin });
+      }
+    } catch {
+      // The 401 interceptor handles an expired session.
+    }
   },
 
   logout: async () => {

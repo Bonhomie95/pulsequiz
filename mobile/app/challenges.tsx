@@ -33,7 +33,6 @@ type Challenge = {
 export default function ChallengesScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { addCoins } = useCoinStore();
 
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +60,7 @@ export default function ChallengesScreen() {
       // Show interstitial before rewarding
       await showInterstitialAd().catch(() => {});
       const res = await api.post(`/challenges/${ch._id}/claim`);
-      addCoins(res.data.rewardCoins);
+      useCoinStore.getState().syncFromServer(res.data);
       setChallenges((prev) =>
         prev.map((c) => (c._id === ch._id ? { ...c, status: 'expired' } : c)),
       );
@@ -85,7 +84,10 @@ export default function ChallengesScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
-        >
+        
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={20} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.text }]}>Challenges</Text>
@@ -106,7 +108,10 @@ export default function ChallengesScreen() {
                 styles.tab,
                 active && { backgroundColor: theme.colors.primary },
               ]}
-            >
+            
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Add more time">
               {t === 'daily'
                 ? <Clock size={15} color={active ? '#fff' : theme.colors.muted} />
                 : <Calendar size={15} color={active ? '#fff' : theme.colors.muted} />
@@ -147,7 +152,10 @@ export default function ChallengesScreen() {
           <TouchableOpacity
             onPress={() => router.push('/quiz/categories')}
             style={[styles.playBtn, { backgroundColor: theme.colors.primary }]}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Play Now"
+            hitSlop={8}>
             <Text style={{ color: '#fff', fontWeight: '700' }}>Play Now</Text>
           </TouchableOpacity>
         </View>
@@ -249,7 +257,10 @@ function ChallengeCard({
           onPress={onClaim}
           disabled={claiming}
           style={[styles.claimBtn, { backgroundColor: 'rgba(255,255,255,0.25)' }]}
-        >
+        
+            accessibilityRole="button"
+            accessibilityLabel="Claim Reward"
+            hitSlop={8}>
           {claiming ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -17,9 +17,10 @@ import { ChevronLeft, ShoppingBag } from 'lucide-react-native';
 
 import { useTheme } from '@/src/theme/useTheme';
 import { COIN_PRODUCTS } from '@/src/iap/products';
-import { api } from '@/src/api/api';
+import { api, errorMessage } from '@/src/api/api';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useRouter } from 'expo-router';
+import { logger } from '@/src/utils/logger';
 
 // Prefer the server's authoritative total (`coins`) so the local balance can't
 // drift; fall back to adding the delta only if an older server omits it.
@@ -32,6 +33,9 @@ function syncCoins(data: { coins?: number; coinsAdded?: number }) {
 }
 
 export default function BuyCoinsScreen() {
+  // Purchases already handled this session, so a re-fired listener doesn't
+  // stack duplicate alerts on top of an idempotent server call.
+  const handledPurchases = useRef<Set<string>>(new Set());
   const theme = useTheme();
   const router = useRouter();
   const [loadingSku, setLoadingSku] = useState<string | null>(null);
@@ -53,7 +57,7 @@ export default function BuyCoinsScreen() {
         }
         setStorePrices(prices);
       } catch (e) {
-        console.warn('[IAP] init/fetch error:', e);
+        logger.warn('Coin IAP init failed', { error: String(e) });
       }
     })();
 
@@ -67,41 +71,74 @@ export default function BuyCoinsScreen() {
   useEffect(() => {
     const purchaseSub = IAP.purchaseUpdatedListener(
       async (purchase: Purchase) => {
+        // The listener can fire more than once for the same purchase (relaunch,
+        // a retried finishTransaction). The server is idempotent, but without
+        // this the user gets a stack of duplicate success alerts.
+        const key = purchase.transactionId ?? purchase.purchaseToken ?? '';
+        if (!key || handledPurchases.current.has(key)) return;
+        handledPurchases.current.add(key);
+
         try {
-          if (Platform.OS === 'ios') {
-            if (!purchase.transactionId) throw new Error('Missing transaction ID');
-            const res = await api.post('/purchase/apple/verify', {
-              sku: purchase.productId,
-              transactionId: purchase.transactionId,
-            });
-            await IAP.finishTransaction({ purchase, isConsumable: true });
-            syncCoins(res.data);
-            Alert.alert(
-              '🎉 Success',
-              `${res.data.coinsAdded} coins added to your account!`,
-            );
-            router.back();
+          const isIos = Platform.OS === 'ios';
+
+          if (isIos && !purchase.transactionId) {
+            throw new Error('Missing transaction ID');
+          }
+          if (!isIos && !purchase.purchaseToken) {
+            throw new Error('Invalid Android purchase');
           }
 
-          if (Platform.OS === 'android') {
-            if (!purchase.purchaseToken) throw new Error('Invalid Android purchase');
-            const res = await api.post('/purchase/google/verify', {
-              sku: purchase.productId,
-              purchaseToken: purchase.purchaseToken,
-              packageName: (purchase as IAP.PurchaseAndroid).packageNameAndroid,
-            });
-            await IAP.finishTransaction({ purchase, isConsumable: true });
-            syncCoins(res.data);
-            Alert.alert(
-              '🎉 Success',
-              `${res.data.coinsAdded} coins added to your account!`,
-            );
-            router.back();
-          }
-        } catch (e: any) {
+          const res = isIos
+            ? await api.post('/purchase/apple/verify', {
+                sku: purchase.productId,
+                transactionId: purchase.transactionId,
+              })
+            : await api.post('/purchase/google/verify', {
+                sku: purchase.productId,
+                purchaseToken: purchase.purchaseToken,
+                packageName: (purchase as IAP.PurchaseAndroid).packageNameAndroid,
+              });
+
+          // Only consume the transaction once the server has banked it —
+          // otherwise a failed verification would destroy the receipt and the
+          // player would have paid for nothing.
+          await IAP.finishTransaction({ purchase, isConsumable: true });
+          syncCoins(res.data);
+
+          const added = res.data?.coinsAdded ?? 0;
           Alert.alert(
-            'Purchase failed',
-            e?.message || 'Something went wrong. Please contact support.',
+            '🎉 Success',
+            added > 0
+              ? `${added.toLocaleString()} coins added to your account!`
+              : // The server replays an already-credited purchase with
+                // coinsAdded: 0. Saying "0 coins added" to someone who just
+                // paid reads as a failure.
+                'This purchase was already credited — your coins are in your wallet.',
+          );
+          router.back();
+        } catch (e: any) {
+          handledPurchases.current.delete(key); // allow a genuine retry
+
+          const status = e?.response?.status;
+          logger.error('Coin purchase verification failed', e, {
+            sku: purchase.productId,
+            status,
+          });
+
+          // A 4xx is the store or the server rejecting the receipt — that
+          // will not fix itself. Anything else (offline, 5xx) is retried
+          // automatically the next time the app opens, because we have not
+          // consumed the transaction.
+          const terminal = typeof status === 'number' && status >= 400 && status < 500;
+
+          Alert.alert(
+            terminal ? 'Purchase could not be verified' : 'Almost there',
+            terminal
+              ? errorMessage(
+                  e,
+                  'Your payment was not accepted. You have not been charged for coins. Contact support if you were.',
+                )
+              : "We couldn't reach PulseQuiz to confirm your purchase. It is safe — your coins will be added automatically next time you open the app.",
           );
         } finally {
           setLoadingSku(null);
@@ -111,7 +148,11 @@ export default function BuyCoinsScreen() {
 
     const errorSub = IAP.purchaseErrorListener((error: PurchaseError) => {
       if (error.code !== ErrorCode.UserCancelled) {
-        Alert.alert('Purchase failed', error.message || 'Something went wrong');
+        logger.warn('Store purchase error', { code: error.code });
+        Alert.alert(
+          'Purchase failed',
+          error.message || "The store couldn't complete that purchase.",
+        );
       }
       setLoadingSku(null);
     });
@@ -166,7 +207,10 @@ export default function BuyCoinsScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
-        >
+        
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={20} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.text }]}>
@@ -205,7 +249,10 @@ export default function BuyCoinsScreen() {
                 borderColor: theme.colors.border,
               },
             ]}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="BEST VALUE 🔥"
+            hitSlop={8}>
             {p.popular && (
               <View style={styles.popularBadge}>
                 <Text style={styles.popularText}>BEST VALUE 🔥</Text>
@@ -259,7 +306,10 @@ export default function BuyCoinsScreen() {
           <TouchableOpacity
             onPress={restorePurchases}
             style={{ marginTop: 8, padding: 16 }}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Restore Purchases"
+            hitSlop={8}>
             <Text
               style={{
                 color: theme.colors.primary,

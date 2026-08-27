@@ -63,7 +63,10 @@ export function AvatarPickerModal({
                         : 'transparent',
                     },
                   ]}
-                >
+                
+            accessibilityRole="button"
+            accessibilityLabel="Choose a custom emoji avatar"
+            hitSlop={8}>
                   <Text style={styles.customEmoji}>
                     {isCustomSelected ? selected : '➕'}
                   </Text>
@@ -74,13 +77,16 @@ export function AvatarPickerModal({
               ) : (
                 <TouchableOpacity
                   onPress={() => onSelect(item)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`Avatar ${item}`}
+                  accessibilityState={{ selected: selected === item }}
                   style={[
                     styles.avatarWrap,
                     selected === item && {
                       borderColor: theme.colors.primary,
                     },
                   ]}
-                >
+            hitSlop={8}>
                   <Image source={AVATAR_MAP[item]} style={styles.avatar} />
                 </TouchableOpacity>
               )
@@ -107,7 +113,10 @@ export function AvatarPickerModal({
               <TouchableOpacity
                 onPress={useCustom}
                 style={[styles.emojiBtn, { backgroundColor: theme.colors.primary }]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Use"
+            hitSlop={8}>
                 <Text style={{ color: '#fff', fontWeight: '700' }}>Use</Text>
               </TouchableOpacity>
             </View>
@@ -118,7 +127,10 @@ export function AvatarPickerModal({
             account banned.
           </Text>
 
-          <TouchableOpacity onPress={onClose} style={styles.cancel}>
+          <TouchableOpacity onPress={onClose} style={styles.cancel}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            hitSlop={8}>
             <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
               Close
             </Text>

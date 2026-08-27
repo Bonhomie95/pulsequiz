@@ -19,4 +19,7 @@ const UserActivitySchema = new Schema(
   { timestamps: true }
 );
 
+UserActivitySchema.index({ userId: 1, createdAt: -1 });
+UserActivitySchema.index({ createdAt: -1 });
+
 export default model('UserActivity', UserActivitySchema);

@@ -1,20 +1,31 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { z } from 'zod';
+
 import User from '../models/User';
 import CoinWallet from '../models/CoinWallet';
+import CoinTransaction from '../models/CoinTransaction';
 import QuizSession from '../models/QuizSession';
 import Purchase from '../models/Purchase';
 import Subscription from '../models/Subscription';
+import Progress from '../models/Progress';
+import FlaggedAccount from '../models/FlaggedAccount';
+import AccumulatedPrize from '../models/AccumulatedPrize';
 import { escapeRegex } from '../utils/escapeRegex';
+import { auditAdmin } from '../utils/adminAudit';
+import { anonymiseUser } from '../services/accountService';
+import { creditCoins, debitCoins, getBalance } from '../services/coinService';
+import { logger } from '../utils/logger';
 
 export async function listUsers(req: Request, res: Response) {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(100, Number(req.query.limit) || 25);
   const search =
     typeof req.query.search === 'string' ? req.query.search.trim() : '';
-  const filter = req.query.filter as string | undefined; // 'banned' | 'premium' | 'online'
+  const filter = req.query.filter as string | undefined;
 
-  const query: any = {};
+  // Deleted accounts are tombstones — never list them by default.
+  const query: any = { deletedAt: null };
 
   if (search) {
     const safe = escapeRegex(search);
@@ -24,27 +35,23 @@ export async function listUsers(req: Request, res: Response) {
     ];
   }
   if (filter === 'banned') query.isBanned = true;
+  if (filter === 'flagged') {
+    const flagged = await FlaggedAccount.distinct('userId', { resolved: false });
+    query._id = { $in: flagged };
+  }
   if (filter === 'online') {
-    // Online = seen within last 5 minutes
-    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
-    query.lastSeenAt = { $gte: fiveMinAgo };
+    query.lastSeenAt = { $gte: new Date(Date.now() - 5 * 60 * 1000) };
   }
 
-  // For premium filter we need a separate lookup — handled after the main query
-  const isPremiumFilter = filter === 'premium';
-
-  // For premium filter: first get all premium userIds, then filter by them
-  let premiumUserIds: any[] | null = null;
-  if (isPremiumFilter) {
+  if (filter === 'premium') {
     const activeSubs = await Subscription.find({
       expiresAt: { $gt: new Date() },
       status: { $in: ['active', 'grace'] },
     })
       .select('userId')
       .lean();
-    premiumUserIds = activeSubs.map((s) => s.userId);
+    const premiumUserIds = activeSubs.map((s) => s.userId);
     if (premiumUserIds.length === 0) {
-      // No premium users — return empty early
       return res.json({ users: [], total: 0, page, pages: 0 });
     }
     query._id = { $in: premiumUserIds };
@@ -52,7 +59,7 @@ export async function listUsers(req: Request, res: Response) {
 
   const [users, total] = await Promise.all([
     User.find(query)
-      .select('username email isBanned lastSeenAt createdAt')
+      .select('username email isBanned lastSeenAt createdAt moderationStrikes')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -60,24 +67,26 @@ export async function listUsers(req: Request, res: Response) {
     User.countDocuments(query),
   ]);
 
-  // Attach coin balances and premium status in one pass
   const ids = users.map((u) => u._id);
-  const [wallets, subs] = await Promise.all([
+  const [wallets, subs, flags] = await Promise.all([
     CoinWallet.find({ userId: { $in: ids } }).lean(),
     Subscription.find({
       userId: { $in: ids },
       expiresAt: { $gt: new Date() },
       status: { $in: ['active', 'grace'] },
     }).lean(),
+    FlaggedAccount.find({ userId: { $in: ids }, resolved: false }).select('userId').lean(),
   ]);
 
   const walletMap = new Map(wallets.map((w) => [w.userId.toString(), w.coins]));
   const premiumSet = new Set(subs.map((s) => s.userId.toString()));
+  const flaggedSet = new Set(flags.map((f) => f.userId.toString()));
 
   const enriched = users.map((u) => ({
     ...u,
     coins: walletMap.get(u._id.toString()) ?? 0,
     isPremium: premiumSet.has(u._id.toString()),
+    isFlagged: flaggedSet.has(u._id.toString()),
   }));
 
   res.json({ users: enriched, total, page, pages: Math.ceil(total / limit) });
@@ -91,83 +100,167 @@ export async function getUser(req: Request, res: Response) {
   const user = await User.findById(id).lean();
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  const [wallet, sessionCount, purchases, sub] = await Promise.all([
-    CoinWallet.findOne({ userId: id }).lean(),
-    QuizSession.countDocuments({ userId: id }),
-    Purchase.find({ userId: id }).sort({ createdAt: -1 }).limit(10).lean(),
-    Subscription.findOne({
-      userId: id,
-      expiresAt: { $gt: new Date() },
-      status: { $in: ['active', 'grace'] },
-    })
-      .sort({ expiresAt: -1 })
-      .lean(),
-  ]);
+  const [wallet, sessionCount, purchases, sub, progress, flags, ledgerSum, prize] =
+    await Promise.all([
+      CoinWallet.findOne({ userId: id }).lean(),
+      QuizSession.countDocuments({ userId: id }),
+      Purchase.find({ userId: id }).sort({ createdAt: -1 }).limit(10).lean(),
+      Subscription.findOne({
+        userId: id,
+        expiresAt: { $gt: new Date() },
+        status: { $in: ['active', 'grace'] },
+      })
+        .sort({ expiresAt: -1 })
+        .lean(),
+      Progress.findOne({ userId: id }).lean(),
+      FlaggedAccount.find({ userId: id }).sort({ flaggedAt: -1 }).limit(10).lean(),
+      CoinTransaction.aggregate<{ total: number }>([
+        { $match: { userId: new mongoose.Types.ObjectId(id) } },
+        { $group: { _id: null, total: { $sum: '$delta' } } },
+      ]),
+      AccumulatedPrize.findOne({ userId: id }).lean(),
+    ]);
+
+  const coins = wallet?.coins ?? 0;
+  const ledgerTotal = ledgerSum[0]?.total ?? 0;
 
   res.json({
     user: {
       ...user,
-      coins: wallet?.coins ?? 0,
+      coins,
       totalSessions: sessionCount,
       isPremium: !!sub,
       premiumExpiry: sub?.expiresAt ?? null,
       premiumPlan: sub?.sku ?? null,
+      progress,
+      // Surfacing the drift makes a tampered or buggy balance visible at a
+      // glance rather than only in the nightly reconciliation log.
+      ledger: { total: ledgerTotal, drift: coins - ledgerTotal },
+      pendingPrizeUSDT: prize?.pendingUSDT ?? 0,
     },
     recentPurchases: purchases,
+    flags,
   });
 }
+
+const UpdateUserSchema = z.object({
+  username: z.string().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/).optional(),
+  withdrawalEnabled: z.boolean().optional(),
+  isBanned: z.boolean().optional(),
+  publicProfile: z.boolean().optional(),
+});
 
 export async function updateUser(req: Request, res: Response) {
   const { id } = req.params;
   if (!mongoose.isValidObjectId(id))
     return res.status(400).json({ message: 'Invalid ID' });
 
-  const { username, coins, withdrawalEnabled, isBanned } = req.body as {
-    username?: string;
-    coins?: number;
-    withdrawalEnabled?: boolean;
-    isBanned?: boolean;
-  };
+  const parsed = UpdateUserSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: 'Invalid payload', errors: parsed.error.issues });
+  }
 
   const user = await User.findById(id);
   if (!user) return res.status(404).json({ message: 'User not found' });
 
+  const before = {
+    username: user.username,
+    withdrawalEnabled: user.withdrawalEnabled,
+    isBanned: user.isBanned,
+    publicProfile: user.publicProfile,
+  };
+
+  const { username, withdrawalEnabled, isBanned, publicProfile } = parsed.data;
+
   if (username !== undefined) {
-    const exists = await User.findOne({ username, _id: { $ne: id } });
-    if (exists)
-      return res.status(409).json({ message: 'Username already taken' });
-    user.username = username || null;
+    const normalised = username.toLowerCase();
+    const exists = await User.findOne({ username: normalised, _id: { $ne: id } })
+      .collation({ locale: 'en', strength: 2 })
+      .select('_id')
+      .lean();
+    if (exists) return res.status(409).json({ message: 'Username already taken' });
+    user.username = normalised;
   }
-  if (withdrawalEnabled !== undefined)
-    user.withdrawalEnabled = withdrawalEnabled;
-  if (isBanned !== undefined) user.isBanned = isBanned;
+  if (withdrawalEnabled !== undefined) user.withdrawalEnabled = withdrawalEnabled;
+  if (publicProfile !== undefined) user.publicProfile = publicProfile;
+  if (isBanned !== undefined) {
+    user.isBanned = isBanned;
+    if (isBanned) {
+      user.withdrawalEnabled = false;
+      // Kick every live session for the account rather than waiting for the
+      // token to expire.
+      user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+    }
+  }
+
   await user.save();
 
-  // Adjust coins separately (wallet upsert)
-  if (coins !== undefined && typeof coins === 'number' && coins >= 0) {
-    await CoinWallet.updateOne(
-      { userId: id },
-      { $set: { coins } },
-      { upsert: true },
-    );
-  }
+  await auditAdmin(req, 'user.update', {
+    targetType: 'user',
+    targetId: id,
+    before,
+    after: parsed.data,
+  });
 
   res.json({ ok: true });
 }
 
-export async function toggleBan(req: Request, res: Response) {
+const AdjustCoinsSchema = z.object({
+  // A delta, not an absolute. Setting a balance directly is what made the
+  // wallet and the ledger disagree; a signed adjustment is auditable.
+  delta: z.number().int().refine((n) => n !== 0, 'delta must be non-zero'),
+  reason: z.string().min(3).max(200),
+});
+
+/**
+ * POST /api/admin/users/:id/coins
+ *
+ * Adjust a balance through the ledger. The previous endpoint did
+ * `$set: { coins }` with no CoinTransaction row, which silently broke
+ * reconciliation for that account forever.
+ */
+export async function adjustCoins(req: Request, res: Response) {
   const { id } = req.params;
-  const user = await User.findById(id);
+  if (!mongoose.isValidObjectId(id))
+    return res.status(400).json({ message: 'Invalid ID' });
+
+  const parsed = AdjustCoinsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: 'Invalid payload', errors: parsed.error.issues });
+  }
+
+  const user = await User.findById(id).select('_id').lean();
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  user.isBanned = !user.isBanned;
-  if (user.isBanned) user.withdrawalEnabled = false;
-  await user.save();
+  const { delta, reason } = parsed.data;
+  const before = await getBalance(id);
 
-  res.json({ ok: true, isBanned: user.isBanned });
+  let balance: number;
+  if (delta > 0) {
+    balance = await creditCoins(id, delta, 'admin_grant', { note: reason });
+  } else {
+    const result = await debitCoins(id, -delta, 'admin_deduct', { note: reason });
+    if (!result.success) {
+      return res.status(400).json({
+        message: `Insufficient balance: user has ${result.balance}, tried to remove ${-delta}`,
+      });
+    }
+    balance = result.balance;
+  }
+
+  await auditAdmin(req, 'user.adjust_coins', {
+    targetType: 'user',
+    targetId: id,
+    before: { coins: before },
+    after: { coins: balance, delta, reason },
+  });
+
+  logger.warn('Admin adjusted coin balance', { userId: id, delta, reason, balance });
+
+  res.json({ ok: true, coins: balance, delta });
 }
 
-export async function deleteUser(req: Request, res: Response) {
+export async function toggleBan(req: Request, res: Response) {
   const { id } = req.params;
   if (!mongoose.isValidObjectId(id))
     return res.status(400).json({ message: 'Invalid ID' });
@@ -175,12 +268,49 @@ export async function deleteUser(req: Request, res: Response) {
   const user = await User.findById(id);
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  // Cascade delete associated data
-  await Promise.all([
-    CoinWallet.deleteOne({ userId: id }),
-    Subscription.deleteMany({ userId: id }),
-    User.deleteOne({ _id: id }),
-  ]);
+  const wasBanned = user.isBanned;
+  user.isBanned = !user.isBanned;
 
-  res.json({ ok: true });
+  if (user.isBanned) {
+    user.withdrawalEnabled = false;
+    // Revoke every outstanding token immediately.
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+  }
+  await user.save();
+
+  await auditAdmin(req, user.isBanned ? 'user.ban' : 'user.unban', {
+    targetType: 'user',
+    targetId: id,
+    before: { isBanned: wasBanned },
+    after: { isBanned: user.isBanned },
+  });
+
+  res.json({ ok: true, isBanned: user.isBanned });
+}
+
+/**
+ * DELETE /api/admin/users/:id
+ *
+ * Full erasure. The previous version removed only the wallet and subscriptions,
+ * leaving ten other collections orphaned and the account still on the
+ * leaderboard.
+ */
+export async function deleteUser(req: Request, res: Response) {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id))
+    return res.status(400).json({ message: 'Invalid ID' });
+
+  const user = await User.findById(id).lean();
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  const summary = await anonymiseUser(id);
+
+  await auditAdmin(req, 'user.delete', {
+    targetType: 'user',
+    targetId: id,
+    before: { username: user.username, email: user.email },
+    after: summary,
+  });
+
+  res.json({ ok: true, removed: summary });
 }

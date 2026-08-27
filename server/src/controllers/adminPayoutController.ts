@@ -4,8 +4,11 @@ import Payout from '../models/Payout';
 import PrizePool from '../models/PrizePool';
 import AccumulatedPrize from '../models/AccumulatedPrize';
 import User from '../models/User';
-import { processPeriodPayouts } from '../services/payoutService';
+import { processPeriodPayouts, checkPayoutEligibility } from '../services/payoutService';
 import { sendUSDT } from '../services/nowpaymentsService';
+import { previousPeriod, periodContaining } from '../utils/dateRanges';
+import { auditAdmin } from '../utils/adminAudit';
+import type { AdminRequest } from '../middlewares/requireAdmin';
 
 const PrizePoolSchema = z.object({
   type: z.enum(['weekly', 'monthly', 'event']),
@@ -36,35 +39,65 @@ export async function retryPayout(req: Request, res: Response) {
   const { id } = req.params;
   const payout = await Payout.findById(id);
   if (!payout) return res.status(404).json({ message: 'Not found' });
-  if (payout.status !== 'failed') return res.status(400).json({ message: 'Can only retry failed payouts' });
+  if (payout.status !== 'failed') {
+    return res.status(400).json({ message: 'Can only retry failed payouts' });
+  }
+
+  const eligibility = await checkPayoutEligibility(payout.userId.toString());
+  if (!eligibility.eligible) {
+    return res.status(400).json({
+      message: `User is not currently eligible: ${eligibility.reason}`,
+    });
+  }
 
   const user = await User.findById(payout.userId).lean();
   if (!user?.usdtAddress) return res.status(400).json({ message: 'User has no USDT address' });
+
+  // Reuse the original reference so the provider lookup inside sendUSDT can
+  // detect a transfer that already went through.
+  const reference =
+    payout.idempotencyKey ?? `${payout.period}:${payout.periodLabel}:${payout.userId}`;
 
   const result = await sendUSDT({
     address: user.usdtAddress,
     usdtType: user.usdtType ?? 'TRC20',
     amount: payout.amount,
     description: `Manual retry: ${payout.periodLabel}`,
+    reference,
   });
 
   await Payout.updateOne(
     { _id: id },
     {
-      status: result.success ? 'sent' : 'failed',
-      txHash: result.txHash,
-      failReason: result.success ? undefined : result.error,
-      retries: payout.retries + 1,
-      lastAttemptAt: new Date(),
-      ...(result.success ? { sentAt: new Date() } : {}),
-    }
+      $set: {
+        status: result.success ? 'sent' : 'failed',
+        ...(result.txHash ? { txHash: result.txHash } : {}),
+        ...(result.paymentId ? { nowpaymentsPaymentId: result.paymentId } : {}),
+        ...(result.success ? { sentAt: new Date() } : { failReason: result.error }),
+        retries: payout.retries + 1,
+        lastAttemptAt: new Date(),
+      },
+    },
   );
+
+  if (result.success) {
+    await AccumulatedPrize.updateOne(
+      { userId: payout.userId },
+      { $inc: { pendingUSDT: -payout.amount }, $set: { lastUpdated: new Date() } },
+    );
+  }
+
+  await auditAdmin(req, 'payout.retry', {
+    targetType: 'payout',
+    targetId: id,
+    after: { success: result.success, amount: payout.amount, error: result.error },
+  });
 
   return res.json({ success: result.success, error: result.error });
 }
 
 export async function setPrizePool(req: Request, res: Response) {
-  const adminUsername = (req as any).admin?.username ?? 'admin';
+  const adminUsername = (req as AdminRequest).adminEmail ?? 'admin';
   const parsed = PrizePoolSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Invalid data', errors: parsed.error.issues });
 
@@ -76,13 +109,52 @@ export async function setPrizePool(req: Request, res: Response) {
     return res.status(400).json({ message: `Tier amounts (${tierSum}) exceed total pool (${totalAmount})` });
   }
 
+  if (tiers.some((t) => t.amount < 0 || t.rank < 1)) {
+    return res.status(400).json({ message: 'Tier ranks must be >= 1 and amounts >= 0' });
+  }
+
+  const before = await PrizePool.findOne({ type, periodLabel }).lean();
+
+  // A locked pool has already paid out; editing it retroactively would make the
+  // payout records disagree with the configuration they were computed from.
+  if (before?.lockedAt) {
+    return res.status(409).json({
+      message: 'This pool has already been processed and can no longer be edited',
+    });
+  }
+
   const pool = await PrizePool.findOneAndUpdate(
     { type, periodLabel },
     { totalAmount, paidRanks, tiers, setByAdmin: adminUsername },
     { upsert: true, returnDocument: 'after' }
   );
 
+  await auditAdmin(req, 'prizepool.set', {
+    targetType: 'prizepool',
+    targetId: `${type}:${periodLabel}`,
+    before: before ? { totalAmount: before.totalAmount, paidRanks: before.paidRanks, tiers: before.tiers } : null,
+    after: { totalAmount, paidRanks, tiers },
+  });
+
   return res.json({ pool });
+}
+
+/**
+ * Period labels the admin UI should offer when configuring a pool — the
+ * current period and the one that just closed, computed the same way the
+ * payout job computes them.
+ */
+export async function getPeriodOptions(_req: Request, res: Response) {
+  return res.json({
+    weekly: {
+      current: periodContaining('weekly').label,
+      previous: previousPeriod('weekly').label,
+    },
+    monthly: {
+      current: periodContaining('monthly').label,
+      previous: previousPeriod('monthly').label,
+    },
+  });
 }
 
 export async function getPrizePools(req: Request, res: Response) {
@@ -91,8 +163,34 @@ export async function getPrizePools(req: Request, res: Response) {
 }
 
 export async function triggerPayout(req: Request, res: Response) {
-  const { type } = z.object({ type: z.enum(['weekly', 'monthly']) }).parse(req.body);
-  const result = await processPeriodPayouts(type);
+  const parsed = z
+    .object({
+      type: z.enum(['weekly', 'monthly']),
+      // Which period to settle. Defaults to the one that just closed, matching
+      // the cron; 'current' is available for testing an in-progress period.
+      period: z.enum(['previous', 'current']).default('previous'),
+    })
+    .safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({ message: 'type must be "weekly" or "monthly"' });
+  }
+
+  const { type, period } = parsed.data;
+  const target = period === 'current' ? periodContaining(type) : previousPeriod(type);
+
+  const result = await processPeriodPayouts(type, target);
+
+  await auditAdmin(req, 'payout.trigger', {
+    targetType: 'period',
+    targetId: `${type}:${target.label}`,
+    after: {
+      sent: result.results?.filter((r) => r.status === 'sent').length ?? 0,
+      skipped: result.results?.filter((r) => r.status === 'skipped').length ?? 0,
+      failed: result.results?.filter((r) => r.status === 'failed').length ?? 0,
+    },
+  });
+
   return res.json(result);
 }
 

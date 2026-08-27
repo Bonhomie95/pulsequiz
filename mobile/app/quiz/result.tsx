@@ -180,13 +180,16 @@ export default function QuizResult() {
           {/* Start Another Quiz */}
           <TouchableOpacity
             onPress={startAnotherQuiz}
+            accessibilityLabel="Play another quiz"
             style={{
               backgroundColor: theme.colors.primary,
               paddingVertical: 16,
               borderRadius: 18,
               alignItems: 'center',
             }}
-          >
+          
+            accessibilityRole="button"
+            hitSlop={8}>
             <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>
               🔁 Start Another Quiz
             </Text>
@@ -206,7 +209,10 @@ export default function QuizResult() {
               borderWidth: 1,
               borderColor: theme.colors.primary + '60',
             }}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Share Result"
+            hitSlop={8}>
             <Share2 size={18} color={theme.colors.primary} />
             <Text
               style={{
@@ -222,6 +228,8 @@ export default function QuizResult() {
           {/* Back to Home */}
           <TouchableOpacity
             onPress={goHome}
+            accessibilityRole="button"
+            accessibilityLabel="Back to home"
             style={{
               backgroundColor: theme.colors.surface,
               paddingVertical: 16,
@@ -230,7 +238,7 @@ export default function QuizResult() {
               borderWidth: 1,
               borderColor: theme.colors.border,
             }}
-          >
+            hitSlop={8}>
             <Text
               style={{
                 color: theme.colors.text,

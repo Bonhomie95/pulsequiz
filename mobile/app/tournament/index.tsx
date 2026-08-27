@@ -82,7 +82,10 @@ export default function TournamentListScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
-        >
+        
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={20} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.text }]}>Tournaments</Text>
@@ -111,8 +114,10 @@ export default function TournamentListScreen() {
             return (
               <TouchableOpacity
                 onPress={() => router.push(`/tournament/${item._id}` as any)}
+                accessibilityRole="button"
+                accessibilityLabel={`Open tournament ${item.title}`}
                 style={[styles.card, { backgroundColor: theme.colors.surface }]}
-              >
+            hitSlop={8}>
                 {/* Status Badge */}
                 <View style={styles.cardTop}>
                   <View style={[styles.statusBadge, { backgroundColor: statusColor + '25' }]}>

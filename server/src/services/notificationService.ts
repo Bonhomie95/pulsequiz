@@ -24,7 +24,11 @@ async function sendExpoPush(messages: ExpoPushMessage[]) {
 }
 
 async function getUserToken(userId: string): Promise<string | null> {
-  const doc = await PushToken.findOne({ userId }).lean();
+  // Prefer the most recently updated ACTIVE token; deactivated tokens (logged
+  // out on that device) must not receive this user's notifications.
+  const doc = await PushToken.findOne({ userId, active: { $ne: false } })
+    .sort({ updatedAt: -1 })
+    .lean();
   return doc?.token ?? null;
 }
 
@@ -80,6 +84,40 @@ export async function sendLeaderboardReminder(userId: string, rank: number) {
   }]);
 }
 
+/**
+ * Alert on a payout-address change.
+ *
+ * Sent to every registered device for the account, not just the most recent
+ * one — if an attacker changed the address from their own device, the owner's
+ * device is the one that must hear about it.
+ */
+export async function sendAddressChangedAlert(
+  userId: string,
+  network: string,
+  address: string,
+) {
+  const docs = await PushToken.find({ userId, active: { $ne: false } })
+    .select('token')
+    .lean();
+  if (!docs.length) return;
+
+  const masked =
+    address.length > 12
+      ? `${address.slice(0, 6)}…${address.slice(-4)}`
+      : address;
+
+  await sendExpoPush(
+    docs.map((d) => ({
+      to: d.token,
+      title: '🔐 Payout address changed',
+      body: `Your ${network} address is now ${masked}. Payouts are paused for 72 hours. If this wasn't you, contact support immediately.`,
+      data: { type: 'address_changed' },
+      priority: 'high' as const,
+      sound: 'default' as const,
+    })),
+  );
+}
+
 export async function sendPvpChallenge(userId: string, challengerUsername: string) {
   const token = await getUserToken(userId);
   if (!token) return;
@@ -107,7 +145,7 @@ export async function sendRoomInvite(userId: string, hostUsername: string, code:
 }
 
 export async function sendNewChallengesNotification(userIds: string[]) {
-  const tokens = await PushToken.find({ userId: { $in: userIds } }).lean();
+  const tokens = await PushToken.find({ userId: { $in: userIds }, active: { $ne: false } }).lean();
   const messages: ExpoPushMessage[] = (tokens as any[]).map((t) => ({
     to: t.token,
     title: '🎯 New Challenges Available!',
@@ -120,7 +158,7 @@ export async function sendNewChallengesNotification(userIds: string[]) {
 }
 
 export async function sendTournamentStarting(userIds: string[], tournamentTitle: string) {
-  const tokens = await PushToken.find({ userId: { $in: userIds } }).lean();
+  const tokens = await PushToken.find({ userId: { $in: userIds }, active: { $ne: false } }).lean();
   const messages: ExpoPushMessage[] = (tokens as any[]).map((t) => ({
     to: t.token,
     title: '🏆 Tournament Starting Soon!',

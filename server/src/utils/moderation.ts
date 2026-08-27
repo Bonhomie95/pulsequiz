@@ -12,43 +12,95 @@ import FlaggedAccount from '../models/FlaggedAccount';
 export const FLAG_THRESHOLD = 3;
 export const BAN_THRESHOLD = 5;
 
-// Unambiguous profanity / slur / abuse stems. Matched against a normalized
-// (lowercased, de-leeted, separator-stripped) form, so "F_u-c.k" or "fvck"
-// style evasions are caught. Deliberately excludes short ambiguous stems
-// ("ass", "cock") to avoid Scunthorpe-style false positives.
-const BLOCKED_STEMS: string[] = [
-  'fuck', 'fck', 'fuk', 'shit', 'bitch', 'cunt', 'asshole', 'arsehole',
-  'dickhead', 'wanker', 'bastard', 'whore', 'slut', 'pussy', 'penis',
-  'vagina', 'porn', 'blowjob', 'handjob', 'cumshot', 'jizz',
-  'nigger', 'nigga', 'negro', 'faggot', 'fagot', 'dyke', 'tranny',
-  'kike', 'spic', 'chink', 'gook', 'wetback', 'raghead', 'paki',
-  'retard', 'rapist', 'raper', 'pedo', 'paedo', 'molest',
-  'hitler', 'nazi', 'kukluxklan',
+/**
+ * Two matching strategies, because one doesn't work for both cases.
+ *
+ * HARD_STEMS are long enough that any string containing them is offensive, so
+ * they match anywhere — which is what catches separator evasion ("f.u-c_k"
+ * normalises to "fuck").
+ *
+ * BOUNDED_STEMS are short enough to appear inside innocent words. They only
+ * match a whole token, optionally with a common inflection. The previous
+ * implementation matched every stem as a substring and claimed to avoid
+ * Scunthorpe-style false positives by omitting the shortest stems — but
+ * "cunt" was still in the list, so the town of Scunthorpe (and anyone named
+ * after it) was rejected.
+ */
+const HARD_STEMS: string[] = [
+  'fuck', 'motherfucker', 'asshole', 'arsehole', 'dickhead', 'wanker',
+  'bastard', 'whore', 'blowjob', 'handjob', 'cumshot', 'jizz',
+  'porn', 'penis', 'vagina',
+  'nigger', 'nigga', 'faggot', 'fagot', 'tranny', 'wetback', 'raghead',
+  'kukluxklan', 'rapist', 'pedophile', 'paedophile', 'molest',
+  'hitler', 'nazi',
 ];
+
+/** Short or embeddable stems — whole-token matches only. */
+const BOUNDED_STEMS: string[] = [
+  'fck', 'fuk', 'shit', 'bitch', 'cunt', 'slut', 'pussy',
+  'dyke', 'kike', 'spic', 'chink', 'gook', 'paki', 'negro',
+  'retard', 'raper', 'pedo', 'paedo',
+];
+
+/** Inflections a bounded stem may carry and still be the same word. */
+const SUFFIXES = ['', 's', 'es', 'ed', 'er', 'ers', 'ing', 'y', 'ies', 'z', 'a', 'o'];
 
 const LEET_MAP: Record<string, string> = {
   '0': 'o', '1': 'i', '2': 'z', '3': 'e', '4': 'a', '5': 's',
   '6': 'g', '7': 't', '8': 'b', '9': 'g',
-  '@': 'a', '$': 's', '!': 'i', '+': 't', '€': 'e', '£': 'l',
+  '@': 'a', '$': 's', '!': 'i', '+': 't', '\u20ac': 'e', '\u00a3': 'l',
 };
 
-function normalizeForModeration(input: string): string {
+/** Lowercase, strip diacritics, de-leet. Separators are preserved here. */
+function normalizeBase(input: string): string {
   let s = input.toLowerCase();
-  // strip diacritics (é → e)
   s = s.normalize('NFKD').replace(/\p{M}/gu, '');
-  // de-leet
-  s = s.replace(/[0-9@$!+€£]/g, (c) => LEET_MAP[c] ?? '');
-  // drop separators and anything non-alphabetic
-  s = s.replace(/[^a-z]/g, '');
-  // collapse repeated letters (fuuuck → fuck) — keep a single copy
-  const collapsed = s.replace(/(.)\1+/g, '$1');
-  return `${s} ${collapsed}`;
+  s = s.replace(/[0-9@$!+\u20ac\u00a3]/g, (c) => LEET_MAP[c] ?? ' ');
+  return s;
+}
+
+/** Everything non-alphabetic removed — catches "f.u.c.k". */
+function squash(base: string): string {
+  return base.replace(/[^a-z]/g, '');
+}
+
+/** Repeated letters collapsed — catches "fuuuck". */
+function collapse(s: string): string {
+  return s.replace(/(.)\1+/g, '$1');
+}
+
+/** Word-ish tokens, so short stems can be matched with real boundaries. */
+function tokenize(base: string): string[] {
+  return base.split(/[^a-z]+/).filter(Boolean);
+}
+
+function matchesBounded(token: string, stem: string): boolean {
+  if (!token.startsWith(stem)) return false;
+  return SUFFIXES.includes(token.slice(stem.length));
 }
 
 /** True if the text contains profanity / abusive content. */
 export function isTextOffensive(input: string): boolean {
-  const normalized = normalizeForModeration(input);
-  return BLOCKED_STEMS.some((stem) => normalized.includes(stem));
+  if (!input) return false;
+
+  const base = normalizeBase(input);
+  const squashed = squash(base);
+  const collapsed = collapse(squashed);
+
+  // Long, unambiguous stems: match anywhere, in either form.
+  if (HARD_STEMS.some((stem) => squashed.includes(stem) || collapsed.includes(stem))) {
+    return true;
+  }
+
+  // Short stems: whole-token matches only, so "scunthorpe" and "cockpit" pass.
+  const tokens = [...tokenize(base), ...tokenize(collapse(base))];
+  // Also treat the fully squashed string as a token, so "c.u.n.t" is caught
+  // while "scunthorpe" (which contains but does not equal the stem) is not.
+  tokens.push(squashed, collapsed);
+
+  return BOUNDED_STEMS.some((stem) =>
+    tokens.some((token) => matchesBounded(token, stem)),
+  );
 }
 
 // ── Avatars ──────────────────────────────────────────────────────────────────

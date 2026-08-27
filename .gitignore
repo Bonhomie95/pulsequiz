@@ -145,3 +145,6 @@ assets
 .expo
 app.json
 eas.json
+# macOS
+.DS_Store
+**/.DS_Store

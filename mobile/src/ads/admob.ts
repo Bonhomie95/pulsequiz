@@ -21,6 +21,7 @@ export async function showRewardedAd(): Promise<boolean> {
     const rewarded = RewardedAd.createForAdRequest(rewardedUnitId);
 
     let earned = false;
+    let settled = false;
 
     const unsubEarn = rewarded.addAdEventListener(
       RewardedAdEventType.EARNED_REWARD,
@@ -36,15 +37,30 @@ export async function showRewardedAd(): Promise<boolean> {
       },
     );
 
-    const unsubClosed = rewarded.addAdEventListener(
-      AdEventType.CLOSED, // ✅ THIS IS CORRECT
-      () => {
-        unsubEarn();
-        unsubLoaded();
-        unsubClosed();
-        resolve(earned);
-      },
+    // Single teardown path: unsubscribe every listener and resolve exactly
+    // once. Without this, a load ERROR (no fill / network) would leave the
+    // listeners subscribed forever and the promise hanging — a leak that
+    // accumulates over a long session.
+    const finish = (result: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      unsubEarn();
+      unsubLoaded();
+      unsubClosed();
+      unsubError();
+      resolve(result);
+    };
+
+    const unsubClosed = rewarded.addAdEventListener(AdEventType.CLOSED, () =>
+      finish(earned),
     );
+    const unsubError = rewarded.addAdEventListener(AdEventType.ERROR, () =>
+      finish(false),
+    );
+
+    // Safety net: never let the promise hang if no event ever fires.
+    const timeout = setTimeout(() => finish(earned), 30_000);
 
     rewarded.load();
   });
@@ -56,6 +72,8 @@ export async function showInterstitialAd(): Promise<boolean> {
   return new Promise((resolve) => {
     const interstitial = InterstitialAd.createForAdRequest(interstitialUnitId);
 
+    let settled = false;
+
     const unsubLoaded = interstitial.addAdEventListener(
       AdEventType.LOADED,
       () => {
@@ -63,14 +81,27 @@ export async function showInterstitialAd(): Promise<boolean> {
       },
     );
 
-    const unsubClosed = interstitial.addAdEventListener(
-      AdEventType.CLOSED,
-      () => {
-        unsubLoaded();
-        unsubClosed();
-        resolve(true);
-      },
+    // Resolve once and tear down all listeners — including on ERROR, which
+    // otherwise leaks a listener + hangs the promise on every failed load
+    // (the usage timer fires one of these every 10 minutes).
+    const finish = (result: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      unsubLoaded();
+      unsubClosed();
+      unsubError();
+      resolve(result);
+    };
+
+    const unsubClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () =>
+      finish(true),
     );
+    const unsubError = interstitial.addAdEventListener(AdEventType.ERROR, () =>
+      finish(false),
+    );
+
+    const timeout = setTimeout(() => finish(false), 30_000);
 
     interstitial.load();
   });

@@ -103,7 +103,11 @@ export function CheckInModal({ visible, streak, coinsAdded, milestoneBonus, onCl
     <Modal transparent animationType="none" visible={visible} onRequestClose={onClose}>
       {/* Backdrop */}
       <Animated.View style={[styles.backdrop, { opacity: backdrop }]}>
-        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} 
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss check-in"
+            hitSlop={8}
+          />
       </Animated.View>
 
       {/* Card */}
@@ -189,7 +193,10 @@ export function CheckInModal({ visible, streak, coinsAdded, milestoneBonus, onCl
             onPress={onClose}
             style={[styles.ctaBtn, { backgroundColor: theme.colors.primary }]}
             activeOpacity={0.85}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Awesome! Lets Play 🎮"
+            hitSlop={8}>
             <Text style={styles.ctaText}>Awesome! Lets Play 🎮</Text>
           </TouchableOpacity>
 

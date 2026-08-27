@@ -143,7 +143,10 @@ export default function TournamentDetailScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
-        >
+        
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={20} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.text }]} numberOfLines={1}>
@@ -273,7 +276,10 @@ export default function TournamentDetailScreen() {
               <TouchableOpacity
                 onPress={play}
                 style={[styles.ctaBtn, { backgroundColor: theme.colors.primary }]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Play Now!"
+            hitSlop={8}>
                 <Swords size={20} color="#fff" />
                 <Text style={styles.ctaBtnText}>Play Now!</Text>
               </TouchableOpacity>
@@ -297,7 +303,10 @@ export default function TournamentDetailScreen() {
                     : theme.colors.primary,
                 },
               ]}
-            >
+            
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Open the leaderboard">
               {joining ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (

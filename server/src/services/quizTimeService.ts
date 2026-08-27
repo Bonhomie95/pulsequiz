@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import ActiveQuizSession from '../models/ActiveQuizSession';
-import CoinWallet from '../models/CoinWallet';
+import { debitCoins } from './coinService';
 
 const EXTEND_COST = 20;
 const MAX_EXTENSIONS = 10;
@@ -41,28 +41,48 @@ export async function extendQuestionTime(params: {
     return { addedSeconds: 0, message: 'No extensions left' };
   }
 
-  const wallet = await CoinWallet.findOne({ userId });
-  if (!wallet) throw new Error('Wallet missing');
-
-  // 📺 Not enough coins → frontend shows ad
-  if (wallet.coins < EXTEND_COST) {
-    return { requiresAd: true };
-  }
-
-  // 💰 Deduct coins
-  wallet.coins -= EXTEND_COST;
-  await wallet.save();
-
-  // ⏱ Extend deadline (SOURCE OF TRUTH)
+  // ⏱ Extend deadline (SOURCE OF TRUTH). Claimed atomically so two concurrent
+  // requests can't stack two extensions — or be charged for two.
   const base = session.questionDeadlineAt?.getTime() ?? Date.now();
-
   const newDeadline = new Date(base + EXTEND_SECONDS * 1000);
 
-  session.questionDeadlineAt = newDeadline;
-  session.timeExtensionsUsed += 1;
-  session.timeExtendedQuestions.push(qId);
+  const claimed = await ActiveQuizSession.findOneAndUpdate(
+    {
+      _id: sessionId,
+      userId,
+      finished: false,
+      currentQuestionId: qId,
+      timeExtendedQuestions: { $ne: qId },
+      timeExtensionsUsed: { $lt: MAX_EXTENSIONS },
+    },
+    {
+      $set: { questionDeadlineAt: newDeadline },
+      $inc: { timeExtensionsUsed: 1 },
+      $push: { timeExtendedQuestions: qId },
+    },
+    { returnDocument: 'after' },
+  );
 
-  await session.save();
+  if (!claimed) {
+    return { addedSeconds: 0, message: 'Already extended' };
+  }
+
+  // Atomic conditional debit, logged to the ledger.
+  const debit = await debitCoins(userId, EXTEND_COST, 'hint_used', { sessionId });
+
+  if (!debit.success) {
+    // Roll the extension back — they didn't pay for it.
+    await ActiveQuizSession.updateOne(
+      { _id: sessionId },
+      {
+        $set: { questionDeadlineAt: session.questionDeadlineAt ?? null },
+        $inc: { timeExtensionsUsed: -1 },
+        $pull: { timeExtendedQuestions: qId },
+      },
+    );
+    // 📺 Not enough coins → frontend offers an ad instead
+    return { requiresAd: true, coins: debit.balance };
+  }
 
   const remainingSeconds = Math.max(
     0,
@@ -71,7 +91,8 @@ export async function extendQuestionTime(params: {
 
   return {
     addedSeconds: EXTEND_SECONDS,
-    coins: wallet.coins,
+    coins: debit.balance,
+    cost: EXTEND_COST,
     deadlineAt: newDeadline,
     remainingSeconds,
   };

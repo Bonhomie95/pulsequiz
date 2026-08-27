@@ -1,21 +1,27 @@
 import { Router } from 'express';
-import { requireAdmin } from '../middlewares/requireAdmin';
+import { requireAdmin, requireSuperAdmin } from '../middlewares/requireAdmin';
 import {
   getAllPayouts,
   retryPayout,
   setPrizePool,
   getPrizePools,
+  getPeriodOptions,
   triggerPayout,
   exportPayoutsCSV,
 } from '../controllers/adminPayoutController';
 
 const router = Router();
 
-router.get('/', requireAdmin, getAllPayouts);
-router.get('/csv', requireAdmin, exportPayoutsCSV);
-router.get('/prize-pools', requireAdmin, getPrizePools);
-router.post('/prize-pools', requireAdmin, setPrizePool);
-router.post('/:id/retry', requireAdmin, retryPayout);
-router.post('/trigger', requireAdmin, triggerPayout);
+router.use(requireAdmin);
+
+router.get('/',                getAllPayouts);
+router.get('/prize-pools',     getPrizePools);
+router.get('/period-options',  getPeriodOptions);
+router.get('/export',          requireSuperAdmin, exportPayoutsCSV);
+
+// Everything below moves real money.
+router.post('/:id/retry',      requireSuperAdmin, retryPayout);
+router.post('/prize-pools',    requireSuperAdmin, setPrizePool);
+router.post('/trigger',        requireSuperAdmin, triggerPayout);
 
 export default router;

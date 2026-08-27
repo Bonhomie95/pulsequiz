@@ -17,8 +17,9 @@ import { ChevronLeft, Crown, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { useTheme } from '@/src/theme/useTheme';
-import { api } from '@/src/api/api';
+import { api, errorMessage } from '@/src/api/api';
 import { usePremiumStore } from '@/src/store/usePremiumStore';
+import { logger } from '@/src/utils/logger';
 
 // ─── Plan definitions ─────────────────────────────────────────────────────────
 
@@ -97,7 +98,7 @@ export default function PremiumScreen() {
         }
         setStorePrices(prices);
       } catch (e) {
-        console.warn('[PremiumIAP] init/fetch error:', e);
+        logger.warn('Premium IAP init failed', { error: String(e) });
       } finally {
         if (mounted) setLoadingPrices(false);
       }
@@ -164,9 +165,24 @@ export default function PremiumScreen() {
             router.back();
           }
         } catch (e: any) {
+          const status = e?.response?.status;
+          logger.error('Subscription verification failed', e, { sku, status });
+
+          // Only a 4xx means the receipt was actually rejected. Everything
+          // else — offline, 5xx — is retried automatically next launch,
+          // because the transaction has deliberately not been finished. Telling
+          // every user with a flaky connection to "contact support" turns a
+          // self-healing blip into a support ticket on a paid flow.
+          const terminal = typeof status === 'number' && status >= 400 && status < 500;
+
           Alert.alert(
-            'Verification failed',
-            'Your payment was received but verification failed. Please contact support.',
+            terminal ? 'Verification failed' : 'Almost there',
+            terminal
+              ? errorMessage(
+                  e,
+                  "Your subscription couldn't be verified. If you were charged, contact support and we'll sort it out.",
+                )
+              : "We couldn't reach PulseQuiz to confirm your subscription. It is safe — premium will activate automatically next time you open the app.",
           );
         } finally {
           setLoadingSku(null);
@@ -176,7 +192,11 @@ export default function PremiumScreen() {
 
     const errorSub = IAP.purchaseErrorListener((error: PurchaseError) => {
       if (error.code !== ErrorCode.UserCancelled) {
-        Alert.alert('Purchase failed', error.message ?? 'Please try again.');
+        logger.warn('Store subscription error', { code: error.code });
+        Alert.alert(
+          'Purchase failed',
+          error.message ?? "The store couldn't complete that purchase.",
+        );
       }
       setLoadingSku(null);
       pendingSkuRef.current = null;
@@ -282,7 +302,10 @@ export default function PremiumScreen() {
           <TouchableOpacity
             onPress={() => router.back()}
             style={[s.backBtn, { backgroundColor: theme.colors.surface }]}
-          >
+          
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
             <ChevronLeft size={20} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={[s.headerTitle, { color: theme.colors.text }]}>
@@ -333,7 +356,10 @@ export default function PremiumScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           style={[s.backBtn, { backgroundColor: theme.colors.surface }]}
-        >
+        
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={20} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: theme.colors.text }]}>
@@ -377,6 +403,9 @@ export default function PremiumScreen() {
           return (
             <TouchableOpacity
               key={plan.sku}
+              accessibilityRole="radio"
+              accessibilityLabel={`${plan.label} plan`}
+              accessibilityState={{ selected }}
               onPress={() => setSelectedSku(plan.sku)}
               activeOpacity={0.8}
               style={[
@@ -391,7 +420,7 @@ export default function PremiumScreen() {
                     : theme.colors.border,
                 },
               ]}
-            >
+            hitSlop={8}>
               {plan.badge && (
                 <View
                   style={[
@@ -479,7 +508,10 @@ export default function PremiumScreen() {
               opacity: loadingSku ? 0.6 : 1,
             },
           ]}
-        >
+        
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go premium">
           {loadingSku ? (
             <ActivityIndicator color={theme.colors.primary} />
           ) : (
@@ -494,7 +526,10 @@ export default function PremiumScreen() {
 
         {/* Restore purchases — required by App Store review guidelines */}
         {Platform.OS === 'ios' && (
-          <TouchableOpacity onPress={restore} style={{ padding: 16 }}>
+          <TouchableOpacity onPress={restore} style={{ padding: 16 }}
+            accessibilityRole="button"
+            accessibilityLabel="Restore Purchases"
+            hitSlop={8}>
             <Text
               style={{
                 color: theme.colors.primary,

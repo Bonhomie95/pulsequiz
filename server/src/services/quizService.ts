@@ -14,6 +14,15 @@ const DIFF_TARGET: Record<Diff, number> = {
   hard: 2,
 };
 
+/**
+ * Cap on how many previously-seen question ids we exclude.
+ *
+ * An unbounded $nin array grows with every game a dedicated player finishes,
+ * until the query document itself exceeds Mongo's 16MB limit and every quiz
+ * start fails. Excluding the most recent N is the same experience in practice.
+ */
+const MAX_SEEN_EXCLUSIONS = 300;
+
 /* ---------------- UTIL ---------------- */
 
 function shuffle<T>(arr: T[]): T[] {
@@ -34,18 +43,21 @@ async function fetchUnseen(
   count: number,
 ): Promise<any[]> {
   // How many questions exist at all for this difficulty?
-  const totalAvailable = await QuizQuestion.countDocuments({ category, difficulty });
+  const totalAvailable = await QuizQuestion.countDocuments({ category, difficulty, disabled: { $ne: true } });
 
   // No questions seeded yet for this difficulty — return empty, handled by caller
   if (totalAvailable === 0) return [];
 
   const seen = await UserQuestion.find({ userId, category, difficulty })
     .select('questionId')
+    .sort({ createdAt: -1 })
+    .limit(MAX_SEEN_EXCLUSIONS)
     .lean();
   const seenIds = seen.map((s) => s.questionId);
 
   let qs = await QuizQuestion.find({
     category,
+    disabled: { $ne: true },
     difficulty,
     _id: { $nin: seenIds },
   })
@@ -55,7 +67,7 @@ async function fetchUnseen(
   // Pool exhausted for this difficulty — reset per-difficulty seen history and recycle
   if (qs.length < count) {
     await UserQuestion.deleteMany({ userId, category, difficulty });
-    qs = await QuizQuestion.find({ category, difficulty })
+    qs = await QuizQuestion.find({ category, difficulty, disabled: { $ne: true } })
       .limit(count)
       .lean();
   }
@@ -89,11 +101,14 @@ export async function startQuizSession({
     const pickedIds = new Set(picked.map((p) => p.q._id.toString()));
     const seenAll = await UserQuestion.find({ userId, category })
       .select('questionId')
+      .sort({ createdAt: -1 })
+      .limit(MAX_SEEN_EXCLUSIONS)
       .lean();
     const seenIds = seenAll.map((s) => s.questionId);
 
     const extras = await QuizQuestion.find({
       category,
+      disabled: { $ne: true },
       _id: { $nin: [...seenIds, ...Array.from(pickedIds)] },
     })
       .limit(TOTAL_Q - picked.length)
@@ -107,6 +122,7 @@ export async function startQuizSession({
     const pickedIds = new Set(picked.map((p) => p.q._id.toString()));
     const fallback = await QuizQuestion.find({
       category,
+      disabled: { $ne: true },
       _id: { $nin: Array.from(pickedIds) },
     })
       .limit(TOTAL_Q - picked.length)

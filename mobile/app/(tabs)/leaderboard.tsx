@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  ActivityIndicator,
   FlatList,
+  RefreshControl,
   Image,
   StyleSheet,
   Text,
@@ -11,8 +13,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 
-import { api } from '@/src/api/api';
+import { api, errorMessage } from '@/src/api/api';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { enterImmersiveMode } from '@/src/utils/immersive';
@@ -78,19 +81,25 @@ function CountdownBanner({
     () => getNextPayoutDate(type).getTime() - Date.now(),
   );
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Tab screens stay mounted when you switch tabs, so gate the per-second
+  // ticker and the pulse loop on focus — otherwise they keep running (and
+  // heating the phone) while you're on another tab.
+  const isFocused = useIsFocused();
 
   // Tick every second. Recompute immediately on `type` change so the timer
   // switches instantly instead of showing the previous tab's value for ~1s.
   useEffect(() => {
+    if (!isFocused) return;
     setRemaining(getNextPayoutDate(type).getTime() - Date.now());
     const id = setInterval(() => {
       setRemaining(getNextPayoutDate(type).getTime() - Date.now());
     }, 1000);
     return () => clearInterval(id);
-  }, [type]);
+  }, [type, isFocused]);
 
-  // Pulse the colon separators
+  // Pulse the colon separators (only while the screen is visible)
   useEffect(() => {
+    if (!isFocused) return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -107,7 +116,7 @@ function CountdownBanner({
     );
     loop.start();
     return () => loop.stop();
-  }, []);
+  }, [isFocused, pulseAnim]);
 
   const { days, hours, minutes, seconds } = formatCountdown(remaining);
   const isUrgent = remaining < 24 * 60 * 60 * 1000; // under 24h
@@ -229,6 +238,19 @@ export default function LeaderboardScreen() {
   const [tab, setTab] = useState<Tab>('weekly');
   const [data, setData] = useState<Entry[]>([]);
   const [myIndex, setMyIndex] = useState<number | null>(null);
+  // The board only stores the top 100. `me` carries the caller's real standing
+  // so a player at #412 sees where they are instead of a blank screen.
+  const [me, setMe] = useState<{
+    rank: number | null;
+    points: number;
+    pointsToPaidTier: number | null;
+    pointsToBoard: number | null;
+    outsideBoard?: boolean;
+    inTopList?: boolean;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [prizeInfo, setPrizeInfo] = useState<{
     paidRanks: number;
     totalAmount: number | null;
@@ -252,13 +274,15 @@ export default function LeaderboardScreen() {
     return `${start.toDateString()} – ${end.toDateString()}`;
   }
 
-  useEffect(() => {
-    let mounted = true;
+  const load = useCallback(
+    async (opts: { silent?: boolean } = {}) => {
+      if (!opts.silent) setLoading(true);
+      setError(null);
 
-    (async () => {
       try {
         let list: Entry[] = [];
         let prizeData = null;
+        let standing = null;
 
         if (tab === 'friends') {
           const [friendsRes, lbRes] = await Promise.all([
@@ -276,12 +300,12 @@ export default function LeaderboardScreen() {
           const res = await api.get(`/leaderboard/${tab}`);
           list = res.data?.data ?? [];
           prizeData = res.data?.prizeInfo ?? null;
+          standing = res.data?.me ?? null;
         }
-
-        if (!mounted) return;
 
         setData(list);
         setPrizeInfo(prizeData);
+        setMe(standing);
 
         const idx = list.findIndex((u) => u.userId === userId);
         setMyIndex(idx >= 0 ? idx : null);
@@ -293,21 +317,25 @@ export default function LeaderboardScreen() {
           friction: 6,
         }).start();
         Animated.timing(jumpAnim, {
-          toValue: idx != null && idx >= 3 ? 1 : 0,
+          toValue: idx >= 3 ? 1 : 0,
           duration: 300,
           useNativeDriver: true,
         }).start();
       } catch (e) {
-        console.error(e);
-        setData([]);
-        setMyIndex(null);
+        // A failed fetch used to be swallowed into console.error, leaving an
+        // empty list the user couldn't tell apart from "nobody has played".
+        setError(errorMessage(e, "Couldn't load the leaderboard."));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    })();
+    },
+    [tab, userId, podiumAnim, jumpAnim],
+  );
 
-    return () => {
-      mounted = false;
-    };
-  }, [tab]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   useFocusEffect(
     useCallback(() => {
@@ -392,6 +420,10 @@ export default function LeaderboardScreen() {
             <TouchableOpacity
               key={t}
               onPress={() => setTab(t)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: tab === t }}
+              accessibilityLabel={`${t} leaderboard`}
+              hitSlop={6}
               style={[
                 styles.tab,
                 {
@@ -420,6 +452,7 @@ export default function LeaderboardScreen() {
         </View>
 
         {/* PODIUM */}
+        {!loading && !error && data.length > 0 && (
         <View style={styles.podium}>
           {podium[1] && (
             <AnimatedPodiumCard
@@ -447,6 +480,7 @@ export default function LeaderboardScreen() {
             />
           )}
         </View>
+        )}
 
         {/* JUMP TO ME */}
         {myIndex != null && myIndex >= 3 && (
@@ -466,14 +500,118 @@ export default function LeaderboardScreen() {
               },
             ]}
           >
-            <TouchableOpacity onPress={scrollToMe}>
+            <TouchableOpacity
+              onPress={scrollToMe}
+              accessibilityRole="button"
+              accessibilityLabel="Scroll to my position on the leaderboard"
+              hitSlop={10}
+            >
               <Text style={styles.jumpText}>⬇ Jump to me</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
 
+        {/* YOUR STANDING — shown when the player is outside the visible board */}
+        {me && !me.inTopList && tab !== 'friends' && (
+          <View
+            style={[
+              styles.standingCard,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            ]}
+            accessible
+            accessibilityLabel={
+              me.rank
+                ? `You are ranked ${me.rank} with ${me.points} points`
+                : 'You are not ranked yet this period'
+            }
+          >
+            <Text style={{ color: theme.colors.muted, fontSize: 12, fontWeight: '700' }}>
+              YOUR POSITION
+            </Text>
+            <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '900', marginTop: 4 }}>
+              {me.rank ? `#${me.rank}` : me.points > 0 ? 'Just off the board' : 'Unranked'}
+              <Text style={{ color: theme.colors.muted, fontSize: 14, fontWeight: '700' }}>
+                {'  '}
+                {me.points} {me.points === 1 ? 'point' : 'points'}
+              </Text>
+            </Text>
+
+            {me.points > 0 && me.pointsToBoard != null && me.pointsToBoard > 0 && (
+              <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '700', marginTop: 6 }}>
+                {me.pointsToBoard} more{' '}
+                {me.pointsToBoard === 1 ? 'point' : 'points'} to appear on the board
+              </Text>
+            )}
+
+            {me.pointsToPaidTier != null && me.pointsToPaidTier > 0 && (
+              <Text style={{ color: theme.colors.coin, fontSize: 13, fontWeight: '700', marginTop: 4 }}>
+                {me.pointsToPaidTier} more{' '}
+                {me.pointsToPaidTier === 1 ? 'point' : 'points'} to reach the prize tier
+              </Text>
+            )}
+
+            {me.points === 0 && (
+              <Text style={{ color: theme.colors.muted, fontSize: 13, marginTop: 6 }}>
+                Play a quiz to get on the board.
+              </Text>
+            )}
+          </View>
+        )}
+
+        {/* LOADING */}
+        {loading && (
+          <View style={styles.stateBlock}>
+            <ActivityIndicator color={theme.colors.primary} />
+            <Text style={{ color: theme.colors.muted, marginTop: 10, fontSize: 13 }}>
+              Loading rankings…
+            </Text>
+          </View>
+        )}
+
+        {/* ERROR */}
+        {!loading && error && (
+          <View style={styles.stateBlock}>
+            <Text style={{ fontSize: 34, marginBottom: 10 }}>📡</Text>
+            <Text
+              style={{
+                color: theme.colors.text,
+                fontWeight: '800',
+                fontSize: 15,
+                marginBottom: 6,
+                textAlign: 'center',
+              }}
+            >
+              {error}
+            </Text>
+            <TouchableOpacity
+              onPress={() => load()}
+              style={[styles.retryBtn, { backgroundColor: theme.colors.primary }]}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading the leaderboard"
+              hitSlop={8}
+            >
+              <Text style={{ color: '#fff', fontWeight: '800' }}>Try again</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* EMPTY — nobody has scored yet this period */}
+        {!loading && !error && tab !== 'friends' && data.length === 0 && (
+          <View style={styles.stateBlock}>
+            <Text style={{ fontSize: 40, marginBottom: 12 }}>🏁</Text>
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>
+              Nobody has scored yet
+            </Text>
+            <Text style={{ color: theme.colors.muted, textAlign: 'center', fontSize: 13 }}>
+              {tab === 'all'
+                ? 'Be the first on the all-time board.'
+                : `Play a quiz to take the top spot this ${tab === 'weekly' ? 'week' : 'month'}.`}
+            </Text>
+          </View>
+        )}
+
         {/* EMPTY FRIENDS */}
-        {tab === 'friends' && data.length === 0 && (
+        {!loading && !error && tab === 'friends' && data.length === 0 && (
           <View style={{ alignItems: 'center', padding: 24 }}>
             <Text style={{ fontSize: 40, marginBottom: 12 }}>👥</Text>
             <Text
@@ -501,9 +639,19 @@ export default function LeaderboardScreen() {
         {/* LIST */}
         <FlatList
           ref={listRef}
-          data={rest}
+          data={loading || error ? [] : rest}
           keyExtractor={(i) => i.userId}
           contentContainerStyle={{ paddingBottom: 80 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                load({ silent: true });
+              }}
+              tintColor={theme.colors.primary}
+            />
+          }
           renderItem={({ item, index }) => {
             const rank = index + 4;
             const isMe = item.userId === userId;
@@ -514,6 +662,8 @@ export default function LeaderboardScreen() {
             }
             return (
               <View
+                accessible
+                accessibilityLabel={`Rank ${rank}, ${item.username}, ${item.points} points${isMe ? ', this is you' : ''}`}
                 style={[
                   styles.row,
                   {
@@ -626,6 +776,26 @@ function AnimatedPodiumCard({
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  standingCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 12,
+  },
+  stateBlock: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+  },
+  retryBtn: {
+    marginTop: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
   container: { padding: 20, flex: 1 },
   title: { fontSize: 26, fontWeight: '800', marginBottom: 14 },
 

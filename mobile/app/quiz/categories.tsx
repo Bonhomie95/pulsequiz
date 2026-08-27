@@ -46,7 +46,10 @@ export default function QuizCategories() {
       <TouchableOpacity
         onPress={() => router.replace('/quiz/mode')}
         style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
-      >
+      
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            hitSlop={8}>
         <ChevronLeft size={18} color={theme.colors.text} />
         <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
           Back
@@ -95,7 +98,10 @@ export default function QuizCategories() {
                   borderColor: isLast ? theme.colors.primary : 'transparent',
                 },
               ]}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="Play your last category again"
+            hitSlop={8}>
               {/* Last Played */}
               {isLast && (
                 <View

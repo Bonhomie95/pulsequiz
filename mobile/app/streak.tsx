@@ -31,7 +31,6 @@ const CALENDAR_RANGE = 7; // centered today (-3 to +3)
 export default function StreakScreen() {
   const theme = useTheme();
   const { streak, lastCheckIn, setFromBackend } = useStreakStore();
-  const { addCoins } = useCoinStore();
 
   const [loading, setLoading] = useState(false);
   const [checkedInToday, setCheckedInToday] = useState(false);
@@ -100,7 +99,7 @@ export default function StreakScreen() {
           dayjs(res.data.lastCheckIn).tz(TZ).isSame(dayjs().tz(TZ), 'day')
       );
 
-      addCoins(res.data.coinsAdded);
+      useCoinStore.getState().syncFromServer(res.data);
 
       // setCheckedInToday(true);
       pulse();
@@ -147,7 +146,10 @@ export default function StreakScreen() {
       <TouchableOpacity
         onPress={() => router.replace('/(tabs)/home')}
         style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
-      >
+      
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={8}>
         <ChevronLeft size={18} color={theme.colors.text} />
         <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
           Home
@@ -215,6 +217,11 @@ export default function StreakScreen() {
         {/* CHECK-IN */}
         <TouchableOpacity
           disabled={checkedInToday}
+          accessibilityRole="button"
+          accessibilityLabel={
+            checkedInToday ? 'Already checked in today' : 'Check in for today'
+          }
+          accessibilityState={{ disabled: checkedInToday }}
           onPress={checkIn}
           style={[
             styles.checkIn,
@@ -224,7 +231,7 @@ export default function StreakScreen() {
                 : theme.colors.primary,
             },
           ]}
-        >
+            hitSlop={8}>
           <Text
             style={{
               color: checkedInToday ? theme.colors.muted : '#fff',
@@ -238,7 +245,10 @@ export default function StreakScreen() {
         {/* STREAK FREEZE (FRONTEND READY) */}
         {/* <TouchableOpacity
           style={[styles.freeze, { backgroundColor: theme.colors.surface }]}
-        >
+        
+            accessibilityRole="button"
+            accessibilityLabel="Use Streak Freeze (Coming Soon)"
+            hitSlop={8}>
           <Text style={{ color: theme.colors.text }}>
             Use Streak Freeze (Coming Soon)
           </Text>

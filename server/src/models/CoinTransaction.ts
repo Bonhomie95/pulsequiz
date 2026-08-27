@@ -50,4 +50,6 @@ const CoinTransactionSchema = new Schema<ICoinTransaction>(
 // Immutable - never update, only insert
 CoinTransactionSchema.set('strict', true);
 
+CoinTransactionSchema.index({ userId: 1, createdAt: -1 });
+
 export default model<ICoinTransaction>('CoinTransaction', CoinTransactionSchema);

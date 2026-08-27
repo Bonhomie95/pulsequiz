@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { AuthRequest } from '../middlewares/auth';
-import { requireAdmin } from '../middlewares/requireAdmin';
+import { requireAdmin, requireSuperAdmin } from '../middlewares/requireAdmin';
+import { auditAdmin } from '../utils/adminAudit';
 
 import Tournament from '../models/Tournament';
 
@@ -27,7 +28,7 @@ router.get('/', requireAdmin, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /admin/tournaments
-router.post('/', requireAdmin, async (req: AuthRequest, res: Response) => {
+router.post('/', requireAdmin, requireSuperAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const t = await Tournament.create(req.body);
     return res.status(201).json(t);
@@ -37,7 +38,7 @@ router.post('/', requireAdmin, async (req: AuthRequest, res: Response) => {
 });
 
 // PATCH /admin/tournaments/:id
-router.patch('/:id', requireAdmin, async (req: AuthRequest, res: Response) => {
+router.patch('/:id', requireAdmin, requireSuperAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const t = await Tournament.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     if (!t) return res.status(404).json({ message: 'Not found' });
@@ -48,7 +49,7 @@ router.patch('/:id', requireAdmin, async (req: AuthRequest, res: Response) => {
 });
 
 // DELETE /admin/tournaments/:id
-router.delete('/:id', requireAdmin, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', requireAdmin, requireSuperAdmin, async (req: AuthRequest, res: Response) => {
   try {
     await Tournament.findByIdAndDelete(req.params.id);
     return res.json({ message: 'Deleted' });

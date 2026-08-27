@@ -154,7 +154,15 @@ export default function OnboardingScreen() {
         </View>
 
         {/* Next / Get Started button */}
-        <TouchableOpacity onPress={next} style={styles.nextBtnWrap}>
+        <TouchableOpacity
+          onPress={next}
+          style={styles.nextBtnWrap}
+          accessibilityRole="button"
+          accessibilityLabel={
+            currentIndex < SLIDES.length - 1 ? 'Next slide' : 'Start playing'
+          }
+          hitSlop={8}
+        >
           <LinearGradient
             colors={[theme.colors.primary, theme.colors.secondary]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
@@ -168,7 +176,10 @@ export default function OnboardingScreen() {
 
         {/* Skip */}
         {currentIndex < SLIDES.length - 1 && (
-          <TouchableOpacity onPress={finish} style={{ paddingVertical: 12 }}>
+          <TouchableOpacity onPress={finish} style={{ paddingVertical: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel="Skip for now"
+            hitSlop={8}>
             <Text style={[styles.skipText, { color: theme.colors.muted }]}>Skip for now</Text>
           </TouchableOpacity>
         )}

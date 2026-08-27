@@ -1,9 +1,7 @@
 import { Redirect, Stack, useRouter, useSegments } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 
 import { storage } from '../src/utils/storage';
 import { api, setAuthToken } from '../src/api/api';
@@ -11,8 +9,16 @@ import { useAuthStore } from '../src/store/useAuthStore';
 import { usePremiumStore } from '../src/store/usePremiumStore';
 import { useOnboardingStore } from '../src/store/useOnboardingStore';
 import { startUsageAdTimer } from '@/src/ads/appUsageAd';
+import { initAdsWithConsent } from '@/src/ads/consent';
 import { notificationRouteFor } from '@/src/utils/notificationRoutes';
+import { registerAndSyncPushToken } from '@/src/utils/push';
+import { logger } from '@/src/utils/logger';
+import { initSentry, setSentryUser, wrapWithSentry } from '@/src/utils/sentry';
+import { ErrorBoundary } from '@/src/components/ErrorBoundary';
 import SplashLoader from '@/src/components/SplashLoader';
+
+// Initialize crash reporting as early as possible (module load, before render).
+initSentry();
 
 // ── Notification display behaviour while app is open ─────────────────────────
 Notifications.setNotificationHandler({
@@ -25,35 +31,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// ── Register device for Expo push notifications ───────────────────────────────
-async function registerForPushNotifications(): Promise<string | null> {
-  if (!Device.isDevice) return null; // simulators can't receive push
-
-  const { status: existing } = await Notifications.getPermissionsAsync();
-  let finalStatus = existing;
-
-  if (existing !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') return null;
-
-  // Android requires an explicit notification channel
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'PulseQuiz',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#6366F1',
-    });
-  }
-
-  const { data } = await Notifications.getExpoPushTokenAsync();
-  return data;
-}
-
-export default function RootLayout() {
+function RootLayout() {
   const segments = useSegments();
   const router = useRouter();
   const { user, hydrated, setUser, setHydrated } = useAuthStore();
@@ -70,9 +48,15 @@ export default function RootLayout() {
   const notifRespRef = useRef<any>(null);
 
   useEffect(() => {
+    initAdsWithConsent(); // UMP consent + Mobile Ads SDK init (before any ad)
     startUsageAdTimer();
     hydrateOnboarding();
   }, [hydrateOnboarding]);
+
+  // Tag crash reports with the signed-in user (and clear on logout).
+  useEffect(() => {
+    setSentryUser(user ? { id: user.id, username: user.username } : null);
+  }, [user]);
 
   useEffect(() => {
     let mounted = true;
@@ -89,26 +73,26 @@ export default function RootLayout() {
         const r = await api.get('/auth/me');
         if (!mounted) return;
 
+        // A pre-versioning token gets swapped for a modern short-lived pair on
+        // the first call. Store it, or the old ten-year token keeps being used.
+        if (r.data.token) {
+          await useAuthStore.getState().setSession(r.data.token, r.data.refreshToken);
+        }
+
         setUser(r.data.user);
         checkPremium();
       } catch (e) {
-        console.warn('Auth restore failed, clearing token', e);
+        logger.warn('Auth restore failed, clearing token', e);
         await storage.clearToken();
         setAuthToken(null);
       } finally {
         if (mounted) {
           setHydrated();
-          // Push is fire-and-forget OUTSIDE auth try/catch
-          // A push error must NEVER wipe the auth token
-          registerForPushNotifications()
-            .then((pt) => {
-              if (pt) {
-                api
-                  .post('/push/register', { token: pt, platform: Platform.OS })
-                  .catch(() => {});
-              }
-            })
-            .catch(() => {});
+          // Push is fire-and-forget OUTSIDE the auth try/catch: a push error
+          // must NEVER wipe the auth token. Only register once we have a user.
+          if (useAuthStore.getState().user) {
+            registerAndSyncPushToken();
+          }
         }
       }
     })();
@@ -197,9 +181,13 @@ export default function RootLayout() {
   else if (user && inAuthGroup && !inIdentity) redirect = '/(tabs)/home';
 
   return (
-    <>
+    <ErrorBoundary>
       <Stack screenOptions={{ headerShown: false }} />
       {redirect && <Redirect href={redirect as any} />}
-    </>
+    </ErrorBoundary>
   );
 }
+
+// Sentry.wrap adds navigation/performance instrumentation and an outer error
+// handler around the whole app.
+export default wrapWithSentry(RootLayout);

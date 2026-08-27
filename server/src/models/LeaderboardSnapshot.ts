@@ -11,6 +11,8 @@ export interface LeaderboardEntry {
 
 export interface ILeaderboardSnapshot {
   type: 'weekly' | 'monthly' | 'all';
+  /** Which period the rows describe, e.g. "2026-W08". Null for all-time. */
+  periodLabel?: string | null;
   data: LeaderboardEntry[];
   generatedAt: Date;
 }
@@ -33,13 +35,13 @@ const LeaderboardSnapshotSchema = new Schema<ILeaderboardSnapshot>(
       type: String,
       enum: ['weekly', 'monthly', 'all'],
       required: true,
-      index: true, // 🔥 add index
     },
     data: {
       type: [LeaderboardEntrySchema], // ✅ THIS fixes the error
       required: true,
       default: [], // 🔥 defensive default
     },
+    periodLabel: { type: String, default: null },
     generatedAt: {
       type: Date,
       default: Date.now,
@@ -47,6 +49,9 @@ const LeaderboardSnapshotSchema = new Schema<ILeaderboardSnapshot>(
   },
   { timestamps: false }
 );
+
+// Exactly one snapshot row per type; buildLeaderboard upserts into it.
+LeaderboardSnapshotSchema.index({ type: 1 }, { unique: true });
 
 export default model<ILeaderboardSnapshot>(
   'LeaderboardSnapshot',

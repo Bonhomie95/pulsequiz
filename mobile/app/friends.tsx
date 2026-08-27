@@ -1,6 +1,8 @@
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Platform,
+  KeyboardAvoidingView,
   ActivityIndicator,
   Alert,
   FlatList,
@@ -136,11 +138,17 @@ function ProfilePreview({
         style={styles.modalOverlay}
         activeOpacity={1}
         onPress={onClose}
-      >
+      
+            accessibilityRole="button"
+            accessibilityLabel="View player"
+            hitSlop={8}>
         <TouchableOpacity
           activeOpacity={1}
           style={[styles.modalSheet, { backgroundColor: theme.colors.surface }]}
-        >
+        
+            accessibilityRole="button"
+            accessibilityLabel="View player"
+            hitSlop={8}>
           <View
             style={[
               styles.sheetHandle,
@@ -289,7 +297,10 @@ function ProfilePreview({
                     styles.previewBtn,
                     { backgroundColor: theme.colors.primary },
                   ]}
-                >
+                
+            accessibilityRole="button"
+            accessibilityLabel="Challenge"
+            hitSlop={8}>
                   <Swords size={18} color="#fff" />
                   <Text style={styles.previewBtnText}>Challenge</Text>
                 </TouchableOpacity>
@@ -306,7 +317,10 @@ function ProfilePreview({
                       borderColor: '#FF5C5C',
                     },
                   ]}
-                >
+                
+            accessibilityRole="button"
+            accessibilityLabel="Unfriend"
+            hitSlop={8}>
                   <UserMinus size={16} color="#FF5C5C" />
                   <Text
                     style={{
@@ -351,7 +365,10 @@ function ProfilePreview({
                   styles.previewBtn,
                   { backgroundColor: theme.colors.primary },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Add Friend"
+            hitSlop={8}>
                 <UserPlus size={18} color="#fff" />
                 <Text style={styles.previewBtnText}>Add Friend</Text>
               </TouchableOpacity>
@@ -368,7 +385,10 @@ function ProfilePreview({
                   styles.previewDangerBtn,
                   { borderColor: theme.colors.border },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Block User"
+            hitSlop={8}>
                 <ShieldOff size={14} color={theme.colors.muted} />
                 <Text
                   style={{
@@ -388,7 +408,10 @@ function ProfilePreview({
                 styles.previewCancelBtn,
                 { borderColor: theme.colors.border },
               ]}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="Cancel"
+            hitSlop={8}>
               <Text style={{ color: theme.colors.muted, fontWeight: '600' }}>
                 Cancel
               </Text>
@@ -600,7 +623,10 @@ export default function FriendsScreen() {
 
       {/* HEADER */}
       <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
@@ -634,6 +660,11 @@ export default function FriendsScreen() {
         ).map((t) => (
           <TouchableOpacity
             key={t.key}
+            accessibilityRole="tab"
+            // The visible label leads with an emoji, which a screen reader
+            // announces literally; strip it for the spoken label.
+            accessibilityLabel={t.label.replace(/^\P{L}+/u, '').trim()}
+            accessibilityState={{ selected: activeTab === t.key }}
             onPress={() => setActiveTab(t.key as ActiveTab)}
             style={[
               styles.tab,
@@ -642,7 +673,7 @@ export default function FriendsScreen() {
                 borderBottomWidth: 2.5,
               },
             ]}
-          >
+            hitSlop={8}>
             <Text
               style={[
                 styles.tabLabel,
@@ -662,6 +693,11 @@ export default function FriendsScreen() {
 
       {/* ── FRIENDS TAB ── */}
       {activeTab === 'friends' && (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+          style={{ flex: 1 }}
+        >
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
           <View
             style={[
@@ -682,7 +718,10 @@ export default function FriendsScreen() {
                   styles.roomBtn,
                   { backgroundColor: theme.colors.primary },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Create Room"
+            hitSlop={8}>
                 <Text style={styles.roomBtnText}>Create Room</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -691,7 +730,10 @@ export default function FriendsScreen() {
                   styles.roomBtnOutline,
                   { borderColor: theme.colors.primary },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Join Room"
+            hitSlop={8}>
                 <Text
                   style={[
                     styles.roomBtnOutlineText,
@@ -724,7 +766,10 @@ export default function FriendsScreen() {
                   styles.emptyBtn,
                   { backgroundColor: theme.colors.primary },
                 ]}
-              >
+              
+            accessibilityRole="button"
+            accessibilityLabel="Find Friends"
+            hitSlop={8}>
                 <Text style={{ color: '#fff', fontWeight: '800' }}>
                   Find Friends
                 </Text>
@@ -743,7 +788,10 @@ export default function FriendsScreen() {
                     { backgroundColor: theme.colors.surface },
                   ]}
                   activeOpacity={0.8}
-                >
+                
+            accessibilityRole="button"
+            accessibilityLabel="Challenge"
+            hitSlop={8}>
                   <View>
                     <View
                       style={[
@@ -784,7 +832,10 @@ export default function FriendsScreen() {
                       },
                     ]}
                     disabled={f.isInGame}
-                  >
+                  
+            accessibilityRole="button"
+            accessibilityLabel="Challenge"
+            hitSlop={8}>
                     <Swords size={14} color="#fff" />
                     <Text style={styles.challengeBtnText}>Challenge</Text>
                   </TouchableOpacity>
@@ -793,6 +844,7 @@ export default function FriendsScreen() {
             })
           )}
         </ScrollView>
+        </KeyboardAvoidingView>
       )}
 
       {/* ── SEARCH TAB ── */}
@@ -820,7 +872,12 @@ export default function FriendsScreen() {
             {searching ? (
               <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : searchQuery.length > 0 ? (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+                hitSlop={8}
+              >
                 <X size={16} color={theme.colors.muted} />
               </TouchableOpacity>
             ) : null}
@@ -877,7 +934,10 @@ export default function FriendsScreen() {
                   ]}
                   activeOpacity={0.8}
                   disabled={isBlocked}
-                >
+                
+            accessibilityRole="button"
+            accessibilityLabel="Blocked"
+            hitSlop={8}>
                   <View>
                     <View
                       style={[
@@ -995,8 +1055,10 @@ export default function FriendsScreen() {
                   </Text>
                   <TouchableOpacity
                     onPress={() => declineRequest(req)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Decline friend request"
                     style={styles.declineBtn}
-                  >
+            hitSlop={8}>
                     <X size={16} color="#FF5C5C" />
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -1005,7 +1067,10 @@ export default function FriendsScreen() {
                       styles.acceptBtn,
                       { backgroundColor: theme.colors.primary },
                     ]}
-                  >
+                  
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Confirm">
                     <Check size={16} color="#fff" />
                   </TouchableOpacity>
                 </View>

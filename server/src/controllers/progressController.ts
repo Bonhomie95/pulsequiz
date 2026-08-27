@@ -6,6 +6,20 @@ import CoinWallet from '../models/CoinWallet';
 import Progress from '../models/Progress';
 import Streak from '../models/Streak';
 
+/**
+ * The player's IANA timezone, sent by the client so the streak day boundary
+ * matches their local midnight instead of a single hardcoded zone.
+ */
+function readTimezone(req: { body?: any; headers: Record<string, any> }): string | null {
+  const fromBody = typeof req.body?.timezone === 'string' ? req.body.timezone : null;
+  const fromHeader =
+    typeof req.headers['x-timezone'] === 'string' ? (req.headers['x-timezone'] as string) : null;
+  const tz = fromBody ?? fromHeader;
+  // IANA zone names are conservative: letters, digits, +-_ and /.
+  return tz && /^[A-Za-z0-9_+\-\/]{1,64}$/.test(tz) ? tz : null;
+}
+
+
 const QuizSchema = z.object({
   category: z.string(),
   correct: z.number().min(0),
@@ -15,7 +29,7 @@ const QuizSchema = z.object({
 export async function dailyCheckIn(req: AuthRequest, res: Response) {
   if (!req.userId) return res.status(401).json({ message: 'Unauthorized' });
 
-  const result = await checkInStreak(req.userId);
+  const result = await checkInStreak(req.userId, readTimezone(req));
   return res.json(result);
 }
 

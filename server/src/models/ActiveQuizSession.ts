@@ -25,6 +25,16 @@ export interface IActiveQuizSession {
   currentQuestionId?: Types.ObjectId;
   questionDeadlineAt?: Date;
   tournamentId?: Types.ObjectId;
+
+  /**
+   * Set once the result has been scored and banked.
+   *
+   * This is deliberately NOT `finished`: the answer handler already sets that
+   * the moment a run ends (a wrong answer, or the tenth correct one), so the
+   * client always calls /quiz/finish on an already-finished session. Claiming
+   * on `finished` would mean no quiz ever scored.
+   */
+  resultAppliedAt?: Date | null;
 }
 
 const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
@@ -79,6 +89,7 @@ const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
     currentQuestionId: { type: Schema.Types.ObjectId, default: null },
     questionDeadlineAt: { type: Date, default: null },
     tournamentId: { type: Schema.Types.ObjectId, ref: 'Tournament', default: null },
+    resultAppliedAt: { type: Date, default: null },
 
     expiresAt: {
       type: Date,

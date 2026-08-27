@@ -73,6 +73,29 @@ export const purchaseLimiter = limiter({
   message: 'Too many purchase verification attempts. Try again later.',
 });
 
+/** Provider callbacks — generous, but not unbounded. Keyed by IP. */
+export const webhookLimiter = limiter({
+  windowMs: MINUTE,
+  max: Number(process.env.RATE_LIMIT_WEBHOOK_MAX || 600),
+  message: 'Too many webhook calls.',
+});
+
+/** Room joins — a short code is enumerable, so cap guessing attempts. */
+export const roomJoinLimiter = limiter({
+  windowMs: 10 * MINUTE,
+  max: Number(process.env.RATE_LIMIT_ROOM_JOIN_MAX || 20),
+  byUser: true,
+  message: 'Too many room join attempts. Try again in a few minutes.',
+});
+
+/** Payout-address changes — rare by nature, and a takeover target. */
+export const walletUpdateLimiter = limiter({
+  windowMs: 24 * HOUR,
+  max: Number(process.env.RATE_LIMIT_WALLET_UPDATE_MAX || 5),
+  byUser: true,
+  message: 'Too many payout address changes. Try again tomorrow.',
+});
+
 /**
  * Economy / social actions that mint coins or spam other users
  * (referral apply, friend requests, reports, room create/join, ad rewards).

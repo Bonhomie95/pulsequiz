@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { verifyJwt } from '../utils/jwt';
+import { verifyAccessToken } from '../utils/jwt';
 import User from '../models/User';
 
 /**
@@ -7,6 +7,8 @@ import User from '../models/User';
  */
 export interface AuthRequest extends Request {
   userId?: string;
+  /** The caller presented a pre-versioning token — see verifyAccessToken. */
+  legacyToken?: boolean;
 }
 
 /** Only refresh lastSeenAt at most once per this window (per user). */
@@ -14,7 +16,11 @@ const LAST_SEEN_THROTTLE_MS = 5 * 60 * 1000;
 
 /**
  * Require authenticated user via Bearer JWT.
- * Also refreshes lastSeenAt and rejects banned accounts.
+ *
+ * Beyond signature validation this checks three things against the user
+ * document: the account still exists, it isn't banned or deleted, and the
+ * token's version claim still matches. That last check is what makes logout
+ * and forced sign-out actually revoke access.
  */
 export async function requireAuth(
   req: AuthRequest,
@@ -30,25 +36,31 @@ export async function requireAuth(
   const token = header.slice(7).trim();
 
   let userId: string;
+  let tokenVersion: number;
+  let legacy = false;
   try {
-    const decoded = verifyJwt<{ userId?: string }>(token);
-    if (!decoded?.userId) {
-      return res.status(401).json({ message: 'Invalid token payload' });
-    }
+    const decoded = verifyAccessToken(token);
     userId = decoded.userId;
+    tokenVersion = decoded.tv;
+    legacy = decoded.legacy;
   } catch {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
   try {
-    // One cheap read for the ban flag + last-seen timestamp.
+    // One cheap indexed read for the ban flag, token version and last-seen.
     const user = await User.findById(userId, {
       isBanned: 1,
       lastSeenAt: 1,
+      tokenVersion: 1,
+      deletedAt: 1,
     }).lean();
 
-    if (!user) {
+    if (!user || user.deletedAt) {
       return res.status(401).json({ message: 'Unauthorized' });
+    }
+    if ((user.tokenVersion ?? 0) !== tokenVersion) {
+      return res.status(401).json({ message: 'Session expired' });
     }
     if (user.isBanned) {
       return res.status(403).json({ message: 'Account banned' });
@@ -67,5 +79,6 @@ export async function requireAuth(
   }
 
   req.userId = userId;
+  req.legacyToken = legacy;
   next();
 }

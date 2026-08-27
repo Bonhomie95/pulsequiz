@@ -16,6 +16,11 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        // Suspend the React tree of tabs that aren't in front. Tab screens stay
+        // mounted (state preserved), but their renders/animations are frozen
+        // via react-native-screens while backgrounded — so an idle tab no
+        // longer burns CPU/GPU behind the active one. Big battery/heat win.
+        freezeOnBlur: true,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.muted,
         tabBarStyle: {
@@ -51,6 +56,8 @@ export default function TabsLayout() {
           tabBarButton: () => (
             <TouchableOpacity
               onPress={() => router.push('/quiz/categories')}
+              accessibilityRole="button"
+              accessibilityLabel="Start a quiz"
               style={{
                 marginTop: -24,
                 backgroundColor: theme.colors.primary,

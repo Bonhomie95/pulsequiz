@@ -126,7 +126,11 @@ export default function Users() {
   const [viewUser, setViewUser] = useState<User | null>(null);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
-  const [editFields, setEditFields] = useState({ username: '', coins: 0 });
+  const [editFields, setEditFields] = useState({ username: '' });
+  // Balances are adjusted by a signed delta with a reason, not overwritten.
+  // A direct `$set` left no ledger entry, which silently broke reconciliation
+  // for that account forever.
+  const [coinAdjust, setCoinAdjust] = useState({ delta: '', reason: '' });
   const [saving, setSaving] = useState(false);
   const [banning, setBanning] = useState<string | null>(null);
 
@@ -193,7 +197,8 @@ export default function Users() {
 
   const openEdit = (u: User) => {
     setEditUser(u);
-    setEditFields({ username: u.username, coins: u.coins });
+    setEditFields({ username: u.username });
+    setCoinAdjust({ delta: '', reason: '' });
   };
 
   const saveEdit = async () => {
@@ -201,6 +206,19 @@ export default function Users() {
     setSaving(true);
     try {
       await adminApi.patch(`/admin/users/${editUser._id}`, editFields);
+
+      const delta = Number(coinAdjust.delta);
+      if (delta) {
+        if (!coinAdjust.reason.trim()) {
+          alert('A reason is required for any balance adjustment.');
+          return;
+        }
+        await adminApi.post(`/admin/users/${editUser._id}/coins`, {
+          delta,
+          reason: coinAdjust.reason.trim(),
+        });
+      }
+
       setEditUser(null);
       fetchUsers();
     } catch (e: any) {
@@ -504,22 +522,44 @@ export default function Users() {
                 className="w-full bg-gray-800 border border-gray-700 focus:border-indigo-500 rounded-lg px-3 py-2 text-sm outline-none transition"
               />
             </div>
-            <div>
+            <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-3">
               <label className="text-xs text-gray-400 block mb-1">
-                Coin Balance (direct override)
+                Adjust coin balance
               </label>
+              <p className="mb-2 text-[11px] leading-relaxed text-gray-500">
+                Current balance:{' '}
+                <span className="font-mono text-gray-300">
+                  {editUser.coins.toLocaleString()}
+                </span>
+                . Enter a signed change — <span className="font-mono">250</span> to
+                grant, <span className="font-mono">-250</span> to remove. Every
+                adjustment writes a ledger entry and an audit record.
+              </p>
               <input
                 type="number"
-                min={0}
-                value={editFields.coins}
+                placeholder="0"
+                value={coinAdjust.delta}
                 onChange={(e) =>
-                  setEditFields((f) => ({
-                    ...f,
-                    coins: Number(e.target.value),
-                  }))
+                  setCoinAdjust((c) => ({ ...c, delta: e.target.value }))
+                }
+                className="w-full bg-gray-800 border border-gray-700 focus:border-indigo-500 rounded-lg px-3 py-2 text-sm outline-none transition mb-2"
+              />
+              <input
+                placeholder="Reason (required for any change)"
+                value={coinAdjust.reason}
+                onChange={(e) =>
+                  setCoinAdjust((c) => ({ ...c, reason: e.target.value }))
                 }
                 className="w-full bg-gray-800 border border-gray-700 focus:border-indigo-500 rounded-lg px-3 py-2 text-sm outline-none transition"
               />
+              {Number(coinAdjust.delta) !== 0 && coinAdjust.delta !== '' && (
+                <p className="mt-2 text-[11px] text-gray-400">
+                  New balance will be{' '}
+                  <span className="font-mono text-gray-200">
+                    {(editUser.coins + Number(coinAdjust.delta)).toLocaleString()}
+                  </span>
+                </p>
+              )}
             </div>
             <button
               onClick={saveEdit}
@@ -542,7 +582,8 @@ export default function Users() {
             </p>
             <p className="font-bold text-lg mb-4">@{deleteUser.username}</p>
             <p className="text-gray-500 text-sm mb-6">
-              This will delete their wallet and subscription. Purchases and quiz
+              This anonymises the account and deletes their quiz history,
+              challenges, friendships and devices. The coin ledger, purchases
               sessions are preserved for audit.
             </p>
             <div className="flex gap-3">

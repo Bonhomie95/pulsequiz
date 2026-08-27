@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { STORAGE_KEYS } from '../constants/storageKeys';
-// import { useCoinStore } from './useCoinStore';
 
 type StreakState = {
   streak: number;
@@ -11,7 +10,7 @@ type StreakState = {
   setFromBackend: (streak: number, lastCheckIn: string | null) => void;
 };
 
-export const useStreakStore = create<StreakState>((set, get) => ({
+export const useStreakStore = create<StreakState>((set) => ({
   streak: 0,
   lastCheckIn: null,
 
@@ -35,32 +34,4 @@ export const useStreakStore = create<StreakState>((set, get) => ({
 
     set({ streak, lastCheckIn });
   },
-
-  // checkInToday: () => {
-  //   const today = new Date().toDateString();
-  //   const last = get().lastCheckIn;
-
-  //   if (last === today) return;
-
-  //   const yesterday = new Date(Date.now() - 86400000).toDateString();
-  //   const nextStreak = last === yesterday ? get().streak + 1 : 1;
-
-  //   const base = 10 + nextStreak * 10;
-  //   let bonus = 0;
-
-  //   if (nextStreak === 10) bonus = 200;
-  //   if (nextStreak === 20) bonus = 500;
-  //   if (nextStreak === 30) bonus = 1000;
-  //   if (nextStreak === 40) bonus = 2000;
-  //   if (nextStreak === 50) bonus = 5000;
-
-  //   useCoinStore.getState().addCoins(base + bonus);
-
-  //   AsyncStorage.multiSet([
-  //     [STORAGE_KEYS.STREAK, String(nextStreak)],
-  //     [STORAGE_KEYS.LAST_CHECKIN, today],
-  //   ]);
-
-  //   set({ streak: nextStreak, lastCheckIn: today });
-  // },
 }));

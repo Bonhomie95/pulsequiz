@@ -50,8 +50,10 @@ class SoundManager {
   private bg: Audio.Sound | null = null;
   private bgLoaded = false;
 
-  // Effects sound (short sounds)
-  private fx: Audio.Sound | null = null;
+  // Preloaded pool of short effect sounds — loaded once and replayed, so we
+  // never load/unload a native player on every tap (that churn heats the
+  // phone during active play).
+  private fxPool: Partial<Record<SoundKey, Audio.Sound>> = {};
 
   private muted = false;
   private masterVolume = 1;
@@ -73,7 +75,25 @@ class SoundManager {
       shouldDuckAndroid: true,
     });
 
+    await this.preloadEffects();
+
     AppState.addEventListener('change', this.onAppStateChange);
+  }
+
+  /** Load every short effect once so `play()` can just replay it. */
+  private async preloadEffects() {
+    await Promise.all(
+      (Object.keys(SOUNDS) as SoundKey[]).map(async (key) => {
+        if (this.fxPool[key]) return;
+        try {
+          const s = new Audio.Sound();
+          await s.loadAsync(SOUNDS[key].source, { shouldPlay: false });
+          this.fxPool[key] = s;
+        } catch {
+          // Leave it out of the pool; play() will lazily load it on demand.
+        }
+      }),
+    );
   }
 
   /* ---------------- SETTINGS ---------------- */
@@ -176,32 +196,32 @@ class SoundManager {
     this.lastPlayedAt[key] = now;
 
     try {
-      // Create a fresh sound per effect (avoids conflicts)
-      const s = new Audio.Sound();
-      await s.loadAsync(cfg.source, { shouldPlay: false });
+      let s = this.fxPool[key];
+      if (!s) {
+        // Not preloaded (or a prior load failed) — load once and keep it.
+        s = new Audio.Sound();
+        await s.loadAsync(cfg.source, { shouldPlay: false });
+        this.fxPool[key] = s;
+      }
 
       const vol =
         (cfg.baseVolume ?? 1) * this.masterVolume * this.effectsVolume;
       await s.setVolumeAsync(vol);
-      await s.playAsync();
-
-      s.setOnPlaybackStatusUpdate((st: any) => {
-        if (st?.didJustFinish) {
-          s.unloadAsync().catch(() => {});
-        }
-      });
-
-      this.fx = s;
-    } catch {}
+      // replayAsync rewinds to 0 and plays — no per-tap load/unload churn.
+      await s.replayAsync();
+    } catch {
+      // Pooled instance is in a bad state — drop it so the next call reloads.
+      this.fxPool[key] = undefined;
+    }
   }
 
   async stopEffects() {
-    if (!this.fx) return;
-    try {
-      await this.fx.stopAsync();
-      await this.fx.unloadAsync();
-    } catch {}
-    this.fx = null;
+    // Stop any playing effects but keep them loaded for reuse.
+    await Promise.all(
+      Object.values(this.fxPool).map((s) =>
+        s?.stopAsync().catch(() => {}),
+      ),
+    );
   }
 
   /* ---------------- APP STATE ---------------- */
@@ -219,18 +239,3 @@ class SoundManager {
 }
 
 export const soundManager = SoundManager.I;
-
-// const instance = SoundManager.I;
-
-// export const soundManager = {
-//   preload: (...args: Parameters<typeof instance.preload>) =>
-//     instance.preload(...args),
-
-//   play: (...args: Parameters<typeof instance.play>) => instance.play(...args),
-
-//   stop: () => instance.stop?.(),
-
-//   setMuted: (v: boolean) => instance.setMuted(v),
-//   setMasterVolume: (v: number) => instance.setMasterVolume(v),
-//   setEffectsVolume: (v: number) => instance.setEffectsVolume(v),
-// };

@@ -13,6 +13,7 @@
 import type { Server, Socket } from 'socket.io';
 import { Types } from 'mongoose';
 import { SOCKET_EVENTS } from './events';
+import { safeHandler } from './safeHandler';
 import Room from '../models/Room';
 import PvPMatch from '../models/PvPMatch';
 import User from '../models/User';
@@ -23,6 +24,35 @@ import { lockWager } from '../services/coinService';
 const roomSockets = new Map<string, { hostSocketId: string; guestSocketId?: string }>();
 // userId → roomCode they are hosting/in
 const userRoom = new Map<string, string>();
+
+/**
+ * Room codes are short and therefore guessable. Cap how many a single socket
+ * may try before we stop answering, so an attacker can't walk the space and
+ * drop into a stranger's wagered private match.
+ */
+const MAX_JOIN_ATTEMPTS = 10;
+const ATTEMPT_WINDOW_MS = 10 * 60_000;
+const joinAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function tooManyAttempts(userId: string): boolean {
+  const now = Date.now();
+  const record = joinAttempts.get(userId);
+
+  if (!record || now > record.resetAt) {
+    joinAttempts.set(userId, { count: 1, resetAt: now + ATTEMPT_WINDOW_MS });
+    return false;
+  }
+  record.count += 1;
+  return record.count > MAX_JOIN_ATTEMPTS;
+}
+
+/** Drop every handle a finished/abandoned room was holding. */
+function releaseRoom(roomCode: string, userIds: string[]) {
+  roomSockets.delete(roomCode);
+  for (const uid of userIds) {
+    if (userRoom.get(uid) === roomCode) userRoom.delete(uid);
+  }
+}
 
 async function snapshotPlayer(userId: string) {
   const [user, progress] = await Promise.all([
@@ -41,12 +71,24 @@ async function snapshotPlayer(userId: string) {
 export function registerRoomHandlers(io: Server, socket: Socket) {
   const userId = socket.data.userId as string;
 
-  socket.on(SOCKET_EVENTS.ROOM_JOIN, async ({ code }: { code: string }) => {
-    if (!code) return;
-    const roomCode = code.toUpperCase().trim();
+  socket.on(SOCKET_EVENTS.ROOM_JOIN, safeHandler(socket, SOCKET_EVENTS.ROOM_JOIN, async ({ code }: { code?: string }) => {
+    const roomCode = String(code ?? '').toUpperCase().trim();
+    if (!/^[A-Z0-9]{4,10}$/.test(roomCode)) {
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'That room code looks wrong' });
+      return;
+    }
 
     const room = await Room.findOne({ code: roomCode, status: 'waiting' });
+
+    // Rate-limit misses only, so a legitimate host reconnecting repeatedly
+    // isn't punished for it.
     if (!room) {
+      if (tooManyAttempts(userId)) {
+        socket.emit(SOCKET_EVENTS.ERROR, {
+          message: 'Too many room code attempts. Try again in a few minutes.',
+        });
+        return;
+      }
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Room not found or already started' });
       return;
     }
@@ -114,10 +156,19 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       );
       if (!lockResult.success) {
         await PvPMatch.deleteOne({ _id: match._id });
-        room.status = 'cancelled';
+        // Put the room back to 'waiting' rather than cancelling it — the host
+        // did nothing wrong, and a different guest may still be able to cover.
+        room.status = 'waiting';
+        room.guestId = null as any;
         await room.save();
-        io.to(`room:${roomCode}`).emit(SOCKET_EVENTS.ROOM_CANCELLED, {
-          reason: `Wager failed: ${lockResult.error}`,
+
+        const whoIsShort =
+          lockResult.error === 'player_a_insufficient' ? 'The host' : 'You';
+        socket.emit(SOCKET_EVENTS.ERROR, {
+          message: `${whoIsShort} ${whoIsShort === 'You' ? "don't" : "doesn't"} have the ${room.wager} coins for this wager.`,
+        });
+        io.to(existing.hostSocketId).emit(SOCKET_EVENTS.ERROR, {
+          message: 'A player tried to join but the wager could not be staked.',
         });
         return;
       }
@@ -151,22 +202,27 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     });
 
     // Cleanup room tracking
-    roomSockets.delete(roomCode);
-    userRoom.delete(room.hostId.toString());
-    userRoom.delete(userId);
-  });
+    releaseRoom(roomCode, [room.hostId.toString(), userId]);
+  }));
 
   socket.on('disconnect', () => {
+    joinAttempts.delete(userId);
+
     const code = userRoom.get(userId);
     if (!code) return;
     userRoom.delete(userId);
 
     const entry = roomSockets.get(code);
-    if (entry?.hostSocketId === socket.id) {
-      // Host disconnected while waiting — cancel room
+    if (!entry) return;
+
+    if (entry.hostSocketId === socket.id) {
+      // Host left while waiting — the room can't proceed.
       Room.updateOne({ code, status: 'waiting' }, { status: 'cancelled' }).catch(() => {});
       io.to(`room:${code}`).emit(SOCKET_EVENTS.ROOM_CANCELLED, { reason: 'host_disconnected' });
       roomSockets.delete(code);
+    } else if (entry.guestSocketId === socket.id) {
+      // Guest left before the match started — free the slot for someone else.
+      entry.guestSocketId = undefined;
     }
   });
 }

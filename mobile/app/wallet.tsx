@@ -25,7 +25,8 @@ import { useTheme } from '@/src/theme/useTheme';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
-import { api } from '@/src/api/api';
+import { PayoutChecklist, type Eligibility } from '@/src/components/PayoutChecklist';
+import { api, errorMessage } from '@/src/api/api';
 import { showRewardedAd } from '@/src/ads/admob';
 import { useAppStateStore } from '@/src/store/useAppStateStore';
 import { CoinRewardToast } from '@/src/components/CoinRewardToast';
@@ -60,6 +61,8 @@ export default function WalletScreen() {
   const router = useRouter();
   const { coins } = useCoinStore();
   const [payoutData, setPayoutData] = useState<PayoutData | null>(null);
+  const [eligibility, setEligibility] = useState<Eligibility | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [adLoading, setAdLoading] = useState(false);
@@ -67,10 +70,17 @@ export default function WalletScreen() {
 
   const fetchPayouts = useCallback(async () => {
     try {
-      const res = await api.get('/payouts/mine');
-      setPayoutData(res.data);
+      setFetchError(null);
+      const [payouts, elig] = await Promise.all([
+        api.get('/payouts/mine'),
+        // Same checklist the payout job runs, so the user can see exactly what
+        // is still blocking them rather than being silently skipped.
+        api.get('/settings/payout-eligibility'),
+      ]);
+      setPayoutData(payouts.data);
+      setEligibility(elig.data);
     } catch (e) {
-      console.warn('Payout fetch failed', e);
+      setFetchError(errorMessage(e, "Couldn't load your earnings."));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -79,7 +89,7 @@ export default function WalletScreen() {
 
   useEffect(() => {
     fetchPayouts();
-  }, []);
+  }, [fetchPayouts]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -95,18 +105,26 @@ export default function WalletScreen() {
         Alert.alert('Ad unavailable', 'No ad available right now. Try again later.');
         return;
       }
-      // Then credit server-side
+      // Then credit server-side. With AdMob server-side verification enabled
+      // the coins arrive from Google's callback rather than this response, so
+      // send the user to the dedicated screen which knows how to wait for it.
       const res = await api.post('/ads/reward');
-      if (res.data?.coins !== undefined) {
+      useAppStateStore.getState().markRewardedAdWatched();
+
+      if (res.data?.pending) {
+        Alert.alert(
+          'Reward on its way',
+          'The ad network is confirming your reward — your balance will update shortly.',
+        );
+      } else if (res.data?.coins !== undefined) {
         useCoinStore.getState().setCoins(res.data.coins);
-        useAppStateStore.getState().markRewardedAdWatched();
-        setCoinToast({ visible: true, coins: res.data.coinsEarned ?? 50 });
+        setCoinToast({ visible: true, coins: res.data.added ?? 0 });
       } else if (res.data?.message) {
         Alert.alert('Try again', res.data.message);
       }
     } catch (e: any) {
       if (e.response?.status === 429) {
-        Alert.alert('Daily limit reached', 'Come back tomorrow for more free coins!');
+        Alert.alert('Daily limit reached', errorMessage(e, 'Come back tomorrow for more free coins!'));
       } else {
         Alert.alert('Error', 'Could not load ad. Try again later.');
       }
@@ -143,7 +161,10 @@ export default function WalletScreen() {
       />
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
+            accessibilityRole="button"
+            hitSlop={8}
+            accessibilityLabel="Go back">
           <ChevronLeft size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.text }]}>Wallet</Text>
@@ -167,6 +188,31 @@ export default function WalletScreen() {
             Available Coins
           </Text>
         </View>
+
+        {/* PAYOUT ELIGIBILITY — what is still blocking a payout, if anything */}
+        <PayoutChecklist eligibility={eligibility} />
+
+        {fetchError && (
+          <View
+            style={[
+              styles.warningCard,
+              { backgroundColor: theme.colors.danger + '15', borderColor: theme.colors.danger + '40' },
+            ]}
+          >
+            <Text style={{ color: theme.colors.danger, fontWeight: '700', fontSize: 13 }}>
+              {fetchError}
+            </Text>
+            <TouchableOpacity
+              onPress={fetchPayouts}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading earnings"
+              hitSlop={8}
+              style={{ marginTop: 8 }}
+            >
+              <Text style={{ color: theme.colors.primary, fontWeight: '800' }}>Try again</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* USDT EARNINGS CARD */}
         {payoutData && (
@@ -232,7 +278,10 @@ export default function WalletScreen() {
             ]}
             onPress={handleWatchAd}
             disabled={adLoading}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Watch Video"
+            hitSlop={8}>
             {adLoading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
@@ -255,7 +304,10 @@ export default function WalletScreen() {
               },
             ]}
             onPress={() => router.push('/earn/buy')}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Buy Coins"
+            hitSlop={8}>
             <ShoppingBag size={22} color={theme.colors.primary} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.actionTitle, { color: theme.colors.text }]}>

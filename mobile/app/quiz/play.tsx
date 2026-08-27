@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Image,
   Platform,
@@ -21,7 +22,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { api } from '@/src/api/api';
+import { api, errorMessage } from '@/src/api/api';
 import { UserAvatar } from '@/src/components/UserAvatar';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useAuthStore } from '@/src/store/useAuthStore';
@@ -29,6 +30,8 @@ import { useTheme } from '@/src/theme/useTheme';
 import { soundManager } from '@/src/audio/SoundManager';
 import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
 import { useAppStateStore } from '@/src/store/useAppStateStore';
+import { ReportQuestionButton } from '@/src/components/ReportQuestionSheet';
+import { logger } from '@/src/utils/logger';
 
 const TIME_PER_QUESTION = 15;
 const HINT_COSTS = [10, 20, 50] as const;
@@ -228,7 +231,7 @@ export default function QuizPlay() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
     } catch (e) {
-      console.warn('Extend time failed', e);
+      logger.warn('Extend time failed', { error: String(e) });
     }
   }, [sessionId, q, locked]);
 
@@ -322,7 +325,7 @@ export default function QuizPlay() {
         setHintsUsed(0);
       })
       .catch((err) => {
-        console.error('Quiz start failed', err?.response?.data || err?.message);
+        logger.error('Quiz start failed', err);
         router.back();
       });
 
@@ -376,16 +379,24 @@ export default function QuizPlay() {
 
   const finishQuiz = useCallback(async () => {
     if (!sessionId) return;
+
+    // /quiz/finish is idempotent server-side — a repeated call replays the
+    // stored result rather than scoring twice — so it is safe to retry. That
+    // matters: dumping the player on the home screen because the network
+    // blipped at the exact moment their run ended loses the whole result.
     try {
-      const res: any = await api.post('/quiz/finish', { sessionId });
-      router.replace({
-        pathname: '/quiz/result',
-        params: res.data,
-      });
+      const res: any = await api.post('/quiz/finish', { sessionId }, { retry: true } as any);
+      router.replace({ pathname: '/quiz/result', params: res.data });
+      return;
     } catch (e) {
-      console.error('Finish quiz failed', e);
-      router.replace('/(tabs)/home');
+      logger.error('Finish quiz failed', e, { sessionId });
     }
+
+    Alert.alert(
+      'Your score is saved',
+      "We couldn't load your results screen just now. Your points have been recorded — check your profile in a moment.",
+      [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }],
+    );
   }, [router, sessionId]);
 
   const lockAndReveal = useCallback(
@@ -487,11 +498,33 @@ export default function QuizPlay() {
         setTimeout(() => {
           finishQuiz();
         }, 1100);
-      } catch (e) {
-        console.error('Submit answer failed', e);
-        // unlock if request failed
+      } catch (e: any) {
+        const status = e?.response?.status;
+        const reason = e?.response?.data?.message;
+
+        // A 400 here is the server rejecting the answer, not a transport
+        // failure — usually the question's deadline passed. Unlocking silently
+        // left the player tapping a button that would never work.
+        if (status === 400 && /too late/i.test(reason ?? '')) {
+          logger.debug('Answer rejected as late', { sessionId });
+          showOverlay('timeout', "Time's up ⏱");
+          setTimeout(() => finishQuiz(), 1100);
+          return;
+        }
+
+        if (status === 409) {
+          // A duplicate submit won the race; the other one is authoritative.
+          logger.debug('Duplicate answer submit ignored', { sessionId });
+          return;
+        }
+
+        logger.error('Submit answer failed', e, { sessionId, status });
         setLocked(false);
         setSelected(null);
+        Alert.alert(
+          'Answer not sent',
+          errorMessage(e, "That didn't go through. Tap your answer again."),
+        );
       }
     },
     [
@@ -582,7 +615,7 @@ export default function QuizPlay() {
       setHintUsedThisQuestion(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (e: any) {
-      console.log(e?.response?.data || e?.message);
+      logger.debug('Hint request failed', { error: String(e) });
     }
   }, [q, locked, sessionId, hintsUsed, hintUsedThisQuestion]);
 
@@ -629,7 +662,10 @@ export default function QuizPlay() {
               styles.primaryBtn,
               { backgroundColor: theme.colors.primary, marginTop: 14 },
             ]}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Go Home"
+            hitSlop={8}>
             <Text style={{ color: '#fff', fontWeight: '800' }}>Go Home</Text>
           </TouchableOpacity>
         </View>
@@ -758,6 +794,11 @@ export default function QuizPlay() {
           <Text style={[styles.questionText, { color: theme.colors.text }]}>
             {q.question}
           </Text>
+          {/* A wrong answer key ends the player's whole run, so give them a way
+              to say so instead of just losing. */}
+          <View style={{ alignItems: 'flex-end', marginTop: 4 }}>
+            <ReportQuestionButton questionId={q.id} />
+          </View>
         </Animated.View>
 
         {/* OPTIONS */}
@@ -793,6 +834,12 @@ export default function QuizPlay() {
             return (
               <Pressable
                 key={i}
+                accessibilityRole="button"
+                accessibilityLabel={`Answer ${i + 1}: ${opt}`}
+                accessibilityState={{
+                  disabled: locked || isDisabled || selected !== null,
+                  selected: isSelected,
+                }}
                 onPress={() => {
                   if (locked || isDisabled || selected !== null) return;
                   submitAnswer(i);
@@ -806,7 +853,7 @@ export default function QuizPlay() {
                     transform: [{ scale: pressed ? 0.98 : 1 }],
                   },
                 ]}
-              >
+            hitSlop={8}>
                 <Text style={{ color: txt, fontWeight: '700', fontSize: 15 }}>
                   {opt}
                 </Text>
@@ -831,7 +878,10 @@ export default function QuizPlay() {
                   opacity: canHint ? 1 : 0.55,
                 },
               ]}
-            >
+            
+            accessibilityRole="button"
+            accessibilityLabel="Hint"
+            hitSlop={8}>
               <Text
                 style={{
                   color: canHint ? '#fff' : theme.colors.muted,
@@ -868,6 +918,9 @@ export default function QuizPlay() {
 
           <TouchableOpacity
             onPress={handleExtendTime}
+            accessibilityRole="button"
+            accessibilityLabel="Buy 10 more seconds"
+            accessibilityState={{ disabled: locked || timeExtendedThisQuestion }}
             disabled={locked || timeExtendedThisQuestion}
             style={[
               styles.hintBtn,
@@ -876,7 +929,7 @@ export default function QuizPlay() {
                 borderColor: theme.colors.border,
               },
             ]}
-          >
+            hitSlop={8}>
             <Text style={{ color: theme.colors.text, fontWeight: '900' }}>
               +10s
             </Text>
@@ -894,7 +947,10 @@ export default function QuizPlay() {
                 borderColor: theme.colors.border,
               },
             ]}
-          >
+          
+            accessibilityRole="button"
+            accessibilityLabel="Quit"
+            hitSlop={8}>
             <Text style={{ color: theme.colors.muted, fontWeight: '900' }}>
               Quit
             </Text>

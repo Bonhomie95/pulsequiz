@@ -6,6 +6,13 @@
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": false,
+    "sourceMap": true
+  },
+  "include": ["src/**/*"],
+  // Tests and fixtures must not end up in the deployed bundle.
+  "exclude": ["node_modules", "dist", "src/**/__tests__/**"]
 }

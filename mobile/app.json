@@ -13,9 +13,14 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bonhomie95.pulsequiz",
+      "associatedDomains": [
+        "applinks:pulsequiz.app"
+      ],
       "infoPlist": {
-        "NSUserNotificationUsageDescription": "PulseQuiz sends you streak reminders, prize alerts, and challenge notifications."
-      }
+        "NSUserNotificationUsageDescription": "PulseQuiz sends you streak reminders, prize alerts, and challenge notifications.",
+        "NSUserTrackingUsageDescription": "This lets us show ads that are more relevant to you. Your data is never sold."
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.bonhomie95.pulsequiz",
@@ -26,7 +31,25 @@
       },
       "permissions": [
         "android.permission.INTERNET",
-        "com.android.vending.BILLING"
+        "com.android.vending.BILLING",
+        "android.permission.POST_NOTIFICATIONS",
+        "com.google.android.gms.permission.AD_ID"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "pulsequiz.app"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ]
     },
     "web": {
@@ -36,6 +59,7 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-apple-authentication",
       "expo-web-browser",
       "expo-notifications",
       [
@@ -59,10 +83,11 @@
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-3226169062425843~7059881649",
-          "iosAppId": "ca-app-pub-7561090708148190~8055600243"
-
+          "iosAppId": "ca-app-pub-7561090708148190~8055600243",
+          "userTrackingUsageDescription": "This lets us show ads that are more relevant to you. Your data is never sold."
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,

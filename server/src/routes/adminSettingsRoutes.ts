@@ -1,11 +1,20 @@
 import { Router } from 'express';
-import { requireAdmin } from '../middlewares/requireAdmin';
-import { getAllSettings, updateSetting, bulkUpdateSettings } from '../controllers/adminSettingsController';
+import { requireAdmin, requireSuperAdmin } from '../middlewares/requireAdmin';
+import {
+  getAllSettings,
+  updateSetting,
+  bulkUpdateSettings,
+} from '../controllers/adminSettingsController';
 
 const router = Router();
 
-router.get('/', requireAdmin, getAllSettings);
-router.patch('/', requireAdmin, updateSetting);
-router.put('/bulk', requireAdmin, bulkUpdateSettings);
+router.use(requireAdmin);
+
+router.get('/', getAllSettings);
+
+// These keys are the economy's dials — coin rewards, wager caps, payout
+// thresholds. SUPER_ADMIN only.
+router.patch('/',    requireSuperAdmin, updateSetting);
+router.put('/bulk',  requireSuperAdmin, bulkUpdateSettings);
 
 export default router;

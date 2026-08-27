@@ -14,11 +14,14 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.100.62:8000/api"
+        "EXPO_PUBLIC_API_URL": "https://api.pulsequiz.app/api"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.pulsequiz.app/api"
+      }
     }
   },
   "submit": {

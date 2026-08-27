@@ -3,28 +3,48 @@
     "category": "Biology",
     "difficulty": "easy",
     "question": "What is the basic unit of life?",
-    "options": ["Atom", "Cell", "Tissue", "Organ"],
+    "options": [
+      "Atom",
+      "Cell",
+      "Tissue",
+      "Organ"
+    ],
     "answer": 1
   },
   {
     "category": "Biology",
     "difficulty": "easy",
     "question": "Which organelle is known as the powerhouse of the cell?",
-    "options": ["Nucleus", "Ribosome", "Mitochondrion", "Golgi apparatus"],
+    "options": [
+      "Nucleus",
+      "Ribosome",
+      "Mitochondrion",
+      "Golgi apparatus"
+    ],
     "answer": 2
   },
   {
     "category": "Biology",
     "difficulty": "easy",
     "question": "Which molecule carries genetic information in most living organisms?",
-    "options": ["RNA", "Protein", "DNA", "Lipid"],
+    "options": [
+      "RNA",
+      "Protein",
+      "DNA",
+      "Lipid"
+    ],
     "answer": 2
   },
   {
     "category": "Biology",
     "difficulty": "easy",
     "question": "Which gas is released during photosynthesis?",
-    "options": ["Carbon dioxide", "Nitrogen", "Oxygen", "Hydrogen"],
+    "options": [
+      "Carbon dioxide",
+      "Nitrogen",
+      "Oxygen",
+      "Hydrogen"
+    ],
     "answer": 2
   },
   {
@@ -43,7 +63,12 @@
     "category": "Biology",
     "difficulty": "easy",
     "question": "What type of organism makes its own food using sunlight?",
-    "options": ["Heterotroph", "Decomposer", "Autotroph", "Parasite"],
+    "options": [
+      "Heterotroph",
+      "Decomposer",
+      "Autotroph",
+      "Parasite"
+    ],
     "answer": 2
   },
   {
@@ -74,14 +99,24 @@
     "category": "Biology",
     "difficulty": "medium",
     "question": "Which phase of mitosis involves the alignment of chromosomes at the cell's equator?",
-    "options": ["Prophase", "Metaphase", "Anaphase", "Telophase"],
+    "options": [
+      "Prophase",
+      "Metaphase",
+      "Anaphase",
+      "Telophase"
+    ],
     "answer": 1
   },
   {
     "category": "Biology",
     "difficulty": "medium",
     "question": "Which enzyme is responsible for breaking down starch into maltose?",
-    "options": ["Lipase", "Protease", "Amylase", "Lactase"],
+    "options": [
+      "Lipase",
+      "Protease",
+      "Amylase",
+      "Lactase"
+    ],
     "answer": 2
   },
   {
@@ -100,28 +135,48 @@
     "category": "Biology",
     "difficulty": "medium",
     "question": "Which part of the brain regulates balance and coordination?",
-    "options": ["Cerebrum", "Medulla oblongata", "Cerebellum", "Hypothalamus"],
+    "options": [
+      "Cerebrum",
+      "Medulla oblongata",
+      "Cerebellum",
+      "Hypothalamus"
+    ],
     "answer": 2
   },
   {
     "category": "Biology",
     "difficulty": "medium",
     "question": "Which macromolecule is primarily responsible for storing genetic information?",
-    "options": ["Carbohydrates", "Lipids", "Proteins", "Nucleic acids"],
+    "options": [
+      "Carbohydrates",
+      "Lipids",
+      "Proteins",
+      "Nucleic acids"
+    ],
     "answer": 3
   },
   {
     "category": "Biology",
     "difficulty": "medium",
     "question": "What is the term for programmed cell death?",
-    "options": ["Necrosis", "Apoptosis", "Mitosis", "Cytokinesis"],
+    "options": [
+      "Necrosis",
+      "Apoptosis",
+      "Mitosis",
+      "Cytokinesis"
+    ],
     "answer": 1
   },
   {
     "category": "Biology",
     "difficulty": "medium",
     "question": "Which structure controls the movement of substances into and out of the cell?",
-    "options": ["Cell wall", "Cytoplasm", "Plasma membrane", "Nucleus"],
+    "options": [
+      "Cell wall",
+      "Cytoplasm",
+      "Plasma membrane",
+      "Nucleus"
+    ],
     "answer": 2
   },
   {
@@ -140,7 +195,12 @@
     "category": "Biology",
     "difficulty": "hard",
     "question": "Which component of the electron transport chain acts as the final electron acceptor?",
-    "options": ["NADH", "FADH2", "Oxygen", "Cytochrome c"],
+    "options": [
+      "NADH",
+      "FADH2",
+      "Oxygen",
+      "Cytochrome c"
+    ],
     "answer": 2
   },
   {
@@ -159,7 +219,12 @@
     "category": "Biology",
     "difficulty": "hard",
     "question": "Which plant hormone is primarily responsible for cell elongation?",
-    "options": ["Cytokinin", "Gibberellin", "Auxin", "Abscisic acid"],
+    "options": [
+      "Cytokinin",
+      "Gibberellin",
+      "Auxin",
+      "Abscisic acid"
+    ],
     "answer": 2
   },
   {
@@ -173,5 +238,713 @@
       "Cytokinesis"
     ],
     "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What is the powerhouse of the cell?",
+    "options": [
+      "The lysosome",
+      "The nucleus",
+      "The mitochondrion",
+      "The ribosome"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "How many chambers does a human heart have?",
+    "options": [
+      "Four",
+      "Two",
+      "Three",
+      "Six"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What gas do plants absorb during photosynthesis?",
+    "options": [
+      "Carbon dioxide",
+      "Hydrogen",
+      "Oxygen",
+      "Nitrogen"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What is the largest organ in the human body?",
+    "options": [
+      "The lungs",
+      "The liver",
+      "The brain",
+      "The skin"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which blood cells carry oxygen?",
+    "options": [
+      "Platelets",
+      "Red blood cells",
+      "Plasma cells",
+      "White blood cells"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What does DNA stand for?",
+    "options": [
+      "Deoxyribose nutrient acid",
+      "Dinucleic acid",
+      "Double nucleic acid",
+      "Deoxyribonucleic acid"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "How many bones are in an adult human body?",
+    "options": [
+      "150",
+      "300",
+      "206",
+      "250"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which organ produces insulin?",
+    "options": [
+      "The kidney",
+      "The spleen",
+      "The liver",
+      "The pancreas"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which animal group do frogs belong to?",
+    "options": [
+      "Fish",
+      "Amphibians",
+      "Reptiles",
+      "Mammals"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What pigment makes plants green?",
+    "options": [
+      "Carotene",
+      "Chlorophyll",
+      "Melanin",
+      "Haemoglobin"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which part of the plant absorbs water?",
+    "options": [
+      "The roots",
+      "The flower",
+      "The leaves",
+      "The stem"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "How many legs does an insect have?",
+    "options": [
+      "Ten",
+      "Six",
+      "Eight",
+      "Four"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What is the human body's largest artery?",
+    "options": [
+      "The femoral",
+      "The aorta",
+      "The carotid",
+      "The pulmonary artery"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which sense organ detects light?",
+    "options": [
+      "The ear",
+      "The eye",
+      "The tongue",
+      "The nose"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What do we call animals that eat only plants?",
+    "options": [
+      "Omnivores",
+      "Carnivores",
+      "Herbivores",
+      "Detritivores"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which vitamin does the body make from sunlight?",
+    "options": [
+      "Vitamin A",
+      "Vitamin K",
+      "Vitamin D",
+      "Vitamin C"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What is the study of living organisms called?",
+    "options": [
+      "Geology",
+      "Astronomy",
+      "Chemistry",
+      "Biology"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "Which organ filters waste from the blood?",
+    "options": [
+      "The stomach",
+      "The kidney",
+      "The heart",
+      "The lung"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "easy",
+    "question": "What is the process by which caterpillars become butterflies?",
+    "options": [
+      "Photosynthesis",
+      "Osmosis",
+      "Mitosis",
+      "Metamorphosis"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "How many pairs of chromosomes does a human normally have?",
+    "options": [
+      "23",
+      "24",
+      "46",
+      "22"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Which molecule carries oxygen in red blood cells?",
+    "options": [
+      "Albumin",
+      "Myoglobin",
+      "Keratin",
+      "Haemoglobin"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the process of cell division that produces gametes?",
+    "options": [
+      "Budding",
+      "Binary fission",
+      "Meiosis",
+      "Mitosis"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Which organelle synthesises proteins?",
+    "options": [
+      "The Golgi apparatus",
+      "The centriole",
+      "The vacuole",
+      "The ribosome"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the largest bone in the human body?",
+    "options": [
+      "The humerus",
+      "The femur",
+      "The tibia",
+      "The pelvis"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Which kingdom do mushrooms belong to?",
+    "options": [
+      "Protista",
+      "Fungi",
+      "Plantae",
+      "Animalia"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the term for an animal active at night?",
+    "options": [
+      "Hibernal",
+      "Nocturnal",
+      "Diurnal",
+      "Crepuscular"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Which part of the brain controls balance and coordination?",
+    "options": [
+      "The medulla",
+      "The cerebellum",
+      "The cerebrum",
+      "The hypothalamus"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the fluid part of blood called?",
+    "options": [
+      "Platelets",
+      "Plasma",
+      "Serum",
+      "Lymph"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Which nutrient class provides the most energy per gram?",
+    "options": [
+      "Fat",
+      "Carbohydrate",
+      "Protein",
+      "Fibre"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the term for organisms that make their own food?",
+    "options": [
+      "Autotrophs",
+      "Parasites",
+      "Saprotrophs",
+      "Heterotrophs"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Which hormone regulates blood sugar by lowering it?",
+    "options": [
+      "Cortisol",
+      "Glucagon",
+      "Insulin",
+      "Adrenaline"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the scientific name for the human species?",
+    "options": [
+      "Homo habilis",
+      "Homo sapiens",
+      "Australopithecus",
+      "Homo erectus"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Which blood type is the universal donor for red cells?",
+    "options": [
+      "B negative",
+      "O negative",
+      "AB positive",
+      "A positive"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Where does most nutrient absorption occur?",
+    "options": [
+      "The large intestine",
+      "The oesophagus",
+      "The small intestine",
+      "The stomach"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the name for the study of heredity?",
+    "options": [
+      "Ecology",
+      "Taxonomy",
+      "Genetics",
+      "Anatomy"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Which structure connects muscle to bone?",
+    "options": [
+      "A tendon",
+      "A ligament",
+      "Cartilage",
+      "A fascia"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the powerhouse molecule cells use for energy?",
+    "options": [
+      "NADH",
+      "RNA",
+      "DNA",
+      "ATP"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "Which system defends the body against infection?",
+    "options": [
+      "The nervous system",
+      "The lymphatic system alone",
+      "The immune system",
+      "The endocrine system"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "medium",
+    "question": "What is the largest mammal on Earth?",
+    "options": [
+      "The sperm whale",
+      "The African elephant",
+      "The blue whale",
+      "The giraffe"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which scientist proposed the theory of evolution by natural selection?",
+    "options": [
+      "Charles Darwin",
+      "Gregor Mendel",
+      "Jean-Baptiste Lamarck",
+      "Alfred Wallace"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "What are the four bases of DNA?",
+    "options": [
+      "Adenine, thymine, guanine, cytosine",
+      "Adenine, thymine, glucose, cytosine",
+      "Alanine, tyrosine, glycine, cysteine",
+      "Adenine, uracil, guanine, cytosine"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which base replaces thymine in RNA?",
+    "options": [
+      "Uracil",
+      "Adenine",
+      "Cytosine",
+      "Guanine"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "What is the term for a change in DNA sequence?",
+    "options": [
+      "A translocation only",
+      "An allele",
+      "A phenotype",
+      "A mutation"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which organelle contains its own DNA besides the nucleus?",
+    "options": [
+      "The lysosome",
+      "The vacuole",
+      "The mitochondrion",
+      "The ribosome"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "What is the name of the process where water moves across a membrane?",
+    "options": [
+      "Osmosis",
+      "Diffusion",
+      "Active transport",
+      "Endocytosis"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Who is considered the father of modern genetics?",
+    "options": [
+      "James Watson",
+      "Gregor Mendel",
+      "Charles Darwin",
+      "Thomas Morgan"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which enzyme unwinds the DNA double helix during replication?",
+    "options": [
+      "Ligase",
+      "Helicase",
+      "Primase",
+      "Polymerase"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "What is the term for the physical expression of a gene?",
+    "options": [
+      "Phenotype",
+      "Locus",
+      "Genotype",
+      "Allele"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which part of the neuron carries signals away from the cell body?",
+    "options": [
+      "The synapse",
+      "The soma",
+      "The axon",
+      "The dendrite"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "What is the pH range of healthy human blood?",
+    "options": [
+      "6.5 to 7.0",
+      "5.5 to 6.5",
+      "7.35 to 7.45",
+      "7.8 to 8.2"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which process produces the most ATP in aerobic respiration?",
+    "options": [
+      "Fermentation",
+      "Oxidative phosphorylation",
+      "The Krebs cycle",
+      "Glycolysis"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "What is the study of the interactions between organisms and their environment?",
+    "options": [
+      "Physiology",
+      "Morphology",
+      "Ecology",
+      "Ethology"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which type of immunity comes from antibodies passed from mother to child?",
+    "options": [
+      "Herd immunity",
+      "Passive immunity",
+      "Active immunity",
+      "Innate immunity"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "What is the term for two species that evolve in response to each other?",
+    "options": [
+      "Adaptive radiation",
+      "Divergent evolution",
+      "Convergent evolution",
+      "Coevolution"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which taxonomic rank sits directly above genus?",
+    "options": [
+      "Class",
+      "Species",
+      "Order",
+      "Family"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "What is the name for programmed cell death?",
+    "options": [
+      "Autolysis",
+      "Lysis",
+      "Necrosis",
+      "Apoptosis"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which structure regulates what enters and leaves a cell?",
+    "options": [
+      "The cytoplasm",
+      "The cell wall",
+      "The nucleus",
+      "The cell membrane"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "What are organisms with two different alleles for a trait called?",
+    "options": [
+      "Homozygous",
+      "Polyploid",
+      "Heterozygous",
+      "Hemizygous"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "Biology",
+    "difficulty": "hard",
+    "question": "Which vitamin deficiency causes scurvy?",
+    "options": [
+      "Vitamin C",
+      "Vitamin B12",
+      "Vitamin A",
+      "Vitamin D"
+    ],
+    "answer": 0
   }
 ]

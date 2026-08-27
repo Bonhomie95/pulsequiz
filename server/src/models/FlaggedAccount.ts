@@ -11,6 +11,8 @@ export interface IFlaggedAccount {
   resolvedAt?: Date;
   resolvedBy?: string;
   action?: 'warned' | 'banned' | 'cleared';
+  /** Free-text note the reviewing admin left. */
+  resolutionNote?: string;
 }
 
 const FlaggedAccountSchema = new Schema<IFlaggedAccount>(
@@ -25,6 +27,7 @@ const FlaggedAccountSchema = new Schema<IFlaggedAccount>(
     resolvedAt: { type: Date },
     resolvedBy: { type: String },
     action: { type: String, enum: ['warned', 'banned', 'cleared'] },
+    resolutionNote: { type: String, default: null },
   },
   { timestamps: true }
 );

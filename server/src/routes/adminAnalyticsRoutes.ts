@@ -21,9 +21,16 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
         ? new Date(now.getTime() - 90 * 86400_000)
         : new Date(now.getTime() - 30 * 86400_000);
 
-  // Month boundaries for MoM comparison
-  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  // Month boundaries in UTC. Everything else in the system — leaderboards,
+  // payout periods, ad-reward days — is UTC, and using server-local time here
+  // attributed revenue near a month boundary to the wrong month depending on
+  // where the server happened to be running.
+  const thisMonthStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  );
+  const lastMonthStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
+  );
 
   const [
     revenueAgg,
@@ -34,6 +41,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     activePremium,
     dailyRevenueAgg,
     dailySignupsAgg,
+    refundAgg,
     planRevenueAgg,
   ] = await Promise.all([
     // All-time total revenue from credited purchases
@@ -56,8 +64,10 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       },
       { $group: { _id: null, total: { $sum: '$priceUsd' } } },
     ]),
-    User.countDocuments(),
-    User.countDocuments({ createdAt: { $gte: thisMonthStart } }),
+    // Deleted accounts are tombstoned rather than dropped, so they must be
+    // excluded or every deletion permanently inflates the user count.
+    User.countDocuments({ deletedAt: null }),
+    User.countDocuments({ deletedAt: null, createdAt: { $gte: thisMonthStart } }),
     Subscription.countDocuments({
       expiresAt: { $gt: now },
       status: { $in: ['active', 'grace'] },
@@ -76,7 +86,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     ]),
     // Daily new signups over range
     User.aggregate([
-      { $match: { createdAt: { $gte: from } } },
+      { $match: { deletedAt: null, createdAt: { $gte: from } } },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
@@ -84,6 +94,11 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
         },
       },
       { $sort: { _id: 1 } },
+    ]),
+    // Refunds — gross revenue alone overstates what was actually kept.
+    Purchase.aggregate([
+      { $match: { state: 'REFUNDED', createdAt: { $gte: from } } },
+      { $group: { _id: null, total: { $sum: '$priceUsd' }, count: { $sum: 1 } } },
     ]),
     // Revenue per subscription plan
     Subscription.aggregate([
@@ -111,8 +126,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     })
     .sort((a: any, b: any) => b.revenue - a.revenue);
 
+  const refunded = refundAgg[0]?.total ?? 0;
+  const grossRevenue = revenueAgg[0]?.total ?? 0;
+
   res.json({
-    totalRevenue: revenueAgg[0]?.total ?? 0,
+    totalRevenue: grossRevenue,
+    refundedInRange: Math.round(refunded * 100) / 100,
+    refundCountInRange: refundAgg[0]?.count ?? 0,
     revenueThisMonth: revenueThisMonthAgg[0]?.total ?? 0,
     revenueLastMonth: revenueLastMonthAgg[0]?.total ?? 0,
     totalUsers,

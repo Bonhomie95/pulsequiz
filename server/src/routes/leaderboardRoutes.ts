@@ -5,6 +5,8 @@ import { requireAuth } from '../middlewares/auth';
 const router = Router();
 
 router.get('/my-rank', requireAuth, getMyRank);
-router.get('/:type', getLeaderboard);
+// Authenticated so the response can include the caller's own standing; the
+// board itself is public data either way.
+router.get('/:type', requireAuth, getLeaderboard);
 
 export default router;

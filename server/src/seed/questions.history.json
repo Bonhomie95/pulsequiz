@@ -15,14 +15,24 @@
     "category": "History",
     "difficulty": "easy",
     "question": "Which ancient civilization built the pyramids of Giza?",
-    "options": ["Romans", "Greeks", "Egyptians", "Mesopotamians"],
+    "options": [
+      "Romans",
+      "Greeks",
+      "Egyptians",
+      "Mesopotamians"
+    ],
     "answer": 2
   },
   {
     "category": "History",
     "difficulty": "easy",
     "question": "In which year did World War II end?",
-    "options": ["1943", "1944", "1945", "1946"],
+    "options": [
+      "1943",
+      "1944",
+      "1945",
+      "1946"
+    ],
     "answer": 2
   },
   {
@@ -53,7 +63,12 @@
     "category": "History",
     "difficulty": "easy",
     "question": "Which wall divided Berlin from 1961 to 1989?",
-    "options": ["Iron Curtain", "Great Wall", "Berlin Wall", "Maginot Line"],
+    "options": [
+      "Iron Curtain",
+      "Great Wall",
+      "Berlin Wall",
+      "Maginot Line"
+    ],
     "answer": 2
   },
   {
@@ -72,7 +87,12 @@
     "category": "History",
     "difficulty": "easy",
     "question": "Which ancient city was buried by the eruption of Mount Vesuvius in AD 79?",
-    "options": ["Athens", "Pompeii", "Carthage", "Sparta"],
+    "options": [
+      "Athens",
+      "Pompeii",
+      "Carthage",
+      "Sparta"
+    ],
     "answer": 1
   },
   {
@@ -103,14 +123,24 @@
     "category": "History",
     "difficulty": "medium",
     "question": "Which civilization is credited with developing cuneiform writing?",
-    "options": ["Egyptians", "Phoenicians", "Sumerians", "Indus Valley people"],
+    "options": [
+      "Egyptians",
+      "Phoenicians",
+      "Sumerians",
+      "Indus Valley people"
+    ],
     "answer": 2
   },
   {
     "category": "History",
     "difficulty": "medium",
     "question": "The Magna Carta was originally signed in which year?",
-    "options": ["1066", "1215", "1492", "1314"],
+    "options": [
+      "1066",
+      "1215",
+      "1492",
+      "1314"
+    ],
     "answer": 1
   },
   {
@@ -129,7 +159,12 @@
     "category": "History",
     "difficulty": "medium",
     "question": "Who was the first emperor of China?",
-    "options": ["Qin Shi Huang", "Confucius", "Han Wudi", "Liu Bang"],
+    "options": [
+      "Qin Shi Huang",
+      "Confucius",
+      "Han Wudi",
+      "Liu Bang"
+    ],
     "answer": 0
   },
   {
@@ -196,7 +231,768 @@
     "category": "History",
     "difficulty": "hard",
     "question": "Which dynasty ruled China immediately before the establishment of the People's Republic of China in 1949?",
-    "options": ["Qing dynasty", "Han dynasty", "Tang dynasty", "Ming dynasty"],
+    "options": [
+      "Qing dynasty",
+      "Han dynasty",
+      "Tang dynasty",
+      "Ming dynasty"
+    ],
     "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "The Great Pyramid of Giza was built in which country?",
+    "options": [
+      "Mexico",
+      "Sudan",
+      "Egypt",
+      "Iraq"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Which ship sank on its maiden voyage in 1912?",
+    "options": [
+      "The Britannic",
+      "The Lusitania",
+      "The Titanic",
+      "The Olympic"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Who was the first person to walk on the Moon?",
+    "options": [
+      "Yuri Gagarin",
+      "Michael Collins",
+      "Buzz Aldrin",
+      "Neil Armstrong"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "In which year did the Berlin Wall fall?",
+    "options": [
+      "1979",
+      "1985",
+      "1991",
+      "1989"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Which empire built the Colosseum?",
+    "options": [
+      "The Roman Empire",
+      "The Ottoman Empire",
+      "The Byzantine Empire",
+      "The Greek Empire"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Who led India's non-violent independence movement?",
+    "options": [
+      "B. R. Ambedkar",
+      "Jawaharlal Nehru",
+      "Mahatma Gandhi",
+      "Subhas Chandra Bose"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Which country gifted the Statue of Liberty to the United States?",
+    "options": [
+      "Italy",
+      "Britain",
+      "France",
+      "Spain"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Nelson Mandela became president of which country?",
+    "options": [
+      "Zimbabwe",
+      "South Africa",
+      "Nigeria",
+      "Kenya"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "In which year did World War I begin?",
+    "options": [
+      "1914",
+      "1912",
+      "1920",
+      "1918"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Who wrote the Declaration of Independence's first draft?",
+    "options": [
+      "James Madison",
+      "Benjamin Franklin",
+      "John Adams",
+      "Thomas Jefferson"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "The Renaissance began in which country?",
+    "options": [
+      "Germany",
+      "England",
+      "France",
+      "Italy"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Which wall was built to protect ancient China?",
+    "options": [
+      "Hadrian's Wall",
+      "The Berlin Wall",
+      "The Great Wall",
+      "The Western Wall"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Cleopatra was the last active pharaoh of which kingdom?",
+    "options": [
+      "Persia",
+      "Egypt",
+      "Nubia",
+      "Assyria"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Which explorer's expedition first circumnavigated the globe?",
+    "options": [
+      "Marco Polo",
+      "Vasco da Gama",
+      "Ferdinand Magellan",
+      "Christopher Columbus"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "The American Civil War ended in which year?",
+    "options": [
+      "1870",
+      "1865",
+      "1861",
+      "1863"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Who was the British Prime Minister for most of World War II?",
+    "options": [
+      "Winston Churchill",
+      "Anthony Eden",
+      "Clement Attlee",
+      "Neville Chamberlain"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "The Olympic Games originated in which country?",
+    "options": [
+      "Egypt",
+      "Italy",
+      "Greece",
+      "Turkey"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "easy",
+    "question": "Which document did King John seal in 1215?",
+    "options": [
+      "Magna Carta",
+      "The Treaty of Paris",
+      "The Bill of Rights",
+      "The Domesday Book"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which treaty formally ended World War I?",
+    "options": [
+      "The Treaty of Versailles",
+      "The Treaty of Utrecht",
+      "The Treaty of Tordesillas",
+      "The Treaty of Ghent"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Who was the first female Prime Minister of the United Kingdom?",
+    "options": [
+      "Liz Truss",
+      "Theresa May",
+      "Barbara Castle",
+      "Margaret Thatcher"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "The Industrial Revolution began in which country?",
+    "options": [
+      "Britain",
+      "Germany",
+      "The United States",
+      "France"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which civilisation built Machu Picchu?",
+    "options": [
+      "The Olmec",
+      "The Maya",
+      "The Aztec",
+      "The Inca"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "In which year did the Soviet Union dissolve?",
+    "options": [
+      "1993",
+      "1991",
+      "1985",
+      "1989"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Who painted the ceiling of the Sistine Chapel?",
+    "options": [
+      "Michelangelo",
+      "Donatello",
+      "Raphael",
+      "Leonardo da Vinci"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "The Rosetta Stone was key to deciphering which writing system?",
+    "options": [
+      "Mayan glyphs",
+      "Egyptian hieroglyphs",
+      "Linear B",
+      "Cuneiform"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which battle in 1066 led to Norman rule in England?",
+    "options": [
+      "The Battle of Agincourt",
+      "The Battle of Bosworth",
+      "The Battle of Bannockburn",
+      "The Battle of Hastings"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Who was the first Emperor of a unified China?",
+    "options": [
+      "Sun Yat-sen",
+      "Qin Shi Huang",
+      "Kublai Khan",
+      "Emperor Wu"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "The Cuban Missile Crisis took place in which year?",
+    "options": [
+      "1962",
+      "1955",
+      "1959",
+      "1968"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which pandemic killed roughly a third of Europe's population in the 1300s?",
+    "options": [
+      "The Spanish Flu",
+      "The Black Death",
+      "Smallpox",
+      "Cholera"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Who was the longest-reigning British monarch?",
+    "options": [
+      "Elizabeth I",
+      "Victoria",
+      "Elizabeth II",
+      "George III"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "The Ottoman Empire captured Constantinople in which year?",
+    "options": [
+      "1204",
+      "1492",
+      "1683",
+      "1453"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which country was the first to give women the vote nationally?",
+    "options": [
+      "United States",
+      "Australia",
+      "New Zealand",
+      "United Kingdom"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Apartheid was the official policy of which country?",
+    "options": [
+      "Angola",
+      "South Africa",
+      "Namibia",
+      "Rhodesia"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Who discovered penicillin?",
+    "options": [
+      "Robert Koch",
+      "Alexander Fleming",
+      "Joseph Lister",
+      "Louis Pasteur"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "The Trail of Tears was the forced relocation of which people?",
+    "options": [
+      "Irish immigrants",
+      "Enslaved Africans",
+      "Chinese labourers",
+      "Native Americans"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which war was fought between 1950 and 1953 on a divided peninsula?",
+    "options": [
+      "The Malayan Emergency",
+      "The Chinese Civil War",
+      "The Vietnam War",
+      "The Korean War"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Who was the Macedonian king who conquered the Persian Empire?",
+    "options": [
+      "Darius III",
+      "Alexander the Great",
+      "Philip II",
+      "Xerxes"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "The French Revolution began in which year?",
+    "options": [
+      "1776",
+      "1804",
+      "1789",
+      "1799"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which pharaoh's largely intact tomb was found in 1922?",
+    "options": [
+      "Akhenaten",
+      "Khufu",
+      "Ramesses II",
+      "Tutankhamun"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which country did Japan attack at Pearl Harbor in 1941?",
+    "options": [
+      "The United States",
+      "The Soviet Union",
+      "The Philippines",
+      "Australia"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "The Magna Carta was sealed in which country?",
+    "options": [
+      "England",
+      "Scotland",
+      "Ireland",
+      "France"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Which empire was ruled from Tenochtitlan?",
+    "options": [
+      "The Inca Empire",
+      "The Aztec Empire",
+      "The Toltec",
+      "The Maya"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "medium",
+    "question": "Who led the Soviet Union during most of World War II?",
+    "options": [
+      "Leon Trotsky",
+      "Nikita Khrushchev",
+      "Joseph Stalin",
+      "Vladimir Lenin"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "The Peloponnesian War was fought between Athens and which city-state?",
+    "options": [
+      "Argos",
+      "Thebes",
+      "Corinth",
+      "Sparta"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Which treaty divided the New World between Spain and Portugal?",
+    "options": [
+      "The Treaty of Tordesillas",
+      "The Treaty of Utrecht",
+      "The Treaty of Madrid",
+      "The Treaty of Zaragoza"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Who was the first Roman Emperor?",
+    "options": [
+      "Tiberius",
+      "Julius Caesar",
+      "Nero",
+      "Augustus"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "The Meiji Restoration modernised which country?",
+    "options": [
+      "Japan",
+      "China",
+      "Thailand",
+      "Korea"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Which dynasty ruled China during the construction of most of the surviving Great Wall?",
+    "options": [
+      "The Han",
+      "The Ming",
+      "The Qing",
+      "The Tang"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Gutenberg's printing press was developed in which century?",
+    "options": [
+      "The 11th",
+      "The 17th",
+      "The 13th",
+      "The 15th"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Which African kingdom was ruled by Mansa Musa?",
+    "options": [
+      "Mali",
+      "Songhai",
+      "Ghana",
+      "Benin"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "The Hundred Years' War was fought between England and which country?",
+    "options": [
+      "France",
+      "The Netherlands",
+      "Spain",
+      "Scotland"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Who was the first woman to win a Nobel Prize?",
+    "options": [
+      "Marie Curie",
+      "Irène Joliot-Curie",
+      "Dorothy Hodgkin",
+      "Gerty Cori"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "The Bay of Pigs invasion targeted which country?",
+    "options": [
+      "The Dominican Republic",
+      "Cuba",
+      "Nicaragua",
+      "Panama"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Which ancient city was destroyed by Vesuvius in AD 79?",
+    "options": [
+      "Troy",
+      "Carthage",
+      "Ephesus",
+      "Pompeii"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "The Treaty of Waitangi was signed in which country?",
+    "options": [
+      "South Africa",
+      "New Zealand",
+      "Australia",
+      "Canada"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Which empire did Suleiman the Magnificent rule?",
+    "options": [
+      "The Byzantine Empire",
+      "The Safavid Empire",
+      "The Mughal Empire",
+      "The Ottoman Empire"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Who was the last Tsar of Russia?",
+    "options": [
+      "Peter III",
+      "Paul I",
+      "Nicholas II",
+      "Alexander III"
+    ],
+    "answer": 2
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "The Berlin Conference of 1884–85 divided which continent among European powers?",
+    "options": [
+      "Africa",
+      "Asia",
+      "Oceania",
+      "South America"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Which US president oversaw the Louisiana Purchase?",
+    "options": [
+      "Thomas Jefferson",
+      "James Monroe",
+      "James Madison",
+      "John Adams"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "The Rosetta Stone is written in three scripts. Which language do two of them record?",
+    "options": [
+      "Aramaic",
+      "Egyptian",
+      "Latin",
+      "Greek"
+    ],
+    "answer": 1
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Which revolution overthrew the Qing dynasty?",
+    "options": [
+      "The Xinhai Revolution",
+      "The Taiping Rebellion",
+      "The Cultural Revolution",
+      "The Boxer Rebellion"
+    ],
+    "answer": 0
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "Hannibal famously crossed which mountain range with elephants?",
+    "options": [
+      "The Apennines",
+      "The Atlas Mountains",
+      "The Pyrenees",
+      "The Alps"
+    ],
+    "answer": 3
+  },
+  {
+    "category": "History",
+    "difficulty": "hard",
+    "question": "The Domesday Book was commissioned by which king?",
+    "options": [
+      "Edward the Confessor",
+      "William the Conqueror",
+      "Henry VIII",
+      "Richard I"
+    ],
+    "answer": 1
   }
 ]

@@ -1,115 +1,207 @@
+import { Types } from 'mongoose';
+
 import QuizSession from '../models/QuizSession';
 import Progress from '../models/Progress';
 import User from '../models/User';
 import LeaderboardSnapshot from '../models/LeaderboardSnapshot';
+import { periodContaining, type Period } from '../utils/dateRanges';
+import { logger } from '../utils/logger';
 
-type LeaderboardType = 'weekly' | 'monthly' | 'all';
+export type LeaderboardType = 'weekly' | 'monthly' | 'all';
 
-// ─── Date helpers ─────────────────────────────────────────────────────────────
+const TOP_N = 100;
 
-function getDateRange(
-  type: LeaderboardType,
-): { start: Date; end: Date } | null {
-  const now = new Date();
-
-  if (type === 'weekly') {
-    const day = now.getDay(); // 0 = Sun, 1 = Mon
-    const diffToMonday = day === 0 ? -6 : 1 - day;
-
-    const start = new Date(now);
-    start.setDate(now.getDate() + diffToMonday);
-    start.setHours(0, 0, 0, 0);
-
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-
-    return { start, end };
-  }
-
-  if (type === 'monthly') {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
-  return null; // 'all' has no date range
+export interface LeaderboardEntry {
+  userId: string;
+  username: string;
+  avatar: string;
+  points: number;
+  rank: number;
 }
 
-// ─── buildLeaderboard ─────────────────────────────────────────────────────────
-
 /**
- * Computes the leaderboard for the given type, persists a snapshot, and
- * returns the ranked entries.
+ * Compute a leaderboard, persist the snapshot, and return the ranked entries.
  *
- * Returns [] if the date range cannot be determined (should not happen in
- * practice for supported types).
+ * `period` is optional and only meaningful for weekly/monthly. Pass it
+ * explicitly from the payout cron, which must rank the period that just ended
+ * rather than the one currently in progress.
  */
-export async function buildLeaderboard(type: LeaderboardType) {
+export async function buildLeaderboard(
+  type: LeaderboardType,
+  period?: Period,
+): Promise<LeaderboardEntry[]> {
   let rows: { userId: string; points: number }[];
+  let snapshotLabel: string | null = null;
 
   if (type === 'all') {
     const all = await Progress.find({ points: { $gt: 0 } })
       .sort({ points: -1 })
-      .limit(100)
+      .limit(TOP_N)
       .lean();
 
     rows = all.map((p) => ({ userId: p.userId.toString(), points: p.points }));
   } else {
-    const range = getDateRange(type);
-    if (!range) return [];
+    const range = period ?? periodContaining(type);
+    snapshotLabel = range.label;
 
-    const agg = await QuizSession.aggregate<{ _id: string; points: number }>([
+    const agg = await QuizSession.aggregate<{ _id: any; points: number }>([
       { $match: { createdAt: { $gte: range.start, $lte: range.end } } },
       { $group: { _id: '$userId', points: { $sum: '$totalPoints' } } },
+      { $match: { points: { $gt: 0 } } },
       { $sort: { points: -1 } },
-      { $limit: 100 },
+      { $limit: TOP_N },
     ]);
 
     rows = agg.map((r) => ({ userId: r._id.toString(), points: r.points }));
   }
 
-  // Hydrate usernames and avatars in a single query
+  // Hydrate usernames and avatars in a single query. Banned and deleted
+  // accounts are excluded from the ranking entirely — a banned account holding
+  // a paid rank would block a legitimate player from the prize.
   const userIds = rows.map((r) => r.userId);
-  const users = await User.find({ _id: { $in: userIds } })
+  const users = await User.find({
+    _id: { $in: userIds },
+    isBanned: { $ne: true },
+    deletedAt: null,
+  })
     .select('username avatar')
     .lean();
   const userMap = new Map(users.map((u) => [u._id.toString(), u]));
 
-  const data = rows.map((r, index) => {
-    const u = userMap.get(r.userId);
-    return {
-      userId: r.userId,
-      username: u?.username ?? 'Anonymous',
-      avatar: u?.avatar ?? '',
-      points: r.points,
-      rank: index + 1,
-    };
-  });
+  const data: LeaderboardEntry[] = rows
+    .filter((r) => userMap.has(r.userId))
+    .map((r, index) => {
+      const u = userMap.get(r.userId)!;
+      return {
+        userId: r.userId,
+        username: u.username ?? 'Anonymous',
+        avatar: u.avatar ?? '',
+        points: r.points,
+        rank: index + 1,
+      };
+    });
 
-  // Persist snapshot — wrap in try/catch so a write failure doesn't lose the result
   try {
     await LeaderboardSnapshot.updateOne(
       { type },
-      { $set: { data, generatedAt: new Date() } },
+      {
+        $set: {
+          data,
+          generatedAt: new Date(),
+          ...(snapshotLabel ? { periodLabel: snapshotLabel } : {}),
+        },
+      },
       { upsert: true },
     );
   } catch (err) {
-    console.error(
-      `❌ Failed to persist leaderboard snapshot (type=${type}):`,
-      err,
-    );
+    logger.error('Failed to persist leaderboard snapshot', err, { type });
   }
 
   return data;
 }
 
-// ─── rebuildLeaderboardSnapshots ─────────────────────────────────────────────
+/**
+ * Where a specific user stands.
+ *
+ * The stored snapshot only holds the top 100, so a player at #412 used to get
+ * no feedback at all. This fills that in — but it has to be cheap, because the
+ * home screen calls it on every load for the large majority of players who are
+ * outside the top 100.
+ *
+ * So: the player's own total is one index-backed read, and everything else
+ * (their rank if they're on the board, and the points cutoffs for the paid
+ * tier and the visible board) comes from the snapshot document the cron
+ * already maintains. No full-period scan on the request path.
+ */
+export interface UserStanding {
+  /** Exact rank when the player is on the stored board, otherwise null. */
+  rank: number | null;
+  points: number;
+  /** Points still needed to reach the lowest paying rank; 0 if already inside. */
+  pointsToPaidTier: number | null;
+  /** Points needed to appear on the visible board at all. */
+  pointsToBoard: number | null;
+  /** True when the player is below the last stored rank. */
+  outsideBoard: boolean;
+}
+
+export async function getUserStanding(
+  userId: string,
+  type: LeaderboardType,
+  paidRanks?: number | null,
+): Promise<UserStanding> {
+  const empty: UserStanding = {
+    rank: null,
+    points: 0,
+    pointsToPaidTier: null,
+    pointsToBoard: null,
+    outsideBoard: false,
+  };
+
+  // ── The player's own total ────────────────────────────────────────────────
+  let points: number;
+
+  if (type === 'all') {
+    const mine = await Progress.findOne({ userId }).select('points').lean();
+    points = mine?.points ?? 0;
+  } else {
+    const range = periodContaining(type);
+    // Index-backed on {userId, createdAt} — touches only this player's rows.
+    const agg = await QuizSession.aggregate<{ points: number }>([
+      {
+        $match: {
+          userId: Types.ObjectId.createFromHexString(userId),
+          createdAt: { $gte: range.start, $lte: range.end },
+        },
+      },
+      { $group: { _id: null, points: { $sum: '$totalPoints' } } },
+    ]);
+    points = agg[0]?.points ?? 0;
+  }
+
+  if (points <= 0) return empty;
+
+  // ── Position, read from the snapshot ──────────────────────────────────────
+  const snapshot = await LeaderboardSnapshot.findOne({ type })
+    .select('data')
+    .lean();
+  const board = (snapshot?.data ?? []) as { userId: string; points: number }[];
+
+  const onBoard = board.findIndex((e) => e.userId === userId);
+  const rank = onBoard >= 0 ? onBoard + 1 : null;
+
+  // Below the last stored entry (or the board isn't full, in which case any
+  // score would have made it and the player simply hasn't been ranked yet).
+  const lastEntry = board[board.length - 1];
+  const outsideBoard = rank === null && board.length >= TOP_N;
+
+  const pointsToBoard =
+    rank !== null || !lastEntry || board.length < TOP_N
+      ? 0
+      : Math.max(1, lastEntry.points - points + 1);
+
+  let pointsToPaidTier: number | null = null;
+  if (paidRanks && paidRanks > 0) {
+    if (rank !== null && rank <= paidRanks) {
+      pointsToPaidTier = 0;
+    } else {
+      const cutoffEntry = board[paidRanks - 1];
+      // Fewer ranked players than paid ranks — anyone scoring qualifies.
+      pointsToPaidTier = cutoffEntry
+        ? Math.max(1, cutoffEntry.points - points + 1)
+        : 0;
+    }
+  }
+
+  return { rank, points, pointsToPaidTier, pointsToBoard, outsideBoard };
+}
 
 /**
- * Rebuild all three snapshots — called after a quiz finishes.
- * Runs sequentially to avoid hammering the DB simultaneously.
+ * Rebuild all three snapshots.
+ *
+ * This is scheduled work, not request work. It used to run synchronously on
+ * every quiz completion — three full-collection aggregations per finish, with a
+ * cost that grew linearly with total sessions ever played.
  */
 export async function rebuildLeaderboardSnapshots() {
   await buildLeaderboard('weekly');

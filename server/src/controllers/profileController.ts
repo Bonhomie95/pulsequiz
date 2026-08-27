@@ -5,7 +5,6 @@ import Progress from '../models/Progress';
 import { AuthRequest } from '../middlewares/auth';
 import QuizSession from '../models/QuizSession';
 import { logActivity } from '../utils/activityLogger';
-import { escapeRegex } from '../utils/escapeRegex';
 import {
   checkAvatar,
   isTextOffensive,
@@ -101,10 +100,12 @@ export async function updateProfile(req: AuthRequest, res: Response) {
       .json({ message: strike.message, strikes: strike.strikes });
   }
 
-  const exists = await User.findOne({
-    username: { $regex: new RegExp(`^${escapeRegex(username)}$`, 'i') },
-    _id: { $ne: req.userId },
-  });
+  // Plain equality against the collated `username_ci` index. The previous
+  // case-insensitive regex could not use an index and scanned every user.
+  const exists = await User.findOne({ username, _id: { $ne: req.userId } })
+    .collation({ locale: 'en', strength: 2 })
+    .select('_id')
+    .lean();
   if (exists)
     return res.status(409).json({ message: 'Username already taken' });
 

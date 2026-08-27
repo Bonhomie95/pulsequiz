@@ -34,12 +34,15 @@ export interface ISubscription {
   userId: Types.ObjectId;
   store: 'apple' | 'google';
   sku: SubscriptionSku;
-  status: 'active' | 'expired' | 'cancelled' | 'grace';
+  status: 'active' | 'expired' | 'cancelled' | 'grace' | 'revoked';
   startedAt: Date;
   expiresAt: Date;
   renewedAt?: Date;
   appleOriginalTransactionId?: string;
   googlePurchaseToken?: string;
+  /** Last store server notification seen for this subscription. */
+  lastNotificationType?: string;
+  lastNotificationAt?: Date;
   raw?: any;
   createdAt: Date;
   updatedAt: Date;
@@ -50,17 +53,27 @@ const SubscriptionSchema = new Schema<ISubscription>(
     userId:  { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     store:   { type: String, enum: ['apple', 'google'], required: true },
     sku:     { type: String, enum: Object.keys(SUBSCRIPTION_PLANS), required: true },
-    status:  { type: String, enum: ['active', 'expired', 'cancelled', 'grace'], default: 'active' },
+    status:  {
+      type: String,
+      // 'revoked' covers a refunded or family-share-removed subscription, which
+      // must lose premium immediately rather than run to its expiry date.
+      enum: ['active', 'expired', 'cancelled', 'grace', 'revoked'],
+      default: 'active',
+    },
     startedAt: { type: Date, required: true },
     expiresAt: { type: Date, required: true, index: true },
     renewedAt: { type: Date, default: null },
     appleOriginalTransactionId: { type: String, sparse: true, index: true },
     googlePurchaseToken:        { type: String, sparse: true, index: true },
+    lastNotificationType: { type: String, default: null },
+    lastNotificationAt:   { type: Date, default: null },
     raw: { type: Schema.Types.Mixed, default: null },
   },
   { timestamps: true },
 );
 
 SubscriptionSchema.index({ userId: 1, store: 1 });
+// getSubscriptionStatus reads by user + active window on every app launch.
+SubscriptionSchema.index({ userId: 1, status: 1, expiresAt: -1 });
 
 export default model<ISubscription>('Subscription', SubscriptionSchema);
