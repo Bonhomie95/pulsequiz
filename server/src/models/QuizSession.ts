@@ -11,6 +11,22 @@ export interface IQuizSession {
   totalQuestions: number;
   levelAtTime: number;
   createdAt: Date;
+  /**
+   * What the player actually answered, question by question.
+   *
+   * ActiveQuizSession carries this during play but is removed by a TTL index a
+   * few minutes after the quiz starts, and this history row previously kept
+   * only totals. That left a disputed score unanswerable — there was no way to
+   * see which questions a player got right, or to demonstrate that a score was
+   * legitimate. On a leaderboard that pays real money, both directions of that
+   * matter.
+   */
+  answers: {
+    questionId: Types.ObjectId;
+    selected: number | null;
+    isCorrect: boolean;
+    answeredAt: Date;
+  }[];
 }
 
 const QuizSessionSchema = new Schema<IQuizSession>(
@@ -23,6 +39,18 @@ const QuizSessionSchema = new Schema<IQuizSession>(
       index: true,
     },
     category: { type: String, required: true, index: true },
+    answers: {
+      type: [
+        {
+          _id: false,
+          questionId: { type: Schema.Types.ObjectId, ref: 'QuizQuestion' },
+          selected: { type: Number, default: null },
+          isCorrect: { type: Boolean, required: true },
+          answeredAt: { type: Date, required: true },
+        },
+      ],
+      default: [],
+    },
     score: { type: Number, required: true },
     bonus: { type: Number, default: 0 },
     totalPoints: { type: Number, required: true },

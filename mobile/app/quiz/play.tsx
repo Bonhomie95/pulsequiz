@@ -18,6 +18,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -145,6 +146,18 @@ export default function QuizPlay() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [index, setIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(TIME_PER_QUESTION);
+  /**
+   * Server wall-clock deadline for the current question.
+   *
+   * The countdown used to be a bare setInterval decrementing from 15. React
+   * Native suspends JS timers while the app is backgrounded, but the server's
+   * deadline is absolute — so minimising for twenty seconds left the on-screen
+   * clock frozen at, say, 9s while the real window had already closed. Tapping
+   * then produced "answer too late" and ended the run with no explanation.
+   * Deriving the display from this instead means the clock is always the truth,
+   * whatever the app has been doing.
+   */
+  const deadlineRef = useRef<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   // selection UI
@@ -293,6 +306,9 @@ export default function QuizPlay() {
         if (!mounted) return;
         setSessionId(res.data.sessionId);
         setQuestions(res.data.questions);
+        deadlineRef.current = res.data.deadlineAt
+          ? new Date(res.data.deadlineAt).getTime()
+          : Date.now() + TIME_PER_QUESTION * 1000;
         setIndex(0);
         setLocked(false);
         resetPerQuestionUI();
@@ -316,30 +332,35 @@ export default function QuizPlay() {
 
     stopTimer();
 
-    timerRef.current = setInterval(() => {
-      setTimeLeft((t) => {
-        const next = t - 1;
+    // Derived from the server deadline rather than counted down locally, so a
+    // suspended JS timer (backgrounded app, locked screen, incoming call) can
+    // never leave the display disagreeing with the server.
+    const tick = () => {
+      const deadline = deadlineRef.current;
+      if (deadline == null) return;
 
-        if (next <= 5 && next > 0 && !tickingRef.current) {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+
+      setTimeLeft((prev) => {
+        // Only cue on a genuine second boundary, and never for seconds that
+        // elapsed while the app was away — otherwise returning from the
+        // background fires a burst of beeps for time already gone.
+        if (remaining < prev && remaining <= 5 && remaining > 0) {
           tickingRef.current = true;
-        }
-
-        // vibration + beep for last 5 seconds
-        if (next <= 5 && next > 0) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           soundManager.play('countdown');
         }
-
-        if (next <= 0) {
-          stopTimer();
-          // timeout
-          onTimeout();
-          return 0;
-        }
-
-        return next;
+        return remaining;
       });
-    }, 1000);
+
+      if (remaining <= 0) {
+        stopTimer();
+        onTimeout();
+      }
+    };
+
+    tick(); // paint the true remaining time immediately, before the first tick
+    timerRef.current = setInterval(tick, 250);
 
     return () => stopTimer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -351,6 +372,8 @@ export default function QuizPlay() {
       // soundManager.stop();
     };
   }, [stopTimer]);
+
+
 
   const finishQuiz = useCallback(async () => {
     if (!sessionId) return;
@@ -422,6 +445,31 @@ export default function QuizPlay() {
     }
   }, [sessionId, locked, q, lockAndReveal, showOverlay, finishQuiz]);
 
+  /**
+   * Re-check the clock the moment the app comes back to the foreground.
+   *
+   * JS timers are suspended while backgrounded, so without this the interval
+   * simply resumes from where it stopped and the player sees time they no
+   * longer have. Recomputing from the deadline shows the truth immediately —
+   * including firing the timeout if the window closed while they were away,
+   * rather than letting them submit an answer the server will reject.
+   */
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      const deadline = deadlineRef.current;
+      if (deadline == null || locked || !sessionId) return;
+
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        stopTimer();
+        onTimeout();
+      }
+    });
+    return () => sub.remove();
+  }, [locked, sessionId, stopTimer, onTimeout]);
+
   const submitAnswer = useCallback(
     async (sel: number) => {
       if (!sessionId || locked || !q) return;
@@ -448,6 +496,12 @@ export default function QuizPlay() {
           showOverlay('correct', 'Correct ✅');
 
           // proceed to next question
+          // The server sends the next question's deadline with the answer
+          // response; adopt it so the clock stays its clock, not ours.
+          const nextDeadline = (data as any).deadlineAt
+            ? new Date((data as any).deadlineAt).getTime()
+            : null;
+
           setTimeout(() => {
             hideOverlay();
 
@@ -456,6 +510,11 @@ export default function QuizPlay() {
               finishQuiz();
               return;
             }
+
+            // The 700ms reveal pause is part of the server's window, so the
+            // deadline is not re-based here — only adopted.
+            deadlineRef.current =
+              nextDeadline ?? Date.now() + TIME_PER_QUESTION * 1000;
 
             setLocked(false);
             setIndex((i) => i + 1);
@@ -488,8 +547,35 @@ export default function QuizPlay() {
         }
 
         if (status === 409) {
-          // A duplicate submit won the race; the other one is authoritative.
-          logger.debug('Duplicate answer submit ignored', { sessionId });
+          // The server already has an answer for this question — most often
+          // because our first attempt succeeded and only its response was lost.
+          // Returning here left the screen locked on a question the server had
+          // moved past, and the run was stuck until the app was killed. Ask the
+          // server where the run actually is and continue from there.
+          logger.debug('Duplicate answer submit — resyncing', { sessionId });
+          try {
+            const st: any = await api.get(`/quiz/state/${sessionId}`, {
+              retry: true,
+            } as any);
+
+            if (st.data.finished) {
+              finishQuiz();
+              return;
+            }
+
+            deadlineRef.current = st.data.deadlineAt
+              ? new Date(st.data.deadlineAt).getTime()
+              : Date.now() + TIME_PER_QUESTION * 1000;
+
+            hideOverlay();
+            setLocked(false);
+            setIndex(st.data.currentIndex ?? 0);
+            resetPerQuestionUI();
+          } catch {
+            // Even the resync failed — collect whatever was scored rather
+            // than stranding the player on a dead screen.
+            finishQuiz();
+          }
           return;
         }
 

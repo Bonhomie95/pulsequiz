@@ -45,12 +45,25 @@ export function startUsageAdTimer() {
       return;
     }
 
+    // Reset the window BEFORE awaiting, not after.
+    //
+    // setInterval does not wait for an async callback, so with the reset at the
+    // end this tick's ad was still loading (or on screen) when the next tick
+    // fired 5 seconds later — and that tick still saw the interval as elapsed,
+    // so it requested another. And another. The player closed one ad only to
+    // meet the next. Resetting first means the window restarts the moment we
+    // decide to show, and the in-flight guard in showInterstitialAd catches
+    // anything that still overlaps.
+    startedAt = Date.now();
+
     try {
       await showInterstitialAd();
     } catch (e) {
       logger.warn('Interstitial ad failed', { error: String(e) });
     }
 
+    // The window runs from when the ad closes, so a long ad does not eat into
+    // the next interval.
     startedAt = Date.now();
   }, TICK_MS);
 }

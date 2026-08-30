@@ -5,6 +5,7 @@ import {
   start,
   answer,
   finish,
+  state,
   hint,
   extendTime,
 } from '../controllers/quizController';
@@ -18,6 +19,7 @@ router.post('/start', requireAuth, quizStartLimiter, start);
 router.post('/answer', requireAuth, answer);
 
 // finalize + apply points/coins
+router.get('/state/:sessionId', requireAuth, state);
 router.post('/finish', requireAuth, finish);
 router.post('/hint', requireAuth, hint);
 router.post('/extend-time', requireAuth, extendTime);

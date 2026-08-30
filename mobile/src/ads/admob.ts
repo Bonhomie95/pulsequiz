@@ -68,7 +68,31 @@ export async function showRewardedAd(): Promise<boolean> {
 
 /* ---------------- INTERSTITIAL ---------------- */
 
+/**
+ * True from the moment a request starts until the ad closes, errors, or times
+ * out.
+ *
+ * Interstitials are full-screen and every caller is independent — the 10-minute
+ * usage timer, the quiz result screen, the PvP result screen, the challenge
+ * reward. Without a shared guard, two callers overlapping each create their own
+ * ad and each calls show(), so the player closes one and is immediately facing
+ * another. The usage timer could do this to itself: its interval keeps firing
+ * every 5s while an ad is on screen, stacking a fresh one each tick.
+ */
+let interstitialInFlight = false;
+
+/** Visible for tests. */
+export function isInterstitialInFlight() {
+  return interstitialInFlight;
+}
+
 export async function showInterstitialAd(): Promise<boolean> {
+  // Never stack. A caller arriving while one is already up is dropped rather
+  // than queued — a queued ad would simply appear the instant the first closes,
+  // which is the same complaint from the player's side.
+  if (interstitialInFlight) return false;
+  interstitialInFlight = true;
+
   return new Promise((resolve) => {
     const interstitial = InterstitialAd.createForAdRequest(interstitialUnitId);
 
@@ -91,6 +115,7 @@ export async function showInterstitialAd(): Promise<boolean> {
       unsubLoaded();
       unsubClosed();
       unsubError();
+      interstitialInFlight = false;
       resolve(result);
     };
 

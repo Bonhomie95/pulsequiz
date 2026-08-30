@@ -12,8 +12,15 @@ export async function applyQuizResult(params: {
   category: string;
   correct: number;
   total: number;
+  /** Per-answer detail, preserved so a disputed score can be investigated. */
+  answers?: {
+    questionId: Types.ObjectId;
+    selected: number | null;
+    isCorrect: boolean;
+    answeredAt: Date;
+  }[];
 }) {
-  const { userId, sessionId, category, correct, total } = params;
+  const { userId, sessionId, category, correct, total, answers = [] } = params;
 
   /* ---------------- SCORE ---------------- */
   const basePoints = correct;
@@ -46,6 +53,7 @@ export async function applyQuizResult(params: {
         correctAnswers: correct,
         totalQuestions: total,
         levelAtTime: priorProgress?.level ?? 1,
+        answers,
       },
     },
     { upsert: true },

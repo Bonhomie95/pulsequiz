@@ -125,26 +125,38 @@ async function pickSharedQuestions(userA: string, userB: string, category: strin
   // Pass 1 — unseen, respecting the difficulty mix.
   for (const diff of DIFF_ORDER) {
     const need = DIFF_TARGET[diff];
-    const pool = await QuizQuestion.find({
-      category,
-      disabled: { $ne: true },
-      difficulty: diff,
-      _id: { $nin: seenIds },
-    })
-      .limit(need * 6)
-      .lean();
+    // $sample rather than a natural-order window: limit(need * 6) shuffled
+    // only the first two dozen rows of the collection, so early questions
+    // surfaced far more often than later ones even though the shuffle made
+    // matches look varied.
+    const pool = await QuizQuestion.aggregate([
+      {
+        $match: {
+          category,
+          disabled: { $ne: true },
+          difficulty: diff,
+          _id: { $nin: seenIds },
+        },
+      },
+      { $sample: { size: need * 6 } },
+    ]);
     take(pool, need);
   }
 
   // Pass 2 — top up from anything unseen in the category, any difficulty.
   if (picked.length < TOTAL_Q) {
-    const pool = await QuizQuestion.find({
-      category,
-      disabled: { $ne: true },
-      _id: { $nin: [...seenIds, ...[...usedIds].map((id) => new Types.ObjectId(id))] },
-    })
-      .limit(TOTAL_Q * 3)
-      .lean();
+    const pool = await QuizQuestion.aggregate([
+      {
+        $match: {
+          category,
+          disabled: { $ne: true },
+          _id: {
+            $nin: [...seenIds, ...[...usedIds].map((id) => new Types.ObjectId(id))],
+          },
+        },
+      },
+      { $sample: { size: TOTAL_Q * 3 } },
+    ]);
     take(pool, TOTAL_Q - picked.length);
   }
 
@@ -156,13 +168,16 @@ async function pickSharedQuestions(userA: string, userB: string, category: strin
       category,
       picked: picked.length,
     });
-    const pool = await QuizQuestion.find({
-      category,
-      disabled: { $ne: true },
-      _id: { $nin: [...usedIds].map((id) => new Types.ObjectId(id)) },
-    })
-      .limit(TOTAL_Q * 3)
-      .lean();
+    const pool = await QuizQuestion.aggregate([
+      {
+        $match: {
+          category,
+          disabled: { $ne: true },
+          _id: { $nin: [...usedIds].map((id) => new Types.ObjectId(id)) },
+        },
+      },
+      { $sample: { size: TOTAL_Q * 3 } },
+    ]);
     take(pool, TOTAL_Q - picked.length);
   }
 

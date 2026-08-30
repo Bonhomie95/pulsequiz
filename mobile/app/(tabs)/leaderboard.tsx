@@ -337,10 +337,20 @@ export default function LeaderboardScreen() {
     load();
   }, [load]);
 
+  /**
+   * Refetch whenever the tab is focused.
+   *
+   * Tab screens stay mounted when you switch away, so the mount-only effect
+   * above ran once and never again — coming back from a quiz showed whatever
+   * was fetched the first time this tab opened, which could be far staler than
+   * the cron's one-minute cadence. Silent, because a spinner on every tab
+   * switch is worse than a brief moment of previous data.
+   */
   useFocusEffect(
     useCallback(() => {
       enterImmersiveMode();
-    }, []),
+      load({ silent: true });
+    }, [load]),
   );
 
   const scrollToMe = () => {

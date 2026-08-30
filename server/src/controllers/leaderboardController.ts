@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
-import LeaderboardSnapshot from '../models/LeaderboardSnapshot';
+import LeaderboardSnapshot, {
+  type LeaderboardEntry,
+} from '../models/LeaderboardSnapshot';
 import PrizePool from '../models/PrizePool';
 import { buildLeaderboard, getUserStanding } from '../services/leaderboardService';
 import { currentPeriodLabel } from '../utils/dateRanges';
@@ -17,7 +19,8 @@ export async function getLeaderboard(req: AuthRequest, res: Response) {
 
   // Serve the snapshot; the cron refreshes it every minute.
   const snapshot = await LeaderboardSnapshot.findOne({ type }).lean();
-  const data = snapshot ? snapshot.data : await buildLeaderboard(type);
+  const data = ((snapshot ? snapshot.data : await buildLeaderboard(type)) ??
+    []) as LeaderboardEntry[];
 
   // Prize pool info — rank count is always visible, amounts only after the
   // period is locked.
@@ -46,26 +49,53 @@ export async function getLeaderboard(req: AuthRequest, res: Response) {
     }
   }
 
-  // The caller's own standing, computed properly rather than read off the
-  // top-100 snapshot — a player at #412 previously got no feedback at all.
+  // The caller's own standing.
+  //
+  // Their *points* are always read live. Taking them off the snapshot when the
+  // player happened to be in the top 100 meant their own total was up to a
+  // minute stale — the cron's rebuild cadence — so a player who finished a quiz
+  // and opened this screen saw their previous total and concluded the run had
+  // not counted. On the next visit the snapshot had caught up and showed the
+  // earlier quiz's score, which reads as the scores being one behind.
+  //
+  // The snapshot is still the right source for *rank* and for the cutoffs:
+  // those describe other players, and a minute of staleness there is invisible.
   let me = null;
   if (req.userId) {
-    const idx = data.findIndex((e: any) => e.userId === req.userId);
-    if (idx >= 0) {
-      me = {
-        rank: idx + 1,
-        points: (data[idx] as any).points,
-        pointsToPaidTier: paidRanks && idx + 1 <= paidRanks ? 0 : null,
-        pointsToBoard: 0,
-        outsideBoard: false,
-        inTopList: true,
-      };
-    } else {
-      // One index-backed read for their own total; the cutoffs come from the
-      // snapshot rather than a period-wide scan.
-      const standing = await getUserStanding(req.userId, type, paidRanks);
-      me = { ...standing, inTopList: false };
+    const standing = await getUserStanding(req.userId, type, paidRanks);
+
+    // Fold the caller's live total back into the board they are looking at.
+    //
+    // The snapshot is up to a minute old, so a player who had just finished a
+    // quiz saw their own row still showing the pre-quiz score — and if the new
+    // score moved them past someone, the order was wrong too. Their own number
+    // is the one they check immediately, so it has to be current; everyone
+    // else's may stay cached, since a minute of drift there is invisible.
+    const mineIdx = data.findIndex((e) => e.userId === req.userId);
+    if (mineIdx >= 0 && data[mineIdx].points !== standing.points) {
+      data[mineIdx] = { ...data[mineIdx], points: standing.points };
+      data.sort((a, b) => b.points - a.points);
+      data.forEach((e, i) => {
+        e.rank = i + 1;
+      });
     }
+
+    const idx = data.findIndex((e) => e.userId === req.userId);
+
+    me = {
+      ...standing,
+      // Prefer the snapshot's position when they are on the stored board;
+      // getUserStanding falls back to the same snapshot anyway.
+      rank: idx >= 0 ? idx + 1 : standing.rank,
+      ...(idx >= 0
+        ? {
+            pointsToPaidTier: paidRanks && idx + 1 <= paidRanks ? 0 : standing.pointsToPaidTier,
+            pointsToBoard: 0,
+            outsideBoard: false,
+          }
+        : {}),
+      inTopList: idx >= 0,
+    };
   }
 
   return res.json({

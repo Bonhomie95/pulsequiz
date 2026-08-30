@@ -55,21 +55,47 @@ async function fetchUnseen(
     .lean();
   const seenIds = seen.map((s) => s.questionId);
 
-  let qs = await QuizQuestion.find({
-    category,
-    disabled: { $ne: true },
-    difficulty,
-    _id: { $nin: seenIds },
-  })
-    .limit(count)
-    .lean();
+  // $sample, not find().limit(): a plain limit returns natural order, so every
+  // player received byte-identical quizzes — same questions, same order — and
+  // progressed through the bank in lockstep. On a real-money leaderboard that
+  // is an integrity problem as much as a dull one, because a single posted
+  // answer key serves everybody.
+  let qs = await QuizQuestion.aggregate([
+    {
+      $match: {
+        category,
+        difficulty,
+        disabled: { $ne: true },
+        _id: { $nin: seenIds },
+      },
+    },
+    { $sample: { size: count } },
+  ]);
 
-  // Pool exhausted for this difficulty — reset per-difficulty seen history and recycle
+  // Pool exhausted for this difficulty — recycle.
   if (qs.length < count) {
+    // Keep whatever unseen questions remain; they are still the freshest
+    // material and discarding them would waste the tail of the pool.
+    const keep = qs;
+    const keepIds = keep.map((q) => q._id);
+
     await UserQuestion.deleteMany({ userId, category, difficulty });
-    qs = await QuizQuestion.find({ category, difficulty, disabled: { $ne: true } })
-      .limit(count)
-      .lean();
+
+    // Exclude the just-served ids so the recycled draw cannot duplicate them
+    // inside this very session.
+    const topUp = await QuizQuestion.aggregate([
+      {
+        $match: {
+          category,
+          difficulty,
+          disabled: { $ne: true },
+          _id: { $nin: keepIds },
+        },
+      },
+      { $sample: { size: count - keep.length } },
+    ]);
+
+    qs = [...keep, ...topUp];
   }
 
   // Fewer questions than needed (small pool) — return whatever exists
@@ -106,13 +132,23 @@ export async function startQuizSession({
       .lean();
     const seenIds = seenAll.map((s) => s.questionId);
 
-    const extras = await QuizQuestion.find({
-      category,
-      disabled: { $ne: true },
-      _id: { $nin: [...seenIds, ...Array.from(pickedIds)] },
-    })
-      .limit(TOTAL_Q - picked.length)
-      .lean();
+    const extras = await QuizQuestion.aggregate([
+      {
+        $match: {
+          category,
+          disabled: { $ne: true },
+          // pickedIds holds strings; this pipeline needs real ObjectIds,
+          // because aggregate() does not cast them the way find() does.
+          _id: {
+            $nin: [
+              ...seenIds,
+              ...Array.from(pickedIds).map((id) => new Types.ObjectId(id)),
+            ],
+          },
+        },
+      },
+      { $sample: { size: TOTAL_Q - picked.length } },
+    ]);
 
     extras.forEach((q) => picked.push({ q, difficulty: q.difficulty }));
   }
@@ -120,13 +156,18 @@ export async function startQuizSession({
   /* 3️⃣ Still not enough? Recycle from ALL category questions */
   if (picked.length < TOTAL_Q) {
     const pickedIds = new Set(picked.map((p) => p.q._id.toString()));
-    const fallback = await QuizQuestion.find({
-      category,
-      disabled: { $ne: true },
-      _id: { $nin: Array.from(pickedIds) },
-    })
-      .limit(TOTAL_Q - picked.length)
-      .lean();
+    const fallback = await QuizQuestion.aggregate([
+      {
+        $match: {
+          category,
+          disabled: { $ne: true },
+          _id: {
+            $nin: Array.from(pickedIds).map((id) => new Types.ObjectId(id)),
+          },
+        },
+      },
+      { $sample: { size: TOTAL_Q - picked.length } },
+    ]);
 
     fallback.forEach((q) => picked.push({ q, difficulty: q.difficulty }));
   }
@@ -191,6 +232,11 @@ export async function startQuizSession({
     timePerQuestion: TIME_PER_QUESTION,
     totalQuestions: actualTotal,
     expiresAt,
+    // Wall-clock deadline for the FIRST question. /quiz/answer already returns
+    // this for each subsequent one; without it here the client had nothing to
+    // anchor question 1 to and had to assume a full 15s from render, which
+    // drifts by however long the response spent in flight.
+    deadlineAt: session.questionDeadlineAt,
     questions: ordered.map(({ q, difficulty }) => ({
       id: q._id.toString(),
       question: q.question,

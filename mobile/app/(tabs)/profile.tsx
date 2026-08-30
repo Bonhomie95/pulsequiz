@@ -62,7 +62,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
   const [avatarModal, setAvatarModal] = useState(false);
 
-  useEffect(() => {
+  const loadProfile = useCallback(() => {
     if (!hydrated) return;
     api
       .get('/profile')
@@ -73,10 +73,21 @@ export default function ProfileScreen() {
       .catch(() => {});
   }, [hydrated]);
 
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  /**
+   * Tab screens stay mounted, so the effect above ran once on first open and
+   * never again — points, level and recent quizzes were frozen at whatever
+   * they were the first time this tab was viewed. Refetch on focus so
+   * returning here after a quiz shows the run that just happened.
+   */
   useFocusEffect(
     useCallback(() => {
       enterImmersiveMode();
-    }, []),
+      loadProfile();
+    }, [loadProfile]),
   );
 
   const startEditing = () => {

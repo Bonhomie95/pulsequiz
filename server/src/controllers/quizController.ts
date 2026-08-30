@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Response } from 'express';
 import { z } from 'zod';
 import { AuthRequest } from '../middlewares/auth';
@@ -97,6 +98,17 @@ export async function answer(req: AuthRequest, res: Response) {
     return res.status(404).json({ message: 'Session not found' });
   }
 
+  // Already answered takes priority over "not current".
+  //
+  // Once an answer lands the server advances currentQuestionId, so a client
+  // retrying because it never saw the response was told "Not current question"
+  // (400) rather than "Already answered" (409). That is the wrong signal: 400
+  // reads as a bad request the client should not repeat, so the retry path
+  // gave up and the run stalled on a question the server had moved past.
+  if ((session.answers as any[]).some((a) => a.questionId.toString() === questionId)) {
+    return res.status(409).json({ message: 'Already answered' });
+  }
+
   // Validate current question
   if (
     !session.currentQuestionId ||
@@ -129,6 +141,55 @@ export async function answer(req: AuthRequest, res: Response) {
     }
     throw err;
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                    STATE                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * GET /api/quiz/state/:sessionId
+ *
+ * Where the run actually is, according to the server.
+ *
+ * Needed because an answer can succeed while its response is lost — a dropped
+ * connection, a backgrounded app, a timeout. The client then retries, gets 409
+ * "Already answered", and previously had nowhere to go: it stayed locked on a
+ * question the server had already moved past, and the run was stuck until the
+ * app was killed. With this it can resynchronise instead.
+ */
+export async function state(req: AuthRequest, res: Response) {
+  if (!req.userId) return res.status(401).json({ message: 'Unauthorized' });
+
+  const sessionId = req.params.sessionId;
+  if (!mongoose.isValidObjectId(sessionId)) {
+    return res.status(400).json({ message: 'Invalid session id' });
+  }
+
+  const session = await ActiveQuizSession.findOne({
+    _id: sessionId,
+    userId: req.userId,
+  }).lean();
+
+  if (!session) return res.status(404).json({ message: 'Session not found' });
+
+  const answered = (session.answers as any[]) ?? [];
+
+  return res.json({
+    sessionId: String(session._id),
+    finished: !!session.finished,
+    scored: !!session.resultAppliedAt,
+    currentIndex: session.currentIndex ?? answered.length,
+    currentQuestionId: session.currentQuestionId
+      ? String(session.currentQuestionId)
+      : null,
+    // Absolute, so the client can rebuild its countdown without trusting its
+    // own elapsed-time bookkeeping.
+    deadlineAt: session.questionDeadlineAt ?? null,
+    answeredCount: answered.length,
+    correctCount: answered.filter((a) => a.isCorrect).length,
+    totalQuestions: (session.questions as any[]).length,
+  });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -185,6 +246,13 @@ export async function finish(req: AuthRequest, res: Response) {
     category: session.category,
     correct,
     total,
+    // Copied out before the TTL index removes the active session.
+    answers: (session.answers as any[]).map((a) => ({
+      questionId: a.questionId,
+      selected: a.selected ?? null,
+      isCorrect: !!a.isCorrect,
+      answeredAt: a.answeredAt,
+    })),
   });
 
   await logActivity(req.userId, 'QUIZ_FINISH', {

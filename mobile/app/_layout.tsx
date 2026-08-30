@@ -161,11 +161,20 @@ function RootLayout() {
     return <SplashLoader />;
   }
 
-  const inAuthGroup = segments[0] === '(auth)';
-  const inTabsGroup = segments[0] === '(tabs)';
-  const inQuizFlow = segments[0] === 'quiz';
-  const inIdentity = segments[0] === '(auth)' && segments[1] === 'identity';
-  const inOnboarding = segments[0] === 'onboarding';
+  // expo-router types `useSegments()` against the route tree it generates into
+  // .expo/types/router.d.ts — a file that is gitignored and only written by a
+  // dev/build run. Locally it exists and segments is a rich tuple union; in CI
+  // it does not, so the type collapses to `[string]` and indexing past 0 fails
+  // to compile. The runtime value is a plain string array either way, and this
+  // is ordinary string matching, so read it as one rather than letting the
+  // build depend on whether a generated file happens to be present.
+  const path = segments as readonly string[];
+
+  const inAuthGroup = path[0] === '(auth)';
+  const inTabsGroup = path[0] === '(tabs)';
+  const inQuizFlow = path[0] === 'quiz';
+  const inIdentity = path[0] === '(auth)' && path[1] === 'identity';
+  const inOnboarding = path[0] === 'onboarding';
 
   const needsIdentity = !!user && (!user.username || !user.avatar);
 
