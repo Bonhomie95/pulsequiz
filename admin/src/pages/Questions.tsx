@@ -264,15 +264,19 @@ ${d.errors.slice(0, 5).join('\n')}` : ''),
   };
 
   const downloadTemplate = async () => {
-    const res = await adminApi.get('/admin/questions/template.csv', {
-      responseType: 'blob',
-    });
-    const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'question-template.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const res = await adminApi.get('/admin/questions/template.csv', {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'question-template.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Could not download the template.');
+    }
   };
 
   const deleteQ = async (id: string) => {

@@ -8,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as IAP from 'react-native-iap';
@@ -20,6 +21,7 @@ import { useTheme } from '@/src/theme/useTheme';
 import { api, errorMessage } from '@/src/api/api';
 import { usePremiumStore } from '@/src/store/usePremiumStore';
 import { logger } from '@/src/utils/logger';
+import { LINKS } from '@/src/constants/links';
 
 // ─── Plan definitions ─────────────────────────────────────────────────────────
 
@@ -542,11 +544,39 @@ export default function PremiumScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Apple requires the subscription's length and price, the auto-renew
+            terms, and functional Terms of Use (EULA) and Privacy Policy links
+            to appear in the binary on the purchase screen itself — links on a
+            sign-in page or in App Store Connect alone do not satisfy it, and
+            their absence is a routine rejection. */}
         <Text style={[s.legal, { color: theme.colors.muted }]}>
-          Subscriptions renew automatically unless cancelled at least 24 hours
-          before the period ends. Manage in your{' '}
+          Payment is charged to your{' '}
+          {Platform.OS === 'ios' ? 'Apple ID' : 'Google Play'} account at
+          confirmation of purchase. Subscriptions renew automatically for the
+          same period and price unless cancelled at least 24 hours before the
+          current period ends. Manage or cancel in your{' '}
           {Platform.OS === 'ios' ? 'App Store' : 'Play Store'} account settings.
         </Text>
+
+        <View style={s.legalLinks}>
+          <Text
+            style={[s.legalLink, { color: theme.colors.primary }]}
+            onPress={() => Linking.openURL(LINKS.TERMS)}
+            accessibilityRole="link"
+            accessibilityLabel="Terms of Use"
+          >
+            Terms of Use
+          </Text>
+          <Text style={[s.legal, { color: theme.colors.muted }]}>  ·  </Text>
+          <Text
+            style={[s.legalLink, { color: theme.colors.primary }]}
+            onPress={() => Linking.openURL(LINKS.PRIVACY)}
+            accessibilityRole="link"
+            accessibilityLabel="Privacy Policy"
+          >
+            Privacy Policy
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -555,6 +585,15 @@ export default function PremiumScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  legalLink: { fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

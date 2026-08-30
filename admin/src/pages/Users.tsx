@@ -189,6 +189,8 @@ export default function Users() {
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  /** Id of the user whose detail request is currently authoritative. */
+  const detailRequestRef = useRef<string | null>(null);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
   const [editFields, setEditFields] = useState({ username: '' });
@@ -254,13 +256,21 @@ export default function Users() {
     setDetail(null);
     setDetailError(null);
     setDetailLoading(true);
+
+    // Guard against a slow response for a previously-opened user landing after
+    // a newer one. Without this, opening A then B could render A's flags and
+    // ledger drift under B's name — and an admin may ban on what they see.
+    detailRequestRef.current = user._id;
+
     try {
       const res = await adminApi.get(`/admin/users/${user._id}`);
+      if (detailRequestRef.current !== user._id) return;
       setDetail(res.data);
     } catch (e: any) {
+      if (detailRequestRef.current !== user._id) return;
       setDetailError(e?.response?.data?.message ?? 'Could not load details');
     } finally {
-      setDetailLoading(false);
+      if (detailRequestRef.current === user._id) setDetailLoading(false);
     }
   };
 
@@ -549,7 +559,11 @@ export default function Users() {
       {viewUser && (
         <Modal
           title={`@${viewUser.username}`}
-          onClose={() => { setViewUser(null); setDetail(null); }}
+          onClose={() => {
+            detailRequestRef.current = null;
+            setViewUser(null);
+            setDetail(null);
+          }}
         >
           <Row label="Email" value={viewUser.email} />
           <Row label="Status" value={<StatusBadge user={viewUser} />} />

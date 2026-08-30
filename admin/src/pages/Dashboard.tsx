@@ -44,12 +44,13 @@ function StatCard({ title, value, icon, change, positive }: StatCardProps) {
 }
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({
-    users: 0,
-    coins: 0,
-    purchases: 0,
-    flags: 0,
-  });
+  // null means "could not load", which renders as — rather than a false zero.
+  const [stats, setStats] = useState<{
+    users: number | null;
+    coins: number | null;
+    purchases: number | null;
+    flags: number | null;
+  }>({ users: 0, coins: 0, purchases: 0, flags: 0 });
 
   const [activity, setActivity] = useState<ActivityItem[]>([]);
 
@@ -67,7 +68,10 @@ export default function Dashboard() {
     let alive = true;
 
     async function loadStats() {
-      const [u, c, p, f, st] = await Promise.all([
+      // allSettled, not all: these are five independent numbers, and with
+      // Promise.all a single failing endpoint left every headline stat at zero
+      // — a dashboard that reads "0 players" is worse than one missing a card.
+      const [u, c, p, f, st] = await Promise.allSettled([
         adminApi.get('/admin/stats/users'),
         adminApi.get('/admin/stats/coins'),
         adminApi.get('/admin/stats/purchases-today'),
@@ -77,16 +81,20 @@ export default function Dashboard() {
 
       if (!alive) return;
 
+      const value = (r: PromiseSettledResult<any>) =>
+        r.status === 'fulfilled' ? r.value.data?.total ?? null : null;
+
       setStats({
-        users: u.data.total,
-        coins: c.data.total,
-        purchases: p.data.total,
-        flags: f.data.total,
+        users: value(u),
+        coins: value(c),
+        purchases: value(p),
+        flags: value(f),
       });
-      setStreaks(st.data);
+      setStreaks(st.status === 'fulfilled' ? st.value.data : null);
     }
 
-    loadStats();
+    // A rejection here would otherwise surface as an unhandled rejection.
+    loadStats().catch(() => {});
     return () => {
       alive = false;
     };
@@ -97,7 +105,10 @@ export default function Dashboard() {
 
     const fetchActivity = async () => {
       if (!active) return;
-      const res = await adminApi.get('/admin/activity');
+      // Polled on a timer: swallow transient failures so one blip neither
+      // raises an unhandled rejection nor stops the poll.
+      const res = await adminApi.get('/admin/activity').catch(() => null);
+      if (!res) return;
       if (active) setActivity(res.data);
     };
 
@@ -124,22 +135,22 @@ export default function Dashboard() {
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Total Users"
-          value={stats.users.toLocaleString()}
+          value={stats.users?.toLocaleString() ?? '—'}
           icon={<Users size={20} />}
         />
         <StatCard
           title="Coins Circulating"
-          value={stats.coins.toLocaleString()}
+          value={stats.coins?.toLocaleString() ?? '—'}
           icon={<Coins size={20} />}
         />
         <StatCard
           title="Purchases Today"
-          value={stats.purchases.toLocaleString()}
+          value={stats.purchases?.toLocaleString() ?? '—'}
           icon={<CreditCard size={20} />}
         />
         <StatCard
           title="Reports / Flags"
-          value={stats.flags.toLocaleString()}
+          value={stats.flags?.toLocaleString() ?? '—'}
           icon={<AlertTriangle size={20} />}
         />
       </div>

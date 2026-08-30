@@ -200,7 +200,6 @@ class SoundManager {
     const now = Date.now();
     const last = this.lastPlayedAt[key] ?? 0;
     if (cfg.debounceMs && now - last < cfg.debounceMs) return;
-    this.lastPlayedAt[key] = now;
 
     try {
       let s = this.fxPool[key];
@@ -209,14 +208,20 @@ class SoundManager {
         this.fxPool[key] = s;
       }
 
-      // Loading is asynchronous and un-awaitable. A tap in the first moments
-      // after boot would otherwise throw; skipping one click beats a crash.
-      if (!s.isLoaded) return;
-
       s.volume = (cfg.baseVolume ?? 1) * this.masterVolume * this.effectsVolume;
-      // Rewind and replay — no per-tap create/destroy churn.
-      await s.seekTo(0);
+
+      // `createAudioPlayer` loads in the background, unlike expo-av's awaited
+      // loadAsync — so the first tap after boot can land before the player is
+      // ready. Seeking then would throw and cost the sound entirely. A player
+      // that has not finished loading is still at position 0, so the rewind is
+      // only needed for one that has already played.
+      if (s.isLoaded) await s.seekTo(0);
       s.play();
+
+      // Recorded only once the sound actually started. Stamping it above meant
+      // a dropped play still burned the debounce window, so the immediate
+      // retry was suppressed too.
+      this.lastPlayedAt[key] = now;
     } catch {
       // Pooled player is in a bad state — drop it so the next call rebuilds.
       const dead = this.fxPool[key];

@@ -132,8 +132,15 @@ export default function Payouts() {
 
   const retryPayout = async (id: string) => {
     if (!confirm('Retry this failed payout?')) return;
-    await adminApi.post(`/admin/payouts/${id}/retry`);
-    fetchPayouts();
+    try {
+      await adminApi.post(`/admin/payouts/${id}/retry`);
+    } catch (e: any) {
+      // This moves real money. A silent failure left the row looking untouched
+      // and invited a second retry on a payout that may already be in flight.
+      alert(e?.response?.data?.message ?? 'Retry failed — the payout was not resent.');
+    } finally {
+      fetchPayouts();
+    }
   };
 
   const exportCSV = async () => {

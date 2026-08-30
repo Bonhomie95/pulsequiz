@@ -10,6 +10,9 @@ import {
   TouchableOpacity,
   View,
   Switch,
+  Alert,
+  Modal,
+  Linking,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +29,10 @@ import {
   Moon,
   Sun,
   Monitor,
+  Trash2,
+  FileText,
+  ExternalLink,
+  LifeBuoy,
 } from 'lucide-react-native';
 
 import { api } from '@/src/api/api';
@@ -36,6 +43,7 @@ import { useTheme } from '@/src/theme/useTheme';
 import { soundManager } from '@/src/audio/SoundManager';
 import { enterImmersiveMode } from '@/src/utils/immersive';
 import { Toast } from '@/src/components/Toast';
+import { LINKS } from '@/src/constants/links';
 
 const USDT_TYPES = ['TRC20', 'ERC20', 'BEP20'] as const;
 
@@ -44,6 +52,33 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const { mode, setMode } = useThemeStore();
   const { user, logout, setUser } = useAuthStore();
+
+  // Account deletion. Apple Guideline 5.1.1(v) and Google Play both require an
+  // account created in-app to be deletable in-app — not by emailing support.
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDeleteAccount = async () => {
+    if (deleteConfirm.trim().toUpperCase() !== 'DELETE') return;
+    setDeleting(true);
+    try {
+      // The server requires this exact body as a second guard against an
+      // accidental or replayed request.
+      await api.delete('/auth/account', { data: { confirm: 'DELETE' } });
+      setShowDelete(false);
+      await logout();
+      router.replace('/(auth)/login');
+    } catch (e: any) {
+      Alert.alert(
+        'Could not delete account',
+        e?.response?.data?.message ??
+          'Something went wrong. Please try again, or contact support.',
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
   const {
     muted,
     masterVolume,
@@ -440,6 +475,69 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* ── LEGAL ──
+            Apple and Google both require Terms and Privacy to be reachable
+            from inside the app, not only on the sign-in screen. */}
+        <SectionHeader
+          title="Legal & Support"
+          icon={<FileText size={15} color={theme.colors.muted} />}
+        />
+        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+          {[
+            { label: 'Terms of Use', url: LINKS.TERMS, icon: <FileText size={17} color={theme.colors.muted} /> },
+            { label: 'Privacy Policy', url: LINKS.PRIVACY, icon: <Shield size={17} color={theme.colors.muted} /> },
+            { label: 'Support', url: LINKS.SUPPORT, icon: <LifeBuoy size={17} color={theme.colors.muted} /> },
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.label}
+              style={styles.cardRow}
+              onPress={() => Linking.openURL(item.url)}
+              accessibilityRole="link"
+              accessibilityLabel={item.label}
+              hitSlop={6}
+            >
+              {item.icon}
+              <Text style={[styles.rowLabel, { color: theme.colors.text, flex: 1 }]}>
+                {item.label}
+              </Text>
+              <ExternalLink size={15} color={theme.colors.muted} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* ── DELETE ACCOUNT ──
+            Required by App Store Guideline 5.1.1(v) and Google Play: an
+            account that can be created in the app must be deletable in the
+            app. This is a hard rejection if it is missing. */}
+        <SectionHeader
+          title="Danger Zone"
+          icon={<Trash2 size={15} color={theme.colors.danger} />}
+        />
+        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+          <TouchableOpacity
+            style={styles.cardRow}
+            onPress={() => {
+              setDeleteConfirm('');
+              setShowDelete(true);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Delete my account"
+            hitSlop={6}
+          >
+            <Trash2 size={17} color={theme.colors.danger} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowLabel, { color: theme.colors.danger }]}>
+                Delete My Account
+              </Text>
+              <Text style={[styles.rowSub, { color: theme.colors.muted }]}>
+                Permanently removes your account, progress and coins. This
+                cannot be undone.
+              </Text>
+            </View>
+            <ChevronRight size={16} color={theme.colors.muted} />
+          </TouchableOpacity>
+        </View>
+
         {/* ── LOGOUT ── */}
         <TouchableOpacity
           onPress={async () => {
@@ -467,6 +565,86 @@ export default function SettingsScreen() {
           PulseQuiz v1.0
         </Text>
       </ScrollView>
+
+      {/* Typed confirmation: deletion is irreversible and wipes real balances,
+          so a single tap must not be enough to trigger it. */}
+      <Modal
+        visible={showDelete}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDelete(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View
+            style={[styles.modalCard, { backgroundColor: theme.colors.surface }]}
+          >
+            <Trash2 size={26} color={theme.colors.danger} />
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+              Delete your account?
+            </Text>
+            <Text style={[styles.modalBody, { color: theme.colors.muted }]}>
+              This permanently deletes your profile, quiz history, streak,
+              friends and challenges. Any coin balance and unpaid prize winnings
+              are forfeited. This cannot be undone.
+            </Text>
+            <Text style={[styles.modalBody, { color: theme.colors.muted }]}>
+              Type DELETE to confirm.
+            </Text>
+            <TextInput
+              value={deleteConfirm}
+              onChangeText={setDeleteConfirm}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              placeholder="DELETE"
+              placeholderTextColor={theme.colors.muted}
+              style={[
+                styles.modalInput,
+                { color: theme.colors.text, borderColor: theme.colors.border },
+              ]}
+              accessibilityLabel="Type DELETE to confirm account deletion"
+            />
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: theme.colors.border }]}
+                onPress={() => setShowDelete(false)}
+                disabled={deleting}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
+              >
+                <Text style={{ color: theme.colors.text, fontWeight: '700' }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor: theme.colors.danger,
+                    opacity:
+                      deleting || deleteConfirm.trim().toUpperCase() !== 'DELETE'
+                        ? 0.5
+                        : 1,
+                  },
+                ]}
+                onPress={confirmDeleteAccount}
+                disabled={
+                  deleting || deleteConfirm.trim().toUpperCase() !== 'DELETE'
+                }
+                accessibilityRole="button"
+                accessibilityLabel="Permanently delete my account"
+              >
+                {deleting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={{ color: '#fff', fontWeight: '700' }}>
+                    Delete Forever
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       </KeyboardAvoidingView>
 
       <Toast
@@ -566,5 +744,37 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   logoutText: { fontWeight: '700', fontSize: 16 },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 20,
+    padding: 22,
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  modalTitle: { fontSize: 19, fontWeight: '800' },
+  modalBody: { fontSize: 13, lineHeight: 19 },
+  modalInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  modalBtn: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   version: { textAlign: 'center', fontSize: 12, marginBottom: 10 },
 });
