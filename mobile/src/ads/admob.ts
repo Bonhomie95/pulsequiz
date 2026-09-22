@@ -6,14 +6,22 @@ import {
   TestIds,
 } from 'react-native-google-mobile-ads';
 import { usePremiumStore } from '@/src/store/usePremiumStore';
-import { adUnitId } from './unitIds';
+import { adUnitId, isTestAdUnit } from './unitIds';
 
 const rewardedUnitId = __DEV__ ? TestIds.REWARDED : adUnitId('REWARDED');
 const interstitialUnitId = __DEV__ ? TestIds.INTERSTITIAL : adUnitId('INTERSTITIAL');
 
-/** False when no rewarded unit is configured for this platform — screens hide
- *  "watch an ad" options instead of offering something that can never load. */
-export const rewardedAdsAvailable = !!rewardedUnitId;
+/**
+ * False when this platform can't pay out for a rewarded ad, so screens hide
+ * "watch an ad" rather than promising coins that never arrive.
+ *
+ * That covers two cases: no unit configured at all, and a Google *test* unit.
+ * Test units belong to Google, so no server-side verification callback can be
+ * configured for them — the server (which credits only on a verified callback)
+ * would never see the reward.
+ */
+export const rewardedAdsAvailable =
+  !!rewardedUnitId && (__DEV__ || !isTestAdUnit(rewardedUnitId));
 
 /* ---------------- REWARDED ---------------- */
 

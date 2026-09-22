@@ -65,15 +65,34 @@ npm run seed
 
 These are the ones where the code is now ready but the provider side is not.
 
-### AdMob server-side verification — required
-Console → the rewarded ad unit → **Server-side verification** → set the callback to:
+### AdMob server-side verification — NOW ENFORCED
 
-```
-https://<host>/api/webhooks/admob/ssv
-```
+`ADMOB_SSV_ENABLED=1` is set, so the server credits rewarded-ad coins **only**
+when Google's signed callback arrives. Until the callback is configured, the
+"Watch video" button loads an ad and no coins land. Configure it:
 
-Until this is set and `ADMOB_SSV_ENABLED=1`, ad rewards do not credit at all in
-production (by design — the alternative is an open currency faucet).
+1. AdMob → Apps → PulseQuiz → **Ad units** → your rewarded unit → **Server-side
+   verification** → set the callback to:
+
+   ```
+   https://<api-host>/api/webhooks/admob/ssv
+   ```
+
+2. Repeat for every rewarded unit, on both platforms.
+3. List those units in `ADMOB_REWARDED_AD_UNIT_IDS` (comma-separated). Only
+   listed units are credited, so another publisher pointing their callback at
+   us earns nothing. Currently set to the Android rewarded unit.
+
+**iOS currently uses Google's test ad units** (`ca-app-pub-3940256099942544/…`)
+until you create real ones. Test units are Google's, so no verification
+callback can be attached to them — the app therefore hides "watch an ad"
+entirely on iOS rather than promising coins that can never arrive. Banners and
+interstitials still display; they simply earn nothing. Replace those three
+`EXPO_PUBLIC_ADMOB_*_ID_IOS` values in `eas.json` before release; any non-dev
+build logs a warning while a test unit is in use.
+
+The server verifies each callback against Google's published keys, rejects
+replays and stale callbacks, and enforces the daily cap.
 
 ### App Store Server Notifications V2
 App Store Connect → App Information → **App Store Server Notifications** →
@@ -134,11 +153,19 @@ Pub/Sub topic, with a push subscription pointing at:
 https://<host>/api/webhooks/google?token=$GOOGLE_RTDN_SECRET
 ```
 
-Prefer OIDC: set `PUBSUB_VERIFICATION_AUDIENCE` and
-`PUBSUB_SERVICE_ACCOUNT_EMAIL` instead of the shared secret. The service
-account email is the `client_email` field of the JSON above; the audience is
-whatever you typed as the audience on the Pub/Sub push subscription (use the
-webhook URL).
+`GOOGLE_RTDN_SECRET` is already set on the API, so paste the full URL above
+(with the token) as the Pub/Sub push endpoint. Anything without that token is
+refused.
+
+Prefer OIDC once the service account exists: set `PUBSUB_VERIFICATION_AUDIENCE`
+(whatever you set as the audience on the push subscription — use the webhook
+URL) and `PUBSUB_SERVICE_ACCOUNT_EMAIL` (the `client_email` from the service
+account JSON). With an audience set, the shared secret is ignored.
+
+**Note:** notifications about *subscriptions* are reconciled by calling Google
+Play, so they also need a real `GOOGLE_SERVICE_ACCOUNT_JSON`. Today that
+variable holds a placeholder, so Android purchase verification and subscription
+reconciliation are both off until you create the service account above.
 
 ### NOWPayments (prize payouts)
 
