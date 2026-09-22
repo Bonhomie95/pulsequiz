@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { LINKS } from '../../src/constants/links';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Monitor, Moon, Sun } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,7 +38,7 @@ import { logger } from '../../src/utils/logger';
 
 import { api, errorMessage } from '../../src/api/api';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import { useThemeStore } from '../../src/store/useThemeStore';
+import { ThemeToggle } from '../../src/components/ThemeToggle';
 import { useTheme } from '../../src/theme/useTheme';
 
 import * as WebBrowser from 'expo-web-browser';
@@ -149,8 +149,8 @@ function FloatingParticle({
 export default function LoginScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const isDark = theme.colors.background === '#0B0F1A';
-  const { mode, setMode } = useThemeStore();
   const setUser = useAuthStore((s) => s.setUser);
   const setSession = useAuthStore((s) => s.setSession);
 
@@ -268,17 +268,7 @@ export default function LoginScreen() {
     [],
   );
 
-  const ThemeIcon = useMemo(
-    () => (mode === 'system' ? Monitor : mode === 'dark' ? Moon : Sun),
-    [mode],
-  );
 
-  const cycleTheme = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (mode === 'system') setMode('dark');
-    else if (mode === 'dark') setMode('light');
-    else setMode('system');
-  };
 
   // ── Google Sign-In ─────────────────────────────────────────────────────────
   /**
@@ -455,18 +445,9 @@ export default function LoginScreen() {
       />
 
       <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
-        {/* Theme toggle */}
-        <TouchableOpacity
-          style={[
-            styles.themeBtn,
-            { backgroundColor: isDark ? '#131A2E' : '#F4F6FB' },
-          ]}
-          onPress={cycleTheme}
-          accessibilityRole="button"
-          accessibilityLabel="Change theme"
-        >
-          <ThemeIcon size={18} color={isDark ? '#A6B0CF' : '#6B7280'} />
-        </TouchableOpacity>
+        {/* Theme toggle — offset by the safe-area inset, or it sits under the
+            status bar and Dynamic Island where it can't be tapped. */}
+        <ThemeToggle style={[styles.themeBtn, { top: insets.top + 8 }]} />
 
         {/* Hero */}
         <Animated.View style={[styles.hero, heroStyle]}>
@@ -781,14 +762,8 @@ const styles = StyleSheet.create({
   // Theme btn
   themeBtn: {
     position: 'absolute',
-    top: 14,
     right: 18,
     zIndex: 20,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
     elevation: 2,
   },
 

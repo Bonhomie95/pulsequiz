@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api, errorMessage } from '@/src/api/api';
 import { ScreenHeader } from '@/src/components/ScreenHeader';
+import { ThemeToggle } from '@/src/components/ThemeToggle';
 import { useTheme } from '@/src/theme/useTheme';
 import { resultGrid } from '@/src/utils/share';
 
@@ -62,7 +63,7 @@ export default function GuestQuiz() {
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ScreenHeader title="Quick Quiz" />
+      <ScreenHeader title="Quick Quiz" right={<ThemeToggle />} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 32, flexGrow: 1 }}>
         {error && (
           <View style={{ gap: 10 }}>

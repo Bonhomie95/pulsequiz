@@ -85,6 +85,19 @@ https://<host>/api/webhooks/apple
 
 Without it, a user can buy coins, spend them, refund the purchase, and keep them.
 
+### Creating the first admin
+
+The admin panel needs an account before anyone can sign in. Run this against
+the same database the API uses (it prompts for the password, so it never
+reaches your shell history):
+
+```bash
+cd server && npm run create-admin -- you@example.com SUPER_ADMIN
+```
+
+Then sign in at the admin panel URL. Manage further admins from its Admins
+page rather than the CLI.
+
 ### Google service account (`GOOGLE_SERVICE_ACCOUNT_JSON`)
 
 Needed for two things: checking Play purchases server-side, and receiving
@@ -160,6 +173,24 @@ arrive. A failed first payout during a real prize week is the worst time to
 discover a missing setting.
 
 ---
+
+### The question bank
+
+`server/src/seed/questions.<category>.json` is the source of truth: 50 questions
+per category (20 easy / 20 medium / 10 hard), each with an `explanation` shown
+to players after the answer.
+
+```bash
+npm run seed            # add/update questions, keep anything already there
+npm run seed -- --wipe  # replace the bank entirely
+```
+
+Re-running updates wording and explanations in place (matched on the question's
+fingerprint) and never resets a question's live calibration counters.
+
+The older generated bank (`npm run bank:build` → `question-bank/*.json`, then
+`npm run bank:seed`) predates explanations and would reintroduce the retired
+2,200-question set. Don't run it unless you mean to.
 
 ### Facebook sign-in (currently OFF)
 

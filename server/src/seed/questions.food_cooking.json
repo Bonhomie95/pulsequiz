@@ -1,677 +1,652 @@
 [
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the main ingredient in guacamole?",
-    "options": ["Tomato", "Avocado", "Lime", "Onion"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which spice gives curry its distinctive yellow color?",
-    "options": ["Cumin", "Paprika", "Turmeric", "Saffron"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What type of pasta is shaped like small bow-ties?",
-    "options": ["Rigatoni", "Penne", "Farfalle", "Fusilli"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the key ingredient that makes bread rise?",
-    "options": ["Sugar", "Yeast", "Baking soda", "Salt"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which country is the origin of sushi?",
-    "options": ["China", "Korea", "Japan", "Vietnam"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the French word for 'appetizer'?",
-    "options": ["Entrée", "Hors d'oeuvre", "Dessert", "Plat principal"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What cooking method involves submerging food in hot oil?",
-    "options": ["Baking", "Grilling", "Deep frying", "Poaching"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which fruit is used to make wine?",
-    "options": ["Apple", "Grape", "Cherry", "Peach"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the main protein in a traditional Caesar salad dressing?",
-    "options": ["Egg yolk", "Cheese", "Anchovy", "Mustard"],
-    "answer": 0
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which vegetable is used to make hummus?",
-    "options": ["Lentils", "Chickpeas", "Peas", "Edamame"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the primary ingredient in chocolate?",
-    "options": ["Vanilla", "Cacao/Cocoa", "Sugar", "Milk"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which herb is commonly used in Italian cooking and on pizza?",
-    "options": ["Thyme", "Rosemary", "Basil", "Tarragon"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What type of milk is traditionally used in mozzarella cheese?",
-    "options": ["Cow's milk", "Goat's milk", "Buffalo's milk", "Sheep's milk"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the name of the Japanese dish of vinegared rice with seafood or vegetables?",
-    "options": ["Ramen", "Tempura", "Sushi", "Udon"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which cooking technique involves cooking food in a vacuum-sealed bag in a water bath?",
-    "options": ["Braising", "Blanching", "Sous vide", "Steaming"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the main ingredient in traditional hummus besides chickpeas?",
-    "options": ["Lemon juice", "Olive oil", "Tahini", "Garlic"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which grain is used to make traditional Italian risotto?",
-    "options": ["Barley", "Arborio rice", "Quinoa", "Farro"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the name for cooked pasta mixed with beaten eggs, cheese, and bacon?",
-    "options": ["Bolognese", "Alfredo", "Carbonara", "Amatriciana"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which spice is derived from the bark of a tree?",
-    "options": ["Nutmeg", "Cinnamon", "Cardamom", "Clove"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the primary ingredient in traditional guacamole besides avocado?",
-    "options": ["Tomato", "Lime juice", "Salt", "Cilantro"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the process of cooking meat slowly over low, indirect heat with wood smoke?",
-    "options": ["Grilling", "Roasting", "Smoking/BBQ", "Broiling"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which cheese is traditionally used on a Greek salad?",
-    "options": ["Brie", "Feta", "Gouda", "Parmesan"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What type of bean is used in traditional Mexican refried beans?",
-    "options": ["Black beans", "Chickpeas", "Pinto beans", "Kidney beans"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the most popular pizza topping in the United States?",
-    "options": ["Mushrooms", "Sausage", "Pepperoni", "Onions"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which country is the origin of croissants?",
-    "options": ["Austria", "France", "Germany", "Switzerland"],
-    "answer": 0
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What does 'al dente' mean in Italian cooking?",
-    "options": ["Well done", "Overcooked", "Firm to the bite", "Very soft"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which nut is used to make marzipan?",
-    "options": ["Walnut", "Cashew", "Almond", "Hazelnut"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the base of a traditional French onion soup?",
-    "options": ["Chicken broth", "Vegetable broth", "Beef broth", "Fish stock"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "Which fruit is used to make a traditional tarte tatin?",
-    "options": ["Pear", "Apple", "Peach", "Plum"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "easy",
-    "question": "What is the name for a dish of Italian rice cooked with broth and usually Parmesan?",
-    "options": ["Polenta", "Risotto", "Pilaf", "Paella"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the Maillard reaction?",
-    "options": [
-      "Caramelization of sugar",
-      "A browning reaction between amino acids and sugars when heated",
-      "The breakdown of fats during cooking",
-      "Fermentation of dough"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the difference between baking soda and baking powder?",
-    "options": [
-      "They are the same",
-      "Baking soda is pure sodium bicarbonate; baking powder also contains acid",
-      "Baking powder is stronger",
-      "Baking soda requires more liquid"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which region of France is famous for its wine production with Bordeaux and Burgundy?",
-    "options": [
-      "Provence",
-      "Alsace",
-      "Bordeaux and Burgundy are both in France's wine country",
-      "Loire Valley"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the name of the Spanish dish made of rice, seafood, and saffron?",
-    "options": ["Gazpacho", "Tortilla española", "Paella", "Fabada"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is 'umami' often described as?",
-    "options": ["Sweet", "Sour", "Savory/meaty", "Bitter"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which country is the largest producer of coffee in the world?",
-    "options": ["Colombia", "Vietnam", "Ethiopia", "Brazil"],
-    "answer": 3
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the technique called when you cook food by browning it in fat then simmering it in liquid?",
-    "options": ["Basting", "Braising", "Blanching", "Barding"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which type of sugar is known for its distinctive molasses flavor used in gingerbread?",
-    "options": [
-      "Caster sugar",
-      "Powdered sugar",
-      "Brown sugar",
-      "Muscovado sugar"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is 'mise en place' in professional cooking?",
-    "options": [
-      "A French dessert",
-      "Plating technique",
-      "Having all ingredients prepared before cooking",
-      "Cleaning the workspace after cooking"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the main fat used in traditional French croissants?",
-    "options": ["Margarine", "Vegetable oil", "Lard", "Butter"],
-    "answer": 3
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which Japanese dish consists of buckwheat noodles served cold with dipping sauce?",
-    "options": ["Udon", "Soba", "Ramen", "Somen"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the term for the liquid that remains after meat is roasted, used to make gravy?",
-    "options": ["Bouillon", "Drippings", "Fond", "Stock"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which Italian dessert contains espresso, ladyfingers, and mascarpone?",
-    "options": ["Panna cotta", "Cannoli", "Tiramisu", "Zuppa inglese"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the name of the Mexican sauce made from chocolate and chili peppers?",
-    "options": ["Salsa verde", "Mole", "Enchilada sauce", "Adobo"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which country is the origin of kimchi?",
-    "options": ["China", "Japan", "Korea", "Thailand"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the primary ingredient of a traditional French beurre blanc sauce?",
-    "options": ["Cream", "Butter", "Wine", "Flour"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "In baking, what does 'folding' mean?",
-    "options": [
-      "Rolling dough flat",
-      "Gently incorporating ingredients to preserve air",
-      "Kneading vigorously",
-      "Chilling the dough"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which spice is known as 'the world's most expensive spice by weight'?",
-    "options": ["Cardamom", "Truffle", "Saffron", "Vanilla"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is a 'roux' used for in cooking?",
-    "options": [
-      "Flavoring meat",
-      "Thickening sauces and soups",
-      "Tenderizing vegetables",
-      "Emulsifying salad dressings"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What does 'julienne' mean as a knife cut?",
-    "options": [
-      "Rough chop",
-      "Thin, matchstick-sized strips",
-      "Diagonal slices",
-      "Very fine dice"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which culture invented the technique of fermenting soybeans to make miso?",
-    "options": ["Chinese", "Korean", "Japanese", "Thai"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is 'brine' used for in cooking?",
-    "options": [
-      "Sweetening food",
-      "Flavoring and tenderizing food in salty water",
-      "Thickening sauces",
-      "Preserving food in acid"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the name for the French technique of cooking vegetables quickly in butter over high heat?",
-    "options": ["Blanching", "Sautéing", "Braising", "Steaming"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which cheese is traditionally used in a French onion soup gratinée?",
-    "options": ["Brie", "Camembert", "Gruyère", "Comté"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is 'tempering' chocolate?",
-    "options": [
-      "Melting chocolate slowly",
-      "Cooling and reheating chocolate to stabilize cocoa butter crystals",
-      "Adding sugar to chocolate",
-      "Mixing in dairy"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What type of flour is used in traditional pasta making?",
-    "options": [
-      "All-purpose flour",
-      "Bread flour",
-      "Semolina flour",
-      "Cake flour"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which fermented beverage is made from mare's milk and is popular in Central Asia?",
-    "options": ["Kefir", "Kumiss", "Kvass", "Kombucha"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the term for cooking food partially in boiling water then shocking it in ice water?",
-    "options": ["Simmering", "Blanching", "Parboiling", "Steaming"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "Which country is the origin of the dish 'pad thai'?",
-    "options": ["Vietnam", "Thailand", "Cambodia", "Indonesia"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "medium",
-    "question": "What is the main ingredient in traditional Jewish matzo ball soup?",
-    "options": ["Rice", "Matzo meal", "Barley", "Noodles"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What chemical compound gives chili peppers their heat?",
-    "options": ["Piperine", "Allicin", "Capsaicin", "Gingerol"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is the difference between a stock and a broth?",
-    "options": [
-      "They are identical",
-      "Stock is made from bones; broth from meat and vegetables",
-      "Broth is always vegetarian",
-      "Stock is always seasoned"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is 'gluten' in baking?",
-    "options": [
-      "A type of sugar",
-      "A protein network formed when wheat flour is hydrated",
-      "A natural preservative",
-      "A type of yeast"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "Which fermentation process is used to make sourdough bread different from regular bread?",
-    "options": [
-      "Yeast fermentation only",
-      "Wild yeast and lactic acid bacteria fermentation",
-      "Commercial yeast with longer rise",
-      "Anaerobic fermentation"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is the smoke point of extra virgin olive oil approximately?",
-    "options": [
-      "160°C (320°F)",
-      "190°C (375°F)",
-      "210°C (410°F)",
-      "240°C (465°F)"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "Which enzyme in raw pineapple prevents gelatin from setting?",
-    "options": ["Papain", "Bromelain", "Ficin", "Amylase"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is the name of the Japanese fermented soybean dish with a pungent smell?",
-    "options": ["Miso", "Tempeh", "Natto", "Edamame"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is 'spherification' in molecular gastronomy?",
-    "options": [
-      "Making food into spheres using calcium and sodium alginate",
-      "A vacuum cooking technique",
-      "High-pressure cooking",
-      "Freeze-drying food"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is the Scoville scale used to measure?",
-    "options": [
-      "Food freshness",
-      "Wine acidity",
-      "Spiciness of chili peppers",
-      "Bitterness of hops"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "Which country produces the most olive oil in the world?",
-    "options": ["Italy", "Greece", "Spain", "Turkey"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is 'deglaze' as a cooking technique?",
-    "options": [
-      "Removing fat from a sauce",
-      "Adding liquid to a hot pan to release browned bits",
-      "Clarifying butter",
-      "Reducing a sauce by boiling"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What acid is primarily responsible for the sourness of sourdough bread?",
-    "options": ["Citric acid", "Lactic acid", "Acetic acid", "Malic acid"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is 'kuzu' used for in Japanese cooking?",
-    "options": [
-      "A thickening starch derived from the kudzu plant",
-      "A type of miso",
-      "A seasoning",
-      "A fermented ingredient"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is the term for the brown residue left in a pan after searing meat that adds flavor to sauces?",
-    "options": ["Roux", "Fond", "Mirepoix", "Mise en place"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "Which country is the origin of the Negroni cocktail?",
-    "options": ["France", "United Kingdom", "Italy", "Spain"],
-    "answer": 2
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is 'emulsification' in cooking?",
-    "options": [
-      "Cooking at high heat",
-      "Mixing two immiscible liquids into a stable mixture",
-      "Reducing a liquid by boiling",
-      "Tenderizing meat"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "Which salt has the lowest sodium content per teaspoon?",
-    "options": ["Table salt", "Kosher salt", "Sea salt", "Himalayan pink salt"],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What gives aged balsamic vinegar from Modena its thick consistency?",
-    "options": [
-      "Added sugar",
-      "Long aging and evaporation process",
-      "Cornstarch",
-      "Grape syrup addition"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "In French cuisine, what are the 'five mother sauces'?",
-    "options": [
-      "Béchamel, Velouté, Espagnole, Hollandaise, Tomato",
-      "Béchamel, Velouté, Aioli, Hollandaise, Tomato",
-      "Bechamel, Bolognese, Espagnole, Hollandaise, Tomato",
-      "Velouté, Espagnole, Mornay, Hollandaise, Tomato"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Food & Cooking",
-    "difficulty": "hard",
-    "question": "What is 'confit' as a cooking technique?",
-    "options": [
-      "Cooking in high heat",
-      "Slow cooking and preserving in fat",
-      "Brining and smoking",
-      "Curing with sugar"
-    ],
-    "answer": 1
-  }
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which dish comes from Italy?",
+  "options": [
+   "Pizza",
+   "Sushi",
+   "Tacos",
+   "Curry"
+  ],
+  "answer": 0,
+  "explanation": "Pizza as we know it developed in Naples, Italy, in the 18th and 19th centuries."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "What is the main ingredient of guacamole?",
+  "options": [
+   "Pea",
+   "Avocado",
+   "Spinach",
+   "Cucumber"
+  ],
+  "answer": 1,
+  "explanation": "Guacamole is mashed avocado, usually with lime, onion, chilli and coriander."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which fruit is dried to make a raisin?",
+  "options": [
+   "Plum",
+   "Fig",
+   "Grape",
+   "Apricot"
+  ],
+  "answer": 2,
+  "explanation": "Raisins are dried grapes. Dried plums are prunes."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "What is the main ingredient in bread?",
+  "options": [
+   "Sugar",
+   "Butter",
+   "Milk",
+   "Flour"
+  ],
+  "answer": 3,
+  "explanation": "Bread is mostly flour, plus water, yeast and salt."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which drink is made from roasted beans?",
+  "options": [
+   "Coffee",
+   "Tea",
+   "Cocoa",
+   "Cider"
+  ],
+  "answer": 0,
+  "explanation": "Coffee is brewed from roasted and ground coffee beans, the seeds of a cherry-like fruit."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "What cooking method uses hot oil?",
+  "options": [
+   "Boiling",
+   "Frying",
+   "Steaming",
+   "Poaching"
+  ],
+  "answer": 1,
+  "explanation": "Frying cooks food in hot fat or oil, which browns the surface quickly."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which of these is a dairy product?",
+  "options": [
+   "Bread",
+   "Rice",
+   "Cheese",
+   "Olive oil"
+  ],
+  "answer": 2,
+  "explanation": "Cheese is made from milk, so it is a dairy product."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "What is jollof rice most associated with?",
+  "options": [
+   "Scandinavia",
+   "Central Europe",
+   "Patagonia",
+   "West Africa"
+  ],
+  "answer": 3,
+  "explanation": "Jollof is a West African one-pot rice dish cooked in a tomato and pepper base, with friendly rivalry over whose version is best."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which vegetable makes people cry when chopped?",
+  "options": [
+   "Onion",
+   "Carrot",
+   "Potato",
+   "Lettuce"
+  ],
+  "answer": 0,
+  "explanation": "Cutting an onion releases a sulphur compound that irritates the eyes."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "What is sushi traditionally made with?",
+  "options": [
+   "Fried noodles",
+   "Vinegared rice",
+   "Mashed potato",
+   "Cornmeal"
+  ],
+  "answer": 1,
+  "explanation": "Sushi is defined by its seasoned, vinegared rice — the raw fish is optional."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which spice is the most expensive by weight?",
+  "options": [
+   "Black pepper",
+   "Cinnamon",
+   "Saffron",
+   "Paprika"
+  ],
+  "answer": 2,
+  "explanation": "Saffron is hand-picked from crocus flowers — thousands of flowers make a single kilogram."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "What do you call food cooked over an open flame outdoors?",
+  "options": [
+   "Baking",
+   "Blanching",
+   "Braising",
+   "Barbecue"
+  ],
+  "answer": 3,
+  "explanation": "Barbecue cooks food over fire or coals, often slowly for tougher cuts."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which of these is a citrus fruit?",
+  "options": [
+   "Lemon",
+   "Banana",
+   "Mango",
+   "Grape"
+  ],
+  "answer": 0,
+  "explanation": "Lemons, oranges, limes and grapefruit are citrus fruits, known for their acidity."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "What is the main ingredient in an omelette?",
+  "options": [
+   "Flour",
+   "Eggs",
+   "Cheese",
+   "Milk"
+  ],
+  "answer": 1,
+  "explanation": "An omelette is beaten eggs cooked in a pan, with fillings added to taste."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which appliance keeps food cold?",
+  "options": [
+   "Oven",
+   "Toaster",
+   "Refrigerator",
+   "Kettle"
+  ],
+  "answer": 2,
+  "explanation": "A refrigerator slows bacterial growth by keeping food at around 4°C."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "What is the main ingredient of hummus?",
+  "options": [
+   "Lentils",
+   "Beans",
+   "Peas",
+   "Chickpeas"
+  ],
+  "answer": 3,
+  "explanation": "Hummus is blended chickpeas with tahini, lemon juice and garlic."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which meal is eaten in the morning?",
+  "options": [
+   "Breakfast",
+   "Lunch",
+   "Dinner",
+   "Supper"
+  ],
+  "answer": 0,
+  "explanation": "Breakfast literally breaks the overnight fast."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which grain is used to make traditional pasta?",
+  "options": [
+   "Rice",
+   "Wheat",
+   "Maize",
+   "Barley"
+  ],
+  "answer": 1,
+  "explanation": "Most pasta is made from durum wheat semolina, which holds its shape when boiled."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "What gives chilli peppers their heat?",
+  "options": [
+   "Caffeine",
+   "Citric acid",
+   "Capsaicin",
+   "Lactose"
+  ],
+  "answer": 2,
+  "explanation": "Capsaicin triggers the same nerve receptors that respond to heat, so your mouth reads it as burning."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "easy",
+  "question": "Which of these is a cooking fat?",
+  "options": [
+   "Vinegar",
+   "Yeast",
+   "Salt",
+   "Butter"
+  ],
+  "answer": 3,
+  "explanation": "Butter is a fat made by churning cream; the others are not fats."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "What does 'al dente' mean when cooking pasta?",
+  "options": [
+   "Firm to the bite",
+   "Very soft",
+   "Cooked in oil",
+   "Served cold"
+  ],
+  "answer": 0,
+  "explanation": "Al dente is Italian for 'to the tooth' — cooked through but still firm."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which country is the origin of the dish paella?",
+  "options": [
+   "Portugal",
+   "Spain",
+   "Mexico",
+   "Greece"
+  ],
+  "answer": 1,
+  "explanation": "Paella comes from Valencia in Spain, cooked in a wide, shallow pan over fire."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "What process turns grape juice into wine?",
+  "options": [
+   "Distillation",
+   "Pasteurisation",
+   "Fermentation",
+   "Evaporation"
+  ],
+  "answer": 2,
+  "explanation": "Yeast ferments the sugars into alcohol and carbon dioxide."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which knife cut produces small cubes about 3 mm across?",
+  "options": [
+   "Julienne",
+   "Chiffonade",
+   "Batonnet",
+   "Brunoise"
+  ],
+  "answer": 3,
+  "explanation": "Brunoise is a fine dice. Julienne is matchsticks and chiffonade is ribbons of leaves."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "What is tofu made from?",
+  "options": [
+   "Soybeans",
+   "Rice",
+   "Wheat",
+   "Chickpeas"
+  ],
+  "answer": 0,
+  "explanation": "Tofu is curdled soy milk pressed into blocks, in the way cheese is made from dairy milk."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which cooking method uses steam under pressure to cook faster?",
+  "options": [
+   "Sous vide",
+   "Pressure cooking",
+   "Roasting",
+   "Grilling"
+  ],
+  "answer": 1,
+  "explanation": "Raising the pressure raises water's boiling point above 100°C, so food cooks faster."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "What is the Maillard reaction responsible for?",
+  "options": [
+   "Sour taste",
+   "Thickening sauces",
+   "Browning and savoury flavour",
+   "Preserving colour"
+  ],
+  "answer": 2,
+  "explanation": "It is the reaction between amino acids and sugars that browns bread crusts, seared meat and roasted coffee."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which herb is the main flavour in traditional pesto?",
+  "options": [
+   "Parsley",
+   "Thyme",
+   "Mint",
+   "Basil"
+  ],
+  "answer": 3,
+  "explanation": "Genoese pesto blends basil with pine nuts, garlic, Parmesan and olive oil."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "What does yeast produce that makes bread rise?",
+  "options": [
+   "Carbon dioxide",
+   "Oxygen",
+   "Nitrogen",
+   "Steam only"
+  ],
+  "answer": 0,
+  "explanation": "Yeast ferments sugars and gives off carbon dioxide, which is trapped by gluten and puffs the dough."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which dish is made from raw fish marinated in citrus juice?",
+  "options": [
+   "Carpaccio",
+   "Ceviche",
+   "Tartare",
+   "Sashimi"
+  ],
+  "answer": 1,
+  "explanation": "In ceviche the acid firms the fish much as heat would. Sashimi is served plain and raw."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which part of the egg contains most of the fat?",
+  "options": [
+   "White",
+   "Shell",
+   "Yolk",
+   "Membrane"
+  ],
+  "answer": 2,
+  "explanation": "The yolk carries the fat, cholesterol and most vitamins; the white is mostly protein and water."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "What is 'umami' usually described as?",
+  "options": [
+   "Sour taste",
+   "Bitter taste",
+   "Spicy heat",
+   "Savoury taste"
+  ],
+  "answer": 3,
+  "explanation": "Umami is the fifth basic taste, the savoury depth of tomatoes, soy sauce and aged cheese."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which oil is the traditional fat of Mediterranean cooking?",
+  "options": [
+   "Olive oil",
+   "Coconut oil",
+   "Palm oil",
+   "Sunflower oil"
+  ],
+  "answer": 0,
+  "explanation": "Olive oil has been the staple fat of the Mediterranean for thousands of years."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "What does it mean to 'blanch' a vegetable?",
+  "options": [
+   "Fry until golden",
+   "Boil briefly then chill",
+   "Bake slowly",
+   "Soak overnight"
+  ],
+  "answer": 1,
+  "explanation": "Blanching sets colour and stops enzyme action, and is often used before freezing."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which cheese is traditionally used on a Margherita pizza?",
+  "options": [
+   "Cheddar",
+   "Feta",
+   "Mozzarella",
+   "Gouda"
+  ],
+  "answer": 2,
+  "explanation": "Fresh mozzarella, with tomato and basil, gives the red, white and green of the Italian flag."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which country does the dish 'biryani' come from?",
+  "options": [
+   "Japan",
+   "Brazil",
+   "Morocco",
+   "India"
+  ],
+  "answer": 3,
+  "explanation": "Biryani is a layered rice and meat dish from the Indian subcontinent, with Persian roots."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "At what temperature is poultry generally considered safely cooked?",
+  "options": [
+   "74°C",
+   "45°C",
+   "55°C",
+   "63°C"
+  ],
+  "answer": 0,
+  "explanation": "Food safety guidance puts whole poultry at 74°C (165°F) in the thickest part."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "What is a roux used for?",
+  "options": [
+   "Thickening sauces",
+   "Sweetening desserts",
+   "Tenderising meat",
+   "Colouring rice"
+  ],
+  "answer": 0,
+  "explanation": "A roux is flour cooked in fat, the base of béchamel and many gravies."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "Which fruit is used to make traditional Moroccan tagine flavouring, preserved in salt?",
+  "options": [
+   "Apple",
+   "Lemon",
+   "Grape",
+   "Cherry"
+  ],
+  "answer": 1,
+  "explanation": "Salt-preserved lemons give tagines their distinctive sharp, mellow flavour."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "medium",
+  "question": "What does 'sous vide' cooking involve?",
+  "options": [
+   "Open flame",
+   "Dry heat in an oven",
+   "Sealed bags in warm water",
+   "Pressure steam"
+  ],
+  "answer": 2,
+  "explanation": "Food is vacuum-sealed and held in precisely controlled warm water, so it cooks evenly."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "Which acid gives vinegar its sour taste?",
+  "options": [
+   "Acetic acid",
+   "Citric acid",
+   "Lactic acid",
+   "Malic acid"
+  ],
+  "answer": 0,
+  "explanation": "Vinegar is a dilute solution of acetic acid, made by fermenting alcohol."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "What are the five 'mother sauces' of French cuisine attributed to Escoffier?",
+  "options": [
+   "Pesto, ragù, alfredo, carbonara, marinara",
+   "Béchamel, velouté, espagnole, hollandaise, tomato",
+   "Soy, oyster, hoisin, fish, chilli",
+   "Gravy, custard, jus, curry, salsa"
+  ],
+  "answer": 1,
+  "explanation": "Escoffier codified these five as the bases from which most classical sauces are built."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "Which country produces the most coffee?",
+  "options": [
+   "Colombia",
+   "Ethiopia",
+   "Brazil",
+   "Vietnam"
+  ],
+  "answer": 2,
+  "explanation": "Brazil has been the world's largest coffee producer for over a century."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "What is gluten?",
+  "options": [
+   "A type of sugar",
+   "A fat in butter",
+   "A leavening gas",
+   "A protein network in wheat dough"
+  ],
+  "answer": 3,
+  "explanation": "Gluten forms when wheat proteins are hydrated and worked, giving dough its stretch."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "Which chilli measurement scale is named after an American pharmacist?",
+  "options": [
+   "Scoville",
+   "Richter",
+   "Brix",
+   "Mohs"
+  ],
+  "answer": 0,
+  "explanation": "Wilbur Scoville devised the scale in 1912 to rate chilli heat."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "What does 'mise en place' mean in a professional kitchen?",
+  "options": [
+   "Cooking to order",
+   "Everything prepared and in position",
+   "Plating the dish",
+   "Cleaning down"
+  ],
+  "answer": 1,
+  "explanation": "It means having every ingredient prepped and laid out before service begins."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "Which ingredient makes a soufflé rise?",
+  "options": [
+   "Baking soda",
+   "Yeast",
+   "Whipped egg whites",
+   "Cream of tartar alone"
+  ],
+  "answer": 2,
+  "explanation": "Air beaten into egg whites expands in the oven, lifting the mixture."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "Brix is a scale used to measure what in food and drink?",
+  "options": [
+   "Acidity",
+   "Salt level",
+   "Fat content",
+   "Sugar content"
+  ],
+  "answer": 3,
+  "explanation": "Degrees Brix measure dissolved sugar, and are widely used in winemaking and fruit juice."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "Which fermentation produces the sour taste of yoghurt?",
+  "options": [
+   "Lactic acid fermentation",
+   "Alcoholic fermentation",
+   "Acetic fermentation",
+   "Malolactic fermentation"
+  ],
+  "answer": 0,
+  "explanation": "Bacteria convert lactose into lactic acid, which sours and thickens the milk."
+ },
+ {
+  "category": "Food & Cooking",
+  "difficulty": "hard",
+  "question": "What is the traditional base of a classic Neapolitan pizza dough?",
+  "options": [
+   "Flour, eggs and butter",
+   "Flour, water, salt and yeast",
+   "Flour, milk and sugar",
+   "Semolina and oil"
+  ],
+  "answer": 1,
+  "explanation": "The protected Neapolitan recipe allows only wheat flour, water, salt and yeast."
+ }
 ]

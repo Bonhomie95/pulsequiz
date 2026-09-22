@@ -1,644 +1,652 @@
 [
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "How many players are on a standard soccer (football) team on the field?",
-    "options": ["9", "10", "11", "12"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "In which sport do players score a 'touchdown'?",
-    "options": ["Baseball", "Basketball", "American Football", "Rugby"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "How many points is a basketball 3-pointer worth?",
-    "options": ["1", "2", "3", "4"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "What sport is played at Wimbledon?",
-    "options": ["Cricket", "Tennis", "Badminton", "Squash"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "In which sport would you perform a 'slam dunk'?",
-    "options": ["Volleyball", "Tennis", "Basketball", "Football"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "How many holes are there in a standard round of golf?",
-    "options": ["9", "12", "18", "24"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "Which country won the most gold medals at the 2020 Tokyo Olympics?",
-    "options": ["China", "Russia", "Great Britain", "United States"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "What is the diameter of a basketball hoop in inches?",
-    "options": ["16", "18", "20", "22"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "In baseball, how many strikes result in a strikeout?",
-    "options": ["2", "3", "4", "5"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "Which sport uses a shuttlecock?",
-    "options": ["Squash", "Badminton", "Racquetball", "Pickleball"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "How many players are on a volleyball team on the court?",
-    "options": ["5", "6", "7", "8"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "What is the highest possible score in a single bowling frame (excluding bonus pins)?",
-    "options": ["8", "9", "10", "12"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "In which sport do athletes compete in the 100m, 200m, and 400m races?",
-    "options": ["Swimming", "Cycling", "Track and Field", "Triathlon"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "What color is the center circle on an archery target?",
-    "options": ["Red", "Blue", "Black", "Yellow/Gold"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "Which country invented the sport of basketball?",
-    "options": ["United States", "Canada", "United Kingdom", "France"],
-    "answer": 0
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "How many innings are in a standard professional baseball game?",
-    "options": ["7", "8", "9", "10"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "In soccer, what does a yellow card signify?",
-    "options": ["Goal", "Substitution", "Warning", "Ejection"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "What sport does Serena Williams play?",
-    "options": ["Golf", "Badminton", "Squash", "Tennis"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "How many periods are in a standard NHL hockey game?",
-    "options": ["2", "3", "4", "5"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "Which athlete is known as 'The Greatest' in boxing?",
-    "options": [
-      "Mike Tyson",
-      "Floyd Mayweather",
-      "Joe Frazier",
-      "Muhammad Ali"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "In which sport is a 'birdie' scored?",
-    "options": ["Tennis", "Golf", "Badminton", "Cricket"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "What is the sport where you race on water using a paddle and a long narrow boat?",
-    "options": ["Rowing", "Kayaking", "Canoeing", "All of these"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "How many events are in a decathlon?",
-    "options": ["5", "8", "10", "12"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "Which country's team is nicknamed the 'All Blacks'?",
-    "options": ["South Africa", "Australia", "New Zealand", "Argentina"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "What is the term for a perfect score in gymnastics?",
-    "options": ["10", "20", "100", "Perfect"],
-    "answer": 0
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "In which sport would you perform a 'hat-trick'?",
-    "options": ["Baseball", "Tennis", "Soccer", "All of these"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "Who holds the record for most Olympic gold medals?",
-    "options": [
-      "Usain Bolt",
-      "Carl Lewis",
-      "Larisa Latynina",
-      "Michael Phelps"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "What is the national sport of Canada?",
-    "options": [
-      "Ice Hockey and Lacrosse",
-      "Basketball",
-      "Football",
-      "Baseball"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "How long is a marathon race in miles (approximately)?",
-    "options": ["20", "24", "26.2", "30"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "easy",
-    "question": "In American football, how many points is a field goal worth?",
-    "options": ["1", "2", "3", "6"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which NBA team has won the most championships?",
-    "options": [
-      "Los Angeles Lakers",
-      "Chicago Bulls",
-      "Boston Celtics",
-      "Golden State Warriors"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "What is the term for winning all four Grand Slam tennis tournaments in one year?",
-    "options": [
-      "Grand Slam",
-      "Golden Slam",
-      "Calendar Grand Slam",
-      "Super Slam"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "In which year did Michael Jordan win his sixth and final NBA championship?",
-    "options": ["1995", "1996", "1997", "1998"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which Formula 1 team has won the most Constructors' Championships?",
-    "options": ["McLaren", "Williams", "Red Bull", "Ferrari"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "What is the maximum number of points a player can score in a single cricket over?",
-    "options": ["24", "36", "30", "48"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "In which Olympic event do competitors perform on a pommel horse?",
-    "options": ["Gymnastics", "Equestrian", "Athletics", "Wrestling"],
-    "answer": 0
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which country has won the most FIFA World Cup titles?",
-    "options": ["Germany", "Argentina", "Brazil", "Italy"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "What is the name of the award given to the NHL's best goaltender each season?",
-    "options": [
-      "Hart Trophy",
-      "Vezina Trophy",
-      "Norris Trophy",
-      "Calder Trophy"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "What sport does LeBron James play?",
-    "options": ["Football", "Soccer", "Basketball", "Baseball"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "In which city are the New England Patriots based?",
-    "options": ["Boston", "Providence", "Hartford", "Foxborough"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "How many sets does a player need to win a men's Grand Slam tennis match?",
-    "options": ["2", "3", "4", "5"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which country has won the most Rugby World Cup titles?",
-    "options": ["England", "South Africa", "Australia", "New Zealand"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "What is the weight of a standard shot put for men in Olympic competition?",
-    "options": ["4 kg", "6 kg", "7.26 kg", "8 kg"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "In which sport is the Davis Cup contested?",
-    "options": ["Golf", "Cricket", "Tennis", "Polo"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "How many red balls are there at the start of a snooker game?",
-    "options": ["12", "13", "14", "15"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Who holds the world record for the 100m sprint?",
-    "options": ["Justin Gatlin", "Tyson Gay", "Usain Bolt", "Asafa Powell"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "In American football, what is the term for when the quarterback is tackled behind the line of scrimmage?",
-    "options": ["Fumble", "Safety", "Sack", "Blitz"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which swimmer has won the most Olympic medals in history?",
-    "options": ["Mark Spitz", "Ryan Lochte", "Ian Thorpe", "Michael Phelps"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "In what year was the first modern Olympic Games held?",
-    "options": ["1892", "1896", "1900", "1904"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "What is the name of the trophy awarded to the winner of the Tour de France?",
-    "options": [
-      "Maillot Jaune",
-      "Yellow Jersey",
-      "Criterium du Dauphiné",
-      "Coupe de la Victoire"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which NFL team has won the most Super Bowls?",
-    "options": [
-      "Dallas Cowboys",
-      "San Francisco 49ers",
-      "Pittsburgh Steelers",
-      "New England Patriots"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "In golf, what is the term for two strokes under par on a hole?",
-    "options": ["Birdie", "Eagle", "Albatross", "Bogey"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "What is the height of a standard basketball hoop from the ground?",
-    "options": ["8 feet", "9 feet", "10 feet", "11 feet"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which sport uses terms like 'spike', 'dig', and 'set'?",
-    "options": ["Tennis", "Badminton", "Volleyball", "Squash"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "In soccer, what is the penalty spot distance from the goal line?",
-    "options": ["8 yards", "10 yards", "11 meters", "12 yards"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which boxer was known as 'Iron Mike'?",
-    "options": ["Mike Foreman", "Mike Tyson", "Mike Spinks", "Mike McCallum"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "How many players are on the field for each team in American football?",
-    "options": ["10", "11", "12", "13"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which country hosted the 2016 Summer Olympics?",
-    "options": ["China", "Japan", "Brazil", "Argentina"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "In tennis, what is a score of 40-40 called?",
-    "options": ["Tiebreak", "Match point", "Deuce", "Set point"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "Which horse racing event is known as 'The Greatest Two Minutes in Sports'?",
-    "options": [
-      "Preakness Stakes",
-      "Belmont Stakes",
-      "Kentucky Derby",
-      "The Grand National"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "medium",
-    "question": "What is the minimum number of points needed to win a set in tennis (with normal scoring)?",
-    "options": ["4", "5", "6", "7"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "In cricket, how many runs are scored for a 'six'?",
-    "options": ["4", "5", "6", "7"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "Which athlete has won the most Ballon d'Or awards as of 2024?",
-    "options": [
-      "Cristiano Ronaldo",
-      "Lionel Messi",
-      "Ronaldo Nazário",
-      "Zinedine Zidane"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "What is the exact world record time for the men's 100m sprint set by Usain Bolt?",
-    "options": ["9.56s", "9.58s", "9.63s", "9.69s"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "In what year did the NBA introduce the 3-point line?",
-    "options": ["1975", "1977", "1979", "1981"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "Which tennis player has won the most Grand Slam singles titles in men's history as of 2024?",
-    "options": [
-      "Roger Federer",
-      "Rafael Nadal",
-      "Novak Djokovic",
-      "Pete Sampras"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "What is the 'Fosbury Flop' technique used in?",
-    "options": ["Swimming", "Pole Vault", "High Jump", "Long Jump"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "Which country won the first Rugby World Cup in 1987?",
-    "options": ["South Africa", "England", "Australia", "New Zealand"],
-    "answer": 3
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "In Formula 1, what does DRS stand for?",
-    "options": [
-      "Dynamic Racing System",
-      "Drag Reduction System",
-      "Direct Response Steering",
-      "Differential Racing Speed"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "Which golfer holds the record for most major championship wins?",
-    "options": ["Arnold Palmer", "Sam Snead", "Jack Nicklaus", "Tiger Woods"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "What is the name of the trophy contested between Australian and English cricket teams?",
-    "options": [
-      "The Ashes",
-      "The Wisden Trophy",
-      "The Frank Worrell Trophy",
-      "The Border-Gavaskar Trophy"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "In which year did Muhammad Ali defeat George Foreman in the 'Rumble in the Jungle'?",
-    "options": ["1971", "1974", "1977", "1980"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "How many times has Brazil won the FIFA World Cup?",
-    "options": ["4", "5", "6", "7"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "Which pitcher holds the MLB record for most career strikeouts?",
-    "options": [
-      "Roger Clemens",
-      "Randy Johnson",
-      "Nolan Ryan",
-      "Steve Carlton"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "What is the term in cycling for a rider who exhausts themselves by leading to help a teammate?",
-    "options": ["Domestique", "Peloton", "Breakaway", "Echelon"],
-    "answer": 0
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "Which NBA player scored 100 points in a single game in 1962?",
-    "options": [
-      "Bill Russell",
-      "Oscar Robertson",
-      "Wilt Chamberlain",
-      "Jerry West"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "Which country won the 1966 FIFA World Cup?",
-    "options": ["West Germany", "Italy", "England", "Brazil"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "In Olympics gymnastics, how many events are included in the men's individual all-around?",
-    "options": ["4", "5", "6", "7"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "What is the term for a chess opening where a player sacrifices a pawn for positional advantage?",
-    "options": ["Fork", "Gambit", "Pin", "Skewer"],
-    "answer": 1
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "Which sprinter was stripped of his gold medal after testing positive for steroids at the 1988 Seoul Olympics?",
-    "options": ["Carl Lewis", "Linford Christie", "Ben Johnson", "Andre Cason"],
-    "answer": 2
-  },
-  {
-    "category": "Sports",
-    "difficulty": "hard",
-    "question": "In which year did Tiger Woods win his first Masters Tournament?",
-    "options": ["1995", "1996", "1997", "1998"],
-    "answer": 2
-  }
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "How many players are on the pitch for one football (soccer) team?",
+  "options": [
+   "Eleven",
+   "Nine",
+   "Ten",
+   "Twelve"
+  ],
+  "answer": 0,
+  "explanation": "Each side fields eleven players, including the goalkeeper."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "In which sport would you perform a slam dunk?",
+  "options": [
+   "Tennis",
+   "Basketball",
+   "Volleyball",
+   "Cricket"
+  ],
+  "answer": 1,
+  "explanation": "A slam dunk is scoring by pushing the ball directly down through the basketball hoop."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "How often are the Summer Olympic Games normally held?",
+  "options": [
+   "Every two years",
+   "Every three years",
+   "Every four years",
+   "Every five years"
+  ],
+  "answer": 2,
+  "explanation": "The Summer Games are held every four years, a gap known as an Olympiad."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "In tennis, what is a score of zero called?",
+  "options": [
+   "Nil",
+   "Duck",
+   "Blank",
+   "Love"
+  ],
+  "answer": 3,
+  "explanation": "Zero is called 'love' in tennis scoring, possibly from the French 'l'oeuf', meaning egg."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "Which sport uses a shuttlecock?",
+  "options": [
+   "Badminton",
+   "Squash",
+   "Table tennis",
+   "Hockey"
+  ],
+  "answer": 0,
+  "explanation": "Badminton is played with a feathered or plastic shuttlecock rather than a ball."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "How many points is a touchdown worth in American football?",
+  "options": [
+   "Three",
+   "Six",
+   "Five",
+   "Seven"
+  ],
+  "answer": 1,
+  "explanation": "A touchdown scores six points, with a kick or two-point play available afterwards."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "In which sport do teams compete for the Stanley Cup?",
+  "options": [
+   "Baseball",
+   "Basketball",
+   "Ice hockey",
+   "American football"
+  ],
+  "answer": 2,
+  "explanation": "The Stanley Cup is the trophy of the National Hockey League."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "What colour card does a football referee show for a serious foul, sending a player off?",
+  "options": [
+   "Yellow",
+   "Blue",
+   "Black",
+   "Red"
+  ],
+  "answer": 3,
+  "explanation": "A red card means the player is sent off and the team plays a player short."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "How many holes are played in a standard round of golf?",
+  "options": [
+   "Eighteen",
+   "Nine",
+   "Twelve",
+   "Twenty-four"
+  ],
+  "answer": 0,
+  "explanation": "A full round is eighteen holes, usually two circuits of nine."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "In swimming, which stroke is swum on the back?",
+  "options": [
+   "Freestyle",
+   "Backstroke",
+   "Breaststroke",
+   "Butterfly"
+  ],
+  "answer": 1,
+  "explanation": "Backstroke is the only competitive stroke swum face-up."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "Which sport is played at Wimbledon?",
+  "options": [
+   "Cricket",
+   "Rugby",
+   "Tennis",
+   "Golf"
+  ],
+  "answer": 2,
+  "explanation": "Wimbledon is the oldest tennis tournament in the world, played on grass in London."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "How many rings are on the Olympic flag?",
+  "options": [
+   "Four",
+   "Six",
+   "Seven",
+   "Five"
+  ],
+  "answer": 3,
+  "explanation": "Five interlocking rings represent the five inhabited continents taking part."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "In boxing, how long is a standard professional round?",
+  "options": [
+   "Three minutes",
+   "Two minutes",
+   "Four minutes",
+   "Five minutes"
+  ],
+  "answer": 0,
+  "explanation": "Professional rounds last three minutes, with a minute's rest between them."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "Which piece of equipment is essential in cricket?",
+  "options": [
+   "Racket",
+   "Bat",
+   "Club",
+   "Puck"
+  ],
+  "answer": 1,
+  "explanation": "Cricket is played with a bat and ball; rackets, clubs and pucks belong to other sports."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "What is the name of the race run over 42.195 kilometres?",
+  "options": [
+   "Sprint",
+   "Relay",
+   "Marathon",
+   "Steeplechase"
+  ],
+  "answer": 2,
+  "explanation": "The marathon's distance was fixed at 42.195 km at the 1908 London Olympics."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "In basketball, how many points is a free throw worth?",
+  "options": [
+   "Two",
+   "Three",
+   "Four",
+   "One"
+  ],
+  "answer": 3,
+  "explanation": "A free throw scores one point; field goals are worth two or three."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "Which sport features terms like 'scrum' and 'try'?",
+  "options": [
+   "Rugby",
+   "Hockey",
+   "Baseball",
+   "Netball"
+  ],
+  "answer": 0,
+  "explanation": "A try is rugby's main score, worth five points in rugby union."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "What is the object of the game in football (soccer)?",
+  "options": [
+   "Run the furthest",
+   "Score in the opponent's goal",
+   "Hold the ball longest",
+   "Hit the crossbar"
+  ],
+  "answer": 1,
+  "explanation": "The team that puts the ball in the opposing goal more times wins."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "Which sport is Usain Bolt famous for?",
+  "options": [
+   "Swimming",
+   "Cycling",
+   "Sprinting",
+   "Boxing"
+  ],
+  "answer": 2,
+  "explanation": "Bolt holds the world records in the 100 m and 200 m sprints."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "easy",
+  "question": "How many players are on a basketball team on court?",
+  "options": [
+   "Four",
+   "Six",
+   "Seven",
+   "Five"
+  ],
+  "answer": 3,
+  "explanation": "Basketball is five a side, with substitutes allowed freely."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "Which country has won the most FIFA World Cups?",
+  "options": [
+   "Brazil",
+   "Germany",
+   "Italy",
+   "Argentina"
+  ],
+  "answer": 0,
+  "explanation": "Brazil has won five titles, more than any other nation."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "In which sport is the Tour de France contested?",
+  "options": [
+   "Running",
+   "Cycling",
+   "Sailing",
+   "Motor racing"
+  ],
+  "answer": 1,
+  "explanation": "The Tour de France is a three-week road cycling race held each July."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "How many players are in a volleyball team on court?",
+  "options": [
+   "Five",
+   "Seven",
+   "Six",
+   "Nine"
+  ],
+  "answer": 2,
+  "explanation": "Indoor volleyball is six a side; beach volleyball is two a side."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "Which Grand Slam tennis tournament is played on clay?",
+  "options": [
+   "Wimbledon",
+   "US Open",
+   "Australian Open",
+   "French Open"
+  ],
+  "answer": 3,
+  "explanation": "The French Open at Roland Garros is the only Grand Slam played on clay."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "In athletics, how many hurdles does a runner clear in the 110 m hurdles?",
+  "options": [
+   "Ten",
+   "Eight",
+   "Twelve",
+   "Fifteen"
+  ],
+  "answer": 0,
+  "explanation": "There are ten hurdles, evenly spaced along the track."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "What is a 'hat-trick' in football?",
+  "options": [
+   "Three saves",
+   "Three goals by one player",
+   "Three corners",
+   "Three wins"
+  ],
+  "answer": 1,
+  "explanation": "A hat-trick is three goals scored by the same player in one match."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "Which sport's governing body is FIBA?",
+  "options": [
+   "Boxing",
+   "Badminton",
+   "Basketball",
+   "Baseball"
+  ],
+  "answer": 2,
+  "explanation": "FIBA governs international basketball; boxing, badminton and baseball have their own bodies."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "In cricket, how many players are in a team?",
+  "options": [
+   "Nine",
+   "Ten",
+   "Twelve",
+   "Eleven"
+  ],
+  "answer": 3,
+  "explanation": "Cricket teams field eleven players, the same as football."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "What does a 'birdie' mean in golf?",
+  "options": [
+   "One under par",
+   "One over par",
+   "A hole in one",
+   "Two under par"
+  ],
+  "answer": 0,
+  "explanation": "A birdie is one stroke under par. Two under is an eagle."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "Which country hosted the first modern Olympic Games in 1896?",
+  "options": [
+   "France",
+   "Greece",
+   "Britain",
+   "United States"
+  ],
+  "answer": 1,
+  "explanation": "Athens hosted the first modern Games, reviving the ancient Greek tradition."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "In Formula One, what does a chequered flag signal?",
+  "options": [
+   "A crash ahead",
+   "A pit stop",
+   "The end of the race",
+   "A false start"
+  ],
+  "answer": 2,
+  "explanation": "The chequered flag is waved as the leader crosses the line to finish the race."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "How long is an Olympic swimming pool?",
+  "options": [
+   "25 metres",
+   "50 metres",
+   "75 metres",
+   "100 metres"
+  ],
+  "answer": 1,
+  "explanation": "Olympic events are swum in a 50-metre 'long course' pool."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "Which sport uses the terms 'love', 'deuce' and 'advantage'?",
+  "options": [
+   "Squash",
+   "Badminton",
+   "Table tennis",
+   "Tennis"
+  ],
+  "answer": 3,
+  "explanation": "These are all tennis scoring terms; deuce means 40–40."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "In rugby union, how many points is a try worth?",
+  "options": [
+   "Five",
+   "Three",
+   "Four",
+   "Seven"
+  ],
+  "answer": 0,
+  "explanation": "A try scores five points, with a conversion kick worth two more."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "Which African country won the 1996 Olympic men's football gold medal?",
+  "options": [
+   "Ghana",
+   "Nigeria",
+   "Cameroon",
+   "Egypt"
+  ],
+  "answer": 1,
+  "explanation": "Nigeria beat Argentina in the final in Atlanta, the first African side to win the title."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "What is the maximum break in a single frame of snooker?",
+  "options": [
+   "100",
+   "147",
+   "155",
+   "180"
+  ],
+  "answer": 1,
+  "explanation": "A 147 comes from fifteen reds each followed by a black, then all the colours."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "In baseball, how many strikes make an out?",
+  "options": [
+   "Two",
+   "Four",
+   "Three",
+   "Five"
+  ],
+  "answer": 2,
+  "explanation": "Three strikes and the batter is out; four balls and they walk to first base."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "Which sport is played in the Ashes series?",
+  "options": [
+   "Rugby",
+   "Hockey",
+   "Netball",
+   "Cricket"
+  ],
+  "answer": 3,
+  "explanation": "The Ashes is the Test cricket rivalry between England and Australia."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "How many minutes are in a standard football match, excluding stoppage?",
+  "options": [
+   "80",
+   "90",
+   "100",
+   "120"
+  ],
+  "answer": 1,
+  "explanation": "Two halves of 45 minutes, plus whatever stoppage time the referee adds."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "medium",
+  "question": "In which sport would you use a 'peloton'?",
+  "options": [
+   "Cycling",
+   "Rowing",
+   "Skiing",
+   "Sailing"
+  ],
+  "answer": 0,
+  "explanation": "The peloton is the main bunch of riders in a road cycling race, who save energy by drafting."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "Which athlete has won the most Olympic gold medals in history?",
+  "options": [
+   "Michael Phelps",
+   "Usain Bolt",
+   "Carl Lewis",
+   "Mark Spitz"
+  ],
+  "answer": 0,
+  "explanation": "Swimmer Michael Phelps won 23 Olympic golds, far more than any other athlete."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "In which year did the first FIFA World Cup take place?",
+  "options": [
+   "1920",
+   "1930",
+   "1938",
+   "1950"
+  ],
+  "answer": 1,
+  "explanation": "Uruguay hosted and won the first World Cup in 1930."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "What is the diameter of a basketball hoop, in inches?",
+  "options": [
+   "16",
+   "18",
+   "20",
+   "24"
+  ],
+  "answer": 1,
+  "explanation": "The rim is 18 inches across — roughly twice the diameter of the ball."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "Which country invented judo?",
+  "options": [
+   "China",
+   "Japan",
+   "Korea",
+   "Thailand"
+  ],
+  "answer": 1,
+  "explanation": "Judo was founded in Japan by Jigoro Kano in 1882."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "In cricket, what is a 'duck'?",
+  "options": [
+   "Six runs",
+   "A dropped catch",
+   "Being out for zero runs",
+   "A wide ball"
+  ],
+  "answer": 2,
+  "explanation": "A batter dismissed without scoring is out for a duck."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "Which is the oldest of the four tennis Grand Slam tournaments?",
+  "options": [
+   "US Open",
+   "French Open",
+   "Australian Open",
+   "Wimbledon"
+  ],
+  "answer": 3,
+  "explanation": "Wimbledon was first played in 1877, decades before the others."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "How many squares does a chess player control at the start on their own side?",
+  "options": [
+   "8",
+   "12",
+   "16",
+   "20"
+  ],
+  "answer": 2,
+  "explanation": "Each player starts with 16 pieces occupying 16 squares across their two back ranks."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "In the decathlon, how many events do athletes compete in?",
+  "options": [
+   "Ten",
+   "Seven",
+   "Eight",
+   "Twelve"
+  ],
+  "answer": 0,
+  "explanation": "'Deca' means ten: the decathlon has ten track and field events over two days."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "Which boxer was known as 'The Greatest' and lit the 1996 Olympic flame?",
+  "options": [
+   "Mike Tyson",
+   "Muhammad Ali",
+   "Joe Frazier",
+   "Sugar Ray Leonard"
+  ],
+  "answer": 1,
+  "explanation": "Muhammad Ali, three-time world heavyweight champion, lit the cauldron in Atlanta."
+ },
+ {
+  "category": "Sports",
+  "difficulty": "hard",
+  "question": "What is the length of an Olympic running track lane one, in metres?",
+  "options": [
+   "200",
+   "400",
+   "500",
+   "800"
+  ],
+  "answer": 1,
+  "explanation": "A standard outdoor track is 400 metres around in the inside lane."
+ }
 ]
