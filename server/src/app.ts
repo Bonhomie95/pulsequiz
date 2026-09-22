@@ -54,6 +54,7 @@ import adminLeaderboardRoutes from './routes/adminLeaderboardRoutes';
 import adminAdminsRoutes from './routes/adminAdminsRoutes';
 import adminAuditRoutes from './routes/adminAuditRoutes';
 import competeRoutes from './routes/competeRoutes';
+import { requireAdminCsrfHeader } from './middlewares/requireAdmin';
 import { DUEL_CODE_RE } from './services/duelService';
 
 /**
@@ -184,6 +185,8 @@ app.use('/api/reports',      reportRoutes);
 app.use('/api',              competeRoutes); // /daily, /leagues/current, /duels
 
 // ── Admin routes ─────────────────────────────────────────────────────────────
+// CSRF guard for cross-site admin hosting (no-op in the default setup).
+app.use('/api/admin', requireAdminCsrfHeader);
 app.use('/api/admin',                adminAuthRoutes);
 app.use('/api/admin/stats',          adminStatsRoutes);
 app.use('/api/admin/activity',       adminActivityRoutes);

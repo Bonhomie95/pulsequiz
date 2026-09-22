@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAdminToken } from '../utils/adminJwt';
-import { ADMIN_COOKIE } from '../controllers/adminAuthController';
+import { ADMIN_COOKIE, ADMIN_COOKIE_CROSS_SITE } from '../controllers/adminAuthController';
 import Admin from '../models/Admin';
 
 export type AdminRole = 'SUPER_ADMIN' | 'MODERATOR';
@@ -23,6 +23,30 @@ function readCookie(req: Request, name: string): string | null {
     }
   }
   return null;
+}
+
+/**
+ * CSRF guard for the cross-site cookie mode.
+ *
+ * With SameSite=None the browser will attach the admin session to requests a
+ * malicious page makes. It cannot, however, set a custom header without a
+ * CORS preflight, and the preflight only passes for origins in
+ * FRONTEND_ORIGIN. So: every state-changing admin request must carry this
+ * header. In the default (same-site) mode SameSite already does this job and
+ * the check stays out of the way.
+ */
+export function requireAdminCsrfHeader(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (!ADMIN_COOKIE_CROSS_SITE) return next();
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  // A Bearer token is not sent automatically by a browser, so it is not
+  // forgeable cross-site and needs no header.
+  if (req.headers.authorization?.startsWith('Bearer ')) return next();
+  if (req.headers['x-admin-request'] === '1') return next();
+  return res.status(403).json({ message: 'Missing admin request header' });
 }
 
 export async function requireAdmin(

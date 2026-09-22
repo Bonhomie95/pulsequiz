@@ -22,8 +22,30 @@ export const ADMIN_COOKIE = 'admin_token';
 // rejects, which reads to the admin as a random logout mid-session.
 const ADMIN_SESSION_MS = 1000 * 60 * 60 * 12; // 12h
 
+/**
+ * True when the admin SPA is served from a different *site* than the API —
+ * e.g. admin.onrender.com talking to pulsequiz-api.onrender.com, where the
+ * two are separate registrable domains. Then the session cookie must be
+ * SameSite=None or the browser drops it on every XHR.
+ *
+ * Subdomains of one domain (admin.pulsequiz.app ↔ api.pulsequiz.app) are the
+ * same site, so a normal production setup leaves this off and keeps 'strict'.
+ * When it is on, `requireAdminCsrfHeader` replaces what SameSite was doing.
+ */
+export const ADMIN_COOKIE_CROSS_SITE = process.env.ADMIN_COOKIE_CROSS_SITE === 'true';
+
 function adminCookieOptions() {
   const isProd = process.env.NODE_ENV === 'production';
+  if (ADMIN_COOKIE_CROSS_SITE) {
+    // SameSite=None is only honoured on a secure cookie.
+    return {
+      httpOnly: true as const,
+      secure: true,
+      sameSite: 'none' as const,
+      path: '/',
+      maxAge: ADMIN_SESSION_MS,
+    };
+  }
   return {
     httpOnly: true as const,
     secure: isProd,
