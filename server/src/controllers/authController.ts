@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 
-import User, { type IUser } from '../models/User';
+import User, { identityHash, type IUser } from '../models/User';
 import Progress from '../models/Progress';
 import CoinWallet from '../models/CoinWallet';
 import Streak from '../models/Streak';
@@ -18,7 +18,9 @@ import {
   registerModerationStrike,
 } from '../utils/moderation';
 import { anonymiseUser } from '../services/accountService';
+import { prizesAvailableFor, requestCountry } from '../utils/prizeRegion';
 import { logger } from '../utils/logger';
+import { kickUser } from '../socket/kick';
 
 const OAuthSchema = z.object({
   provider: z.enum(['google', 'facebook', 'apple']),
@@ -117,7 +119,13 @@ export async function oauthLogin(req: Request, res: Response) {
 
     // 3) Create the account WITHOUT identity — set in /identity.
     if (!user) {
+      // Same identity deleted an account before: allowed to come back, but not
+      // to collect referral bonuses again (delete/re-create was a coin farm).
+      const returning = await User.exists({
+        deletedIdentityHash: identityHash(provider, profile.providerId),
+      });
       user = await User.create({
+        referralIneligible: !!returning,
         email: profile.email,
         provider,
         providerId: profile.providerId,
@@ -202,6 +210,7 @@ export async function refresh(req: Request, res: Response) {
  */
 export async function logout(req: AuthRequest, res: Response) {
   await User.updateOne({ _id: req.userId }, { $inc: { tokenVersion: 1 } });
+  kickUser(req.userId!);
   await PushToken.updateMany({ userId: req.userId }, { $set: { active: false } });
   return res.json({ ok: true });
 }
@@ -347,6 +356,13 @@ export async function me(req: AuthRequest, res: Response) {
     return res.status(404).json({ message: 'User not found' });
   }
 
+  // Every launch calls this, so it's where the player's country is refreshed.
+  const country = requestCountry(req) ?? user.country ?? null;
+  if (country && country !== user.country) {
+    await User.updateOne({ _id: user._id }, { $set: { country } });
+  }
+  const prizesAvailable = await prizesAvailableFor(country);
+
   // Silently retire a pre-versioning token. Those were signed with a ten-year
   // expiry and no version claim, so bumping tokenVersion cannot revoke them —
   // the only way to get rid of them is to replace them. The client stores the
@@ -367,11 +383,14 @@ export async function me(req: AuthRequest, res: Response) {
       username: user.username ?? null,
       avatar: user.avatar ?? null,
       theme: user.theme,
+      payoutCurrency: user.payoutCurrency ?? 'USDT',
       usdtType: user.usdtType ?? null,
       usdtAddress: user.usdtAddress ?? null,
       withdrawalEnabled: !!user.withdrawalEnabled,
       publicProfile: user.publicProfile,
       provider: user.provider,
+      country,
+      prizesAvailable,
     },
   });
 }

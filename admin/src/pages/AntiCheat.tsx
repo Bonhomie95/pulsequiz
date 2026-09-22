@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
+import { useAdminRole } from '../auth/useAdminRole';
+import { errMsg } from '../utils/errMsg';
 import {
   Shield,
   AlertTriangle,
@@ -36,6 +38,7 @@ const ACTION_STYLES: Record<string, string> = {
 };
 
 export default function AntiCheat() {
+  const { canResolveFlags } = useAdminRole();
   const [accounts, setAccounts] = useState<FlaggedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unresolved' | 'resolved'>(
@@ -76,8 +79,8 @@ export default function AntiCheat() {
     try {
       await adminApi.post(`/admin/anticheat/${id}/resolve`, { action });
       fetchAccounts();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error resolving flag');
+    } catch (e) {
+      alert(errMsg(e, 'Error resolving flag'));
     } finally {
       setResolving(null);
     }
@@ -119,7 +122,7 @@ export default function AntiCheat() {
           <p className="text-yellow-300/80">
             Flagged accounts are <strong>not automatically banned</strong>.
             Review each flag and take action. Banned accounts are excluded from
-            all USDT payouts automatically.
+            all prize payouts automatically.
           </p>
         </div>
       </div>
@@ -242,7 +245,7 @@ export default function AntiCheat() {
                     </td>
 
                     <td className="px-4 py-3">
-                      {!a.resolved && (
+                      {!a.resolved && canResolveFlags && (
                         <div className="flex gap-1">
                           <button
                             onClick={() => resolve(a._id, 'cleared')}

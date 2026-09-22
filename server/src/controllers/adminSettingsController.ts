@@ -7,6 +7,7 @@ import AppSettings, {
   SETTINGS_KEYS,
 } from '../models/AppSettings';
 import { auditAdmin } from '../utils/adminAudit';
+import { parseCountryList } from '../utils/prizeRegion';
 import type { AdminRequest } from '../middlewares/requireAdmin';
 
 const KNOWN_KEYS = new Set<string>(Object.values(SETTINGS_KEYS));
@@ -35,6 +36,22 @@ function validate(key: string, value: unknown): { ok: true; value: any } | { ok:
       };
     }
     return { ok: true, value: n };
+  }
+
+  if (key === SETTINGS_KEYS.PRIZES_ENABLED) {
+    if (value === true || value === 'true') return { ok: true, value: true };
+    if (value === false || value === 'false') return { ok: true, value: false };
+    return { ok: false, error: `${key} must be true or false` };
+  }
+
+  if (key === SETTINGS_KEYS.PRIZE_COUNTRIES) {
+    const raw = String(value ?? '');
+    const codes = parseCountryList(raw);
+    const tokens = raw.split(/[\s,]+/).filter(Boolean);
+    if (codes.length !== tokens.length) {
+      return { ok: false, error: `${key} must be 2-letter country codes, e.g. "US, GB, CA"` };
+    }
+    return { ok: true, value: codes.join(',') };
   }
 
   return { ok: true, value };

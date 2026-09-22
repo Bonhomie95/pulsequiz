@@ -14,17 +14,39 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.pulsequiz.app/api"
+        "EXPO_PUBLIC_API_URL": "https://api.pulsequiz.app/api",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "924123058946-k6dolakebn53t9tklmi9p3k21osbc9m2.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "924123058946-1fv87la03mkufft6mgm4o50oas9qfbep.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "924123058946-rk6hn6iuf8fmitpsi8jsjfpk47cjucni.apps.googleusercontent.com",
+        "EXPO_PUBLIC_FACEBOOK_APP_ID": "905543619310012",
+        "EXPO_PUBLIC_ADMOB_REWARDED_ID_ANDROID": "ca-app-pub-3226169062425843/5799411496",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID_ANDROID": "ca-app-pub-3226169062425843/8900217553",
+        "EXPO_PUBLIC_ADMOB_BANNER_ID_ANDROID": "ca-app-pub-3226169062425843/4134335406"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.pulsequiz.app/api"
+        "EXPO_PUBLIC_API_URL": "https://api.pulsequiz.app/api",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "924123058946-k6dolakebn53t9tklmi9p3k21osbc9m2.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "924123058946-1fv87la03mkufft6mgm4o50oas9qfbep.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "924123058946-rk6hn6iuf8fmitpsi8jsjfpk47cjucni.apps.googleusercontent.com",
+        "EXPO_PUBLIC_FACEBOOK_APP_ID": "905543619310012",
+        "EXPO_PUBLIC_ADMOB_REWARDED_ID_ANDROID": "ca-app-pub-3226169062425843/5799411496",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID_ANDROID": "ca-app-pub-3226169062425843/8900217553",
+        "EXPO_PUBLIC_ADMOB_BANNER_ID_ANDROID": "ca-app-pub-3226169062425843/4134335406"
+      },
+      "android": {
+        "buildType": "app-bundle"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
   }
 }

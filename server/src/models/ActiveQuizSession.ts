@@ -2,6 +2,16 @@ import { Schema, model, Types } from 'mongoose';
 
 type Diff = 'easy' | 'medium' | 'hard';
 
+/**
+ * classic — sudden death, ranked (leaderboard points).
+ * relaxed — every question is answered, unranked practice.
+ * daily   — today's shared 10 questions, one attempt, unranked.
+ * duel    — an async friend challenge on a fixed set, unranked.
+ * Every mode earns league XP.
+ */
+export type QuizMode = 'classic' | 'relaxed' | 'daily' | 'duel';
+export const QUIZ_MODES: QuizMode[] = ['classic', 'relaxed', 'daily', 'duel'];
+
 export interface IActiveQuizSession {
   userId: Types.ObjectId;
   category: string;
@@ -25,6 +35,12 @@ export interface IActiveQuizSession {
   currentQuestionId?: Types.ObjectId;
   questionDeadlineAt?: Date;
   tournamentId?: Types.ObjectId;
+  mode: QuizMode;
+  /** daily: the puzzle date; duel: the duel code. */
+  dailyDate?: string | null;
+  duelCode?: string | null;
+  /** Sum of time left on the clock across correct answers — the speed tiebreak. */
+  timeLeftMs: number;
 
   /**
    * Set once the result has been scored and banked.
@@ -89,6 +105,10 @@ const ActiveQuizSessionSchema = new Schema<IActiveQuizSession>(
     currentQuestionId: { type: Schema.Types.ObjectId, default: null },
     questionDeadlineAt: { type: Date, default: null },
     tournamentId: { type: Schema.Types.ObjectId, ref: 'Tournament', default: null },
+    mode: { type: String, enum: QUIZ_MODES, default: 'classic' },
+    dailyDate: { type: String, default: null },
+    duelCode: { type: String, default: null },
+    timeLeftMs: { type: Number, default: 0 },
     resultAppliedAt: { type: Date, default: null },
 
     expiresAt: {

@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, errorMessage } from '@/src/api/api';
 import { UserAvatar } from '@/src/components/UserAvatar';
 import { useCoinStore } from '@/src/store/useCoinStore';
+import { rewardedAdsAvailable } from '@/src/ads/admob';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { soundManager } from '@/src/audio/SoundManager';
@@ -50,7 +51,20 @@ type AnswerRes = {
   correct: boolean;
   finished: boolean;
   correctIndex?: number;
+  explanation?: string | null;
+  deadlineAt?: string;
 };
+
+type Mode = 'classic' | 'relaxed' | 'daily' | 'duel';
+
+/** Router params are strings; the result screen rebuilds the grid from "1011…". */
+function resultParams(data: any) {
+  const { results, ...rest } = data ?? {};
+  return {
+    ...rest,
+    results: Array.isArray(results) ? results.map((r: boolean) => (r ? '1' : '0')).join('') : '',
+  };
+}
 
 function cap(s: string) {
   if (!s) return s;
@@ -132,7 +146,23 @@ function ProgressRing({
 }
 
 export default function QuizPlay() {
-  const { category, tournamentId } = useLocalSearchParams<{ category: string; tournamentId?: string }>();
+  const params = useLocalSearchParams<{
+    category?: string;
+    tournamentId?: string;
+    mode?: string;
+    date?: string;
+    duelCode?: string;
+  }>();
+  const { tournamentId, date, duelCode } = params;
+  const mode: Mode =
+    params.mode === 'relaxed' || params.mode === 'daily' || params.mode === 'duel'
+      ? params.mode
+      : 'classic';
+  // Classic is sudden death; the rest play every question.
+  const suddenDeath = mode === 'classic';
+  // Shared-question modes are compared player to player — no bought help.
+  const paidHelp = mode === 'classic' || mode === 'relaxed';
+  const [category, setCategory] = useState(params.category ?? '');
   const router = useRouter();
   const theme = useTheme();
   const [hintUsedThisQuestion, setHintUsedThisQuestion] = useState(false);
@@ -164,6 +194,16 @@ export default function QuizPlay() {
   const [locked, setLocked] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [correctIndex, setCorrectIndex] = useState<number | null>(null);
+
+  // After-answer explanation, and what its button does.
+  const [reveal, setReveal] = useState<null | {
+    verdict: 'correct' | 'wrong' | 'timeout';
+    explanation: string | null;
+    action: 'next' | 'finish' | null;
+  }>(null);
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextDeadlineRef = useRef<number | null>(null);
+  const resultRef = useRef<Promise<any> | null>(null);
 
   // hint UI
   const [hintsUsed, setHintsUsed] = useState(0);
@@ -217,6 +257,10 @@ export default function QuizPlay() {
 
       // 🧠 ONLY go to ads if backend explicitly says so
       if (res.data?.requiresAd) {
+        if (!rewardedAdsAvailable) {
+          Alert.alert('Not enough coins', 'You need 20 coins for extra time.');
+          return;
+        }
         stopTimer(); // pause time
         router.push({
           pathname: '/earn/ads',
@@ -271,6 +315,7 @@ export default function QuizPlay() {
   const resetPerQuestionUI = useCallback(() => {
     setSelected(null);
     setCorrectIndex(null);
+    setReveal(null);
     setDisabledOptions([]);
     setOverlay(null);
     setTimeExtendedThisQuestion(false);
@@ -300,11 +345,18 @@ export default function QuizPlay() {
     let mounted = true;
 
     setLoading(true);
+    const body =
+      mode === 'daily'
+        ? { mode, date }
+        : mode === 'duel'
+          ? { mode, duelCode }
+          : { mode, category: params.category, ...(tournamentId ? { tournamentId } : {}) };
     api
-      .post('/quiz/start', { category, ...(tournamentId ? { tournamentId } : {}) })
+      .post('/quiz/start', body)
       .then((res: any) => {
         if (!mounted) return;
         setSessionId(res.data.sessionId);
+        if (res.data.category) setCategory(res.data.category);
         setQuestions(res.data.questions);
         deadlineRef.current = res.data.deadlineAt
           ? new Date(res.data.deadlineAt).getTime()
@@ -316,15 +368,17 @@ export default function QuizPlay() {
         setHintsUsed(0);
       })
       .catch((err) => {
-        logger.error('Quiz start failed', err);
-        router.back();
+        logger.warn('Quiz start failed', { error: String(err), mode });
+        Alert.alert("Couldn't start the quiz", errorMessage(err, 'Please try again.'), [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
       });
 
     return () => {
       mounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category]);
+  }, [params.category, mode, date, duelCode]);
 
   /** Timer tick */
   useEffect(() => {
@@ -339,7 +393,12 @@ export default function QuizPlay() {
       const deadline = deadlineRef.current;
       if (deadline == null) return;
 
-      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      // Clamped: in unranked modes the next clock can start a moment after the
+      // question appears (the reveal pause), and should read 15, not 19.
+      const remaining = Math.min(
+        TIME_PER_QUESTION,
+        Math.max(0, Math.ceil((deadline - Date.now()) / 1000)),
+      );
 
       setTimeLeft((prev) => {
         // Only cue on a genuine second boundary, and never for seconds that
@@ -369,24 +428,39 @@ export default function QuizPlay() {
   useEffect(() => {
     return () => {
       stopTimer();
-      // soundManager.stop();
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     };
   }, [stopTimer]);
 
 
 
-  const finishQuiz = useCallback(async () => {
-    if (!sessionId) return;
+  /**
+   * Bank the result. Started the moment a run ends — before any explanation
+   * is shown — so a player who closes the app on the explanation still keeps
+   * their score. /quiz/finish is idempotent, so a retry can't score twice.
+   */
+  const collectResult = useCallback(() => {
+    if (!sessionId) return null;
+    if (!resultRef.current) {
+      resultRef.current = api
+        .post('/quiz/finish', { sessionId }, { retry: true } as any)
+        .then((r: any) => r.data);
+    }
+    return resultRef.current;
+  }, [sessionId]);
 
-    // /quiz/finish is idempotent server-side — a repeated call replays the
-    // stored result rather than scoring twice — so it is safe to retry. That
-    // matters: dumping the player on the home screen because the network
-    // blipped at the exact moment their run ended loses the whole result.
+  const finishQuiz = useCallback(async () => {
+    const pending = collectResult();
+    if (!pending) return;
+
+    // Dumping the player on the home screen because the network blipped at
+    // the exact moment their run ended would lose the whole result.
     try {
-      const res: any = await api.post('/quiz/finish', { sessionId }, { retry: true } as any);
-      router.replace({ pathname: '/quiz/result', params: res.data });
+      const data = await pending;
+      router.replace({ pathname: '/quiz/result', params: resultParams(data) });
       return;
     } catch (e) {
+      resultRef.current = null;
       logger.error('Finish quiz failed', e, { sessionId });
     }
 
@@ -395,7 +469,7 @@ export default function QuizPlay() {
       "We couldn't load your results screen just now. Your points have been recorded — check your profile in a moment.",
       [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }],
     );
-  }, [router, sessionId]);
+  }, [router, sessionId, collectResult]);
 
   const lockAndReveal = useCallback(
     (sel: number | null, cIndex: number | null) => {
@@ -414,6 +488,69 @@ export default function QuizPlay() {
     };
   }, []);
 
+  const advance = useCallback(() => {
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    advanceTimerRef.current = null;
+    hideOverlay();
+    deadlineRef.current = nextDeadlineRef.current ?? Date.now() + TIME_PER_QUESTION * 1000;
+    setLocked(false);
+    setIndex((i) => i + 1);
+    resetPerQuestionUI();
+  }, [hideOverlay, resetPerQuestionUI]);
+
+  /** One place that reacts to the server's verdict, for taps and timeouts. */
+  const handleResult = useCallback(
+    (data: AnswerRes, sel: number | null) => {
+      const cIndex = typeof data.correctIndex === 'number' ? data.correctIndex : null;
+      if (cIndex !== null) setCorrectIndex(cIndex);
+      const explanation = data.explanation ?? null;
+      const verdict = data.correct ? 'correct' : sel === null ? 'timeout' : 'wrong';
+
+      if (data.correct) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        soundManager.play('victory');
+      } else if (sel !== null) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        soundManager.play('fail');
+      }
+      // The explanation card carries the verdict itself; the toast would cover it.
+      if (explanation) hideOverlay();
+      else if (verdict !== 'timeout') {
+        showOverlay(verdict, verdict === 'correct' ? 'Correct ✅' : 'Wrong ❌');
+      }
+
+      if (data.finished) {
+        collectResult(); // bank it now, whatever the player does next
+        if (explanation) {
+          setReveal({ verdict, explanation, action: 'finish' });
+        } else {
+          setTimeout(() => finishQuiz(), data.correct ? 700 : 1100);
+        }
+        return;
+      }
+
+      nextDeadlineRef.current = data.deadlineAt ? new Date(data.deadlineAt).getTime() : null;
+
+      if (suddenDeath) {
+        // The 700ms reveal pause is part of the server's window, so the
+        // deadline is not re-based here — only adopted.
+        setTimeout(advance, 700);
+        return;
+      }
+
+      // Unranked: the server paused the next clock for the reveal. Show the
+      // explanation for that pause; relaxed players may skip ahead.
+      if (explanation || !data.correct) {
+        setReveal({ verdict, explanation, action: mode === 'relaxed' ? 'next' : null });
+      }
+      const wait = nextDeadlineRef.current
+        ? Math.max(700, nextDeadlineRef.current - TIME_PER_QUESTION * 1000 - Date.now())
+        : 700;
+      advanceTimerRef.current = setTimeout(advance, wait);
+    },
+    [advance, collectResult, finishQuiz, hideOverlay, mode, showOverlay, suddenDeath],
+  );
+
   const onTimeout = useCallback(async () => {
     if (!sessionId || locked || !q) return;
 
@@ -430,20 +567,13 @@ export default function QuizPlay() {
         questionId: q.id,
         selected: null,
       });
-
-      const cIndex = res?.data?.correctIndex;
-      if (typeof cIndex === 'number') setCorrectIndex(cIndex);
-
-      // timeout ends game immediately (your rule)
-      setTimeout(() => {
-        finishQuiz();
-      }, 1100);
+      handleResult(res.data, null);
     } catch {
       setTimeout(() => {
         finishQuiz();
       }, 1100);
     }
-  }, [sessionId, locked, q, lockAndReveal, showOverlay, finishQuiz]);
+  }, [sessionId, locked, q, lockAndReveal, showOverlay, finishQuiz, handleResult]);
 
   /**
    * Re-check the clock the moment the app comes back to the foreground.
@@ -484,54 +614,7 @@ export default function QuizPlay() {
           selected: sel,
         });
 
-        const data: AnswerRes = res.data;
-        const cIndex =
-          typeof data.correctIndex === 'number' ? data.correctIndex : null;
-
-        if (cIndex !== null) setCorrectIndex(cIndex);
-
-        if (data.correct) {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          soundManager.play('victory');
-          showOverlay('correct', 'Correct ✅');
-
-          // proceed to next question
-          // The server sends the next question's deadline with the answer
-          // response; adopt it so the clock stays its clock, not ours.
-          const nextDeadline = (data as any).deadlineAt
-            ? new Date((data as any).deadlineAt).getTime()
-            : null;
-
-          setTimeout(() => {
-            hideOverlay();
-
-            const last = index >= questions.length - 1;
-            if (data.finished || last) {
-              finishQuiz();
-              return;
-            }
-
-            // The 700ms reveal pause is part of the server's window, so the
-            // deadline is not re-based here — only adopted.
-            deadlineRef.current =
-              nextDeadline ?? Date.now() + TIME_PER_QUESTION * 1000;
-
-            setLocked(false);
-            setIndex((i) => i + 1);
-            resetPerQuestionUI();
-          }, 700);
-
-          return;
-        }
-
-        // WRONG → end game immediately
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        soundManager.play('fail');
-        showOverlay('wrong', 'Wrong ❌');
-
-        setTimeout(() => {
-          finishQuiz();
-        }, 1100);
+        handleResult(res.data as AnswerRes, sel);
       } catch (e: any) {
         const status = e?.response?.status;
         const reason = e?.response?.data?.message;
@@ -593,12 +676,11 @@ export default function QuizPlay() {
       locked,
       q,
       lockAndReveal,
-      index,
-      questions.length,
       resetPerQuestionUI,
       finishQuiz,
       showOverlay,
       hideOverlay,
+      handleResult,
     ],
   );
 
@@ -656,6 +738,10 @@ export default function QuizPlay() {
       if (typeof disabledIndex !== 'number') {
         // 🔥 NOT ENOUGH COINS → GO TO EARN ADS
         if (res?.data?.message === 'Not enough coins') {
+          if (!rewardedAdsAvailable) {
+            Alert.alert('Not enough coins', `You need ${hintCost} coins for a hint.`);
+            return;
+          }
           stopTimer(); // pause quiz
           router.push({
             pathname: '/earn/ads',
@@ -757,7 +843,7 @@ export default function QuizPlay() {
               ]}
             >
               <Text style={{ color: theme.colors.text, fontWeight: '800' }}>
-                {cap(category)}
+                {mode === 'daily' ? 'Daily Quiz' : cap(category)}
               </Text>
             </View>
 
@@ -923,8 +1009,59 @@ export default function QuizPlay() {
           })}
         </View>
 
-        {/* FOOTER */}
+        {/* EXPLANATION (replaces the footer while shown) */}
+        {reveal ? (
+          <View
+            style={[
+              styles.revealCard,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            ]}
+            accessibilityLiveRegion="polite"
+          >
+            <Text
+              style={{
+                fontWeight: '900',
+                fontSize: 15,
+                color: reveal.verdict === 'correct' ? theme.colors.success : theme.colors.danger,
+              }}
+            >
+              {reveal.verdict === 'correct'
+                ? 'Correct ✅'
+                : reveal.verdict === 'timeout'
+                  ? "Time's up ⏱"
+                  : 'Not quite ❌'}
+            </Text>
+            {correctIndex !== null && reveal.verdict !== 'correct' && q.options[correctIndex] ? (
+              <Text style={{ color: theme.colors.text, marginTop: 4, fontWeight: '700' }}>
+                Answer: {q.options[correctIndex]}
+              </Text>
+            ) : null}
+            {reveal.explanation ? (
+              <Text style={{ color: theme.colors.muted, marginTop: 6, lineHeight: 20 }}>
+                💡 {reveal.explanation}
+              </Text>
+            ) : null}
+            {reveal.action ? (
+              <TouchableOpacity
+                onPress={reveal.action === 'finish' ? finishQuiz : advance}
+                style={[styles.primaryBtn, { backgroundColor: theme.colors.primary, marginTop: 12 }]}
+                accessibilityRole="button"
+                accessibilityLabel={reveal.action === 'finish' ? 'See results' : 'Next question'}
+                hitSlop={8}
+              >
+                <Text style={{ color: '#fff', fontWeight: '800' }}>
+                  {reveal.action === 'finish' ? 'See results' : 'Next question'}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <Text style={{ color: theme.colors.muted, marginTop: 10, fontSize: 12 }}>
+                Next question in a moment…
+              </Text>
+            )}
+          </View>
+        ) : (
         <View style={styles.footer}>
+          {paidHelp ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <TouchableOpacity
               disabled={!canHint}
@@ -941,7 +1078,7 @@ export default function QuizPlay() {
               ]}
             
             accessibilityRole="button"
-            accessibilityLabel="Hint"
+            accessibilityLabel={`Hint, ${hintCost} coins. A hinted answer earns no leaderboard points.`}
             hitSlop={8}>
               <Text
                 style={{
@@ -976,11 +1113,17 @@ export default function QuizPlay() {
               </Text>
             </View>
           </View>
+          ) : (
+            <Text style={{ color: theme.colors.muted, fontSize: 12, fontWeight: '700' }}>
+              Same questions for everyone · no hints
+            </Text>
+          )}
 
+          {paidHelp && (
           <TouchableOpacity
             onPress={handleExtendTime}
             accessibilityRole="button"
-            accessibilityLabel="Buy 10 more seconds"
+            accessibilityLabel="Buy 10 more seconds, 20 coins. That answer earns no leaderboard points."
             accessibilityState={{ disabled: locked || timeExtendedThisQuestion }}
             disabled={locked || timeExtendedThisQuestion}
             style={[
@@ -998,9 +1141,24 @@ export default function QuizPlay() {
               20 coins
             </Text>
           </TouchableOpacity>
+          )}
 
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              if (mode !== 'daily' && mode !== 'duel') return router.back();
+              // One attempt only: quitting ends it, so bank what was answered.
+              Alert.alert('End your attempt?', "You can't replay this one. Unanswered questions count as wrong.", [
+                { text: 'Keep playing', style: 'cancel' },
+                {
+                  text: 'End it',
+                  style: 'destructive',
+                  onPress: () => {
+                    stopTimer();
+                    finishQuiz();
+                  },
+                },
+              ]);
+            }}
             style={[
               styles.exitBtn,
               {
@@ -1017,6 +1175,7 @@ export default function QuizPlay() {
             </Text>
           </TouchableOpacity>
         </View>
+        )}
 
         {/* OVERLAY FEEDBACK */}
         {overlay && (
@@ -1063,7 +1222,9 @@ export default function QuizPlay() {
                   ? 'Keep going!'
                   : overlay.type === 'timeout'
                     ? 'Be faster next time.'
-                    : 'Game over.'}
+                    : suddenDeath
+                      ? 'Game over.'
+                      : 'Keep going!'}
               </Text>
             </View>
           </Animated.View>
@@ -1181,6 +1342,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 1,
+  },
+
+  revealCard: {
+    marginTop: 'auto',
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 16,
   },
 
   overlay: {

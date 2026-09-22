@@ -21,6 +21,7 @@ import {
   Crown,
   Settings as SettingsIcon,
   Target,
+  UserCog,
 } from 'lucide-react';
 
 type LinkItemProps = {
@@ -58,8 +59,10 @@ export default function Sidebar() {
 
   const closeMobile = () => setOpen(false);
 
-  const handleLogout = () => {
-    logout();
+  // Await the server logout so the cookie is actually cleared before the
+  // login page loads.
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -67,7 +70,7 @@ export default function Sidebar() {
     <>
       {/* Mobile Top Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-14 flex items-center px-4 bg-gray-900 border-b border-gray-800 z-40">
-        <button onClick={() => setOpen(true)}>
+        <button onClick={() => setOpen(true)} aria-label="Open menu">
           <Menu size={24} />
         </button>
       </div>
@@ -93,8 +96,8 @@ export default function Sidebar() {
           md:translate-x-0
         `}
       >
-        {/* Top Section */}
-        <div>
+        {/* Top Section — scrolls on short screens so Logout stays reachable */}
+        <div className="min-h-0 overflow-y-auto">
           <div className="flex items-center justify-between p-4">
             {!collapsed && (
               <span className="font-extrabold">PulseQuiz Admin</span>
@@ -103,6 +106,7 @@ export default function Sidebar() {
             {/* Collapse Toggle (desktop only) */}
             <button
               onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               className="hidden md:block"
             >
               <ChevronLeft
@@ -204,6 +208,15 @@ export default function Sidebar() {
               collapsed={collapsed}
               onClick={closeMobile}
             />
+            {canViewAudit && (
+              <LinkItem
+                to="/admins"
+                label="Admins"
+                icon={<UserCog size={20} />}
+                collapsed={collapsed}
+                onClick={closeMobile}
+              />
+            )}
             {canViewAudit && (
               <LinkItem
                 to="/audit"

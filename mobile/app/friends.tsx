@@ -591,13 +591,13 @@ export default function FriendsScreen() {
     );
   };
 
-  const inviteToRoom = (userId: string) =>
+  const inviteToRoom = (userId: string, name?: string | null) =>
     router.push({
       pathname: '/room/create',
-      params: { invite: userId },
+      params: { invite: userId, inviteName: name ?? '' },
     } as any);
 
-  const challengeUser = (u: SearchUser | Friend) => inviteToRoom(u._id);
+  const challengeUser = (u: SearchUser | Friend) => inviteToRoom(u._id, u.username);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -821,7 +821,7 @@ export default function FriendsScreen() {
                     <StatusBadges user={f} theme={theme} />
                   </View>
                   <TouchableOpacity
-                    onPress={() => inviteToRoom(f._id)}
+                    onPress={() => inviteToRoom(f._id, f.username)}
                     style={[
                       styles.challengeBtn,
                       {

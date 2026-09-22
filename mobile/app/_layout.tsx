@@ -8,10 +8,10 @@ import { api, setAuthToken } from '../src/api/api';
 import { useAuthStore } from '../src/store/useAuthStore';
 import { usePremiumStore } from '../src/store/usePremiumStore';
 import { useOnboardingStore } from '../src/store/useOnboardingStore';
-import { startUsageAdTimer } from '@/src/ads/appUsageAd';
 import { initAdsWithConsent } from '@/src/ads/consent';
 import { notificationRouteFor } from '@/src/utils/notificationRoutes';
 import { registerAndSyncPushToken } from '@/src/utils/push';
+import { reconcilePendingPurchases } from '@/src/iap/verify';
 import { logger } from '@/src/utils/logger';
 import { initSentry, setSentryUser, wrapWithSentry } from '@/src/utils/sentry';
 import { ErrorBoundary } from '@/src/components/ErrorBoundary';
@@ -48,8 +48,10 @@ function RootLayout() {
   const notifRespRef = useRef<any>(null);
 
   useEffect(() => {
-    initAdsWithConsent(); // UMP consent + Mobile Ads SDK init (before any ad)
-    startUsageAdTimer();
+    // UMP consent + Mobile Ads SDK init (before any ad). Interstitials only
+    // appear at natural breaks (quiz/PvP result) — the old 10-minute timer
+    // could interrupt a live match or a purchase, which AdMob policy forbids.
+    initAdsWithConsent();
     hydrateOnboarding();
   }, [hydrateOnboarding]);
 
@@ -57,6 +59,18 @@ function RootLayout() {
   useEffect(() => {
     setSentryUser(user ? { id: user.id, username: user.username } : null);
   }, [user]);
+
+  // Once per signed-in user — on restore AND on a fresh sign-in (previously
+  // only a relaunch registered push). Fire-and-forget, outside any auth
+  // try/catch: a push or store error must never touch the session.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) return;
+    registerAndSyncPushToken();
+    // Credit purchases paid for but never confirmed (app killed mid-purchase,
+    // or offline at verify time). Android refunds unacknowledged ones in 3 days.
+    reconcilePendingPurchases();
+  }, [userId]);
 
   useEffect(() => {
     let mounted = true;
@@ -81,19 +95,19 @@ function RootLayout() {
 
         setUser(r.data.user);
         checkPremium();
-      } catch (e) {
-        logger.warn('Auth restore failed, clearing token', e);
-        await storage.clearToken();
-        setAuthToken(null);
-      } finally {
-        if (mounted) {
-          setHydrated();
-          // Push is fire-and-forget OUTSIDE the auth try/catch: a push error
-          // must NEVER wipe the auth token. Only register once we have a user.
-          if (useAuthStore.getState().user) {
-            registerAndSyncPushToken();
-          }
+      } catch (e: any) {
+        // Only a rejected credential ends the session. Being offline at launch
+        // used to wipe the token and force a fresh OAuth sign-in.
+        const status = e?.response?.status;
+        if (status === 401 || status === 403) {
+          logger.warn('Auth restore rejected, clearing token', { status });
+          await storage.clearToken();
+          setAuthToken(null);
+        } else {
+          logger.warn('Auth restore failed (network) — keeping session', { error: String(e) });
         }
+      } finally {
+        if (mounted) setHydrated();
       }
     })();
 
@@ -171,10 +185,11 @@ function RootLayout() {
   const path = segments as readonly string[];
 
   const inAuthGroup = path[0] === '(auth)';
-  const inTabsGroup = path[0] === '(tabs)';
-  const inQuizFlow = path[0] === 'quiz';
   const inIdentity = path[0] === '(auth)' && path[1] === 'identity';
   const inOnboarding = path[0] === 'onboarding';
+  // Screens a signed-out visitor may see: sign-in, the guest taster, and the
+  // index redirect itself. Everything else needs an account.
+  const isPublic = path.length === 0 || path[0] === 'index' || inAuthGroup || path[0] === 'guest';
 
   const needsIdentity = !!user && (!user.username || !user.avatar);
 
@@ -183,7 +198,7 @@ function RootLayout() {
   // "was not handled by any navigator" / "Cannot read property 'stale'".
   // Render the redirect as a sibling so the navigator stays alive.
   let redirect: string | null = null;
-  if (!user && (inTabsGroup || inQuizFlow)) redirect = '/(auth)/login';
+  if (!user && !isPublic) redirect = '/(auth)/login';
   else if (user && needsIdentity && !inIdentity) redirect = '/(auth)/identity';
   else if (user && !needsIdentity && !onboardingDone && !inOnboarding)
     redirect = '/onboarding';

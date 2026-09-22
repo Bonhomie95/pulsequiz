@@ -103,6 +103,32 @@ trivial amount end to end before any period closes.**
 
 ---
 
+## 2a. After deploying this release
+
+```bash
+npm run sync-indexes   # new: challenge seed-slot unique index, user identity-hash index
+```
+
+New or now-required environment variables:
+
+| Variable | Why |
+|---|---|
+| `METRICS_TOKEN` | Now required in production (`/metrics` was public without it). |
+| `ADMOB_REWARDED_AD_UNIT_IDS` | Comma-separated rewarded units; SSV callbacks from other publishers' units are rejected. |
+| `PUBSUB_SERVICE_ACCOUNT_EMAIL` | Required with `PUBSUB_VERIFICATION_AUDIENCE` in production. |
+
+The server now also serves `/terms`, `/privacy`, `/rules`, `/support` and
+`/delete-account` (from `server/public/legal`). Replace the placeholder support
+email in those files before launch.
+
+### Upgrades in this release (leagues, daily quiz, duels, practice, prize regions)
+
+- New collections: `dailyquizzes`, `dailyattempts`, `leaguegroups`, `leaguemembers`, `duels`. Run `sync-indexes` after deploy — the unique indexes (one daily attempt per user+date, one league row per user+week) are what make these safe.
+- New cron `league-settle` at :15 every hour. It settles every unsettled group from a past week, and a re-run resumes where it stopped (per-member claim).
+- New settings: `prizes_enabled`, `prize_countries` (Admin → Settings → Payouts). A payout skipped for region shows `region_not_eligible`.
+- New env (optional): `APP_STORE_URL`, `PLAY_STORE_URL` for the `/d/:code` challenge landing page.
+- "A player says their league reward is missing": check `leaguemembers` for their `week` — `outcome` and `reward` are set when paid, and the coin ledger has a `league_reward` row.
+
 ## 2b. Retiring the old ten-year tokens
 
 Sessions created before this release were signed with a ten-year expiry and no
@@ -170,10 +196,14 @@ dedicated worker set `RUN_CRON=1` and on web nodes `RUN_CRON=0`.
 
 ### "A payout didn't arrive"
 1. Admin → Payouts, filter by `failed`. `failReason` says why.
-2. `retries: 99` means the outcome was **indeterminate** — the provider may or
-   may not have sent it. Do **not** retry. Check the provider dashboard for the
-   reference `{period}:{periodLabel}:{userId}` first.
-3. `skipped` with a reason means the user was ineligible; the same reason is
+2. `retries: 99` (shown as **CHECK** in the panel) means the outcome was
+   **indeterminate** — the provider may or may not have sent it. The Retry
+   button is hidden and the API refuses it. Check the provider dashboard for
+   the reference `{period}:{periodLabel}:{userId}` first.
+3. `superseded` means the amount was paid inside a later payout (balances roll
+   over). It is never sent on its own. A retry that finds the balance already
+   paid marks the row `superseded` instead of sending.
+4. `skipped` with a reason means the user was ineligible; the same reason is
    shown to them on their wallet screen.
 
 ### "Coins went missing / a balance looks wrong"
@@ -340,9 +370,24 @@ in the UI).
 | Anti-Cheat | Review queue, resolve flags | Any |
 | Coins | Adjust a balance with a reason (audited) | SUPER |
 | Payouts | Records, prize pools, retry, manual trigger, CSV export | View: any · rest SUPER |
-| Questions | CRUD, per-category coverage, CSV import with dry run, template download | Import: SUPER |
+| Questions | Create/edit (answer picked by clicking the option), enable/disable, reported-question queue, per-category coverage, **upload a .csv or .json file** (dry-run report with row numbers, then import), template download | Delete: SUPER · rest any |
+| Admins | Add admins (SUPER_ADMIN or MODERATOR), change role, deactivate/reactivate, reset password. Can't demote/deactivate yourself or the last super admin. 5 failed logins lock an account for 15 min | SUPER |
 | Challenges | List/filter, assign to a player, delete | Assign: SUPER |
-| Tournaments, Subscriptions, Purchases, Reports, Leaderboard, Analytics, Activity, Audit, Settings | Full | Audit: SUPER |
+| Tournaments | Create/edit (fee locked once players join), start, **cancel & refund all entries**, delete (only when nobody paid) | Changes: SUPER |
+| Subscriptions | List; revoke premium (does not stop store billing) | Revoke: SUPER |
+| Purchases, Reports, Leaderboard, Analytics, Activity, Audit, Settings | Full | Audit, Settings edit: SUPER |
+
+Bootstrap the first super admin with `npm run create-admin -- you@example.com`
+(password is prompted, never on the command line); manage the rest from the
+**Admins** page.
+
+### Prize currency (USDT / USDC)
+
+Players choose the coin and network in Settings. Supported pairs (must match
+`nowpaymentsService.getCurrency`): USDT on TRC20 / ERC20 / BEP20, USDC on
+ERC20 / Polygon / Solana. Changing coin, network or address starts the 72-hour
+payout hold. Each payout row records the currency; the CSV export includes it.
+Fund the NOWPayments balance in **both** coins.
 
 ### Streak ranking
 

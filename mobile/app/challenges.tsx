@@ -2,6 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   FlatList,
   StyleSheet,
@@ -15,7 +16,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '@/src/api/api';
 import { useTheme } from '@/src/theme/useTheme';
 import { useCoinStore } from '@/src/store/useCoinStore';
-import { showInterstitialAd } from '@/src/ads/admob';
 
 type Challenge = {
   _id: string;
@@ -57,15 +57,17 @@ export default function ChallengesScreen() {
     if (claiming) return;
     try {
       setClaiming(ch._id);
-      // Show interstitial before rewarding
-      await showInterstitialAd().catch(() => {});
       const res = await api.post(`/challenges/${ch._id}/claim`);
       useCoinStore.getState().syncFromServer(res.data);
       setChallenges((prev) =>
         prev.map((c) => (c._id === ch._id ? { ...c, status: 'expired' } : c)),
       );
     } catch (e: any) {
-      /* silent — maybe already claimed */
+      Alert.alert(
+        'Could not claim reward',
+        e?.response?.data?.message ?? 'Please check your connection and try again.',
+      );
+      load();
     } finally {
       setClaiming(null);
     }
@@ -111,7 +113,8 @@ export default function ChallengesScreen() {
             
             accessibilityRole="button"
             hitSlop={8}
-            accessibilityLabel="Add more time">
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={`${t === 'daily' ? 'Daily' : 'Weekly'} challenges`}>
               {t === 'daily'
                 ? <Clock size={15} color={active ? '#fff' : theme.colors.muted} />
                 : <Calendar size={15} color={active ? '#fff' : theme.colors.muted} />

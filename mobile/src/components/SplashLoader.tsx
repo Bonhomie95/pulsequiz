@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { PulseMark } from './brand/BrandIcons';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -138,7 +139,7 @@ export default function SplashLoader() {
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             style={styles.logoBox}
           >
-            <Text style={styles.logoEmoji}>⚡</Text>
+            <PulseMark size={56} />
           </LinearGradient>
         </Animated.View>
 
@@ -238,9 +239,6 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  logoEmoji: {
-    fontSize: 44,
   },
 
   appName: {

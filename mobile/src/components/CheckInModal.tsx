@@ -195,9 +195,9 @@ export function CheckInModal({ visible, streak, coinsAdded, milestoneBonus, onCl
             activeOpacity={0.85}
           
             accessibilityRole="button"
-            accessibilityLabel="Awesome! Lets Play 🎮"
+            accessibilityLabel="Awesome, let's play"
             hitSlop={8}>
-            <Text style={styles.ctaText}>Awesome! Lets Play 🎮</Text>
+            <Text style={styles.ctaText}>{"Awesome! Let's Play 🎮"}</Text>
           </TouchableOpacity>
 
           <Text style={[styles.footer, { color: theme.colors.muted }]}>

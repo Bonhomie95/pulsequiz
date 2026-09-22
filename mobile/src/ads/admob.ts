@@ -5,18 +5,21 @@ import {
   RewardedAdEventType,
   TestIds,
 } from 'react-native-google-mobile-ads';
+import { usePremiumStore } from '@/src/store/usePremiumStore';
+import { adUnitId } from './unitIds';
 
-const rewardedUnitId = __DEV__
-  ? TestIds.REWARDED
-  : process.env.EXPO_PUBLIC_ADMOB_REWARDED_ID!;
+const rewardedUnitId = __DEV__ ? TestIds.REWARDED : adUnitId('REWARDED');
+const interstitialUnitId = __DEV__ ? TestIds.INTERSTITIAL : adUnitId('INTERSTITIAL');
 
-const interstitialUnitId = __DEV__
-  ? TestIds.INTERSTITIAL
-  : process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID!;
+/** False when no rewarded unit is configured for this platform — screens hide
+ *  "watch an ad" options instead of offering something that can never load. */
+export const rewardedAdsAvailable = !!rewardedUnitId;
 
 /* ---------------- REWARDED ---------------- */
 
 export async function showRewardedAd(): Promise<boolean> {
+  // A missing unit id in a release build must fail soft, not crash the SDK.
+  if (!rewardedUnitId) return false;
   return new Promise((resolve) => {
     const rewarded = RewardedAd.createForAdRequest(rewardedUnitId);
 
@@ -87,6 +90,9 @@ export function isInterstitialInFlight() {
 }
 
 export async function showInterstitialAd(): Promise<boolean> {
+  // Subscribers paid for "no interstitial ads" — every caller routes through here.
+  if (usePremiumStore.getState().isPremium) return false;
+  if (!interstitialUnitId) return false;
   // Never stack. A caller arriving while one is already up is dropped rather
   // than queued — a queued ad would simply appear the instant the first closes,
   // which is the same complaint from the player's side.

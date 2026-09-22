@@ -26,3 +26,12 @@ export function isAnswerTooLate(deadline: Date | string | null | undefined): boo
   if (!deadline) return false;
   return Date.now() > answerCutoff(deadline);
 }
+
+/**
+ * Unranked modes keep going after a wrong answer and show the explanation, so
+ * the next question's clock starts after a reading pause rather than at once.
+ * The client auto-advances when the pause ends (or on "Next").
+ */
+export function revealPauseMs(hasExplanation: boolean): number {
+  return hasExplanation ? 6_000 : 1_500;
+}

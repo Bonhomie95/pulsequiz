@@ -38,7 +38,7 @@ const WAGER_OPTIONS = [0, 10, 25, 50, 100, 200, 500];
 export default function CreateRoomScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { invite } = useLocalSearchParams<{ invite?: string }>();
+  const { invite, inviteName } = useLocalSearchParams<{ invite?: string; inviteName?: string }>();
   const { coins } = useCoinStore();
 
   const [category, setCategory] = useState('General Knowledge');
@@ -87,7 +87,7 @@ export default function CreateRoomScreen() {
       usePvPStore.getState().setMatched({
         matchId: payload.matchId,
         players: payload.players ?? [],
-        myUserId: useAuthStore.getState().user!.id,
+        myUserId: useAuthStore.getState().user?.id ?? '',
         wager: payload.wager ?? 0,
       });
       router.replace('/quiz/pvp/vs');
@@ -110,10 +110,20 @@ export default function CreateRoomScreen() {
     };
   }, [roomCode]);
 
+  // Tell the server, or the room stays joinable while we're not looking.
   const cancelRoom = () => {
-    // Optimistically clear local state; server TTL / host-disconnect handler will cancel the DB record
+    if (roomCodeRef.current) socket.emit(SOCKET_EVENTS.ROOM_LEAVE, { code: roomCodeRef.current });
     setRoomCode(null);
   };
+
+  // Leaving the screen with a waiting room also cancels it. After a guest
+  // joins we navigate away with router.replace, and the server has already
+  // moved the room out of 'waiting', so this is a no-op then.
+  useEffect(() => {
+    return () => {
+      if (roomCodeRef.current) socket.emit(SOCKET_EVENTS.ROOM_LEAVE, { code: roomCodeRef.current });
+    };
+  }, [socket]);
 
   const copyCode = async () => {
     if (!roomCode) return;
@@ -149,8 +159,9 @@ export default function CreateRoomScreen() {
                 ]}
               >
                 <Text style={{ color: theme.colors.primary, fontSize: 13 }}>
-                  Inviting <Text style={{ fontWeight: '800' }}>{invite}</Text> —
-                  share your code after creating the room
+                  Challenging{' '}
+                  <Text style={{ fontWeight: '800' }}>{inviteName ? `@${inviteName}` : 'your friend'}</Text> —
+                  create the room, then share the code with them
                 </Text>
               </View>
             )}

@@ -14,7 +14,6 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
-  Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -43,11 +42,12 @@ import { useAudioStore } from '@/src/store/useAudioStore';
 import { enterImmersiveMode } from '@/src/utils/immersive';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '@/src/constants/storageKeys';
+import { LEAGUE_STYLE } from '@/src/constants/leagues';
 
+/** Local calendar day — matches the server, which uses the device timezone. */
 const todayKey = () => {
-  const now = new Date();
-  const gmt1 = new Date(now.getTime() + 60 * 60 * 1000);
-  return gmt1.toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
 type ReadyPlayer = { _id: string; username: string; avatar?: string | null };
@@ -158,11 +158,21 @@ export default function HomeScreen() {
   });
 
   const [myWeeklyRank, setMyWeeklyRank] = useState<number | null>(null);
-  const [myMonthlyRank, setMyMonthlyRank] = useState<number | null>(null);
-  const [myAllTimeRank, setMyAllTimeRank] = useState<number | null>(null);
-  const [rankTab, setRankTab] = useState<'weekly' | 'monthly' | 'all'>(
-    'weekly',
-  );
+  const [league, setLeague] = useState<{
+    tier: number;
+    tierName: string;
+    joined: boolean;
+    myXp: number;
+    myRank: number | null;
+    size: number;
+  } | null>(null);
+  const [daily, setDaily] = useState<{
+    number: number;
+    played: boolean;
+    finished: boolean;
+    correct: number | null;
+    total: number;
+  } | null>(null);
   const [readyPlayers, setReadyPlayers] = useState<ReadyPlayer[]>([]);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -181,12 +191,39 @@ export default function HomeScreen() {
       setHomeError(null);
       try {
           const check = await api.post('/streak/check-in');
-          const [res, playersRes] = await Promise.all([
+          const [res, playersRes, leagueRes, dailyRes] = await Promise.all([
             api.get('/home/summary'),
             api
               .get('/home/ready-players')
               .catch(() => ({ data: { players: [] } })),
+            api.get('/leagues/current').catch(() => null),
+            api.get(`/daily?date=${todayKey()}`).catch(() => null),
           ]);
+          const lg: any = leagueRes?.data;
+          setLeague(
+            lg
+              ? {
+                  tier: lg.tier,
+                  tierName: lg.tierName,
+                  joined: lg.joined,
+                  myXp: lg.myXp,
+                  myRank: lg.members?.find((m: any) => m.isMe)?.rank ?? null,
+                  size: lg.members?.length ?? 0,
+                }
+              : null,
+          );
+          const dq: any = dailyRes?.data;
+          setDaily(
+            dq
+              ? {
+                  number: dq.number,
+                  played: dq.played,
+                  finished: dq.finished,
+                  correct: dq.result?.correct ?? null,
+                  total: dq.totalQuestions,
+                }
+              : null,
+          );
           useCoinStore.getState().setCoins(res.data.coins);
           useStreakStore
             .getState()
@@ -201,16 +238,6 @@ export default function HomeScreen() {
           setMyWeeklyRank(
             typeof res.data.myWeeklyRank === 'number'
               ? res.data.myWeeklyRank
-              : null,
-          );
-          setMyMonthlyRank(
-            typeof res.data.myMonthlyRank === 'number'
-              ? res.data.myMonthlyRank
-              : null,
-          );
-          setMyAllTimeRank(
-            typeof res.data.myAllTimeRank === 'number'
-              ? res.data.myAllTimeRank
               : null,
           );
           setReadyPlayers(playersRes.data.players ?? []);
@@ -275,7 +302,7 @@ export default function HomeScreen() {
     const next =
       mode === 'system' ? 'dark' : mode === 'dark' ? 'light' : 'system';
     setMode(next);
-    api.patch('/settings', { theme: next });
+    api.patch('/settings', { theme: next }).catch(() => {});
   };
   const ThemeIcon = mode === 'system' ? Monitor : mode === 'dark' ? Moon : Sun;
   const greetingHour = new Date().getHours();
@@ -286,14 +313,13 @@ export default function HomeScreen() {
         ? 'Good afternoon'
         : 'Good evening';
 
+  // A direct challenge is a private room the player shares a code for.
+  // Random matchmaking can't target one person, so the old path here showed
+  // "Challenging X…" and then matched a stranger.
   const handleCarouselChallenge = (player: ReadyPlayer) => {
     router.push({
-      pathname: '/quiz/pvp/search',
-      params: {
-        category: 'General Knowledge',
-        challengeUser: player._id,
-        challengeName: player.username,
-      },
+      pathname: '/room/create',
+      params: { invite: player._id, inviteName: player.username },
     } as any);
   };
 
@@ -460,114 +486,73 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* RANK CARD */}
+        {/* DAILY + LEAGUE */}
         {!loading && (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => router.push('/(tabs)/leaderboard')}
-            style={[styles.rankCard, { backgroundColor: theme.colors.surface }]}
-          
-            accessibilityRole="button"
-            accessibilityLabel="Open the leaderboard"
-            hitSlop={8}>
-            <View style={styles.rankCardTop}>
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+          <View style={styles.duoRow}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => router.push('/daily')}
+              style={[
+                styles.duoCard,
+                {
+                  backgroundColor: daily?.finished ? theme.colors.surface : theme.colors.primary,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={
+                daily?.finished
+                  ? `Daily quiz done, ${daily.correct} of ${daily.total}. See standings`
+                  : "Play today's daily quiz"
+              }
+              hitSlop={4}
+            >
+              <Text style={{ fontSize: 24 }}>📅</Text>
+              <Text
+                style={[
+                  styles.duoTitle,
+                  { color: daily?.finished ? theme.colors.text : '#fff' },
+                ]}
               >
-                <Trophy size={16} color="#FFB800" />
-                <Text
-                  style={[styles.rankCardTitle, { color: theme.colors.text }]}
-                >
-                  Your Rankings
-                </Text>
-              </View>
-              <View style={styles.rankTabs}>
-                {(['weekly', 'monthly', 'all'] as const).map((t) => (
-                  <TouchableOpacity
-                    key={t}
-                    accessibilityRole="tab"
-                    accessibilityLabel={`Show ${t} rank`}
-                    accessibilityState={{ selected: rankTab === t }}
-                    onPress={(e) => {
-                      e.stopPropagation?.();
-                      setRankTab(t);
-                    }}
-                    style={[
-                      styles.rankTabBtn,
-                      {
-                        backgroundColor:
-                          rankTab === t ? theme.colors.primary : 'transparent',
-                      },
-                    ]}
-            hitSlop={8}>
-                    <Text
-                      style={{
-                        color: rankTab === t ? '#fff' : theme.colors.muted,
-                        fontSize: 10,
-                        fontWeight: '700',
-                      }}
-                    >
-                      {t === 'weekly' ? 'W' : t === 'monthly' ? 'M' : 'All'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-            {(() => {
-              const rank =
-                rankTab === 'weekly'
-                  ? myWeeklyRank
-                  : rankTab === 'monthly'
-                    ? myMonthlyRank
-                    : myAllTimeRank;
-              const label =
-                rankTab === 'weekly'
-                  ? 'This Week'
-                  : rankTab === 'monthly'
-                    ? 'This Month'
-                    : 'All Time';
-              return rank !== null ? (
-                <View style={styles.rankDisplay}>
-                  <Text style={[styles.rankNumber, { color: '#FFB800' }]}>
-                    #{rank}
-                  </Text>
-                  <View>
-                    <Text
-                      style={[styles.rankLabel, { color: theme.colors.text }]}
-                    >
-                      {label}
-                    </Text>
-                    <Text
-                      style={[styles.rankSub, { color: theme.colors.muted }]}
-                    >
-                      Tap to see full leaderboard →
-                    </Text>
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.rankDisplay}>
-                  <Text style={{ fontSize: 28 }}>🎯</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={[styles.rankLabel, { color: theme.colors.text }]}
-                    >
-                      Not ranked yet
-                      {rankTab === 'weekly'
-                        ? ' this week'
-                        : rankTab === 'monthly'
-                          ? ' this month'
-                          : ''}
-                    </Text>
-                    <Text
-                      style={[styles.rankSub, { color: theme.colors.muted }]}
-                    >
-                      Play a quiz to appear on the leaderboard!
-                    </Text>
-                  </View>
-                </View>
-              );
-            })()}
-          </TouchableOpacity>
+                Daily{daily ? ` #${daily.number}` : ''}
+              </Text>
+              <Text
+                style={[
+                  styles.duoSub,
+                  { color: daily?.finished ? theme.colors.muted : '#ffffffd9' },
+                ]}
+              >
+                {daily?.finished
+                  ? `Done · ${daily.correct}/${daily.total}`
+                  : daily?.played
+                    ? 'Back tomorrow'
+                    : 'Same 10 for everyone'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => router.push('/league')}
+              style={[
+                styles.duoCard,
+                { backgroundColor: (LEAGUE_STYLE[league?.tier ?? 0] ?? LEAGUE_STYLE[0]).color },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={`${league?.tierName ?? 'Bronze'} league. Open standings`}
+              hitSlop={4}
+            >
+              <Text style={{ fontSize: 24 }}>
+                {(LEAGUE_STYLE[league?.tier ?? 0] ?? LEAGUE_STYLE[0]).icon}
+              </Text>
+              <Text style={[styles.duoTitle, { color: '#fff' }]}>
+                {league?.tierName ?? 'Bronze'} League
+              </Text>
+              <Text style={[styles.duoSub, { color: '#ffffffd9' }]}>
+                {league?.joined && league.myRank
+                  ? `#${league.myRank} of ${league.size} · ${league.myXp} XP`
+                  : 'Play to join this week'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {homeError && (
@@ -644,7 +629,7 @@ export default function HomeScreen() {
             <PlayCircle size={40} color="#fff" />
             <View style={{ flex: 1 }}>
               <Text style={styles.playTitle}>Start a Quiz</Text>
-              <Text style={styles.playSub}>Solo · PvP · Play With Friends</Text>
+              <Text style={styles.playSub}>Ranked · Practice · 1v1 · Friends</Text>
             </View>
             <View style={styles.playChip}>
               <Text
@@ -688,11 +673,11 @@ export default function HomeScreen() {
               route: '/(tabs)/leaderboard',
             },
             {
-              icon: '💰',
-              label: 'Wallet',
-              sub: 'Coins & payouts',
+              icon: '🤝',
+              label: 'Challenge a Friend',
+              sub: 'Same questions, any time',
               color: '#10B981',
-              route: '/wallet',
+              route: '/duel',
             },
           ].map((a) => (
             <TouchableOpacity
@@ -754,59 +739,6 @@ export default function HomeScreen() {
           </>
         )}
 
-        {/* EARN ROW */}
-        <Text style={[styles.section, { color: theme.colors.text }]}>
-          Earn More Coins
-        </Text>
-        <View style={styles.earnRow}>
-          {[
-            {
-              icon: '📺',
-              label: 'Watch Ad',
-              sub: '+10 coins',
-              route: '/earn/ads',
-            },
-            {
-              icon: '🛒',
-              label: 'Buy Coins',
-              sub: 'Packages',
-              route: '/earn/buy',
-            },
-            { icon: '👑', label: 'Premium', sub: 'Ad-Free', route: '/premium' },
-            {
-              icon: '🔗',
-              label: 'Referral',
-              sub: '+50 coins',
-              route: '/referral',
-            },
-          ].map((e) => (
-            <TouchableOpacity
-              key={e.label}
-              accessibilityRole="button"
-              accessibilityLabel={e.label}
-              onPress={() => router.push(e.route as any)}
-              style={[
-                styles.earnCard,
-                { backgroundColor: theme.colors.surface },
-              ]}
-            hitSlop={8}>
-              <Text style={{ fontSize: 22 }}>{e.icon}</Text>
-              <Text
-                style={{
-                  fontWeight: '700',
-                  fontSize: 12,
-                  color: theme.colors.text,
-                }}
-              >
-                {e.label}
-              </Text>
-              <Text style={{ fontSize: 10, color: theme.colors.muted }}>
-                {e.sub}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
         {/* AD BANNER — hidden for premium */}
         <View style={[styles.adWrap, { borderColor: theme.colors.border }]}>
           <AdBanner />
@@ -864,26 +796,6 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 20, fontWeight: '800' },
   statLabel: { fontSize: 11 },
   statDiv: { width: 1, height: 36 },
-  rankCard: { borderRadius: 20, padding: 16, marginBottom: 20 },
-  rankCardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  rankCardTitle: { fontSize: 14, fontWeight: '700' },
-  rankTabs: {
-    flexDirection: 'row',
-    gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: 20,
-    padding: 3,
-  },
-  rankTabBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16 },
-  rankDisplay: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  rankNumber: { fontSize: 40, fontWeight: '900' },
-  rankLabel: { fontSize: 15, fontWeight: '700' },
-  rankSub: { fontSize: 12, marginTop: 2 },
   carouselHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -910,6 +822,10 @@ const styles = StyleSheet.create({
   carouselName: { fontSize: 11, fontWeight: '700', textAlign: 'center' },
   challengeChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
   challengeChipText: { fontSize: 10, color: '#fff', fontWeight: '800' },
+  duoRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  duoCard: { flex: 1, borderRadius: 20, padding: 16, gap: 4 },
+  duoTitle: { fontSize: 16, fontWeight: '900' },
+  duoSub: { fontSize: 12, fontWeight: '600' },
   playCard: {
     borderRadius: 22,
     padding: 20,
@@ -961,14 +877,6 @@ const styles = StyleSheet.create({
   },
   catName: { fontSize: 15, fontWeight: '700' },
   catMeta: { fontSize: 12, marginTop: 3 },
-  earnRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
-  earnCard: {
-    flex: 1,
-    borderRadius: 14,
-    padding: 10,
-    alignItems: 'center',
-    gap: 3,
-  },
   adWrap: {
     borderRadius: 14,
     overflow: 'hidden',

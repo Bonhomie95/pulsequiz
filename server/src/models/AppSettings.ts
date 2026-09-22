@@ -29,6 +29,8 @@ export const SETTINGS_KEYS = {
   MIN_PAYOUT_USD: 'min_payout_usd',                     // min USDT for payout
   MIN_ACCOUNT_AGE_DAYS: 'min_account_age_days',         // min days old to receive payout
   MIN_SESSIONS_FOR_PAYOUT: 'min_sessions_for_payout',   // min total sessions
+  PRIZES_ENABLED: 'prizes_enabled',                     // real-money prizes on/off
+  PRIZE_COUNTRIES: 'prize_countries',                   // ISO codes, blank = all
 } as const;
 
 /**
@@ -81,6 +83,8 @@ export async function initDefaultSettings() {
     [SETTINGS_KEYS.MIN_PAYOUT_USD]: 5,
     [SETTINGS_KEYS.MIN_ACCOUNT_AGE_DAYS]: 7,
     [SETTINGS_KEYS.MIN_SESSIONS_FOR_PAYOUT]: 5,
+    [SETTINGS_KEYS.PRIZES_ENABLED]: true,
+    [SETTINGS_KEYS.PRIZE_COUNTRIES]: '',
   };
   await Promise.all(
     Object.entries(defaults).map(([key, value]) =>

@@ -18,45 +18,54 @@ import { ChevronLeft, Crown, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { useTheme } from '@/src/theme/useTheme';
-import { api, errorMessage } from '@/src/api/api';
+import { errorMessage } from '@/src/api/api';
 import { usePremiumStore } from '@/src/store/usePremiumStore';
 import { logger } from '@/src/utils/logger';
 import { LINKS } from '@/src/constants/links';
+import { verifyAndFinish, SUBSCRIPTION_SKUS } from '@/src/iap/verify';
 
 // ─── Plan definitions ─────────────────────────────────────────────────────────
 
 type PlanMeta = {
-  sku: string;
+  sku: (typeof SUBSCRIPTION_SKUS)[number];
   label: string;
-  perMonth: string;
-  badge?: string;
+  /** Billing period shown next to the price ("/ year"). */
+  period: string;
+  months: number;
   highlighted?: boolean;
 };
 
+// Prices come ONLY from the store (localised, exact). Hardcoded USD figures
+// were wrong for most of the world and the store price must be the most
+// prominent one on a subscription screen (Guideline 3.1.2).
 const PLANS: PlanMeta[] = [
-  { sku: 'pq_premium_monthly', label: 'Monthly', perMonth: '~$2.99/mo' },
-  {
-    sku: 'pq_premium_3month',
-    label: '3 Months',
-    perMonth: '~$2.66/mo',
-    badge: 'Save 11%',
-  },
-  {
-    sku: 'pq_premium_6month',
-    label: '6 Months',
-    perMonth: '~$2.33/mo',
-    badge: 'Save 22%',
-    highlighted: true,
-  },
-  {
-    sku: 'pq_premium_yearly',
-    label: '12 Months',
-    perMonth: '~$2.08/mo',
-    badge: '🔥 Best Value',
-  },
+  { sku: 'pq_premium_monthly', label: 'Monthly', period: 'month', months: 1 },
+  { sku: 'pq_premium_3month', label: '3 Months', period: '3 months', months: 3 },
+  { sku: 'pq_premium_6month', label: '6 Months', period: '6 months', months: 6, highlighted: true },
+  { sku: 'pq_premium_yearly', label: '12 Months', period: 'year', months: 12 },
 ];
 
-const ALL_SKUS = PLANS.map((p) => p.sku);
+const ALL_SKUS: string[] = [...SUBSCRIPTION_SKUS];
+
+type StorePrice = { display: string; amount: number | null; currency: string | null };
+
+function perMonthLabel(p: StorePrice | undefined, months: number): string | null {
+  if (!p || p.amount == null || !p.currency || months <= 1) return null;
+  try {
+    const fmt = new Intl.NumberFormat(undefined, { style: 'currency', currency: p.currency });
+    return `${fmt.format(p.amount / months)} / month`;
+  } catch {
+    return null;
+  }
+}
+
+function savingsBadge(prices: Record<string, StorePrice>, plan: PlanMeta): string | null {
+  const monthly = prices.pq_premium_monthly?.amount;
+  const mine = prices[plan.sku]?.amount;
+  if (!monthly || !mine || plan.months <= 1) return null;
+  const pct = Math.round((1 - mine / (monthly * plan.months)) * 100);
+  return pct >= 5 ? `Save ${pct}%` : null;
+}
 
 const PERKS = [
   { icon: '🚫', text: 'No banner ads' },
@@ -74,10 +83,10 @@ export default function PremiumScreen() {
     isPremium,
     expiresAt,
     plan: activePlan,
-    setPremium,
   } = usePremiumStore();
 
-  const [storePrices, setStorePrices] = useState<Record<string, string>>({});
+  const [storePrices, setStorePrices] = useState<Record<string, StorePrice>>({});
+  const [restoring, setRestoring] = useState(false);
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [selectedSku, setSelectedSku] = useState('pq_premium_yearly');
   const [loadingSku, setLoadingSku] = useState<string | null>(null);
@@ -94,9 +103,13 @@ export default function PremiumScreen() {
         await IAP.initConnection();
         const subs = await IAP.fetchProducts({ skus: ALL_SKUS, type: 'subs' });
         if (!mounted) return;
-        const prices: Record<string, string> = {};
+        const prices: Record<string, StorePrice> = {};
         for (const s of subs ?? []) {
-          prices[s.id] = s.displayPrice;
+          prices[s.id] = {
+            display: s.displayPrice,
+            amount: typeof s.price === 'number' ? s.price : null,
+            currency: s.currency ?? null,
+          };
         }
         setStorePrices(prices);
       } catch (e) {
@@ -116,65 +129,23 @@ export default function PremiumScreen() {
   useEffect(() => {
     const purchaseSub = IAP.purchaseUpdatedListener(
       async (purchase: Purchase) => {
-        const sku = pendingSkuRef.current ?? purchase.productId;
-
-        // Ignore if not from this screen
+        // Ignore coin packs — the Buy screen owns those.
         if (!ALL_SKUS.includes(purchase.productId)) return;
-
+        const sku = purchase.productId;
         pendingSkuRef.current = null;
 
         try {
-          if (Platform.OS === 'ios') {
-            if (!purchase.transactionId)
-              throw new Error('Missing transaction ID');
-            const res = await api.post('/subscription/apple/verify', {
-              sku,
-              transactionId: purchase.transactionId,
-              originalTransactionId: (purchase as IAP.PurchaseIOS)
-                .originalTransactionIdentifierIOS,
-            });
-            await IAP.finishTransaction({ purchase, isConsumable: false });
-            setPremium({
-              isPremium: true,
-              expiresAt: res.data.expiresAt,
-              plan: sku,
-            });
-            Alert.alert(
-              '🎉 Premium Activated!',
-              'Enjoy your ad-free experience!',
-            );
-            router.back();
-          }
-
-          if (Platform.OS === 'android') {
-            if (!purchase.purchaseToken)
-              throw new Error('Invalid Android purchase');
-            const res = await api.post('/subscription/google/verify', {
-              sku,
-              purchaseToken: purchase.purchaseToken,
-              packageName: (purchase as IAP.PurchaseAndroid).packageNameAndroid,
-            });
-            await IAP.finishTransaction({ purchase, isConsumable: false });
-            setPremium({
-              isPremium: true,
-              expiresAt: res.data.expiresAt,
-              plan: sku,
-            });
-            Alert.alert(
-              '🎉 Premium Activated!',
-              'Enjoy your ad-free experience!',
-            );
-            router.back();
-          }
+          await verifyAndFinish(purchase);
+          Alert.alert('🎉 Premium Activated!', 'Enjoy your ad-free experience!');
+          router.back();
         } catch (e: any) {
           const status = e?.response?.status;
           logger.error('Subscription verification failed', e, { sku, status });
 
           // Only a 4xx means the receipt was actually rejected. Everything
-          // else — offline, 5xx — is retried automatically next launch,
-          // because the transaction has deliberately not been finished. Telling
-          // every user with a flaky connection to "contact support" turns a
-          // self-healing blip into a support ticket on a paid flow.
+          // else — offline, 5xx — is retried automatically next launch
+          // (reconcilePendingPurchases), because the transaction has
+          // deliberately not been finished.
           const terminal = typeof status === 'number' && status >= 400 && status < 500;
 
           Alert.alert(
@@ -235,60 +206,46 @@ export default function PremiumScreen() {
     });
   };
 
-  // ── Restore purchases (iOS App Store requirement) ─────────────────────────
+  // ── Restore purchases (required by App Store review) ──────────────────────
   const restore = async () => {
+    if (restoring) return;
+    setRestoring(true);
     try {
-      // Server-side restore first (fastest path)
-      const res = await api
-        .post('/subscription/apple/restore')
-        .catch(() => null);
-      if (res?.data?.isPremium) {
-        setPremium({
-          isPremium: true,
-          expiresAt: res.data.expiresAt,
-          plan: res.data.plan,
-        });
+      // Ask the store what this Apple ID / Google account owns, and verify the
+      // newest subscription with our server (which also rejects a receipt
+      // already attached to a different PulseQuiz account).
+      await IAP.initConnection();
+      const purchases = await IAP.getAvailablePurchases();
+      const sub = purchases
+        .filter((p) => ALL_SKUS.includes(p.productId))
+        .sort((a, b) => (b.transactionDate ?? 0) - (a.transactionDate ?? 0))[0];
+
+      if (sub) {
+        await verifyAndFinish(sub);
         Alert.alert('Restored!', 'Your subscription has been restored.');
         router.back();
         return;
       }
 
-      // Fallback: query the App Store directly
-      const purchases = await IAP.getAvailablePurchases();
-      const subPurchase = purchases.find((p) =>
-        ALL_SKUS.includes(p.productId),
-      );
-      if (subPurchase) {
-        const res2 = await api.post('/subscription/apple/verify', {
-          sku: subPurchase.productId,
-          transactionId: subPurchase.transactionId,
-          originalTransactionId: (subPurchase as IAP.PurchaseIOS)
-            .originalTransactionIdentifierIOS,
-        });
-        await IAP.finishTransaction({
-          purchase: subPurchase,
-          isConsumable: false,
-        });
-        setPremium({
-          isPremium: true,
-          expiresAt: res2.data.expiresAt,
-          plan: subPurchase.productId,
-        });
-        Alert.alert('Restored!', 'Your subscription has been restored.');
+      // Nothing on the store side — check our own records (e.g. a purchase
+      // made on another device with this account).
+      await usePremiumStore.getState().checkStatus();
+      if (usePremiumStore.getState().isPremium) {
+        Alert.alert('Restored!', 'Your subscription is active on this account.');
         router.back();
       } else {
-        Alert.alert(
-          'No subscription found',
-          'No active subscription found on this account.',
-        );
+        Alert.alert('No subscription found', 'There is no active PulseQuiz subscription on this store account.');
       }
-    } catch {
-      Alert.alert('Restore failed', 'Please try again later.');
+    } catch (e: any) {
+      Alert.alert('Restore failed', errorMessage(e, 'Please check your connection and try again.'));
+    } finally {
+      setRestoring(false);
     }
   };
 
-  const getPrice = (sku: string) =>
-    storePrices[sku] || PLANS.find((p) => p.sku === sku)?.perMonth || '—';
+  const priceOf = (sku: string) => storePrices[sku]?.display ?? null;
+  const planOf = (sku: string) => PLANS.find((p) => p.sku === sku)!;
+  const selectedPrice = priceOf(selectedSku);
 
   // ── Already premium — show status ─────────────────────────────────────────
   if (isPremium) {
@@ -331,6 +288,16 @@ export default function PremiumScreen() {
             Plan: {planLabel}
             {'\n'}Renews / Expires: {exp}
           </Text>
+          <TouchableOpacity
+            onPress={() => IAP.deepLinkToSubscriptions({ skuAndroid: activePlan ?? undefined }).catch(() => {})}
+            style={{ paddingVertical: 12, marginBottom: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Manage subscription"
+          >
+            <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
+              Manage or cancel subscription
+            </Text>
+          </TouchableOpacity>
           <View
             style={[s.perksCard, { backgroundColor: theme.colors.surface }]}
           >
@@ -402,11 +369,14 @@ export default function PremiumScreen() {
         {PLANS.map((plan) => {
           const selected = selectedSku === plan.sku;
           const busy = loadingSku === plan.sku;
+          const badge = savingsBadge(storePrices, plan);
+          const perMonth = perMonthLabel(storePrices[plan.sku], plan.months);
+          const price = priceOf(plan.sku);
           return (
             <TouchableOpacity
               key={plan.sku}
               accessibilityRole="radio"
-              accessibilityLabel={`${plan.label} plan`}
+              accessibilityLabel={`${plan.label} plan${price ? `, ${price} per ${plan.period}` : ''}`}
               accessibilityState={{ selected }}
               onPress={() => setSelectedSku(plan.sku)}
               activeOpacity={0.8}
@@ -423,7 +393,7 @@ export default function PremiumScreen() {
                 },
               ]}
             hitSlop={8}>
-              {plan.badge && (
+              {badge && (
                 <View
                   style={[
                     s.badge,
@@ -441,7 +411,7 @@ export default function PremiumScreen() {
                       fontSize: 10,
                     }}
                   >
-                    {plan.badge}
+                    {badge}
                   </Text>
                 </View>
               )}
@@ -462,15 +432,17 @@ export default function PremiumScreen() {
                   >
                     {plan.label}
                   </Text>
-                  <Text
-                    style={{
-                      color: theme.colors.muted,
-                      fontSize: 12,
-                      marginTop: 2,
-                    }}
-                  >
-                    {plan.perMonth}
-                  </Text>
+                  {perMonth && (
+                    <Text
+                      style={{
+                        color: theme.colors.muted,
+                        fontSize: 12,
+                        marginTop: 2,
+                      }}
+                    >
+                      {perMonth}
+                    </Text>
+                  )}
                 </View>
                 <View
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
@@ -488,7 +460,7 @@ export default function PremiumScreen() {
                         fontSize: 18,
                       }}
                     >
-                      {busy ? '…' : getPrice(plan.sku)}
+                      {busy ? '…' : price ? `${price} / ${plan.period}` : '—'}
                     </Text>
                   )}
                   {selected && <Check size={18} color={theme.colors.primary} />}
@@ -501,37 +473,45 @@ export default function PremiumScreen() {
         {/* Subscribe CTA */}
         <TouchableOpacity
           onPress={() => subscribe(selectedSku)}
-          disabled={!!loadingSku}
+          // No store price = the store is unreachable; never sell at a guessed price.
+          disabled={!!loadingSku || !selectedPrice}
           activeOpacity={0.85}
           style={[
             s.ctaBtn,
             {
-              backgroundColor: loadingSku ? theme.colors.surface : '#FFB800',
-              opacity: loadingSku ? 0.6 : 1,
+              backgroundColor: loadingSku || !selectedPrice ? theme.colors.surface : '#FFB800',
+              opacity: loadingSku || !selectedPrice ? 0.6 : 1,
             },
           ]}
         
             accessibilityRole="button"
             hitSlop={8}
-            accessibilityLabel="Go premium">
+            accessibilityLabel={selectedPrice ? `Subscribe for ${selectedPrice} per ${planOf(selectedSku).period}` : 'Subscribe'}>
           {loadingSku ? (
             <ActivityIndicator color={theme.colors.primary} />
           ) : (
             <>
               <Crown size={20} color="#000" />
               <Text style={s.ctaText}>
-                Subscribe — {loadingPrices ? '…' : getPrice(selectedSku)}
+                {loadingPrices
+                  ? 'Loading prices…'
+                  : selectedPrice
+                    ? `Subscribe — ${selectedPrice} / ${planOf(selectedSku).period}`
+                    : 'Store unavailable — try again later'}
               </Text>
             </>
           )}
         </TouchableOpacity>
 
         {/* Restore purchases — required by App Store review guidelines */}
-        {Platform.OS === 'ios' && (
-          <TouchableOpacity onPress={restore} style={{ padding: 16 }}
-            accessibilityRole="button"
-            accessibilityLabel="Restore Purchases"
-            hitSlop={8}>
+        <TouchableOpacity onPress={restore} disabled={restoring} style={{ padding: 16 }}
+          accessibilityRole="button"
+          accessibilityLabel="Restore Purchases"
+          accessibilityState={{ disabled: restoring, busy: restoring }}
+          hitSlop={8}>
+          {restoring ? (
+            <ActivityIndicator color={theme.colors.primary} />
+          ) : (
             <Text
               style={{
                 color: theme.colors.primary,
@@ -541,8 +521,8 @@ export default function PremiumScreen() {
             >
               Restore Purchases
             </Text>
-          </TouchableOpacity>
-        )}
+          )}
+        </TouchableOpacity>
 
         {/* Apple requires the subscription's length and price, the auto-renew
             terms, and functional Terms of Use (EULA) and Privacy Policy links
@@ -561,7 +541,7 @@ export default function PremiumScreen() {
         <View style={s.legalLinks}>
           <Text
             style={[s.legalLink, { color: theme.colors.primary }]}
-            onPress={() => Linking.openURL(LINKS.TERMS)}
+            onPress={() => Linking.openURL(LINKS.TERMS).catch(() => {})}
             accessibilityRole="link"
             accessibilityLabel="Terms of Use"
           >
@@ -570,7 +550,7 @@ export default function PremiumScreen() {
           <Text style={[s.legal, { color: theme.colors.muted }]}>  ·  </Text>
           <Text
             style={[s.legalLink, { color: theme.colors.primary }]}
-            onPress={() => Linking.openURL(LINKS.PRIVACY)}
+            onPress={() => Linking.openURL(LINKS.PRIVACY).catch(() => {})}
             accessibilityRole="link"
             accessibilityLabel="Privacy Policy"
           >

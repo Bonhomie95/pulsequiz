@@ -16,10 +16,11 @@ import { useFocusEffect } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 
 import { api, errorMessage } from '@/src/api/api';
-import { useAuthStore } from '@/src/store/useAuthStore';
+import { useAuthStore, usePrizesAvailable } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { enterImmersiveMode } from '@/src/utils/immersive';
 import { UserAvatar } from '@/src/components/UserAvatar';
+import { RulesSheet } from '@/src/components/RulesSheet';
 
 type Tab = 'weekly' | 'monthly' | 'all' | 'friends';
 
@@ -73,9 +74,11 @@ function pad(n: number) {
 function CountdownBanner({
   type,
   theme,
+  prizes,
 }: {
   type: 'weekly' | 'monthly';
   theme: any;
+  prizes: boolean;
 }) {
   const [remaining, setRemaining] = useState(
     () => getNextPayoutDate(type).getTime() - Date.now(),
@@ -146,14 +149,18 @@ function CountdownBanner({
               ? 'FINAL HOURS!'
               : isUrgent
                 ? 'ENDING SOON'
-                : `${type === 'weekly' ? 'WEEKLY' : 'MONTHLY'} PAYOUT`}
+                : `${type === 'weekly' ? 'WEEKLY' : 'MONTHLY'} ${prizes ? 'PAYOUT' : 'RESET'}`}
           </Text>
           <Text style={styles.countdownSub}>
             {isVeryUrgent
-              ? 'Play NOW to secure your prize position!'
+              ? prizes
+                ? 'Play NOW to secure your prize position!'
+                : 'Play NOW to lock in your final rank!'
               : isUrgent
                 ? 'Less than 24h left — climb the leaderboard!'
-                : `Prizes paid to top players every ${type === 'weekly' ? 'week' : 'month'}`}
+                : prizes
+                  ? `Prizes paid to top players every ${type === 'weekly' ? 'week' : 'month'}`
+                  : `Rankings reset every ${type === 'weekly' ? 'week' : 'month'}`}
           </Text>
         </View>
       </View>
@@ -230,12 +237,14 @@ function AvatarBubble({
 export default function LeaderboardScreen() {
   const theme = useTheme();
   const userId = useAuthStore((s) => s.user?.id);
+  const prizes = usePrizesAvailable();
   const listRef = useRef<FlatList<Entry>>(null);
 
   const podiumAnim = useRef(new Animated.Value(0)).current;
   const jumpAnim = useRef(new Animated.Value(0)).current;
 
   const [tab, setTab] = useState<Tab>('weekly');
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [data, setData] = useState<Entry[]>([]);
   const [myIndex, setMyIndex] = useState<number | null>(null);
   // The board only stores the top 100. `me` carries the caller's real standing
@@ -370,6 +379,7 @@ export default function LeaderboardScreen() {
       edges={['top']}
       style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
+      <RulesSheet visible={rulesOpen} onClose={() => setRulesOpen(false)} />
       <View style={styles.container}>
         <Text style={[styles.title, { color: theme.colors.text }]}>
           Leaderboard 🏆
@@ -377,11 +387,11 @@ export default function LeaderboardScreen() {
 
         {/* ── COUNTDOWN BANNER (weekly / monthly only) ── */}
         {(tab === 'weekly' || tab === 'monthly') && (
-          <CountdownBanner type={tab} theme={theme} />
+          <CountdownBanner type={tab} theme={theme} prizes={prizes} />
         )}
 
         {/* PRIZE INFO */}
-        {(tab === 'weekly' || tab === 'monthly') && prizeInfo && (
+        {prizes && (tab === 'weekly' || tab === 'monthly') && prizeInfo && (
           <View
             style={{
               backgroundColor: '#FFB80015',
@@ -396,24 +406,31 @@ export default function LeaderboardScreen() {
               {prizeInfo.revealed ? (
                 <>
                   <Text style={{ fontWeight: '800' }}>PRIZES REVEALED! </Text>
-                  Top {prizeInfo.paidRanks} players earned USDT this{' '}
+                  Top {prizeInfo.paidRanks} players earned USDT/USDC this{' '}
                   {tab === 'weekly' ? 'week' : 'month'}.
                 </>
               ) : prizeInfo.paidRanks ? (
                 <>
                   <Text style={{ fontWeight: '800' }}>
-                    Top {prizeInfo.paidRanks} players win USDT!{' '}
+                    Top {prizeInfo.paidRanks} players win USDT/USDC!{' '}
                   </Text>
                   Keep climbing!
                 </>
               ) : (
                 <>
                   <Text style={{ fontWeight: '800' }}>
-                    USDT prizes revealed after period ends.{' '}
+                    Prize amounts revealed after the period ends.{' '}
                   </Text>
                   Top players earn real crypto.
                 </>
-              )}
+              )}{' '}
+              <Text
+                onPress={() => setRulesOpen(true)}
+                accessibilityRole="link"
+                style={{ fontWeight: '800', textDecorationLine: 'underline' }}
+              >
+                Rules
+              </Text>
             </Text>
           </View>
         )}
@@ -553,7 +570,7 @@ export default function LeaderboardScreen() {
               </Text>
             )}
 
-            {me.pointsToPaidTier != null && me.pointsToPaidTier > 0 && (
+            {prizes && me.pointsToPaidTier != null && me.pointsToPaidTier > 0 && (
               <Text style={{ color: theme.colors.coin, fontSize: 13, fontWeight: '700', marginTop: 4 }}>
                 {me.pointsToPaidTier} more{' '}
                 {me.pointsToPaidTier === 1 ? 'point' : 'points'} to reach the prize tier

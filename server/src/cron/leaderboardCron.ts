@@ -13,6 +13,7 @@ import {
 } from '../services/payoutService';
 import { finaliseTournament } from '../services/tournamentService';
 import { warnStreaksAtRisk } from '../services/streakService';
+import { settleFinishedWeeks } from '../services/leagueService';
 import { reconcileCoinLedger } from '../services/ledgerReconciliation';
 import { sweepStaleMatches } from '../services/pvpService';
 import {
@@ -99,6 +100,17 @@ export function startLeaderboardCron(io?: Server) {
       await processPeriodPayouts('weekly', period);
       // Refresh the live snapshot so the app shows the new (empty) week.
       await buildLeaderboard('weekly');
+    }),
+    { timezone: TIMEZONE },
+  );
+
+  // Weekly leagues — settle the week that just closed (promotions, relegations,
+  // podium coins). Hourly as well as Monday, so a missed tick catches up.
+  cron.schedule(
+    '15 * * * *',
+    job('league-settle', 30 * MINUTE, async () => {
+      const groups = await settleFinishedWeeks();
+      return groups ? { groups } : undefined;
     }),
     { timezone: TIMEZONE },
   );

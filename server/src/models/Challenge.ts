@@ -22,6 +22,8 @@ export interface IChallenge {
   status: ChallengeStatus;
   claimedAt?: Date | null;
   periodLabel: string;  // e.g. "2024-W05" or "2024-02"
+  /** 0/1 for auto-seeded challenges; unset for admin-created ones. */
+  slot?: number;
   completedAt?: Date;
   expiresAt: Date;
   createdAt: Date;
@@ -53,6 +55,7 @@ const ChallengeSchema = new Schema<IChallenge>(
     },
     claimedAt: { type: Date, default: null },
     periodLabel: { type: String, required: true },
+    slot: { type: Number },
     completedAt: { type: Date, default: null },
     expiresAt: { type: Date, required: true },
   },
@@ -61,6 +64,12 @@ const ChallengeSchema = new Schema<IChallenge>(
 
 ChallengeSchema.index({ userId: 1, status: 1 });
 ChallengeSchema.index({ userId: 1, periodLabel: 1 });
+// Parallel home loads each passed the "none seeded yet" count and inserted a
+// full set, multiplying claimable rewards. One seeded challenge per slot.
+ChallengeSchema.index(
+  { userId: 1, type: 1, periodLabel: 1, slot: 1 },
+  { unique: true, partialFilterExpression: { slot: { $exists: true } }, name: 'seed_slot_unique' },
+);
 ChallengeSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 86400 }); // clean up 1d after expiry
 
 export default model<IChallenge>('Challenge', ChallengeSchema);

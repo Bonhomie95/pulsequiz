@@ -33,6 +33,8 @@ import {
 } from '@react-native-google-signin/google-signin';
 
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { GoogleG, FacebookF, PulseMark } from '../../src/components/brand/BrandIcons';
+import { logger } from '../../src/utils/logger';
 
 import { api, errorMessage } from '../../src/api/api';
 import { useAuthStore } from '../../src/store/useAuthStore';
@@ -54,15 +56,11 @@ function bootstrapGoogleSignin() {
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
   if (!webClientId) {
-    console.warn(
-      'Missing EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in env. Google Sign-In will fail.',
-    );
+    logger.warn('Missing EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID — Google Sign-In will fail.');
     return;
   }
   if (Platform.OS === 'ios' && !iosClientId) {
-    console.warn(
-      'Missing EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID in env. Google Sign-In will fail on iOS.',
-    );
+    logger.warn('Missing EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID — Google Sign-In will fail on iOS.');
   }
   GoogleSignin.configure({
     webClientId,
@@ -296,12 +294,17 @@ export default function LoginScreen() {
     }
 
     await setSession(token, refreshToken);
-    setUser({
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      avatar: user.avatar,
-    });
+    // The full profile (wallet, prize availability) comes from /auth/me; the
+    // sign-in response only carries the basics.
+    const me = await api.get('/auth/me').catch(() => null);
+    setUser(
+      me?.data?.user ?? {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+      },
+    );
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
@@ -468,7 +471,7 @@ export default function LoginScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.iconBox}
             >
-              <Text style={styles.iconEmoji}>⚡</Text>
+              <PulseMark size={52} />
             </LinearGradient>
             {/* Glow */}
             <View style={[styles.iconGlow, { shadowColor: '#5B7CFF' }]} />
@@ -487,7 +490,7 @@ export default function LoginScreen() {
 
           {/* Feature pills */}
           <Animated.View style={[styles.pills, cardStyle]}>
-            {['🏆 Real USDT prizes', '⚡ Live PvP', '🔥 Daily streaks'].map(
+            {['📅 Daily quiz', '🥇 Weekly leagues', '⚡ Live 1v1'].map(
               (label) => (
                 <View
                   key={label}
@@ -535,48 +538,67 @@ export default function LoginScreen() {
           <Text
             style={[styles.cardSub, { color: isDark ? '#A6B0CF' : '#6B7280' }]}
           >
-            Join thousands competing for weekly prizes
+            Free to play · Save your progress and compete
           </Text>
 
           <View style={styles.btnStack}>
+            {/* Sign in with Apple uses Apple's own button (HIG / Guideline
+                4.8), at the same size as the others. */}
+            {appleAvailable && (
+              <View style={{ opacity: loading ? 0.6 : 1 }} pointerEvents={loading ? 'none' : 'auto'}>
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                  buttonStyle={
+                    isDark
+                      ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                      : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                  }
+                  cornerRadius={16}
+                  style={{ width: '100%', height: 54 }}
+                  onPress={signInWithApple}
+                />
+              </View>
+            )}
             <LoginButton
               label="Continue with Google"
-              icon="🔵"
+              icon={<GoogleG size={20} />}
               onPress={signInWithGoogle}
               loading={activeBtn === 'google'}
               disabled={loading}
               isDark={isDark}
-              variant="primary"
+              variant="ghost"
             />
             <LoginButton
               label="Continue with Facebook"
-              icon="🔷"
+              icon={<FacebookF size={20} />}
               onPress={signInWithFacebook}
               loading={activeBtn === 'fb'}
               disabled={loading}
               isDark={isDark}
-              variant="ghost"
+              variant="facebook"
             />
-            {appleAvailable && (
-              <LoginButton
-                label="Continue with Apple"
-                icon=""
-                onPress={signInWithApple}
-                loading={activeBtn === 'apple'}
-                disabled={loading}
-                isDark={isDark}
-                variant="ghost"
-              />
-            )}
           </View>
 
+          <TouchableOpacity
+            onPress={() => router.push('/guest')}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Try a quick quiz without an account"
+            hitSlop={8}
+            style={{ alignSelf: 'center', marginTop: 16, paddingVertical: 6 }}
+          >
+            <Text style={{ color: isDark ? '#8EA2FF' : '#3F57C9', fontWeight: '800', fontSize: 15 }}>
+              Try a quick quiz first →
+            </Text>
+          </TouchableOpacity>
+
           <Text
-            style={[styles.terms, { color: isDark ? '#2A3350' : '#9CA3AF' }]}
+            style={[styles.terms, { color: isDark ? '#A6B0CF' : '#5A6480' }]}
           >
             By continuing you agree to our{' '}
             <Text
               style={{ color: '#5B7CFF' }}
-              onPress={() => Linking.openURL(LINKS.TERMS)}
+              onPress={() => Linking.openURL(LINKS.TERMS).catch(() => {})}
               accessibilityRole="link"
             >
               Terms
@@ -584,7 +606,7 @@ export default function LoginScreen() {
             {' & '}
             <Text
               style={{ color: '#5B7CFF' }}
-              onPress={() => Linking.openURL(LINKS.PRIVACY)}
+              onPress={() => Linking.openURL(LINKS.PRIVACY).catch(() => {})}
               accessibilityRole="link"
             >
               Privacy Policy
@@ -608,12 +630,12 @@ function LoginButton({
   variant,
 }: {
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   onPress: () => void;
   loading: boolean;
   disabled: boolean;
   isDark: boolean;
-  variant: 'primary' | 'ghost';
+  variant: 'primary' | 'ghost' | 'facebook';
 }) {
   const scale = useSharedValue(1);
 
@@ -628,7 +650,8 @@ function LoginButton({
     scale.value = withSpring(1, { damping: 15 });
   };
 
-  const isPrimary = variant === 'primary';
+  // Brand-filled buttons (primary, Facebook blue) use light text and dots.
+  const isPrimary = variant === 'primary' || variant === 'facebook';
 
   return (
     <Animated.View style={animStyle}>
@@ -642,7 +665,9 @@ function LoginButton({
         accessibilityState={{ disabled, busy: loading }}
         style={({ pressed }) => [
           styles.loginBtn,
-          isPrimary
+          variant === 'facebook'
+            ? { backgroundColor: '#1877F2' }
+            : isPrimary
             ? { backgroundColor: '#5B7CFF' }
             : {
                 backgroundColor: 'transparent',
@@ -656,12 +681,12 @@ function LoginButton({
           <LoadingDots isDark={isDark} isPrimary={isPrimary} />
         ) : (
           <>
-            <Text style={styles.btnIcon}>{icon}</Text>
+            {icon}
             <Text
               style={[
                 styles.btnLabel,
                 {
-                  color: isPrimary ? '#FFFFFF' : isDark ? '#A6B0CF' : '#374151',
+                  color: isPrimary ? '#FFFFFF' : isDark ? '#E5E7EB' : '#1F2937',
                 },
               ]}
             >
@@ -780,7 +805,6 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 14,
   },
-  iconEmoji: { fontSize: 40 },
   iconGlow: {
     position: 'absolute',
     inset: -10,
@@ -855,7 +879,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
   },
-  btnIcon: { fontSize: 18 },
   btnLabel: { fontSize: 15, fontWeight: '700' },
 
   dotsRow: {

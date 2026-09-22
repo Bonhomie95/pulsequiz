@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
+import { useAdminRole } from '../auth/useAdminRole';
+import { errMsg, errData } from '../utils/errMsg';
 import { Swords, RefreshCw, Plus, Trash2, X } from 'lucide-react';
 
 type Challenge = {
@@ -38,6 +40,7 @@ const EMPTY = {
 };
 
 export default function Challenges() {
+  const { isSuperAdmin } = useAdminRole();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
@@ -58,8 +61,8 @@ export default function Challenges() {
       if (userFilter.trim()) params.set('userId', userFilter.trim());
       const res = await adminApi.get(`/admin/challenges?${params}`);
       setChallenges(res.data.challenges ?? []);
-    } catch (e: any) {
-      setError(e?.response?.data?.message ?? 'Could not load challenges');
+    } catch (e) {
+      setError(errMsg(e, 'Could not load challenges'));
     } finally {
       setLoading(false);
     }
@@ -83,8 +86,8 @@ export default function Challenges() {
       setShowCreate(false);
       setForm({ ...EMPTY });
       fetchChallenges();
-    } catch (e: any) {
-      const d = e?.response?.data;
+    } catch (e) {
+      const d = errData<{ errors?: string[]; message?: string }>(e);
       setError(d?.errors?.join('\n') ?? d?.message ?? 'Could not create challenge');
     } finally {
       setSaving(false);
@@ -96,8 +99,8 @@ export default function Challenges() {
     try {
       await adminApi.delete(`/admin/challenges/${id}`);
       fetchChallenges();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Could not delete');
+    } catch (e) {
+      alert(errMsg(e, 'Could not delete'));
     }
   };
 
@@ -119,12 +122,12 @@ export default function Challenges() {
           >
             <RefreshCw size={14} />
           </button>
-          <button
+          {isSuperAdmin && <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold transition"
           >
             <Plus size={15} /> Assign Challenge
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -205,13 +208,13 @@ export default function Challenges() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button
+                  {isSuperAdmin && <button
                     onClick={() => remove(c._id)}
                     className="p-1.5 rounded-lg hover:bg-red-600/20 text-red-400 transition"
                     title="Delete challenge"
                   >
                     <Trash2 size={15} />
-                  </button>
+                  </button>}
                 </td>
               </tr>
             ))}
@@ -277,7 +280,7 @@ export default function Challenges() {
                 <Field label="Type">
                   <select
                     value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value as any })}
+                    onChange={(e) => setForm({ ...form, type: e.target.value as Challenge['type'] })}
                     className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm outline-none border border-gray-700"
                   >
                     <option value="daily">daily</option>
@@ -287,7 +290,7 @@ export default function Challenges() {
                 <Field label="Metric">
                   <select
                     value={form.metric}
-                    onChange={(e) => setForm({ ...form, metric: e.target.value as any })}
+                    onChange={(e) => setForm({ ...form, metric: e.target.value as Challenge['metric'] })}
                     className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm outline-none border border-gray-700"
                   >
                     <option value="quizzes_played">quizzes_played</option>

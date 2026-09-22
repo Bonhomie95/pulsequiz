@@ -20,8 +20,10 @@ function limiter(opts: {
   max: number;
   message: string;
   byUser?: boolean;
+  skip?: (req: Request) => boolean;
 }) {
   return rateLimit({
+    skip: opts.skip,
     windowMs: opts.windowMs,
     max: opts.max,
     standardHeaders: true,
@@ -94,6 +96,9 @@ export const walletUpdateLimiter = limiter({
   max: Number(process.env.RATE_LIMIT_WALLET_UPDATE_MAX || 5),
   byUser: true,
   message: 'Too many payout address changes. Try again tomorrow.',
+  // Only wallet writes count. Theme / profile toggles hit the same endpoint and
+  // were burning the 5-per-day budget, then silently failing.
+  skip: (req) => !req.body?.usdtAddress && !req.body?.usdtType && !req.body?.payoutCurrency,
 });
 
 /**

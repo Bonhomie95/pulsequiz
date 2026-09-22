@@ -16,7 +16,7 @@ export function notificationRouteFor(
     case 'payout':
       return '/wallet';
     case 'address_warning':
-      // USDT address is configured on the Settings screen.
+      // The prize wallet (USDT/USDC) is configured on the Settings screen.
       return '/(tabs)/settings';
     case 'streak_warning':
       return '/streak';
@@ -34,6 +34,10 @@ export function notificationRouteFor(
       return '/challenges';
     case 'tournament_starting':
       return '/tournament';
+    case 'duel_finished':
+      return typeof data?.code === 'string' && /^[A-Z2-9]{6}$/.test(data.code)
+        ? { pathname: '/duel/[code]', params: { code: data.code } }
+        : '/duel';
     case 'friend_request':
     case 'friend_accepted':
       return '/friends';

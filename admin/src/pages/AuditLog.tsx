@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
+import { errMsg } from '../utils/errMsg';
 import { useAdminRole } from '../auth/useAdminRole';
 
 type AuditEntry = {
@@ -46,8 +47,8 @@ export default function AuditLog() {
       });
       setEntries(res.data.entries ?? []);
       setTotal(res.data.total ?? 0);
-    } catch (e: any) {
-      setError(e?.response?.data?.message ?? 'Could not load the audit trail.');
+    } catch (e) {
+      setError(errMsg(e, 'Could not load the audit trail.'));
     } finally {
       setLoading(false);
     }

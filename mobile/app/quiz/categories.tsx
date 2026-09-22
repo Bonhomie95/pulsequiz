@@ -1,4 +1,5 @@
 import {
+  Alert,
   View,
   Text,
   TouchableOpacity,
@@ -8,12 +9,13 @@ import {
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/theme/useTheme';
 import { useEffect, useState } from 'react';
+import { api, errorMessage } from '@/src/api/api';
 import { storage } from '@/src/utils/storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { useQuizModeStore } from '@/src/store/useQuizModeStore';
 
-const CATEGORIES = [
+export const CATEGORIES = [
   { id: 'General Knowledge', label: 'General Knowledge', icon: '🧠' },
   { id: 'History', label: 'History', icon: '📜' },
   { id: 'Math', label: 'Maths', icon: '➗' },
@@ -32,7 +34,21 @@ export default function QuizCategories() {
   const theme = useTheme();
 
   const [lastCategory, setLastCategory] = useState<string | null>(null);
-  const mode = useQuizModeStore((s) => s.mode);
+  const mode = useQuizModeStore((s) => s.mode) ?? 'normal';
+  const [creating, setCreating] = useState(false);
+
+  const createDuel = async (category: string) => {
+    if (creating) return;
+    setCreating(true);
+    try {
+      const res: any = await api.post('/duels', { category });
+      router.replace({ pathname: '/quiz/play', params: { mode: 'duel', duelCode: res.data.code } });
+    } catch (e) {
+      Alert.alert("Couldn't create the challenge", errorMessage(e, 'Please try again.'));
+    } finally {
+      setCreating(false);
+    }
+  };
 
   useEffect(() => {
     storage.getLastCategory().then(setLastCategory);
@@ -62,7 +78,11 @@ export default function QuizCategories() {
           Choose a Category
         </Text>
         <Text style={[styles.subtitle, { color: theme.colors.muted }]}>
-          Pick where you want to start your streak
+          {mode === 'duel'
+            ? 'Your friend will get the same 10 questions'
+            : mode === 'relaxed'
+              ? 'Practice — answer all 10, learn as you go'
+              : 'Pick where you want to start your streak'}
         </Text>
       </View>
 
@@ -81,15 +101,18 @@ export default function QuizCategories() {
               activeOpacity={0.9}
               onPress={() => {
                 storage.setLastCategory(cat.id);
-                if (mode === 'normal') {
-                  router.push(`/quiz/play?category=${cat.id}`);
-                  return;
-                }
-
                 if (mode === 'pvp') {
                   router.push(`/quiz/pvp/search?category=${cat.id}` as const);
                   return;
                 }
+                if (mode === 'duel') {
+                  createDuel(cat.id);
+                  return;
+                }
+                router.push({
+                  pathname: '/quiz/play',
+                  params: { category: cat.id, mode: mode === 'relaxed' ? 'relaxed' : 'classic' },
+                });
               }}
               style={[
                 styles.card,
@@ -100,7 +123,7 @@ export default function QuizCategories() {
               ]}
             
             accessibilityRole="button"
-            accessibilityLabel="Play your last category again"
+            accessibilityLabel={isLast ? `${cat.label}, last played` : cat.label}
             hitSlop={8}>
               {/* Last Played */}
               {isLast && (

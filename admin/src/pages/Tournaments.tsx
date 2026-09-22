@@ -1,17 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
-import { Trophy, Plus, RefreshCw, Edit3, Trash2, X } from 'lucide-react';
+import { errMsg } from '../utils/errMsg';
+import { useAdminRole } from '../auth/useAdminRole';
+import { Trophy, Plus, RefreshCw, Edit3, Trash2, X, Ban } from 'lucide-react';
 
 type Tournament = {
   _id: string;
   title: string;
   description?: string;
   category: string;
-  entryFee: number;
-  prizePool: number;
+  entryFeeCoins: number;
+  prizePoolCoins: number;
   maxParticipants: number;
-  participants: number;
-  status: 'upcoming' | 'active' | 'completed' | 'cancelled';
+  participants: unknown[];
+  status: 'upcoming' | 'active' | 'finished' | 'cancelled';
+  settledAt?: string | null;
   startsAt: string;
   endsAt: string;
   createdAt: string;
@@ -21,23 +24,41 @@ type TournamentForm = {
   title: string;
   description: string;
   category: string;
-  entryFee: number;
-  prizePool: number;
+  entryFeeCoins: number;
+  prizePoolCoins: number;
   maxParticipants: number;
   startsAt: string;
   endsAt: string;
 };
 
+/** `<input type="datetime-local">` wants LOCAL time; toISOString() is UTC and
+ *  shifted every edited tournament by the admin's timezone offset. */
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Local datetime-local value → absolute ISO for the server. */
+function toPayload(f: TournamentForm) {
+  return {
+    ...f,
+    category: f.category.trim().toLowerCase(),
+    startsAt: new Date(f.startsAt).toISOString(),
+    endsAt: new Date(f.endsAt).toISOString(),
+  };
+}
+
 const EMPTY_FORM: TournamentForm = {
-  title: '', description: '', category: 'General Knowledge',
-  entryFee: 100, prizePool: 1000, maxParticipants: 100,
+  title: '', description: '', category: 'general knowledge',
+  entryFeeCoins: 100, prizePoolCoins: 1000, maxParticipants: 100,
   startsAt: '', endsAt: '',
 };
 
 const STATUS_META: Record<string, { cls: string; label: string }> = {
   upcoming:  { cls: 'bg-blue-500/15 text-blue-400',   label: 'Upcoming' },
   active:    { cls: 'bg-green-500/15 text-green-400',  label: 'Active' },
-  completed: { cls: 'bg-gray-500/15 text-gray-400',    label: 'Completed' },
+  finished:  { cls: 'bg-gray-500/15 text-gray-400',    label: 'Finished' },
   cancelled: { cls: 'bg-red-500/15 text-red-400',      label: 'Cancelled' },
 };
 
@@ -56,13 +77,15 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-function TournamentForm({ form, setForm, onSave, saving, submitLabel }: {
+function TournamentForm({ form, setForm, onSave, saving, submitLabel, feeLocked }: {
   form: TournamentForm;
   setForm: React.Dispatch<React.SetStateAction<TournamentForm>>;
   onSave: () => void;
   saving: boolean;
   submitLabel: string;
+  feeLocked?: boolean;
 }) {
+  const datesValid = !form.startsAt || !form.endsAt || new Date(form.endsAt) > new Date(form.startsAt);
   const set = (k: keyof TournamentForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.type === 'number' ? Number(e.target.value) : e.target.value }));
 
@@ -81,7 +104,7 @@ function TournamentForm({ form, setForm, onSave, saving, submitLabel }: {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-gray-400 block mb-1">Category</label>
-          <input value={form.category} onChange={set('category')} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none" />
+          <input value={form.category} onChange={set('category')} placeholder="must match a question category" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none" />
         </div>
         <div>
           <label className="text-xs text-gray-400 block mb-1">Max Participants</label>
@@ -90,12 +113,13 @@ function TournamentForm({ form, setForm, onSave, saving, submitLabel }: {
         </div>
         <div>
           <label className="text-xs text-gray-400 block mb-1">Entry Fee (coins)</label>
-          <input type="number" min={0} value={form.entryFee} onChange={set('entryFee')}
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none" />
+          <input type="number" min={0} value={form.entryFeeCoins} onChange={set('entryFeeCoins')} disabled={feeLocked}
+            title={feeLocked ? 'Locked — players have already paid this fee' : undefined}
+            className="disabled:opacity-50 w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none" />
         </div>
         <div>
           <label className="text-xs text-gray-400 block mb-1">Prize Pool (coins)</label>
-          <input type="number" min={0} value={form.prizePool} onChange={set('prizePool')}
+          <input type="number" min={0} value={form.prizePoolCoins} onChange={set('prizePoolCoins')}
             className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none" />
         </div>
         <div>
@@ -109,7 +133,8 @@ function TournamentForm({ form, setForm, onSave, saving, submitLabel }: {
             className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none" />
         </div>
       </div>
-      <button onClick={onSave} disabled={saving || !form.title || !form.startsAt || !form.endsAt}
+      {!datesValid && <p className="text-red-400 text-xs">End must be after start.</p>}
+      <button onClick={onSave} disabled={saving || form.title.trim().length < 3 || !form.startsAt || !form.endsAt || !datesValid}
         className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 py-2.5 rounded-xl font-bold text-sm transition mt-2">
         {saving ? 'Saving…' : submitLabel}
       </button>
@@ -118,6 +143,7 @@ function TournamentForm({ form, setForm, onSave, saving, submitLabel }: {
 }
 
 export default function Tournaments() {
+  const { isSuperAdmin } = useAdminRole();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -130,7 +156,7 @@ export default function Tournaments() {
   const [editForm, setEditForm] = useState<TournamentForm>({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
 
-  const fetchTournaments = async () => {
+  const fetchTournaments = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
@@ -139,23 +165,23 @@ export default function Tournaments() {
       setTournaments(res.data.tournaments ?? []);
       setTotal(res.data.total ?? 0);
     } catch (e) {
-      console.error('Tournaments fetch error', e);
+      alert(errMsg(e, 'Could not load tournaments'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter]);
 
-  useEffect(() => { fetchTournaments(); }, [page, statusFilter]);
+  useEffect(() => { fetchTournaments(); }, [fetchTournaments]);
 
   const createTournament = async () => {
     setSaving(true);
     try {
-      await adminApi.post('/admin/tournaments', createForm);
+      await adminApi.post('/admin/tournaments', toPayload(createForm));
       setShowCreate(false);
       setCreateForm({ ...EMPTY_FORM });
       fetchTournaments();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error creating tournament');
+    } catch (e) {
+      alert(errMsg(e, 'Error creating tournament'));
     } finally {
       setSaving(false);
     }
@@ -165,10 +191,10 @@ export default function Tournaments() {
     setEditT(t);
     setEditForm({
       title: t.title, description: t.description ?? '',
-      category: t.category, entryFee: t.entryFee, prizePool: t.prizePool,
+      category: t.category, entryFeeCoins: t.entryFeeCoins ?? 0, prizePoolCoins: t.prizePoolCoins ?? 0,
       maxParticipants: t.maxParticipants,
-      startsAt: t.startsAt ? new Date(t.startsAt).toISOString().slice(0, 16) : '',
-      endsAt: t.endsAt ? new Date(t.endsAt).toISOString().slice(0, 16) : '',
+      startsAt: t.startsAt ? toLocalInput(t.startsAt) : '',
+      endsAt: t.endsAt ? toLocalInput(t.endsAt) : '',
     });
   };
 
@@ -176,23 +202,37 @@ export default function Tournaments() {
     if (!editT) return;
     setSaving(true);
     try {
-      await adminApi.patch(`/admin/tournaments/${editT._id}`, editForm);
+      const payload: Partial<ReturnType<typeof toPayload>> = toPayload(editForm);
+      // The server refuses a fee change once anyone has paid; don't send it.
+      if (editT.participants.length) delete payload.entryFeeCoins;
+      await adminApi.patch(`/admin/tournaments/${editT._id}`, payload);
       setEditT(null);
       fetchTournaments();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error updating');
+    } catch (e) {
+      alert(errMsg(e, 'Error updating'));
     } finally {
       setSaving(false);
     }
   };
 
-  const changeStatus = async (id: string, status: string) => {
-    if (!confirm(`Set tournament status to "${status}"?`)) return;
+  const startNow = async (id: string) => {
+    if (!confirm('Start this tournament now?')) return;
     try {
-      await adminApi.patch(`/admin/tournaments/${id}`, { status });
+      await adminApi.patch(`/admin/tournaments/${id}`, { status: 'active' });
       fetchTournaments();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error');
+    } catch (e) {
+      alert(errMsg(e, 'Error'));
+    }
+  };
+
+  const cancelTournament = async (t: Tournament) => {
+    if (!confirm(`Cancel "${t.title}"? Every entry fee (${t.participants.length} players) is refunded. This cannot be undone.`)) return;
+    try {
+      const res = await adminApi.post(`/admin/tournaments/${t._id}/cancel`);
+      alert(`Cancelled. ${res.data.refunded} players refunded.`);
+      fetchTournaments();
+    } catch (e) {
+      alert(errMsg(e, 'Could not cancel'));
     }
   };
 
@@ -201,8 +241,8 @@ export default function Tournaments() {
     try {
       await adminApi.delete(`/admin/tournaments/${id}`);
       fetchTournaments();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error deleting');
+    } catch (e) {
+      alert(errMsg(e, 'Error deleting'));
     }
   };
 
@@ -217,15 +257,17 @@ export default function Tournaments() {
           <button onClick={fetchTournaments} className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition">
             <RefreshCw size={14} />
           </button>
-          <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold transition">
-            <Plus size={15} /> New Tournament
-          </button>
+          {isSuperAdmin && (
+            <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold transition">
+              <Plus size={15} /> New Tournament
+            </button>
+          )}
         </div>
       </div>
 
       {/* STATUS FILTERS */}
       <div className="flex gap-2 mb-5">
-        {[['', 'All'], ['upcoming', 'Upcoming'], ['active', 'Active'], ['completed', 'Completed'], ['cancelled', 'Cancelled']].map(([val, label]) => (
+        {[['', 'All'], ['upcoming', 'Upcoming'], ['active', 'Active'], ['finished', 'Finished'], ['cancelled', 'Cancelled']].map(([val, label]) => (
           <button key={val} onClick={() => { setStatusFilter(val); setPage(1); }}
             className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition ${statusFilter === val ? 'bg-indigo-600' : 'bg-gray-800 hover:bg-gray-700'}`}>
             {label}
@@ -240,15 +282,17 @@ export default function Tournaments() {
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-16 text-center">
           <Trophy size={36} className="mx-auto mb-3 opacity-20" />
           <p className="text-gray-400">No tournaments yet</p>
-          <button onClick={() => setShowCreate(true)} className="mt-4 bg-indigo-600 hover:bg-indigo-500 px-5 py-2 rounded-lg text-sm font-bold transition">
+          {isSuperAdmin && <button onClick={() => setShowCreate(true)} className="mt-4 bg-indigo-600 hover:bg-indigo-500 px-5 py-2 rounded-lg text-sm font-bold transition">
             Create First Tournament
-          </button>
+          </button>}
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {tournaments.map((t) => {
             const meta = STATUS_META[t.status] ?? STATUS_META.upcoming;
-            const pct = t.maxParticipants > 0 ? Math.min(100, (t.participants / t.maxParticipants) * 100) : 0;
+            const players = t.participants?.length ?? 0;
+            const pct = t.maxParticipants > 0 ? Math.min(100, (players / t.maxParticipants) * 100) : 0;
+            const open = (t.status === 'upcoming' || t.status === 'active') && !t.settledAt;
             return (
               <div key={t._id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 hover:border-gray-700 transition">
                 <div className="flex items-start justify-between mb-3">
@@ -259,25 +303,28 @@ export default function Tournaments() {
                     </div>
                     <p className="text-gray-500 text-xs">{t.category}</p>
                   </div>
-                  <div className="flex gap-1 ml-2 shrink-0">
-                    <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition"><Edit3 size={13} /></button>
-                    <button onClick={() => deleteTournament(t._id, t.title)} className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition"><Trash2 size={13} /></button>
-                  </div>
+                  {isSuperAdmin && (
+                    <div className="flex gap-1 ml-2 shrink-0">
+                      {open && <button onClick={() => openEdit(t)} aria-label="Edit tournament" className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition"><Edit3 size={13} /></button>}
+                      {open && <button onClick={() => cancelTournament(t)} aria-label="Cancel and refund" title="Cancel & refund entries" className="p-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 transition"><Ban size={13} /></button>}
+                      <button onClick={() => deleteTournament(t._id, t.title)} aria-label="Delete tournament" className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition"><Trash2 size={13} /></button>
+                    </div>
+                  )}
                 </div>
 
                 {t.description && <p className="text-gray-400 text-xs mb-3 line-clamp-2">{t.description}</p>}
 
                 <div className="grid grid-cols-3 gap-3 text-center mb-3">
                   <div className="bg-gray-800 rounded-xl p-2">
-                    <p className="text-yellow-400 font-bold text-sm">{t.entryFee.toLocaleString()}</p>
+                    <p className="text-yellow-400 font-bold text-sm">{(t.entryFeeCoins ?? 0).toLocaleString()}</p>
                     <p className="text-gray-500 text-[10px]">Entry</p>
                   </div>
                   <div className="bg-gray-800 rounded-xl p-2">
-                    <p className="text-green-400 font-bold text-sm">{t.prizePool.toLocaleString()}</p>
+                    <p className="text-green-400 font-bold text-sm">{(t.prizePoolCoins ?? 0).toLocaleString()}</p>
                     <p className="text-gray-500 text-[10px]">Prize Pool</p>
                   </div>
                   <div className="bg-gray-800 rounded-xl p-2">
-                    <p className="text-white font-bold text-sm">{t.participants}/{t.maxParticipants}</p>
+                    <p className="text-white font-bold text-sm">{players}/{t.maxParticipants}</p>
                     <p className="text-gray-500 text-[10px]">Players</p>
                   </div>
                 </div>
@@ -292,18 +339,13 @@ export default function Tournaments() {
 
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <span>{new Date(t.startsAt).toLocaleDateString()} → {new Date(t.endsAt).toLocaleDateString()}</span>
-                  {t.status === 'upcoming' && (
-                    <button onClick={() => changeStatus(t._id, 'active')}
+                  {isSuperAdmin && t.status === 'upcoming' && (
+                    <button onClick={() => startNow(t._id)}
                       className="px-2 py-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-md font-bold transition">
                       Start
                     </button>
                   )}
-                  {t.status === 'active' && (
-                    <button onClick={() => changeStatus(t._id, 'completed')}
-                      className="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-md font-bold transition">
-                      End
-                    </button>
-                  )}
+
                 </div>
               </div>
             );
@@ -326,7 +368,7 @@ export default function Tournaments() {
 
       {editT && (
         <Modal title={`Edit: ${editT.title}`} onClose={() => setEditT(null)}>
-          <TournamentForm form={editForm} setForm={setEditForm} onSave={saveEdit} saving={saving} submitLabel="Save Changes" />
+          <TournamentForm form={editForm} setForm={setEditForm} onSave={saveEdit} saving={saving} submitLabel="Save Changes" feeLocked={editT.participants.length > 0} />
         </Modal>
       )}
     </div>

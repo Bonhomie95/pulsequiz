@@ -65,6 +65,18 @@ function pickRandom<T>(arr: T[], n: number): T[] {
 
 /* ─────────────────────── Seed for one user ───────────────────────── */
 
+/** A concurrent seeder losing the unique-slot race is expected, not an error. */
+async function insertSeeded(docs: Record<string, unknown>[]): Promise<void> {
+  try {
+    await Challenge.insertMany(docs, { ordered: false });
+  } catch (err: any) {
+    const dupOnly =
+      err?.code === 11000 ||
+      (Array.isArray(err?.writeErrors) && err.writeErrors.every((e: any) => e?.code === 11000 || e?.err?.code === 11000));
+    if (!dupOnly) throw err;
+  }
+}
+
 export async function seedChallengesForUser(userId: string): Promise<void> {
   const now = dayjs().tz(TZ);
   const dailyPeriod = getDailyLabel();
@@ -77,22 +89,22 @@ export async function seedChallengesForUser(userId: string): Promise<void> {
   if (existingDaily === 0) {
     const templates = pickRandom(DAILY, 2);
     const expiresAt = now.endOf('day').toDate();
-    await Challenge.insertMany(templates.map((t) => ({
+    await insertSeeded(templates.map((t, slot) => ({
       userId, type: 'daily', title: t.title, description: t.description,
       metric: t.metric, targetValue: t.targetValue, currentValue: 0,
       rewardCoins: t.rewardCoins, rewardPoints: t.rewardPoints,
-      status: 'active', periodLabel: dailyPeriod, expiresAt,
+      status: 'active', periodLabel: dailyPeriod, expiresAt, slot,
     })));
   }
 
   if (existingWeekly === 0) {
     const templates = pickRandom(WEEKLY, 2);
     const expiresAt = (now as any).endOf('isoWeek').toDate();
-    await Challenge.insertMany(templates.map((t) => ({
+    await insertSeeded(templates.map((t, slot) => ({
       userId, type: 'weekly', title: t.title, description: t.description,
       metric: t.metric, targetValue: t.targetValue, currentValue: 0,
       rewardCoins: t.rewardCoins, rewardPoints: t.rewardPoints,
-      status: 'active', periodLabel: weeklyPeriod, expiresAt,
+      status: 'active', periodLabel: weeklyPeriod, expiresAt, slot,
     })));
   }
 }

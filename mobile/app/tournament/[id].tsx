@@ -95,10 +95,8 @@ export default function TournamentDetailScreen() {
           onPress: async () => {
             setJoining(true);
             try {
-              await api.post(`/tournaments/${id}/join`);
-              if (tournament.entryFeeCoins > 0) {
-                useCoinStore.getState().addCoins(-tournament.entryFeeCoins);
-              }
+              const joinRes = await api.post(`/tournaments/${id}/join`);
+              useCoinStore.getState().syncFromServer(joinRes.data);
               const res = await api.get(`/tournaments/${id}`);
               setTournament(res.data?.tournament ?? null);
               Alert.alert('🎉 Joined!', 'You\'ve joined the tournament. Play now to earn points!');

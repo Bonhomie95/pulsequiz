@@ -15,8 +15,11 @@ const api = axios.create({
 // on every request means a player's streak rolls over at their local midnight
 // rather than a single hardcoded zone.
 try {
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const { timeZone: tz, locale } = Intl.DateTimeFormat().resolvedOptions();
   if (tz) api.defaults.headers.common['X-Timezone'] = tz;
+  // Device region (e.g. "en-GB" → GB). Decides whether cash prizes are shown.
+  const region = /[-_]([A-Z]{2})(?:$|[-_])/.exec(locale ?? '')?.[1];
+  if (region) api.defaults.headers.common['X-Region'] = region;
 } catch {
   /* older engines without full ICU — the server falls back to UTC */
 }

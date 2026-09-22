@@ -4,6 +4,7 @@ export interface IQuizSession {
   userId: Types.ObjectId;
   sessionId: Types.ObjectId;
   category: string;
+  mode: string;
   score: number;
   bonus: number;
   totalPoints: number;
@@ -39,6 +40,7 @@ const QuizSessionSchema = new Schema<IQuizSession>(
       index: true,
     },
     category: { type: String, required: true, index: true },
+    mode: { type: String, default: 'classic' },
     answers: {
       type: [
         {

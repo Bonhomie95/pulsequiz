@@ -24,7 +24,7 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router';
 
 import { api } from '@/src/api/api';
-import { useAuthStore } from '@/src/store/useAuthStore';
+import { useAuthStore, usePrizesAvailable } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { UserAvatar } from '@/src/components/UserAvatar';
 import { AvatarPickerModal } from '@/src/components/profile/AvatarPickerModal';
@@ -35,6 +35,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { user, hydrated, updateUser } = useAuthStore();
+  const prizes = usePrizesAvailable();
   const { coins } = useCoinStore();
 
   const [stats, setStats] = useState<{
@@ -344,17 +345,26 @@ export default function ProfileScreen() {
             },
             {
               icon: '💰',
-              label: 'Wallet & Payouts',
-              sub: 'View coin history',
+              label: prizes ? 'Wallet & Payouts' : 'Wallet',
+              sub: prizes ? 'Coins, prizes and payout history' : 'Coins and purchases',
               route: '/wallet',
             },
-          ].map((l, i) => (
+            {
+              hidden: !prizes,
+              icon: '💵',
+              label: 'Prize Wallet (USDT / USDC)',
+              sub: user?.usdtAddress
+                ? `${user.payoutCurrency ?? 'USDT'} · ${user.usdtType} · ${user.usdtAddress.slice(0, 6)}…${user.usdtAddress.slice(-4)}`
+                : 'Not set — add one to receive prizes',
+              route: '/(tabs)/settings',
+            },
+          ].filter((l) => !l.hidden).map((l, i, all) => (
             <TouchableOpacity
               key={l.label}
               onPress={() => router.push(l.route as any)}
               style={[
                 styles.linkRow,
-                i < 3 && {
+                i < all.length - 1 && {
                   borderBottomWidth: 1,
                   borderBottomColor: theme.colors.border,
                 },
@@ -362,7 +372,7 @@ export default function ProfileScreen() {
             
             accessibilityRole="button"
             hitSlop={8}
-            accessibilityLabel="Next">
+            accessibilityLabel={`${l.label}. ${l.sub}`}>
               <Text style={{ fontSize: 20, width: 32 }}>{l.icon}</Text>
               <View style={{ flex: 1 }}>
                 <Text

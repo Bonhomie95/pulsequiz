@@ -51,6 +51,9 @@ import ActiveQuizSession from '../models/ActiveQuizSession';
 import QuizQuestion from '../models/QuizQuestion';
 import Admin from '../models/Admin';
 import AppSettings from '../models/AppSettings';
+import { DailyQuiz, DailyAttempt } from '../models/DailyQuiz';
+import { LeagueGroup, LeagueMember } from '../models/League';
+import Duel from '../models/Duel';
 
 const MODELS: mongoose.Model<any>[] = [
   User, QuizSession, Progress, PvPMatch, UserQuestion, CoinTransaction,
@@ -58,6 +61,7 @@ const MODELS: mongoose.Model<any>[] = [
   Referral, Room, Tournament, LeaderboardSnapshot, AdReward, AdminAuditLog,
   JobLock, PushToken, Friend, FlaggedAccount, Report, PrizePool,
   AccumulatedPrize, ActiveQuizSession, QuizQuestion, Admin, AppSettings,
+  DailyQuiz, DailyAttempt, LeagueGroup, LeagueMember, Duel,
 ];
 
 /** Duplicate checks for the unique indexes that could fail to build. */

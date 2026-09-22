@@ -15,7 +15,22 @@ import Tournament from '../models/Tournament';
 import { logActivity } from '../utils/activityLogger';
 import { logger } from '../utils/logger';
 
-import ActiveQuizSession from '../models/ActiveQuizSession';
+import ActiveQuizSession, { QUIZ_MODES } from '../models/ActiveQuizSession';
+import QuizQuestion from '../models/QuizQuestion';
+import {
+  claimDailyAttempt,
+  getOrCreateDaily,
+  isPlayableDate,
+  recordDailyResult,
+  releaseDailyAttempt,
+} from '../services/dailyService';
+import {
+  claimDuelSeat,
+  DUEL_CODE_RE,
+  DuelError,
+  recordDuelResult,
+  releaseDuelSeat,
+} from '../services/duelService';
 import User from '../models/User';
 import { isAnswerTooLate } from '../config/quizTiming';
 
@@ -24,8 +39,13 @@ import { isAnswerTooLate } from '../config/quizTiming';
 /* -------------------------------------------------------------------------- */
 
 const StartSchema = z.object({
-  category: z.string().min(2),
+  category: z.string().min(2).optional(),
   tournamentId: z.string().optional(),
+  mode: z.enum(QUIZ_MODES as [string, ...string[]]).default('classic'),
+  /** daily: the player's local date, YYYY-MM-DD */
+  date: z.string().optional(),
+  /** duel: the six-character code */
+  duelCode: z.string().optional(),
 });
 
 const AnswerSchema = z.object({
@@ -59,16 +79,89 @@ export async function start(req: AuthRequest, res: Response) {
 
   const parsed = StartSchema.safeParse(req.body);
   if (!parsed.success) {
+    return res.status(400).json({ message: 'Invalid quiz request' });
+  }
+  const { tournamentId, date } = parsed.data;
+  const userId = req.userId;
+  // Tournaments are scored on ranked runs only.
+  const mode = tournamentId ? 'classic' : (parsed.data.mode as (typeof QUIZ_MODES)[number]);
+
+  if (mode === 'daily') {
+    if (!date || !isPlayableDate(date)) {
+      return res.status(400).json({ message: 'Invalid date for the daily quiz' });
+    }
+    const daily = await getOrCreateDaily(date);
+    if (!(await claimDailyAttempt(userId, date))) {
+      return res.status(409).json({ message: "You've already played today's quiz. Come back tomorrow!" });
+    }
+    try {
+      return res.json(
+        await startQuizSession({ userId, category: 'daily', mode, fixed: daily.questions, dailyDate: date }),
+      );
+    } catch (err) {
+      await releaseDailyAttempt(userId, date);
+      throw err;
+    }
+  }
+
+  if (mode === 'duel') {
+    const code = String(parsed.data.duelCode ?? '').trim().toUpperCase();
+    if (!DUEL_CODE_RE.test(code)) {
+      return res.status(400).json({ message: 'Enter a valid 6-character code' });
+    }
+    let seat;
+    try {
+      seat = await claimDuelSeat(userId, code);
+    } catch (err) {
+      if (err instanceof DuelError) return res.status(err.status).json({ message: err.message });
+      throw err;
+    }
+    try {
+      return res.json(
+        await startQuizSession({ userId, category: seat.category, mode, fixed: seat.questions, duelCode: code }),
+      );
+    } catch (err) {
+      await releaseDuelSeat(userId, code);
+      throw err;
+    }
+  }
+
+  if (!parsed.data.category) {
     return res.status(400).json({ message: 'Category required' });
   }
 
   const data = await startQuizSession({
-    userId: req.userId,
+    userId,
     category: parsed.data.category.trim().toLowerCase(),
-    tournamentId: parsed.data.tournamentId,
+    tournamentId,
+    mode,
   });
 
   return res.json(data);
+}
+
+/**
+ * GET /api/quiz/guest — five easy questions to try before signing up.
+ *
+ * Answers are included: nothing is scored or stored, so there is nothing to
+ * protect, and it lets the whole taster run offline once loaded.
+ */
+export async function guest(_req: AuthRequest, res: Response) {
+  const qs = await QuizQuestion.aggregate([
+    { $match: { difficulty: 'easy', disabled: { $ne: true }, category: { $ne: 'math' } } },
+    { $sample: { size: 5 } },
+    { $project: { question: 1, options: 1, answer: 1, explanation: 1, category: 1 } },
+  ]);
+  return res.json({
+    questions: qs.map((q) => ({
+      id: String(q._id),
+      category: q.category,
+      question: q.question,
+      options: q.options,
+      answer: q.answer,
+      explanation: q.explanation ?? null,
+    })),
+  });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -231,8 +324,11 @@ export async function finish(req: AuthRequest, res: Response) {
 
     const already = (done.answers as any[]).filter((a) => a.isCorrect).length;
     return res.json({
+      mode: done.mode ?? 'classic',
       correct: already,
       total: done.questions.length,
+      dailyDate: done.dailyDate ?? undefined,
+      duelCode: done.duelCode ?? undefined,
       alreadyFinished: true,
     });
   }
@@ -240,12 +336,22 @@ export async function finish(req: AuthRequest, res: Response) {
   const correct = (session.answers as any[]).filter((a) => a.isCorrect).length;
   const total = session.questions.length;
 
+  const assistedIds = new Set(
+    [...(session.hintedQuestions ?? []), ...(session.timeExtendedQuestions ?? [])].map(String),
+  );
+  const assistedCorrect = (session.answers as any[]).filter(
+    (a) => a.isCorrect && assistedIds.has(String(a.questionId)),
+  ).length;
+
+  const mode = session.mode ?? 'classic';
   const result = await applyQuizResult({
     userId: req.userId,
     sessionId: session._id,
     category: session.category,
+    mode,
     correct,
     total,
+    assistedCorrect,
     // Copied out before the TTL index removes the active session.
     answers: (session.answers as any[]).map((a) => ({
       questionId: a.questionId,
@@ -254,6 +360,20 @@ export async function finish(req: AuthRequest, res: Response) {
       answeredAt: a.answeredAt,
     })),
   });
+
+  // Per question, in order — the daily share grid and the duel comparison.
+  const byQuestion = new Map(
+    (session.answers as any[]).map((a) => [String(a.questionId), !!a.isCorrect]),
+  );
+  const results = session.questions.map((q: any) => byQuestion.get(String(q.questionId)) ?? false);
+  const shared = { correct, total, results, timeLeftMs: session.timeLeftMs ?? 0 };
+
+  if (mode === 'daily' && session.dailyDate) {
+    await recordDailyResult(req.userId, session.dailyDate, shared);
+  }
+  if (mode === 'duel' && session.duelCode) {
+    await recordDuelResult(req.userId, session.duelCode, shared);
+  }
 
   await logActivity(req.userId, 'QUIZ_FINISH', {
     score: correct,
@@ -266,14 +386,18 @@ export async function finish(req: AuthRequest, res: Response) {
     { $inc: { sessionsSinceLastAd: 1 } },
   );
 
+  // A quiz started and "finished" with no answers is not played — it must not
+  // advance challenges or trigger the referral payout (both were farmable).
+  const played = (session.answers as any[]).length > 0;
+
   // Track challenge progress (async, non-blocking)
-  updateChallengeProgress({ userId: req.userId, correct, total }).catch((err) =>
+  if (played) updateChallengeProgress({ userId: req.userId, correct, total }).catch((err) =>
     logger.error('Challenge progress update failed', err, { userId: req.userId }),
   );
 
   // Referral: pay the referrer on the referred player's FIRST completion.
   // Claiming hasCompletedFirstQuiz conditionally makes this fire exactly once.
-  (async () => {
+  if (played) (async () => {
     const claimed = await User.findOneAndUpdate(
       { _id: req.userId, hasCompletedFirstQuiz: { $ne: true } },
       { $set: { hasCompletedFirstQuiz: true } },
@@ -312,8 +436,14 @@ export async function finish(req: AuthRequest, res: Response) {
   }
 
   return res.json({
+    mode,
     correct,
     total,
+    results,
+    leagueXp: result.leagueXp,
+    dailyDate: session.dailyDate ?? undefined,
+    duelCode: session.duelCode ?? undefined,
+    assisted: assistedCorrect,
     points: result.pointsAdded,
     actualPoints: result.actualPoints,
     capExceeded: result.capExceeded,
