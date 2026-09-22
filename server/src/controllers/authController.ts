@@ -74,6 +74,16 @@ export async function oauthLogin(req: Request, res: Response) {
 
   const { provider, token } = parsed.data;
 
+  // Facebook sign-in is switched OFF until the Facebook app is set up. It is
+  // off unless FACEBOOK_LOGIN_ENABLED is exactly "true", so a stray
+  // FACEBOOK_APP_ID in an env file can't quietly turn it back on. Re-enable
+  // here AND in the app's login screen (FACEBOOK_LOGIN_ENABLED there).
+  if (provider === 'facebook' && process.env.FACEBOOK_LOGIN_ENABLED !== 'true') {
+    return res
+      .status(503)
+      .json({ message: 'Facebook sign-in is unavailable. Please use Apple or Google.' });
+  }
+
   try {
     const profile: OAuthProfile =
       provider === 'google'

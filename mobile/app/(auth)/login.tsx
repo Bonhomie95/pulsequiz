@@ -48,6 +48,13 @@ WebBrowser.maybeCompleteAuthSession();
 
 const { width, height } = Dimensions.get('window');
 
+/**
+ * Facebook sign-in is off until the Facebook app is configured. The server
+ * refuses it too (FACEBOOK_LOGIN_ENABLED), so flipping this alone is not
+ * enough — set that env var as well.
+ */
+const FACEBOOK_LOGIN_ENABLED = false;
+
 const facebookDiscovery = {
   authorizationEndpoint: 'https://www.facebook.com/v19.0/dialog/oauth',
 };
@@ -568,15 +575,17 @@ export default function LoginScreen() {
               isDark={isDark}
               variant="ghost"
             />
-            <LoginButton
-              label="Continue with Facebook"
-              icon={<FacebookF size={20} />}
-              onPress={signInWithFacebook}
-              loading={activeBtn === 'fb'}
-              disabled={loading}
-              isDark={isDark}
-              variant="facebook"
-            />
+            {FACEBOOK_LOGIN_ENABLED && (
+              <LoginButton
+                label="Continue with Facebook"
+                icon={<FacebookF size={20} />}
+                onPress={signInWithFacebook}
+                loading={activeBtn === 'fb'}
+                disabled={loading}
+                isDark={isDark}
+                variant="facebook"
+              />
+            )}
           </View>
 
           <TouchableOpacity

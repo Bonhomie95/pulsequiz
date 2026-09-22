@@ -236,6 +236,16 @@ describe('question reports', () => {
   });
 });
 
+describe('sign-in providers', () => {
+  it('refuses Facebook while it is switched off', async () => {
+    const res = await request(app)
+      .post('/api/auth/oauth')
+      .send({ provider: 'facebook', token: 'x'.repeat(40) });
+    expect(res.status).toBe(503);
+    expect(res.body.message).toMatch(/Apple or Google/);
+  });
+});
+
 describe('prize regions', () => {
   it('offers prizes only in listed countries', async () => {
     const u = await makeUser();

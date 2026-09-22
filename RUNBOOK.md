@@ -85,6 +85,34 @@ https://<host>/api/webhooks/apple
 
 Without it, a user can buy coins, spend them, refund the purchase, and keep them.
 
+### Google service account (`GOOGLE_SERVICE_ACCOUNT_JSON`)
+
+Needed for two things: checking Play purchases server-side, and receiving
+Play's subscription notifications. One service account covers both.
+
+1. **Play Console → Setup → API access.** If no Google Cloud project is
+   linked, click *Create new project* (or link an existing one). The rest of
+   this happens in that project.
+2. On the same page, **Create new service account** → it opens Google Cloud
+   Console → *Create service account*. Name it e.g. `pulsequiz-play`. No
+   project roles are needed at this step; Play grants the permissions.
+3. In Cloud Console open the new account → **Keys → Add key → Create new key
+   → JSON**. A `.json` file downloads. This is the only copy — Google won't
+   show it again.
+4. Back in **Play Console → API access**, the account now appears. Click
+   *Manage Play Console permissions* → grant **View financial data** and
+   **Manage orders and subscriptions** for the PulseQuiz app → Invite user.
+   Permissions take a few minutes to apply.
+5. Put the **whole JSON file, on one line** into `GOOGLE_SERVICE_ACCOUNT_JSON`
+   (Render → Environment → Add). To flatten it:
+   `node -e "console.log(JSON.stringify(require('./key.json')))"`.
+   Also set `ANDROID_PACKAGE_NAME=com.bonhomie95.pulsequiz`.
+6. Delete the downloaded file afterwards. If it ever leaks, delete that key in
+   Cloud Console and create a new one.
+
+Verify: buy a coin pack with a Play licence tester account; the server logs a
+successful verification and the coins land.
+
 ### Google Play Real-Time Developer Notifications
 Play Console → Monetisation setup → **Real-time developer notifications** →
 Pub/Sub topic, with a push subscription pointing at:
@@ -94,14 +122,52 @@ https://<host>/api/webhooks/google?token=$GOOGLE_RTDN_SECRET
 ```
 
 Prefer OIDC: set `PUBSUB_VERIFICATION_AUDIENCE` and
-`PUBSUB_SERVICE_ACCOUNT_EMAIL` instead of the shared secret.
+`PUBSUB_SERVICE_ACCOUNT_EMAIL` instead of the shared secret. The service
+account email is the `client_email` field of the JSON above; the audience is
+whatever you typed as the audience on the Pub/Sub push subscription (use the
+webhook URL).
 
-### NOWPayments
-Payouts need `NOWPAYMENTS_EMAIL` + `NOWPAYMENTS_PASSWORD` (for the bearer token)
-and, if the account has 2FA, `NOWPAYMENTS_2FA_CODE`. **Run one real payout of a
-trivial amount end to end before any period closes.**
+### NOWPayments (prize payouts)
+
+Only needed if you pay cash prizes. While `prizes_enabled` is off, or
+`PAYOUT_MOCK=1`, nothing here is required.
+
+1. Create an account at https://nowpayments.io and verify the email. Business
+   accounts need KYB before mass payouts are enabled — start this early, it is
+   the slow part.
+2. **Settings → Payments → API keys → Add new key** → `NOWPAYMENTS_API_KEY`.
+3. **Mass payouts** must be enabled on the account (Settings → Payouts). Ask
+   support if the section is missing. Payouts authenticate differently from
+   the API key: the server signs in with your account credentials to get a
+   bearer token, so set `NOWPAYMENTS_EMAIL` and `NOWPAYMENTS_PASSWORD`.
+4. Turn on 2FA for the account (they require it for payouts). Store the TOTP
+   *code source* in `NOWPAYMENTS_2FA_CODE`. A static code expires in 30s, so in
+   practice this env var holds the current code only for a manual run — for
+   unattended payouts use their whitelisted-address flow, or keep a human in
+   the loop with the admin Payouts screen.
+5. Fund the payout balance in the coins you pay in (USDT and/or USDC on the
+   networks in `validateWallet.ts`).
+6. `NOWPAYMENTS_IPN_URL` is sent to NOWPayments with each payout, but **there
+   is no IPN receiver in the server yet** — nothing listens on that URL. Payout
+   status is instead reconciled by the `payout-retry` cron and the stuck-payout
+   sweep, and anything indeterminate is parked for an admin to resolve on the
+   Payouts screen. Leave the variable unset, or treat building the receiver as
+   work still to do before prizes run at volume.
+
+**Before any period closes, run one real payout of a trivial amount end to
+end** (admin → Payouts → retry on a small test row) and confirm the coins
+arrive. A failed first payout during a real prize week is the worst time to
+discover a missing setting.
 
 ---
+
+### Facebook sign-in (currently OFF)
+
+Facebook sign-in is disabled in both the app and the server. To turn it on:
+set `FACEBOOK_LOGIN_ENABLED=true` plus `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET`
+on the server, and set `FACEBOOK_LOGIN_ENABLED = true` in
+`mobile/app/(auth)/login.tsx`. Both sides are needed — the server refuses the
+provider on its own.
 
 ## 2a. After deploying this release
 
