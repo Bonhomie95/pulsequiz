@@ -14,7 +14,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.pulsequiz.app/api",
+        "EXPO_PUBLIC_API_URL": "https://pulsequiz-api.onrender.com/api",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "924123058946-k6dolakebn53t9tklmi9p3k21osbc9m2.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "924123058946-1fv87la03mkufft6mgm4o50oas9qfbep.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "924123058946-rk6hn6iuf8fmitpsi8jsjfpk47cjucni.apps.googleusercontent.com",
@@ -27,7 +27,7 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.pulsequiz.app/api",
+        "EXPO_PUBLIC_API_URL": "https://pulsequiz-api.onrender.com/api",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "924123058946-k6dolakebn53t9tklmi9p3k21osbc9m2.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "924123058946-1fv87la03mkufft6mgm4o50oas9qfbep.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "924123058946-rk6hn6iuf8fmitpsi8jsjfpk47cjucni.apps.googleusercontent.com",
