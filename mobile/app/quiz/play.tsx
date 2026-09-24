@@ -33,6 +33,7 @@ import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
 import { useAppStateStore } from '@/src/store/useAppStateStore';
 import { ReportQuestionButton } from '@/src/components/ReportQuestionSheet';
 import { logger } from '@/src/utils/logger';
+import { deadlineFrom, serverNow } from '@/src/utils/serverClock';
 
 const TIME_PER_QUESTION = 15;
 const HINT_COSTS = [10, 20, 50] as const;
@@ -358,9 +359,7 @@ export default function QuizPlay() {
         setSessionId(res.data.sessionId);
         if (res.data.category) setCategory(res.data.category);
         setQuestions(res.data.questions);
-        deadlineRef.current = res.data.deadlineAt
-          ? new Date(res.data.deadlineAt).getTime()
-          : Date.now() + TIME_PER_QUESTION * 1000;
+        deadlineRef.current = deadlineFrom(res.data.deadlineAt, TIME_PER_QUESTION * 1000);
         setIndex(0);
         setLocked(false);
         resetPerQuestionUI();
@@ -397,7 +396,7 @@ export default function QuizPlay() {
       // question appears (the reveal pause), and should read 15, not 19.
       const remaining = Math.min(
         TIME_PER_QUESTION,
-        Math.max(0, Math.ceil((deadline - Date.now()) / 1000)),
+        Math.max(0, Math.ceil((deadline - serverNow()) / 1000)),
       );
 
       setTimeLeft((prev) => {
@@ -492,7 +491,7 @@ export default function QuizPlay() {
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     advanceTimerRef.current = null;
     hideOverlay();
-    deadlineRef.current = nextDeadlineRef.current ?? Date.now() + TIME_PER_QUESTION * 1000;
+    deadlineRef.current = deadlineFrom(nextDeadlineRef.current, TIME_PER_QUESTION * 1000);
     setLocked(false);
     setIndex((i) => i + 1);
     resetPerQuestionUI();
@@ -544,7 +543,7 @@ export default function QuizPlay() {
         setReveal({ verdict, explanation, action: mode === 'relaxed' ? 'next' : null });
       }
       const wait = nextDeadlineRef.current
-        ? Math.max(700, nextDeadlineRef.current - TIME_PER_QUESTION * 1000 - Date.now())
+        ? Math.max(700, nextDeadlineRef.current - TIME_PER_QUESTION * 1000 - serverNow())
         : 700;
       advanceTimerRef.current = setTimeout(advance, wait);
     },
@@ -590,7 +589,7 @@ export default function QuizPlay() {
       const deadline = deadlineRef.current;
       if (deadline == null || locked || !sessionId) return;
 
-      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      const remaining = Math.max(0, Math.ceil((deadline - serverNow()) / 1000));
       setTimeLeft(remaining);
       if (remaining <= 0) {
         stopTimer();
@@ -646,9 +645,7 @@ export default function QuizPlay() {
               return;
             }
 
-            deadlineRef.current = st.data.deadlineAt
-              ? new Date(st.data.deadlineAt).getTime()
-              : Date.now() + TIME_PER_QUESTION * 1000;
+            deadlineRef.current = deadlineFrom(st.data.deadlineAt, TIME_PER_QUESTION * 1000);
 
             hideOverlay();
             setLocked(false);

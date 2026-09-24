@@ -1,5 +1,6 @@
 import axios, { AxiosError, type AxiosRequestConfig } from 'axios';
 import { logger } from '@/src/utils/logger';
+import { noteServerDate } from '@/src/utils/serverClock';
 
 const baseURL = process.env.EXPO_PUBLIC_API_URL;
 if (!baseURL) {
@@ -79,8 +80,15 @@ function refreshOnce(): Promise<string | null> {
 }
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // Keep our estimate of the server's clock fresh. Question deadlines are
+    // absolute server instants, so a device clock that drifts must not be
+    // allowed to decide whether they have passed.
+    noteServerDate(res.headers?.date as string | undefined);
+    return res;
+  },
   async (error: AxiosError) => {
+    noteServerDate(error.response?.headers?.date as string | undefined);
     const status = error.response?.status;
     const cfg = error.config as RetryConfig | undefined;
     const message = (error.response?.data as { message?: string } | undefined)?.message;
