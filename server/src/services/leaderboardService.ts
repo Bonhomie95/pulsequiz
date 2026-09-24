@@ -9,7 +9,7 @@ import { logger } from '../utils/logger';
 
 export type LeaderboardType = 'weekly' | 'monthly' | 'all';
 
-const TOP_N = 100;
+export const TOP_N = 100;
 
 export interface LeaderboardEntry {
   userId: string;

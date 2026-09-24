@@ -63,8 +63,9 @@ const auth = (r: request.Test) => r.set('Authorization', `Bearer ${token}`);
 
 describe('the app boots and serves its surface', () => {
   it('seeds a usable question bank', async () => {
+    // 11 categories x 50 explained questions (20 easy / 20 medium / 10 hard).
     const total = await QuizQuestion.countDocuments({});
-    expect(total).toBeGreaterThan(1000);
+    expect(total).toBeGreaterThanOrEqual(550);
 
     // Every category must support at least a few distinct quizzes before it
     // starts recycling — seven of them used to manage two.
