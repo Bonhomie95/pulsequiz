@@ -45,6 +45,12 @@ const MAX_SEEN_EXCLUSIONS = 300;
 const readyTimers = new Map<string, NodeJS.Timeout>();      // matchId -> timer
 const liveByUser = new Map<string, { matchId: string }>();   // userId -> live match
 const disconnectTimers = new Map<string, NodeJS.Timeout>();  // userId -> timer
+/**
+ * Below this, no human has read the question — reflex alone is around 200ms
+ * and these are four-option multiple choice.
+ */
+const IMPOSSIBLY_FAST_MS = 250;
+
 export const userSocketMap = new Map<string, string>();      // userId -> socketId
 
 /** Pair key -> the players who have agreed to a rematch. */
@@ -563,9 +569,34 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
         const deadline: Date | null = player.questionDeadlineAt ?? null;
         const expired = deadline ? now.getTime() > deadline.getTime() : false;
 
-        if (!expired && selected !== null && isTooFast(now, servedAt)) {
-          socket.emit(SOCKET_EVENTS.ERROR, { message: 'Answer submitted too quickly' });
+        // A quick answer is recorded, not thrown away.
+        //
+        // This used to reject anything under a second outright: no
+        // PLAYER_UPDATE, so the question never advanced and the player sat
+        // watching their own clock run out having answered. A second is well
+        // within human reach on an easy question, and voiding a real answer
+        // is a far worse outcome than logging a suspicious one — the
+        // finish-time anti-cheat sweep already looks at accuracy and timing
+        // patterns across sessions, which is where automation actually shows
+        // up.
+        //
+        // Below IMPOSSIBLY_FAST_MS there is no human explanation, so that is
+        // still refused, and the client is told why.
+        const elapsedSinceServed = now.getTime() - servedAt.getTime();
+
+        if (!expired && selected !== null && elapsedSinceServed < IMPOSSIBLY_FAST_MS) {
+          socket.emit(SOCKET_EVENTS.ERROR, {
+            message: 'That answer came in too fast to be counted.',
+          });
           return;
+        }
+
+        if (!expired && selected !== null && isTooFast(now, servedAt)) {
+          logger.warn('Fast PvP answer recorded for review', {
+            matchId,
+            userId,
+            elapsedMs: elapsedSinceServed,
+          });
         }
 
         const qq = await QuizQuestion.findById(questionId).select('answer').lean();

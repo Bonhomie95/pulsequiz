@@ -48,14 +48,22 @@ function connect(token: string): Promise<ClientSocket> {
   });
 }
 
-/** Resolve on the next occurrence of `event`. */
-function once<T = any>(s: ClientSocket, event: string, timeoutMs = 15_000): Promise<T> {
+/** Resolve on the next occurrence of `event`, optionally matching a predicate. */
+function once<T = any>(
+  s: ClientSocket,
+  event: string,
+  match: (payload: T) => boolean = () => true,
+  timeoutMs = 15_000,
+): Promise<T> {
   return new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error(`timed out waiting for ${event}`)), timeoutMs);
-    s.once(event, (payload: T) => {
+    const handler = (payload: T) => {
+      if (!match(payload)) return;
       clearTimeout(t);
+      s.off(event, handler);
       resolve(payload);
-    });
+    };
+    s.on(event, handler);
   });
 }
 
@@ -91,6 +99,9 @@ it('deals the question set to both players and lets each answer all ten', async 
   const sa = await connect(a.token);
   const sb = await connect(b.token);
 
+  sa.on(SOCKET_EVENTS.ERROR, (e: any) => console.log('A error:', e?.message));
+  sb.on(SOCKET_EVENTS.ERROR, (e: any) => console.log('B error:', e?.message));
+
   try {
     const foundA = once<any>(sa, SOCKET_EVENTS.MATCH_FOUND);
     const foundB = once<any>(sb, SOCKET_EVENTS.MATCH_FOUND);
@@ -118,8 +129,14 @@ it('deals the question set to both players and lets each answer all ten', async 
     // whichever save lost the version check.
     const total = qa.questions.length;
     for (let i = 0; i < total; i++) {
-      const updA = once<any>(sa, SOCKET_EVENTS.PLAYER_UPDATE);
-      const updB = once<any>(sb, SOCKET_EVENTS.PLAYER_UPDATE);
+      // Each client also hears the opponent's progress, so wait for our own
+      // update or the loop races ahead of the server.
+      const updA = once<any>(sa, SOCKET_EVENTS.PLAYER_UPDATE, (p) => p.userId === a.id);
+      const updB = once<any>(sb, SOCKET_EVENTS.PLAYER_UPDATE, (p) => p.userId === b.id);
+
+      // Answer at human speed. Anything under a quarter of a second is
+      // refused outright, and rightly so.
+      await new Promise((r) => setTimeout(r, 400));
 
       const payload = (s: ClientSocket) =>
         s.emit(SOCKET_EVENTS.ANSWER, {
