@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -72,6 +72,9 @@ function untilMidnight() {
 export default function DailyScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+  /** Where the pinned "your position" row sits, once it has been laid out. */
+  const [myRowY, setMyRowY] = useState<number | null>(null);
   const [data, setData] = useState<DailyView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -107,7 +110,23 @@ export default function DailyScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScreenHeader title="Daily Quiz" />
+      {/* Only worth offering once the board is long enough to lose yourself in. */}
+      {myRowY != null && (
+        <TouchableOpacity
+          onPress={() =>
+            scrollRef.current?.scrollTo({ y: Math.max(0, myRowY - 120), animated: true })
+          }
+          style={[styles.jumpBtn, { backgroundColor: theme.colors.primary }]}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll to my position"
+          hitSlop={10}
+        >
+          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>⬇ Jump to me</Text>
+        </TouchableOpacity>
+      )}
+
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 16 }}
         refreshControl={
           <RefreshControl
@@ -193,41 +212,62 @@ export default function DailyScreen() {
               <View style={{ gap: 8 }}>
                 {/* Podium, same shape as the leaderboard's top three. */}
                 <View style={styles.podium}>
-                  {data.top.slice(0, 3).map((p, i) => (
-                    <View
-                      key={p.userId}
-                      style={[
-                        styles.podiumCard,
-                        {
-                          backgroundColor: p.isMe
-                            ? theme.colors.primary + '1F'
-                            : theme.colors.surface,
-                          borderColor: p.isMe ? theme.colors.primary : 'transparent',
-                          // 1st sits highest, as on a real podium.
-                          marginTop: i === 0 ? 0 : 14,
-                        },
-                      ]}
-                      accessible
-                      accessibilityLabel={`Rank ${p.rank}, ${p.isMe ? 'you' : p.username}, ${p.correct} of ${p.total} in ${timeTaken(p.total, p.timeLeftMs)}`}
-                    >
-                      <Text style={styles.podiumMedal}>
-                        {['🥇', '🥈', '🥉'][i]}
-                      </Text>
-                      <UserAvatar avatar={p.avatar} size={i === 0 ? 46 : 38} />
-                      <Text
-                        numberOfLines={1}
-                        style={[styles.podiumName, { color: theme.colors.text }]}
+                  {/* Olympic order: silver, gold raised in the middle, bronze.
+                      Same arrangement as the Leaderboard podium. */}
+                  {([1, 0, 2] as const).map((place) => {
+                    const p = data.top[place];
+                    if (!p) return null;
+                    const isFirst = place === 0;
+                    const medalColor =
+                      place === 0 ? '#FFD700' : place === 1 ? '#C0C0C0' : '#CD7F32';
+
+                    return (
+                      <View
+                        key={p.userId}
+                        style={[
+                          styles.podiumCard,
+                          {
+                            backgroundColor: p.isMe
+                              ? theme.colors.primary + '1F'
+                              : theme.colors.surface,
+                            borderColor: p.isMe ? theme.colors.primary : medalColor,
+                            borderWidth: isFirst ? 1.5 : 1,
+                            marginTop: isFirst ? 0 : 18,
+                          },
+                        ]}
+                        accessible
+                        accessibilityLabel={`Rank ${p.rank}, ${p.isMe ? 'you' : p.username}, ${p.correct} of ${p.total} in ${timeTaken(p.total, p.timeLeftMs)}`}
                       >
-                        {p.isMe ? 'You' : p.username}
-                      </Text>
-                      <Text style={[styles.podiumScore, { color: theme.colors.text }]}>
-                        {p.correct}/{p.total}
-                      </Text>
-                      <Text style={{ color: theme.colors.muted, fontSize: 11 }}>
-                        {timeTaken(p.total, p.timeLeftMs)}
-                      </Text>
-                    </View>
-                  ))}
+                        <Text style={{ fontSize: isFirst ? 28 : 22 }}>
+                          {['👑', '🥈', '🥉'][place]}
+                        </Text>
+                        <UserAvatar avatar={p.avatar} size={isFirst ? 46 : 36} />
+                        <Text
+                          numberOfLines={1}
+                          style={[
+                            styles.podiumName,
+                            {
+                              color: isFirst ? '#FFD700' : theme.colors.text,
+                              fontSize: isFirst ? 13 : 11,
+                            },
+                          ]}
+                        >
+                          {p.isMe ? 'You' : p.username}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.podiumScore,
+                            { color: theme.colors.text, fontSize: isFirst ? 15 : 13 },
+                          ]}
+                        >
+                          {p.correct}/{p.total}
+                        </Text>
+                        <Text style={{ color: theme.colors.muted, fontSize: 11 }}>
+                          {timeTaken(p.total, p.timeLeftMs)}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </View>
 
                 {data.top.slice(3).map((p) => (
@@ -246,7 +286,10 @@ export default function DailyScreen() {
                 {data.myRank != null &&
                   data.result &&
                   !data.top.some((p) => p.isMe) && (
-                    <View style={{ gap: 6, marginTop: 6 }}>
+                    <View
+                      style={{ gap: 6, marginTop: 6 }}
+                      onLayout={(e) => setMyRowY(e.nativeEvent.layout.y)}
+                    >
                       <Text style={{ color: theme.colors.muted, fontSize: 12, fontWeight: '700' }}>
                         YOUR POSITION
                       </Text>
@@ -301,7 +344,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  podiumMedal: { fontSize: 20 },
+  jumpBtn: {
+    position: 'absolute',
+    bottom: 24,
+    alignSelf: 'center',
+    zIndex: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
   podiumName: { fontSize: 13, fontWeight: '800', maxWidth: '100%' },
   podiumScore: { fontSize: 15, fontWeight: '900' },
 });
