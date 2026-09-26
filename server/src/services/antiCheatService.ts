@@ -70,13 +70,19 @@ async function flagUser(
  * Check if a user has exceeded the daily session cap for leaderboard purposes.
  * Returns true if cap exceeded (session should not count toward leaderboard).
  */
-export async function isDailyCapExceeded(userId: string, cap: number): Promise<boolean> {
+export async function isDailyCapExceeded(
+  userId: string,
+  cap: number,
+  /** Count only ranked sessions (classic + PvP rows, which carry no mode). */
+  rankedOnly = true,
+): Promise<boolean> {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
   const count = await QuizSession.countDocuments({
     userId,
     createdAt: { $gte: startOfDay },
+    ...(rankedOnly ? { mode: { $nin: ['relaxed', 'daily', 'duel'] } } : {}),
   });
 
   return count >= cap;

@@ -67,10 +67,12 @@ async function verifyGoogleCaller(req: Request): Promise<boolean> {
     if (!bearer) return false;
     try {
       const ticket = await oauthClient.verifyIdToken({ idToken: bearer, audience });
-      const email = ticket.getPayload()?.email;
+      const payload = ticket.getPayload();
       const expected = process.env.PUBSUB_SERVICE_ACCOUNT_EMAIL;
-      if (expected && email !== expected) return false;
-      return true;
+      // Without a pinned service account, ANY Google account can mint an ID
+      // token for this audience. Refuse in production rather than trust it.
+      if (!expected) return process.env.NODE_ENV !== 'production';
+      return payload?.email === expected && payload?.email_verified === true;
     } catch {
       return false;
     }

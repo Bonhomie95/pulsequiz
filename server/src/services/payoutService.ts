@@ -1,5 +1,6 @@
 import Payout from '../models/Payout';
 import PrizePool from '../models/PrizePool';
+import { prizesAvailableFor } from '../utils/prizeRegion';
 import AccumulatedPrize from '../models/AccumulatedPrize';
 import User from '../models/User';
 import Progress from '../models/Progress';
@@ -29,6 +30,12 @@ export type PayoutPeriodType = PeriodType;
  * next payout before the real owner noticed. The hold gives the notification
  * we send on change time to reach them.
  */
+export const MAX_PAYOUT_RETRIES = 3;
+/** Retries value that parks a payout whose outcome is unknown for a human. */
+export const PARKED_RETRIES = 99;
+/** A retry stuck in `processing` this long was interrupted mid-send. */
+const STUCK_PROCESSING_MS = 10 * 60 * 1000;
+
 const ADDRESS_HOLD_MS = Number(process.env.PAYOUT_ADDRESS_HOLD_HOURS || 72) * 60 * 60 * 1000;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -52,7 +59,8 @@ export type SkipReason =
   | 'address_recently_changed'
   | 'account_too_new'
   | 'insufficient_sessions'
-  | 'flagged_for_review';
+  | 'flagged_for_review'
+  | 'region_not_eligible';
 
 export interface EligibilityResult {
   eligible: boolean;
@@ -80,11 +88,18 @@ export async function checkPayoutEligibility(userId: string): Promise<Eligibilit
   if (user.isBanned) {
     return { eligible: false, reason: 'banned', message: 'Account is banned.' };
   }
+  if (!(await prizesAvailableFor(user.country))) {
+    return {
+      eligible: false,
+      reason: 'region_not_eligible',
+      message: 'Cash prizes are not offered in your country.',
+    };
+  }
   if (!user.usdtAddress) {
     return {
       eligible: false,
       reason: 'no_usdt_address',
-      message: 'Add a USDT wallet address in Settings.',
+      message: 'Add a USDT or USDC wallet address in Settings.',
     };
   }
   if (!user.withdrawalEnabled) {
@@ -192,7 +207,11 @@ export async function processPeriodPayouts(
   }
 
   // 3. Rank the period that ended, not the one in progress.
-  const leaderboard = await buildLeaderboard(type, target);
+  //
+  // Players only. The visible board is padded with house accounts so it does
+  // not look deserted; letting one of those hold a paying rank would take a
+  // real player's prize.
+  const leaderboard = await buildLeaderboard(type, target, { excludeSynthetic: true });
   const topEntries = leaderboard.slice(0, pool.paidRanks);
 
   const minPayout = Number(await getSetting(SETTINGS_KEYS.MIN_PAYOUT_USD, 5));
@@ -245,6 +264,7 @@ export async function processPeriodPayouts(
         periodLabel,
         usdtAddress: user.usdtAddress,
         usdtType: user.usdtType ?? 'TRC20',
+        currency: user.payoutCurrency ?? 'USDT',
         status: 'pending',
         retries: 0,
         idempotencyKey,
@@ -257,6 +277,22 @@ export async function processPeriodPayouts(
       throw err;
     }
 
+    // This row's amount is the WHOLE pending balance, which already includes
+    // whatever older failed / below-threshold rows were holding. From here on
+    // this row owns that money, whether its send succeeds or fails; the older
+    // rows must never be sent on their own (double pay) nor reserve against it
+    // (underpay). Parked rows (outcome unknown) hold their amount separately
+    // and are left for a human.
+    await Payout.updateMany(
+      {
+        userId: entry.userId,
+        _id: { $ne: payoutRecord._id },
+        status: { $in: ['failed', 'pending'] },
+        retries: { $lt: PARKED_RETRIES },
+      },
+      { $set: { status: 'superseded', failReason: `rolled_into:${periodLabel}` } },
+    );
+
     // Below threshold — hold it and roll into the next period.
     if (accumulated!.pendingUSDT < minPayout) {
       await Payout.updateOne(
@@ -267,7 +303,7 @@ export async function processPeriodPayouts(
         userId: entry.userId,
         status: 'accumulated',
         amount: tier.amount,
-        reason: `below_threshold (${accumulated!.pendingUSDT.toFixed(2)} USDT)`,
+        reason: `below_threshold ($${accumulated!.pendingUSDT.toFixed(2)})`,
       });
       continue;
     }
@@ -278,6 +314,7 @@ export async function processPeriodPayouts(
     const result = await sendUSDT({
       address: user.usdtAddress,
       usdtType: user.usdtType ?? 'TRC20',
+      currency: user.payoutCurrency ?? 'USDT',
       amount: payoutAmount,
       description: `PulseQuiz ${type} prize — Rank #${entry.rank} — ${periodLabel}`,
       reference: idempotencyKey,
@@ -316,13 +353,20 @@ export async function processPeriodPayouts(
             failReason: result.error,
             // An indeterminate outcome must never be auto-retried; park it at
             // the retry cap so a human reconciles it.
-            retries: result.indeterminate ? 99 : 1,
+            retries: result.indeterminate ? PARKED_RETRIES : 1,
             lastAttemptAt: new Date(),
           },
         },
       );
 
       if (result.indeterminate) {
+        // It may have gone out: take it out of the pending balance so the next
+        // period's payout can't send the same money again. An admin resolves
+        // the row (sent / not sent) after checking the provider.
+        await AccumulatedPrize.updateOne(
+          { userId: entry.userId },
+          { $inc: { pendingUSDT: -payoutAmount }, $set: { lastUpdated: new Date() } },
+        );
         logger.error('Payout outcome unknown — requires manual reconciliation', undefined, {
           userId: entry.userId,
           amount: payoutAmount,
@@ -352,12 +396,153 @@ export async function processPeriodPayouts(
  * so a transfer that actually went through on the first attempt is detected
  * rather than sent again.
  */
+
+export type RetryOutcome =
+  | { status: 'sent'; txHash?: string }
+  | { status: 'failed'; error?: string; indeterminate?: boolean }
+  | { status: 'skipped'; reason?: string }
+  | { status: 'superseded' }
+  | { status: 'not_retryable' };
+
+/**
+ * Retry one failed payout. Shared by the cron and the admin "Retry" button.
+ *
+ * 1. Claims the row (failed → processing) so two retries can't both send.
+ * 2. Reserves the amount from the user's pending balance first. If the balance
+ *    can't cover it, a later payout already paid this money → superseded.
+ * 3. Sends with the original reference, so the provider-side reconciliation in
+ *    sendUSDT catches a transfer that already went through.
+ */
+export async function retryPayout(
+  payoutId: string,
+  opts: { maxRetries?: number; description?: string } = {},
+): Promise<RetryOutcome> {
+  const maxRetries = opts.maxRetries ?? MAX_PAYOUT_RETRIES;
+  const payout = await Payout.findOneAndUpdate(
+    { _id: payoutId, status: 'failed', retries: { $lt: maxRetries } },
+    { $set: { status: 'processing', lastAttemptAt: new Date() } },
+    { returnDocument: 'after' },
+  ).lean();
+  if (!payout) return { status: 'not_retryable' };
+
+  const userId = payout.userId.toString();
+  const release = (set: Record<string, unknown>) =>
+    Payout.updateOne({ _id: payout._id, status: 'processing' }, { $set: set });
+
+  try {
+    const eligibility = await checkPayoutEligibility(userId);
+    if (!eligibility.eligible) {
+      await release({ status: 'skipped', failReason: eligibility.reason });
+      return { status: 'skipped', reason: eligibility.reason };
+    }
+
+    const user = await User.findById(userId).lean();
+    if (!user?.usdtAddress) {
+      await release({ status: 'failed', failReason: 'no_wallet' });
+      return { status: 'failed', error: 'no_wallet' };
+    }
+
+    // Tiny epsilon: amounts are summed floats.
+    const reserved = await AccumulatedPrize.findOneAndUpdate(
+      { userId, pendingUSDT: { $gte: payout.amount - 1e-6 } },
+      { $inc: { pendingUSDT: -payout.amount }, $set: { lastUpdated: new Date() } },
+    );
+    if (!reserved) {
+      await release({ status: 'superseded', failReason: 'balance_already_paid' });
+      return { status: 'superseded' };
+    }
+
+    const reference =
+      payout.idempotencyKey ?? `${payout.period}:${payout.periodLabel}:${payout.userId}`;
+    const result = await sendUSDT({
+      address: user.usdtAddress,
+      usdtType: user.usdtType ?? 'TRC20',
+      currency: user.payoutCurrency ?? 'USDT',
+      amount: payout.amount,
+      description: opts.description ?? `PulseQuiz retry payout — ${payout.periodLabel}`,
+      reference,
+    });
+
+    if (result.success) {
+      await release({
+        status: 'sent',
+        sentAt: new Date(),
+        retries: payout.retries + 1,
+        ...(result.txHash ? { txHash: result.txHash } : {}),
+        ...(result.paymentId ? { nowpaymentsPaymentId: result.paymentId } : {}),
+      });
+      sendPayoutNotification(userId, payout.amount).catch(() => {});
+      return { status: 'sent', txHash: result.txHash };
+    }
+
+    if (!result.indeterminate) {
+      // Definitely not sent — give the reservation back.
+      await AccumulatedPrize.updateOne({ userId }, { $inc: { pendingUSDT: payout.amount } });
+    }
+    // Indeterminate keeps the reservation (it may have gone out) and parks the
+    // row so only a human, after checking the provider, can act on it.
+    await release({
+      status: 'failed',
+      failReason: result.error,
+      retries: result.indeterminate ? PARKED_RETRIES : payout.retries + 1,
+    });
+    return { status: 'failed', error: result.error, indeterminate: result.indeterminate };
+  } catch (err) {
+    logger.error('Payout retry threw', err, { payoutId });
+    await release({
+      status: 'failed',
+      failReason: err instanceof Error ? err.message : String(err),
+      retries: payout.retries + 1,
+    }).catch(() => {});
+    return { status: 'failed', error: 'exception' };
+  }
+}
+
+/**
+ * Admin resolution of a parked payout (outcome was unknown), after checking the
+ * provider dashboard for its reference.
+ *  - 'sent':     it went out → mark sent; the reserved amount stays deducted.
+ *  - 'not_sent': it didn't → return the reserved amount and make it retryable.
+ */
+export async function resolveParkedPayout(
+  payoutId: string,
+  outcome: 'sent' | 'not_sent',
+  txHash?: string,
+): Promise<boolean> {
+  const parked = await Payout.findOneAndUpdate(
+    { _id: payoutId, status: 'failed', retries: { $gte: PARKED_RETRIES } },
+    outcome === 'sent'
+      ? { $set: { status: 'sent', sentAt: new Date(), failReason: 'resolved_sent_by_admin', ...(txHash ? { txHash } : {}) } }
+      : { $set: { status: 'failed', retries: 0, failReason: 'resolved_not_sent_by_admin' } },
+  ).lean();
+  if (!parked) return false;
+  if (outcome === 'not_sent') {
+    await AccumulatedPrize.updateOne(
+      { userId: parked.userId },
+      { $inc: { pendingUSDT: parked.amount }, $set: { lastUpdated: new Date() } },
+    );
+  }
+  return true;
+}
+
+/** Cron: retry every failed payout that still has attempts left. */
 export async function retryFailedPayouts(): Promise<number> {
-  const MAX_RETRIES = 3;
+  // A crash between claiming a row and releasing it leaves it in `processing`
+  // with its amount reserved. The send may or may not have happened, so park
+  // it for a human rather than retrying.
+  const stuck = await Payout.updateMany(
+    { status: 'processing', lastAttemptAt: { $lt: new Date(Date.now() - STUCK_PROCESSING_MS) } },
+    { $set: { status: 'failed', retries: PARKED_RETRIES, failReason: 'interrupted_mid_send' } },
+  );
+  if (stuck.modifiedCount) {
+    logger.error('Parked payouts interrupted mid-send', undefined, { count: stuck.modifiedCount });
+  }
+
   const failed = await Payout.find({
     status: 'failed',
-    retries: { $lt: MAX_RETRIES },
+    retries: { $lt: MAX_PAYOUT_RETRIES },
   })
+    .select('_id')
     .limit(200)
     .lean();
 
@@ -367,68 +552,7 @@ export async function retryFailedPayouts(): Promise<number> {
   }
 
   logger.info('Retrying failed payouts', { count: failed.length });
-
-  for (const payout of failed) {
-    try {
-      const eligibility = await checkPayoutEligibility(payout.userId.toString());
-      if (!eligibility.eligible) {
-        await Payout.updateOne(
-          { _id: payout._id },
-          { $set: { status: 'skipped', failReason: eligibility.reason, lastAttemptAt: new Date() } },
-        );
-        continue;
-      }
-
-      const user = await User.findById(payout.userId).lean();
-      if (!user?.usdtAddress) continue;
-
-      const reference =
-        payout.idempotencyKey ?? `${payout.period}:${payout.periodLabel}:${payout.userId}`;
-
-      const result = await sendUSDT({
-        address: user.usdtAddress,
-        usdtType: user.usdtType ?? 'TRC20',
-        amount: payout.amount,
-        description: `PulseQuiz retry payout — ${payout.periodLabel}`,
-        reference,
-      });
-
-      await Payout.updateOne(
-        { _id: payout._id },
-        {
-          $set: {
-            status: result.success ? 'sent' : 'failed',
-            ...(result.txHash ? { txHash: result.txHash } : {}),
-            ...(result.paymentId ? { nowpaymentsPaymentId: result.paymentId } : {}),
-            ...(result.success ? { sentAt: new Date() } : { failReason: result.error }),
-            retries: result.indeterminate ? MAX_RETRIES : payout.retries + 1,
-            lastAttemptAt: new Date(),
-          },
-        },
-      );
-
-      if (result.success) {
-        await AccumulatedPrize.updateOne(
-          { userId: payout.userId },
-          { $inc: { pendingUSDT: -payout.amount }, $set: { lastUpdated: new Date() } },
-        );
-        sendPayoutNotification(payout.userId.toString(), payout.amount).catch(() => {});
-      }
-    } catch (err) {
-      logger.error('Payout retry threw', err, { payoutId: payout._id.toString() });
-      await Payout.updateOne(
-        { _id: payout._id },
-        {
-          $set: {
-            failReason: err instanceof Error ? err.message : String(err),
-            retries: payout.retries + 1,
-            lastAttemptAt: new Date(),
-          },
-        },
-      ).catch(() => {});
-    }
-  }
-
+  for (const p of failed) await retryPayout(p._id.toString());
   return failed.length;
 }
 
@@ -442,7 +566,11 @@ export async function sendWeeklyAddressWarnings() {
     (await PrizePool.findOne({ type: 'weekly' }).sort({ createdAt: -1 }).lean());
   if (!pool) return;
 
-  const leaderboard = await buildLeaderboard('weekly', periodContaining('weekly'));
+  // Players only, matching how the prize itself is ranked — nudging a house
+  // account to add a wallet address would be absurd.
+  const leaderboard = await buildLeaderboard('weekly', periodContaining('weekly'), {
+    excludeSynthetic: true,
+  });
   const topN = leaderboard.slice(0, pool.paidRanks);
 
   await Promise.allSettled(

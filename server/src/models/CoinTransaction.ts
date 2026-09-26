@@ -13,7 +13,9 @@ export type CoinReason =
   | 'tournament_entry'
   | 'tournament_prize'
   | 'admin_grant'
-  | 'admin_deduct';
+  | 'admin_deduct'
+  | 'league_reward'
+  | 'daily_quiz_reward';
 
 export interface ICoinTransaction {
   userId: Types.ObjectId;
@@ -37,6 +39,7 @@ const CoinTransactionSchema = new Schema<ICoinTransaction>(
         'daily_checkin', 'ad_reward', 'iap_purchase', 'referral_bonus',
         'pvp_wager_win', 'pvp_wager_refund', 'pvp_wager_stake',
         'hint_used', 'challenge_reward', 'tournament_entry', 'tournament_prize', 'admin_grant', 'admin_deduct',
+        'league_reward', 'daily_quiz_reward',
       ],
       required: true,
     },

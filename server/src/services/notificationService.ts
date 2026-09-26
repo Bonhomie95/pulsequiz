@@ -39,7 +39,7 @@ export async function sendPayoutNotification(userId: string | any, amount: numbe
   await sendExpoPush([{
     to: token,
     title: '💰 Prize Sent!',
-    body: `Your $${amount.toFixed(2)} USDT prize is on its way to your wallet!`,
+    body: `Your $${amount.toFixed(2)} prize is on its way to your wallet!`,
     data: { type: 'payout', amount },
     priority: 'high',
     sound: 'default',
@@ -51,8 +51,8 @@ export async function sendAddressWarningNotifications(userId: string, rank: numb
   if (!token) return;
   await sendExpoPush([{
     to: token,
-    title: '⚠️ ACTION REQUIRED — Confirm Your USDT Address',
-    body: `You are ranked #${rank} this week. Confirm your USDT address before Saturday or you may forfeit your prize!`,
+    title: '⚠️ ACTION REQUIRED — Confirm Your Wallet Address',
+    body: `You are ranked #${rank} this week. Make sure your USDT/USDC wallet is set in Settings before the week closes (Monday 00:00 UTC) — winners without a wallet miss the payout.`,
     data: { type: 'address_warning', rank },
     priority: 'high',
     sound: 'default',
@@ -193,6 +193,19 @@ export async function sendFriendAcceptedNotification(userId: string, accepterUse
     body: `${accepterUsername} accepted your friend request!`,
     data: { type: 'friend_accepted', accepter: accepterUsername },
     priority: 'normal',
+    sound: 'default',
+  }]);
+}
+
+export async function sendDuelFinished(userId: string, friendUsername: string, code: string) {
+  const token = await getUserToken(userId);
+  if (!token) return;
+  await sendExpoPush([{
+    to: token,
+    title: '🤝 Challenge result is in',
+    body: `${friendUsername} finished your challenge. See who won!`,
+    data: { type: 'duel_finished', code },
+    priority: 'high',
     sound: 'default',
   }]);
 }

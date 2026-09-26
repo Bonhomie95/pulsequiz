@@ -1,3 +1,4 @@
+import path from 'path';
 import express, {
   type NextFunction,
   type Request,
@@ -50,7 +51,11 @@ import adminTournamentRoutes from './routes/adminTournamentRoutes';
 import adminReportRoutes from './routes/adminReportRoutes';
 import adminAnalyticsRoutes from './routes/adminAnalyticsRoutes';
 import adminLeaderboardRoutes from './routes/adminLeaderboardRoutes';
+import adminAdminsRoutes from './routes/adminAdminsRoutes';
 import adminAuditRoutes from './routes/adminAuditRoutes';
+import competeRoutes from './routes/competeRoutes';
+import { requireAdminCsrfHeader } from './middlewares/requireAdmin';
+import { DUEL_CODE_RE } from './services/duelService';
 
 /**
  * FRONTEND_ORIGIN supports a comma-separated list, e.g.
@@ -96,14 +101,56 @@ app.use(
 );
 // Store the raw body for the webhook routes, which must verify a signature
 // over the exact bytes the provider sent.
-app.use(
-  express.json({
-    limit: '256kb',
-    verify: (req, _res, buf) => {
-      (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
-    },
-  }),
+const jsonParser = express.json({
+  limit: '256kb',
+  verify: (req, _res, buf) => {
+    (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+  },
+});
+// Bulk question import is the one legitimately large body; its router parses
+// it with a bigger limit only AFTER admin auth, so anonymous callers can't
+// make us buffer megabytes.
+const QUESTION_IMPORT_PATH = '/api/admin/questions/import';
+app.use((req, res, next) =>
+  req.path === QUESTION_IMPORT_PATH ? next() : jsonParser(req, res, next),
 );
+
+// Public legal pages — app-store reviewers open these, and Google Play needs a
+// web account-deletion URL. Point the pulsequiz.app website at these paths
+// (or proxy them) so the in-app links resolve.
+const LEGAL_DIR = path.join(__dirname, '..', 'public', 'legal');
+for (const page of ['terms', 'privacy', 'rules', 'support', 'delete-account']) {
+  app.get(`/${page}`, (_req, res) => {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(LEGAL_DIR, `${page}.html`));
+  });
+}
+
+// Share links for async friend challenges: https://<host>/d/ABC123 opens the
+// app (pulsequiz://duel/ABC123) or points to the stores.
+const PLAY_URL =
+  process.env.PLAY_STORE_URL ||
+  'https://play.google.com/store/apps/details?id=com.bonhomie95.pulsequiz';
+const APP_STORE_URL = process.env.APP_STORE_URL || '';
+app.get('/d/:code', (req, res) => {
+  const code = String(req.params.code).toUpperCase();
+  if (!DUEL_CODE_RE.test(code)) return res.status(404).send('Not found');
+  const deep = `pulsequiz://duel/${code}`;
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.type('html').send(`<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>PulseQuiz challenge</title>
+<style>body{margin:0;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0b0f1a;color:#e5e7eb;display:flex;min-height:100vh;align-items:center;justify-content:center}
+main{max-width:420px;padding:24px 16px;text-align:center}h1{font-size:24px;margin:0 0 8px}code{font-size:28px;letter-spacing:4px;color:#8ea2ff}
+a.btn{display:block;margin:12px 0;padding:14px;border-radius:14px;background:#3f57c9;color:#fff;text-decoration:none;font-weight:700}
+a.alt{background:#141a2b}</style></head><body><main>
+<h1>You've been challenged!</h1><p>Answer the same 10 questions as your friend and see who wins.</p>
+<p><code>${code}</code></p>
+<a class="btn" href="${deep}">Open in PulseQuiz</a>
+${APP_STORE_URL ? `<a class="btn alt" href="${APP_STORE_URL}">Get it on the App Store</a>` : ''}
+<a class="btn alt" href="${PLAY_URL}">Get it on Google Play</a>
+<p style="color:#a6b0cf;font-size:14px">Already have the app? Open PulseQuiz → Challenge a friend → Enter code.</p>
+</main></body></html>`);
+});
 
 app.get('/health', getHealth);
 app.get('/metrics', getMetrics);
@@ -135,8 +182,11 @@ app.use('/api/referrals',    referralRoutes);
 app.use('/api/tournaments',  tournamentRoutes);
 app.use('/api/push',         pushTokenRoutes);
 app.use('/api/reports',      reportRoutes);
+app.use('/api',              competeRoutes); // /daily, /leagues/current, /duels
 
 // ── Admin routes ─────────────────────────────────────────────────────────────
+// CSRF guard for cross-site admin hosting (no-op in the default setup).
+app.use('/api/admin', requireAdminCsrfHeader);
 app.use('/api/admin',                adminAuthRoutes);
 app.use('/api/admin/stats',          adminStatsRoutes);
 app.use('/api/admin/activity',       adminActivityRoutes);
@@ -153,6 +203,7 @@ app.use('/api/admin/reports',        adminReportRoutes);
 app.use('/api/admin/analytics',      adminAnalyticsRoutes);
 app.use('/api/admin/leaderboard',    adminLeaderboardRoutes);
 app.use('/api/admin/audit',          adminAuditRoutes);
+app.use('/api/admin/admins',         adminAdminsRoutes);
 
 // ── Fallthrough handlers ─────────────────────────────────────────────────────
 app.use((_, res) => res.status(404).json({ message: 'Not found' }));

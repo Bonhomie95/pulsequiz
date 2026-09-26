@@ -17,6 +17,7 @@ import { auditAdmin } from '../utils/adminAudit';
 import { anonymiseUser } from '../services/accountService';
 import { creditCoins, debitCoins, getBalance } from '../services/coinService';
 import { logger } from '../utils/logger';
+import { kickUser } from '../socket/kick';
 
 export async function listUsers(req: Request, res: Response) {
   const page = Math.max(1, Number(req.query.page) || 1);
@@ -242,6 +243,7 @@ export async function updateUser(req: Request, res: Response) {
   }
 
   await user.save();
+  if (isBanned) kickUser(String(id));
 
   await auditAdmin(req, 'user.update', {
     targetType: 'user',
@@ -325,6 +327,7 @@ export async function toggleBan(req: Request, res: Response) {
     user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   }
   await user.save();
+  if (user.isBanned) kickUser(String(id));
 
   await auditAdmin(req, user.isBanned ? 'user.ban' : 'user.unban', {
     targetType: 'user',

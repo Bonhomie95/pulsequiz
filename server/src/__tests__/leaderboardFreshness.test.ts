@@ -158,3 +158,82 @@ describe('the board itself reflects the caller immediately', () => {
   });
 });
 
+
+describe('a player who is not on the cached board yet', () => {
+  /** Play one run worth 7 points. */
+  async function scoreSeven(t = token) {
+    const hdr = (r: request.Test) => r.set('Authorization', `Bearer ${t}`);
+    const s = (
+      await hdr(request(app).post('/api/quiz/start').send({ category: 'math' })).expect(200)
+    ).body;
+    for (let i = 0; i < 7; i++) {
+      const q = await QuizQuestion.findById(s.questions[i].id).lean();
+      await hdr(request(app).post('/api/quiz/answer')
+        .send({ sessionId: s.sessionId, questionId: s.questions[i].id, selected: q!.answer })).expect(200);
+    }
+    const bad = await QuizQuestion.findById(s.questions[7].id).lean();
+    await hdr(request(app).post('/api/quiz/answer')
+      .send({ sessionId: s.sessionId, questionId: s.questions[7].id, selected: (bad!.answer + 1) % 4 })).expect(200);
+    await hdr(request(app).post('/api/quiz/finish').send({ sessionId: s.sessionId })).expect(200);
+  }
+
+  it('appears on the board straight after their first ever run', async () => {
+    // No points yet, so the cron's board legitimately does not list them.
+    await Progress.updateOne({ userId }, { $set: { points: 0 } });
+    await buildLeaderboard('all');
+
+    const before = await auth(request(app).get('/api/leaderboard/all')).expect(200);
+    expect(before.body.data.find((e: any) => e.userId === userId)).toBeUndefined();
+
+    await scoreSeven();
+
+    // Cron has not run. Finding no trace of yourself here is what reads as
+    // "my score didn't count", so the row has to be there already.
+    const after = await auth(request(app).get('/api/leaderboard/all')).expect(200);
+    const myRow = after.body.data.find((e: any) => e.userId === userId);
+    expect(myRow).toBeDefined();
+    expect(myRow.points).toBe(7);
+    expect(myRow.username).toBe('boarder');
+    expect(after.body.me.inTopList).toBe(true);
+    expect(after.body.me.rank).toBe(myRow.rank);
+  });
+
+  it('slots in at the right rank among cached rivals', async () => {
+    await Progress.updateOne({ userId }, { $set: { points: 0 } });
+    for (const [n, pts] of [['high', 30], ['low', 3]] as const) {
+      const r = await User.create({
+        email: `${n}@example.com`, provider: 'google', providerId: `${n}-1`,
+        username: n, avatar: 'avatar0',
+      });
+      await Progress.create({ userId: r._id, points: pts });
+    }
+    await buildLeaderboard('all');
+
+    await scoreSeven(); // caller reaches 7: below "high" (30), above "low" (3)
+
+    const res = await auth(request(app).get('/api/leaderboard/all')).expect(200);
+    expect(res.body.data.map((e: any) => e.username)).toEqual(['high', 'boarder', 'low']);
+    expect(res.body.data.map((e: any) => e.rank)).toEqual([1, 2, 3]);
+    expect(res.body.me.rank).toBe(2);
+  });
+
+  it('leaves a player with no points off the board', async () => {
+    await Progress.updateOne({ userId }, { $set: { points: 0 } });
+    await buildLeaderboard('all');
+
+    const res = await auth(request(app).get('/api/leaderboard/all')).expect(200);
+    expect(res.body.data.find((e: any) => e.userId === userId)).toBeUndefined();
+    expect(res.body.me.inTopList).toBe(false);
+  });
+
+  it('cannot be used by a banned account to reach the board', async () => {
+    // The live-insert path trusts the caller's own id, so the ban has to hold
+    // before the request gets that far. It does: auth rejects them outright.
+    await Progress.updateOne({ userId }, { $set: { points: 0 } });
+    await buildLeaderboard('all');
+    await scoreSeven();
+    await User.updateOne({ _id: userId }, { $set: { isBanned: true } });
+
+    await auth(request(app).get('/api/leaderboard/all')).expect(403);
+  });
+});

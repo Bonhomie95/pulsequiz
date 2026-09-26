@@ -21,6 +21,10 @@ export async function extendQuestionTime(params: {
 
   if (!session) throw new Error('Session not found');
 
+  if (session.mode === 'daily' || session.mode === 'duel') {
+    return { addedSeconds: 0, message: 'Extra time is off in this mode' };
+  }
+
   // 🔒 Must extend current question only
   if (
     !session.currentQuestionId ||

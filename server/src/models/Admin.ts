@@ -1,25 +1,36 @@
 import { Schema, model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+export type AdminRoleName = 'SUPER_ADMIN' | 'MODERATOR';
+
 export interface IAdmin {
   email: string;
   passwordHash: string;
-  role: 'SUPER_ADMIN' | 'MODERATOR';
+  role: AdminRoleName;
   isActive: boolean;
   lastLoginAt?: Date;
+  /** Consecutive failed logins; reset on success. */
+  failedLogins: number;
+  /** Per-account lockout — the IP limiter alone doesn't stop a botnet. */
+  lockedUntil?: Date | null;
+  createdBy?: string | null;
 }
 
 const AdminSchema = new Schema<IAdmin>(
   {
-    email: { type: String, unique: true, required: true },
+    email: { type: String, unique: true, required: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     role: {
       type: String,
       enum: ['SUPER_ADMIN', 'MODERATOR'],
-      default: 'SUPER_ADMIN',
+      // Least privilege by default; super admins are granted explicitly.
+      default: 'MODERATOR',
     },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date },
+    failedLogins: { type: Number, default: 0 },
+    lockedUntil: { type: Date, default: null },
+    createdBy: { type: String, default: null },
   },
   { timestamps: true },
 );

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middlewares/auth';
 import Tournament, { ITournamentParticipant } from '../models/Tournament';
 import { joinTournament as joinTournamentService } from '../services/tournamentService';
+import { getBalance } from '../services/coinService';
 
 export async function getActiveTournaments(req: AuthRequest, res: Response) {
   const tournaments = await Tournament.find({
@@ -39,7 +40,8 @@ export async function joinTournament(req: AuthRequest, res: Response) {
     return res.status(mapped.status).json({ message: mapped.message });
   }
 
-  return res.json({ ok: true });
+  // Authoritative balance so the client syncs instead of guessing a delta.
+  return res.json({ ok: true, coins: await getBalance(req.userId!) });
 }
 
 export async function getMyTournaments(req: AuthRequest, res: Response) {

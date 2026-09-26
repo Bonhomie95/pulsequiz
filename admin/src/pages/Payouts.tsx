@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
+import { errMsg, errStatus } from '../utils/errMsg';
+import { useAdminRole } from '../auth/useAdminRole';
 import { Download, RefreshCw, Plus, Trophy, AlertTriangle, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 type Payout = {
@@ -11,7 +13,9 @@ type Payout = {
   periodLabel: string;
   usdtAddress: string;
   usdtType: string;
-  status: 'pending' | 'sent' | 'confirmed' | 'failed' | 'skipped';
+  currency?: 'USDT' | 'USDC';
+  status: 'pending' | 'processing' | 'sent' | 'confirmed' | 'failed' | 'skipped' | 'superseded';
+  failReason?: string;
   txHash?: string;
   retries: number;
   createdAt: string;
@@ -34,6 +38,8 @@ const STATUS_COLORS: Record<string, string> = {
   confirmed: 'text-green-400 bg-green-400/10',
   failed: 'text-red-400 bg-red-400/10',
   skipped: 'text-gray-400 bg-gray-400/10',
+  processing: 'text-indigo-300 bg-indigo-400/10',
+  superseded: 'text-gray-400 bg-gray-400/10',
 };
 
 const StatusIcon = ({ status }: { status: string }) => {
@@ -68,6 +74,7 @@ type PeriodOptions = {
 };
 
 export default function Payouts() {
+  const { canManagePayouts } = useAdminRole();
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [pools, setPools] = useState<PrizePool[]>([]);
   const [total, setTotal] = useState(0);
@@ -130,15 +137,40 @@ export default function Payouts() {
       });
   }, []);
 
-  const retryPayout = async (id: string) => {
-    if (!confirm('Retry this failed payout?')) return;
+  const [retrying, setRetrying] = useState<string | null>(null);
+
+  // Outcome-unknown payouts: an admin checks NOWPayments for the reference
+  // `{period}:{periodLabel}:{userId}` and records what actually happened.
+  const resolvePayout = async (id: string, outcome: 'sent' | 'not_sent') => {
+    const msg =
+      outcome === 'sent'
+        ? 'Confirm NOWPayments shows this payout as SENT. It will be marked paid.'
+        : 'Confirm NOWPayments has NO transfer for this reference. The amount returns to the player and the payout becomes retryable.';
+    if (!confirm(msg)) return;
+    setRetrying(id);
     try {
-      await adminApi.post(`/admin/payouts/${id}/retry`);
-    } catch (e: any) {
+      await adminApi.post(`/admin/payouts/${id}/resolve`, { outcome });
+    } catch (e) {
+      alert(errMsg(e, 'Could not resolve payout'));
+    } finally {
+      setRetrying(null);
+      fetchPayouts();
+    }
+  };
+  const retryPayout = async (id: string) => {
+    if (!confirm('Retry this failed payout? This sends real crypto.')) return;
+    setRetrying(id);
+    try {
+      const res = await adminApi.post(`/admin/payouts/${id}/retry`);
+      const st = res.data?.status;
+      if (st === 'superseded') alert('Not sent: this amount was already paid as part of a later payout.');
+      else if (st && st !== 'sent') alert(`Not sent (${st})${res.data?.error ? `: ${res.data.error}` : ''}.`);
+    } catch (e) {
       // This moves real money. A silent failure left the row looking untouched
       // and invited a second retry on a payout that may already be in flight.
-      alert(e?.response?.data?.message ?? 'Retry failed — the payout was not resent.');
+      alert(errMsg(e, 'Retry failed — the payout was not resent.'));
     } finally {
+      setRetrying(null);
       fetchPayouts();
     }
   };
@@ -155,8 +187,8 @@ export default function Payouts() {
       a.download = `payouts-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (e: any) {
-      alert(e?.response?.status === 403
+    } catch (e) {
+      alert(errStatus(e) === 403
         ? 'Export is restricted to SUPER_ADMIN.'
         : 'Could not export payouts.');
     }
@@ -198,8 +230,8 @@ export default function Payouts() {
       await adminApi.post('/admin/payouts/prize-pools', poolForm);
       alert('Prize pool saved!');
       fetchPools();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error saving pool');
+    } catch (e) {
+      alert(errMsg(e, 'Error saving pool'));
     } finally { setSaving(false); }
   };
 
@@ -210,8 +242,8 @@ export default function Payouts() {
       const res = await adminApi.post('/admin/payouts/trigger', { type: triggerType });
       alert(`Payout triggered. Results: ${JSON.stringify(res.data?.results?.length ?? 0)} users processed.`);
       fetchPayouts();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Trigger failed');
+    } catch (e) {
+      alert(errMsg(e, 'Trigger failed'));
     } finally { setTriggering(false); }
   };
 
@@ -225,15 +257,15 @@ export default function Payouts() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-extrabold">Payouts</h1>
-          <p className="text-gray-400 text-sm mt-1">Manage USDT prize pools and track all payouts</p>
+          <p className="text-gray-400 text-sm mt-1">Manage prize pools (paid in USDT or USDC) and track all payouts</p>
         </div>
         <div className="flex gap-3">
-          <button
+          {canManagePayouts && <button
             onClick={exportCSV}
             className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition"
           >
             <Download size={15} /> Export CSV
-          </button>
+          </button>}
           <button
             onClick={fetchPayouts}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold transition"
@@ -261,7 +293,7 @@ export default function Payouts() {
         <>
           {/* FILTERS */}
           <div className="flex gap-2 mb-4 flex-wrap">
-            {['', 'pending', 'sent', 'confirmed', 'failed', 'skipped'].map((s) => (
+            {['', 'pending', 'processing', 'sent', 'confirmed', 'failed', 'skipped', 'superseded'].map((s) => (
               <button
                 key={s}
                 onClick={() => { setStatusFilter(s); setPage(1); }}
@@ -273,14 +305,14 @@ export default function Payouts() {
           </div>
 
           {/* MANUAL TRIGGER */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-4 flex items-center gap-4">
+          {canManagePayouts && <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-4 flex items-center gap-4">
             <AlertTriangle size={18} className="text-yellow-400 shrink-0" />
             <span className="text-sm text-gray-300 flex-1">
-              <span className="font-bold text-white">Manual Trigger:</span> Only use if cron failed. This sends real USDT.
+              <span className="font-bold text-white">Manual Trigger:</span> Only use if cron failed. This sends real crypto (USDT/USDC).
             </span>
             <select
               value={triggerType}
-              onChange={(e) => setTriggerType(e.target.value as any)}
+              onChange={(e) => setTriggerType(e.target.value as 'weekly' | 'monthly')}
               className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white"
             >
               <option value="weekly">Weekly</option>
@@ -293,7 +325,7 @@ export default function Payouts() {
             >
               {triggering ? 'Running…' : 'Trigger Now'}
             </button>
-          </div>
+          </div>}
 
           {/* TABLE */}
           <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
@@ -324,22 +356,46 @@ export default function Payouts() {
                       <td className="px-4 py-3">#{p.rank}</td>
                       <td className="px-4 py-3 text-gray-400">{p.period} • {p.periodLabel}</td>
                       <td className="px-4 py-3 text-xs text-gray-400 max-w-32 truncate">
-                        <span title={p.usdtAddress}>{p.usdtType}: {p.usdtAddress.slice(0, 8)}…</span>
+                        <span title={p.usdtAddress}>{p.currency ?? 'USDT'} · {p.usdtType}: {p.usdtAddress.slice(0, 8)}…</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold capitalize ${STATUS_COLORS[p.status]}`}>
                           <StatusIcon status={p.status} />{p.status}
                         </span>
+                        {p.failReason && p.status !== 'sent' && (
+                          <p className="text-[10px] text-gray-500 mt-0.5 max-w-40 truncate" title={p.failReason}>{p.failReason}</p>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-gray-400">{p.retries}/3</td>
+                      <td className="px-4 py-3 text-gray-400">{p.retries >= 99 ? <span className="text-orange-400 font-bold" title="Outcome unknown — reconcile with NOWPayments">CHECK</span> : `${p.retries}/3`}</td>
                       <td className="px-4 py-3 text-gray-400 text-xs">
                         {new Date(p.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3">
-                        {p.status === 'failed' && (
+                        {canManagePayouts && p.status === 'failed' && p.retries >= 99 && (
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => resolvePayout(p._id, 'sent')}
+                              disabled={retrying !== null}
+                              title="NOWPayments shows this reference as sent"
+                              className="disabled:opacity-40 bg-green-600 hover:bg-green-500 px-2 py-1 rounded-md text-xs font-bold"
+                            >
+                              Was sent
+                            </button>
+                            <button
+                              onClick={() => resolvePayout(p._id, 'not_sent')}
+                              disabled={retrying !== null}
+                              title="NOWPayments has no transfer for this reference — make it retryable"
+                              className="disabled:opacity-40 bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded-md text-xs font-bold"
+                            >
+                              Not sent
+                            </button>
+                          </div>
+                        )}
+                        {canManagePayouts && p.status === 'failed' && p.retries < 99 && (
                           <button
                             onClick={() => retryPayout(p._id)}
-                            className="bg-yellow-500 hover:bg-yellow-400 text-black px-2 py-1 rounded-md text-xs font-bold transition"
+                            disabled={retrying !== null}
+                            className="disabled:opacity-40 bg-yellow-500 hover:bg-yellow-400 text-black px-2 py-1 rounded-md text-xs font-bold transition"
                           >
                             Retry
                           </button>
@@ -420,7 +476,7 @@ export default function Payouts() {
                   <label className="text-xs text-gray-400 block mb-1">Type</label>
                   <select
                     value={poolForm.type}
-                    onChange={(e) => updatePoolType(e.target.value as any)}
+                    onChange={(e) => updatePoolType(e.target.value as 'weekly' | 'monthly')}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
                   >
                     <option value="weekly">Weekly</option>
@@ -492,7 +548,8 @@ export default function Payouts() {
 
               <button
                 onClick={savePool}
-                disabled={saving || !tierValid || poolForm.totalAmount <= 0}
+                disabled={!canManagePayouts || saving || !tierValid || poolForm.totalAmount <= 0}
+                title={canManagePayouts ? undefined : 'Requires a SUPER_ADMIN account'}
                 className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed py-2.5 rounded-lg font-bold text-sm transition"
               >
                 {saving ? 'Saving…' : 'Save Prize Pool'}

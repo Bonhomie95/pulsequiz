@@ -6,7 +6,7 @@ type ActivityItem = {
   _id: string;
   userId: { _id: string; username: string; email: string } | null;
   type: string;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   createdAt: string;
 };
 
@@ -34,15 +34,15 @@ const TYPE_META: Record<string, { color: string; emoji: string }> = {
   BAN: { color: 'bg-red-500/15 text-red-400 border-red-500/30', emoji: '🚫' },
 };
 
-function metaSummary(type: string, meta?: Record<string, any>): string {
+function metaSummary(type: string, meta?: Record<string, unknown>): string {
   if (!meta) return '';
   switch (type) {
     case 'QUIZ_FINISH':
-      return meta.points != null ? `+${meta.points} pts` : '';
+      return meta.points != null ? `+${String(meta.points)} pts` : '';
     case 'PURCHASE':
-      return meta.sku ? meta.sku : '';
+      return meta.sku ? String(meta.sku) : '';
     case 'CHECK_IN':
-      return meta.streak ? `Streak: ${meta.streak}d` : '';
+      return meta.streak ? `Streak: ${String(meta.streak)}d` : '';
     default:
       return '';
   }

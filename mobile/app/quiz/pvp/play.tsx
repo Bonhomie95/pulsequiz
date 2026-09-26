@@ -12,6 +12,7 @@ import { CountdownRing } from '../../../src/components/CountdownRing';
 
 import { connectSocket } from '@/src/socket/connect';
 import { ReportQuestionButton } from '@/src/components/ReportQuestionSheet';
+import { serverNow } from '@/src/utils/serverClock';
 const TOTAL_Q = 10;
 const TIME_PER_QUESTION = 15;
 const WARNING_TIME = 5;
@@ -68,7 +69,7 @@ export default function PvPPlayScreen() {
   // then be told they timed out.
   useEffect(() => {
     const remaining = deadlineAt
-      ? Math.max(0, Math.ceil((deadlineAt - Date.now()) / 1000))
+      ? Math.max(0, Math.ceil((deadlineAt - serverNow()) / 1000))
       : TIME_PER_QUESTION;
 
     ringProgress.setValue(1 - remaining / TIME_PER_QUESTION);

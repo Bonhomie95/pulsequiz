@@ -62,3 +62,17 @@ it('nine correct then one wrong scores 9, not 19', async () => {
   const fin = await auth(request(app).post('/api/quiz/finish').send({sessionId})).expect(200);
   expect(fin.body.points).toBe(9);
 });
+
+it('answers helped by a coin-bought hint score no ranking points and void the perfect bonus', async () => {
+  const { sessionId, questions } = await start();
+  await auth(request(app).post('/api/quiz/hint').send({ sessionId, questionId: questions[0].id })).expect(200);
+  for (const r of questions) {
+    const q = await QuizQuestion.findById(r.id).lean();
+    await ans(sessionId, r.id, q!.answer).expect(200);
+  }
+  const fin = await auth(request(app).post('/api/quiz/finish').send({ sessionId })).expect(200);
+  expect(fin.body.correct).toBe(10);
+  expect(fin.body.assisted).toBe(1);
+  // 9 unassisted correct, no +10 perfect bonus: coins can't buy prize rank.
+  expect(fin.body.points).toBe(9);
+});

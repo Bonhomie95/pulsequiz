@@ -5,6 +5,10 @@ export interface IStreak {
   streak: number;
   lastCheckIn: Date | null;
   checkInHistory: Date[];
+  /** IANA zone the day boundary is computed in. Pinned server-side so a
+   *  client can't hop zones to make every call look like a new day. */
+  timezone?: string | null;
+  timezoneChangedAt?: Date | null;
 }
 
 const StreakSchema = new Schema<IStreak>(
@@ -13,6 +17,8 @@ const StreakSchema = new Schema<IStreak>(
     streak: { type: Number, default: 0 },
     lastCheckIn: { type: Date, default: null },
     checkInHistory: { type: [Date], default: [] },
+    timezone: { type: String, default: null },
+    timezoneChangedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

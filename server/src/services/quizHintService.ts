@@ -20,6 +20,11 @@ export async function useHintService(params: {
 
   if (!session) throw new Error('Session not found');
 
+  // Shared-question modes are compared player to player; no bought help.
+  if (session.mode === 'daily' || session.mode === 'duel') {
+    return { disabledIndex: null, coins: null, message: 'Hints are off in this mode' };
+  }
+
   // ✅ Rule 1: max 3 per session
   if (session.hintsUsed >= 3) {
     return { disabledIndex: null, coins: null, message: 'No hints left' };

@@ -81,7 +81,7 @@ export default function Dashboard() {
 
       if (!alive) return;
 
-      const value = (r: PromiseSettledResult<any>) =>
+      const value = (r: PromiseSettledResult<{ data?: { total?: number } }>) =>
         r.status === 'fulfilled' ? r.value.data?.total ?? null : null;
 
       setStats({

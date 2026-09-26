@@ -36,7 +36,14 @@ import {
 } from 'lucide-react-native';
 
 import { api } from '@/src/api/api';
-import { useAuthStore } from '@/src/store/useAuthStore';
+import * as Application from 'expo-application';
+import {
+  useAuthStore,
+  usePrizesAvailable,
+  PAYOUT_NETWORKS,
+  type PayoutCurrency,
+  type UsdtType,
+} from '@/src/store/useAuthStore';
 import { useThemeStore } from '@/src/store/useThemeStore';
 import { useAudioStore } from '@/src/store/useAudioStore';
 import { useTheme } from '@/src/theme/useTheme';
@@ -45,13 +52,20 @@ import { enterImmersiveMode } from '@/src/utils/immersive';
 import { Toast } from '@/src/components/Toast';
 import { LINKS } from '@/src/constants/links';
 
-const USDT_TYPES = ['TRC20', 'ERC20', 'BEP20'] as const;
+const NETWORK_LABELS: Record<UsdtType, string> = {
+  TRC20: 'Tron (TRC20)',
+  ERC20: 'Ethereum (ERC20)',
+  BEP20: 'BNB Smart Chain (BEP20)',
+  POLYGON: 'Polygon',
+  SOL: 'Solana',
+};
 
 export default function SettingsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { mode, setMode } = useThemeStore();
   const { user, logout, setUser } = useAuthStore();
+  const prizes = usePrizesAvailable();
 
   // Account deletion. Apple Guideline 5.1.1(v) and Google Play both require an
   // account created in-app to be deletable in-app — not by emailing support.
@@ -88,8 +102,12 @@ export default function SettingsScreen() {
     setEffectsVolume,
   } = useAudioStore();
 
-  const [usdtType, setUsdtType] = useState(user?.usdtType);
+  const [currency, setCurrency] = useState<PayoutCurrency>(
+    user?.payoutCurrency ?? 'USDT',
+  );
+  const [usdtType, setUsdtType] = useState<UsdtType | undefined>(user?.usdtType);
   const [address, setAddress] = useState(user?.usdtAddress ?? '');
+  const networks = PAYOUT_NETWORKS[currency];
   const [networkOpen, setNetworkOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [publicProfile, setPublicProfile] = useState(
@@ -104,21 +122,43 @@ export default function SettingsScreen() {
   const showToast = (message: string, type: 'success' | 'error' = 'success') =>
     setToast({ visible: true, message, type });
 
-  const saveWallet = async () => {
-    if (!usdtType || !address) return;
+  const pickCurrency = (c: PayoutCurrency) => {
+    setCurrency(c);
+    // A network valid for one coin may not exist for the other.
+    if (usdtType && !PAYOUT_NETWORKS[c].includes(usdtType)) setUsdtType(undefined);
+  };
+
+  const submitWallet = async (trimmed: string) => {
     try {
       setLoading(true);
       const res = await api.patch('/settings', {
+        payoutCurrency: currency,
         usdtType,
-        usdtAddress: address,
+        usdtAddress: trimmed,
       });
       setUser({ ...user!, ...res.data.settings });
+      setAddress(trimmed);
       showToast('Wallet saved successfully ✓');
     } catch (e: any) {
       showToast(e?.response?.data?.message || 'Save failed', 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveWallet = () => {
+    const trimmed = address.trim();
+    if (!usdtType) return showToast('Select a network first', 'error');
+    if (!trimmed) return showToast(`Enter your ${currency} address`, 'error');
+    // Crypto sent to the wrong chain is gone for good — make the user read it back.
+    Alert.alert(
+      'Confirm payout wallet',
+      `Coin: ${currency}\nNetwork: ${NETWORK_LABELS[usdtType]}\nAddress: ${trimmed}\n\nPrizes sent to a wrong address or network cannot be recovered. Payouts pause for 72 hours after any change.\n\nBy saving, you confirm you are 18 or older and that receiving crypto prizes is legal where you live.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'I confirm — Save', onPress: () => submitWallet(trimmed) },
+      ],
+    );
   };
 
   useFocusEffect(
@@ -175,7 +215,8 @@ export default function SettingsScreen() {
                     ? 'light'
                     : 'system';
               setMode(next);
-              api.patch('/settings', { theme: next });
+              // Theme is applied locally; the server copy is best-effort.
+              api.patch('/settings', { theme: next }).catch(() => {});
             }}
             style={styles.cardRow}
           
@@ -270,12 +311,50 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* ── WALLET ── */}
+        {/* ── WALLET (only where cash prizes are offered) ── */}
+        {prizes && (
+        <>
         <SectionHeader
-          title="USDT Wallet"
+          title="Prize Wallet (USDT / USDC)"
           icon={<Wallet2 size={15} color={theme.colors.muted} />}
         />
         <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+          {/* Coin picker */}
+          <View
+            accessibilityRole="radiogroup"
+            style={[styles.cardRow, styles.rowBorder, { borderBottomColor: theme.colors.border }]}
+          >
+            <Text style={{ fontSize: 18 }}>💵</Text>
+            <Text style={[styles.rowLabel, { color: theme.colors.text, flex: 1 }]}>
+              Receive prizes in
+            </Text>
+            <View style={[styles.segment, { backgroundColor: theme.colors.border }]}>
+              {(['USDT', 'USDC'] as const).map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  onPress={() => pickCurrency(c)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`Receive prizes in ${c}`}
+                  accessibilityState={{ selected: currency === c }}
+                  style={[
+                    styles.segmentBtn,
+                    currency === c && { backgroundColor: theme.colors.primary },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      fontWeight: '800',
+                      fontSize: 13,
+                      color: currency === c ? '#fff' : theme.colors.text,
+                    }}
+                  >
+                    {c}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           {/* Network picker */}
           <TouchableOpacity
             onPress={() => setNetworkOpen((v) => !v)}
@@ -286,7 +365,7 @@ export default function SettingsScreen() {
             ]}
           
             accessibilityRole="button"
-            accessibilityLabel="Choose USDT network"
+            accessibilityLabel={`Choose ${currency} network`}
             hitSlop={8}>
             <Text style={{ fontSize: 18 }}>🌐</Text>
             <View style={{ flex: 1 }}>
@@ -301,7 +380,7 @@ export default function SettingsScreen() {
                   },
                 ]}
               >
-                {usdtType ?? 'Select a network'}
+                {usdtType ? NETWORK_LABELS[usdtType] : 'Select a network'}
               </Text>
             </View>
             <ChevronRight
@@ -320,11 +399,11 @@ export default function SettingsScreen() {
                 { borderBottomColor: theme.colors.border },
               ]}
             >
-              {USDT_TYPES.map((t) => (
+              {networks.map((t) => (
                 <TouchableOpacity
                   key={t}
                   accessibilityRole="radio"
-                  accessibilityLabel={`Use the ${t} network`}
+                  accessibilityLabel={`Use the ${NETWORK_LABELS[t]} network`}
                   accessibilityState={{ selected: usdtType === t }}
                   onPress={() => {
                     setUsdtType(t);
@@ -351,7 +430,7 @@ export default function SettingsScreen() {
                       },
                     ]}
                   >
-                    {t}
+                    {NETWORK_LABELS[t]}
                   </Text>
                   {usdtType === t && (
                     <Text style={{ color: theme.colors.primary }}>✓</Text>
@@ -371,10 +450,14 @@ export default function SettingsScreen() {
           >
             <Text style={{ fontSize: 18 }}>📋</Text>
             <TextInput
-              placeholder="USDT wallet address"
+              placeholder={`${currency} wallet address`}
               placeholderTextColor={theme.colors.muted}
               value={address}
               onChangeText={setAddress}
+              autoCapitalize="none"
+              autoCorrect={false}
+              spellCheck={false}
+              accessibilityLabel={`${currency} wallet address`}
               style={[styles.addressInput, { color: theme.colors.text }]}
             />
           </View>
@@ -406,6 +489,8 @@ export default function SettingsScreen() {
             </Text>
           )}
         </View>
+        </>
+        )}
 
         {/* ── PRIVACY ── */}
         <SectionHeader
@@ -486,12 +571,17 @@ export default function SettingsScreen() {
           {[
             { label: 'Terms of Use', url: LINKS.TERMS, icon: <FileText size={17} color={theme.colors.muted} /> },
             { label: 'Privacy Policy', url: LINKS.PRIVACY, icon: <Shield size={17} color={theme.colors.muted} /> },
+            { label: 'Official Contest Rules', url: LINKS.RULES, icon: <FileText size={17} color={theme.colors.muted} /> },
             { label: 'Support', url: LINKS.SUPPORT, icon: <LifeBuoy size={17} color={theme.colors.muted} /> },
           ].map((item) => (
             <TouchableOpacity
               key={item.label}
               style={styles.cardRow}
-              onPress={() => Linking.openURL(item.url)}
+              onPress={() =>
+                Linking.openURL(item.url).catch(() =>
+                  showToast(`Couldn't open ${item.label}`, 'error'),
+                )
+              }
               accessibilityRole="link"
               accessibilityLabel={item.label}
               hitSlop={6}
@@ -562,7 +652,8 @@ export default function SettingsScreen() {
         </TouchableOpacity>
 
         <Text style={[styles.version, { color: theme.colors.muted }]}>
-          PulseQuiz v1.0
+          PulseQuiz v{Application.nativeApplicationVersion ?? '1.0.0'}
+          {Application.nativeBuildVersion ? ` (${Application.nativeBuildVersion})` : ''}
         </Text>
       </ScrollView>
 
@@ -719,6 +810,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   networkLabel: { fontWeight: '700', fontSize: 14 },
+  segment: { flexDirection: 'row', borderRadius: 10, padding: 3 },
+  segmentBtn: {
+    paddingHorizontal: 14,
+    minHeight: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
   addressInput: { flex: 1, fontSize: 13, paddingVertical: 2 },
   saveWalletBtn: {
     margin: 14,

@@ -1,938 +1,652 @@
 [
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What is the SI unit of force?",
-    "options": [
-      "Joule",
-      "Newton",
-      "Pascal",
-      "Watt"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "Which particle carries a negative electric charge?",
-    "options": [
-      "Proton",
-      "Neutron",
-      "Electron",
-      "Photon"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What is the speed of light in a vacuum (approximately)?",
-    "options": [
-      "3 × 10^6 m/s",
-      "3 × 10^7 m/s",
-      "3 × 10^8 m/s",
-      "3 × 10^9 m/s"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "Which form of energy is associated with motion?",
-    "options": [
-      "Potential energy",
-      "Thermal energy",
-      "Kinetic energy",
-      "Chemical energy"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What instrument is used to measure temperature?",
-    "options": [
-      "Barometer",
-      "Thermometer",
-      "Ammeter",
-      "Voltmeter"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "Which force pulls objects toward the center of the Earth?",
-    "options": [
-      "Magnetic force",
-      "Electric force",
-      "Gravitational force",
-      "Nuclear force"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What type of wave requires a medium to travel?",
-    "options": [
-      "Electromagnetic wave",
-      "Light wave",
-      "Mechanical wave",
-      "Radio wave"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "Which physical quantity is measured in watts?",
-    "options": [
-      "Energy",
-      "Power",
-      "Force",
-      "Pressure"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What does Newton’s Second Law relate?",
-    "options": [
-      "Force, mass, and acceleration",
-      "Energy and mass",
-      "Velocity and time",
-      "Pressure and volume"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "Which law states that for every action there is an equal and opposite reaction?",
-    "options": [
-      "Newton’s First Law",
-      "Newton’s Second Law",
-      "Newton’s Third Law",
-      "Law of Gravitation"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What happens to the resistance of a conductor as temperature increases (for most metals)?",
-    "options": [
-      "It decreases",
-      "It becomes zero",
-      "It increases",
-      "It remains constant"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "Which quantity remains constant in a closed system according to the law of conservation of energy?",
-    "options": [
-      "Mass",
-      "Momentum",
-      "Energy",
-      "Force"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is the unit of electric current?",
-    "options": [
-      "Volt",
-      "Ohm",
-      "Ampere",
-      "Coulomb"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "Which type of lens converges light rays to a focal point?",
-    "options": [
-      "Concave lens",
-      "Convex lens",
-      "Cylindrical lens",
-      "Plane lens"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "Which physical quantity is defined as force per unit area?",
-    "options": [
-      "Energy",
-      "Pressure",
-      "Power",
-      "Density"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What phenomenon explains the bending of light when it passes from one medium to another?",
-    "options": [
-      "Reflection",
-      "Diffraction",
-      "Refraction",
-      "Interference"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which equation represents Einstein’s mass-energy equivalence?",
-    "options": [
-      "E = mc^2",
-      "F = ma",
-      "V = IR",
-      "pV = nRT"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the SI unit of electric potential difference?",
-    "options": [
-      "Ampere",
-      "Volt",
-      "Ohm",
-      "Coulomb"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which principle states that it is impossible to determine both the position and momentum of a particle precisely at the same time?",
-    "options": [
-      "Pauli Exclusion Principle",
-      "Heisenberg Uncertainty Principle",
-      "Principle of Superposition",
-      "Bohr Correspondence Principle"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which law describes the relationship between pressure and volume of a gas at constant temperature?",
-    "options": [
-      "Charles’s Law",
-      "Boyle’s Law",
-      "Avogadro’s Law",
-      "Gay-Lussac’s Law"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What force pulls objects toward Earth?",
-    "options": [
-      "Gravity",
-      "Tension",
-      "Magnetism",
-      "Friction"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What is the SI unit of energy?",
-    "options": [
-      "The newton",
-      "The watt",
-      "The joule",
-      "The volt"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What is the SI unit of power?",
-    "options": [
-      "The watt",
-      "The ampere",
-      "The joule",
-      "The newton"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What travels faster, light or sound?",
-    "options": [
-      "Light",
-      "It depends on colour",
-      "They travel at the same speed",
-      "Sound"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What is the SI unit of electric current?",
-    "options": [
-      "The ohm",
-      "The ampere",
-      "The coulomb",
-      "The volt"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "Which simple machine is a ramp?",
-    "options": [
-      "An inclined plane",
-      "A pulley",
-      "A lever",
-      "A screw"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What do we call the bending of light as it passes between materials?",
-    "options": [
-      "Absorption",
-      "Refraction",
-      "Diffraction",
-      "Reflection"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What is the state of matter with a fixed shape and volume?",
-    "options": [
-      "Liquid",
-      "Plasma",
-      "Gas",
-      "Solid"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What kind of energy does a moving object have?",
-    "options": [
-      "Potential energy",
-      "Thermal energy",
-      "Kinetic energy",
-      "Chemical energy"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "Which colour of visible light has the longest wavelength?",
-    "options": [
-      "Red",
-      "Blue",
-      "Violet",
-      "Green"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What instrument measures temperature?",
-    "options": [
-      "A barometer",
-      "A thermometer",
-      "An ammeter",
-      "A hygrometer"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What is the force that opposes motion between surfaces?",
-    "options": [
-      "Friction",
-      "Inertia",
-      "Gravity",
-      "Momentum"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "Which planet is closest to the Sun?",
-    "options": [
-      "Earth",
-      "Mars",
-      "Mercury",
-      "Venus"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What do magnets have at each end?",
-    "options": [
-      "Currents",
-      "Poles",
-      "Charges",
-      "Fields only"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What is the SI unit of length?",
-    "options": [
-      "The foot",
-      "The litre",
-      "The metre",
-      "The gram"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "Sound cannot travel through what?",
-    "options": [
-      "Air",
-      "Steel",
-      "A vacuum",
-      "Water"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What device converts electrical energy into motion?",
-    "options": [
-      "A capacitor",
-      "A motor",
-      "A generator",
-      "A transformer"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "easy",
-    "question": "What do we call energy stored due to position?",
-    "options": [
-      "Potential energy",
-      "Sound energy",
-      "Nuclear energy",
-      "Kinetic energy"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is Newton's second law?",
-    "options": [
-      "Every action has an equal and opposite reaction",
-      "Force equals mass times acceleration",
-      "Energy cannot be created or destroyed",
-      "An object in motion stays in motion"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is the acceleration due to gravity on Earth, approximately?",
-    "options": [
-      "3.7 m/s²",
-      "1.6 m/s²",
-      "9.8 m/s²",
-      "11.2 m/s²"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is the SI unit of frequency?",
-    "options": [
-      "The hertz",
-      "The newton",
-      "The tesla",
-      "The decibel"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "Which law states that energy cannot be created or destroyed?",
-    "options": [
-      "Conservation of energy",
-      "Newton's first law",
-      "Hooke's law",
-      "Ohm's law"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What does Ohm's law relate?",
-    "options": [
-      "Charge, field and distance",
-      "Force, mass and acceleration",
-      "Voltage, current and resistance",
-      "Pressure, volume and temperature"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is the SI unit of electrical resistance?",
-    "options": [
-      "The ohm",
-      "The farad",
-      "The ampere",
-      "The volt"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What kind of wave is sound?",
-    "options": [
-      "Longitudinal",
-      "Standing only",
-      "Electromagnetic",
-      "Transverse"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What kind of wave is light?",
-    "options": [
-      "Transverse",
-      "Mechanical",
-      "Longitudinal",
-      "Compression"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is the term for the rate of change of velocity?",
-    "options": [
-      "Momentum",
-      "Speed",
-      "Acceleration",
-      "Displacement"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is momentum equal to?",
-    "options": [
-      "Mass times velocity",
-      "Mass times acceleration",
-      "Force times distance",
-      "Half mass times velocity squared"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "Which particle has no electric charge?",
-    "options": [
-      "The ion",
-      "The neutron",
-      "The proton",
-      "The electron"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is the SI unit of pressure?",
-    "options": [
-      "The pascal",
-      "The newton",
-      "The bar",
-      "The joule"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What phenomenon explains why a straw looks bent in water?",
-    "options": [
-      "Interference",
-      "Reflection",
-      "Refraction",
-      "Diffraction"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is the transfer of heat through a fluid's motion called?",
-    "options": [
-      "Conduction",
-      "Insulation",
-      "Radiation",
-      "Convection"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is absolute zero in Celsius?",
-    "options": [
-      "-273.15 °C",
-      "0 °C",
-      "-100 °C",
-      "-459 °C"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "Which scientist formulated the laws of motion?",
-    "options": [
-      "Niels Bohr",
-      "Albert Einstein",
-      "Galileo Galilei",
-      "Isaac Newton"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What is the SI unit of temperature?",
-    "options": [
-      "The kelvin",
-      "The fahrenheit",
-      "The joule",
-      "The celsius"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What happens to the wavelength of a wave as its frequency increases?",
-    "options": [
-      "It stays the same",
-      "It doubles",
-      "It increases",
-      "It decreases"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "What device steps voltage up or down in AC circuits?",
-    "options": [
-      "A capacitor",
-      "A resistor",
-      "A transformer",
-      "A diode"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "medium",
-    "question": "Which type of lens converges light?",
-    "options": [
-      "A prism",
-      "A concave lens",
-      "A convex lens",
-      "A plane mirror"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What does E = mc² describe?",
-    "options": [
-      "The force of gravity",
-      "The equivalence of mass and energy",
-      "The speed of sound",
-      "The conservation of momentum"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which principle states you cannot know both position and momentum precisely?",
-    "options": [
-      "The uncertainty principle",
-      "The exclusion principle",
-      "The correspondence principle",
-      "The equivalence principle"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Who developed the theory of general relativity?",
-    "options": [
-      "Max Planck",
-      "Werner Heisenberg",
-      "Isaac Newton",
-      "Albert Einstein"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the second law of thermodynamics about?",
-    "options": [
-      "Entropy always increases in an isolated system",
-      "Energy is conserved",
-      "Pressure and volume are inversely related",
-      "Absolute zero is unreachable"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the term for light behaving as both a wave and a particle?",
-    "options": [
-      "Quantisation",
-      "Superposition",
-      "Entanglement",
-      "Wave–particle duality"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which force holds atomic nuclei together?",
-    "options": [
-      "Electromagnetism",
-      "The strong nuclear force",
-      "The weak nuclear force",
-      "Gravity"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the Doppler effect?",
-    "options": [
-      "The bending of light by gravity",
-      "The scattering of light by particles",
-      "A change in observed frequency due to relative motion",
-      "The reflection of sound off surfaces"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the SI unit of magnetic flux density?",
-    "options": [
-      "The tesla",
-      "The henry",
-      "The weber",
-      "The gauss"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What particle mediates the electromagnetic force?",
-    "options": [
-      "The graviton",
-      "The gluon",
-      "The W boson",
-      "The photon"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the term for a material with zero electrical resistance?",
-    "options": [
-      "An insulator",
-      "A semiconductor",
-      "A superconductor",
-      "A dielectric"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which effect describes electrons being emitted when light hits a metal?",
-    "options": [
-      "The photoelectric effect",
-      "The Compton effect",
-      "The Hall effect",
-      "The Zeeman effect"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is escape velocity from Earth, approximately?",
-    "options": [
-      "7.8 km/s",
-      "25 km/s",
-      "3.0 km/s",
-      "11.2 km/s"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the name for the resistance of an object to a change in motion?",
-    "options": [
-      "Inertia",
-      "Friction",
-      "Momentum",
-      "Torque"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which quantity is conserved in an elastic collision but not an inelastic one?",
-    "options": [
-      "Mass",
-      "Kinetic energy",
-      "Charge",
-      "Momentum"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the SI unit of capacitance?",
-    "options": [
-      "The henry",
-      "The ohm",
-      "The siemens",
-      "The farad"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which law relates the force between two charges to their separation?",
-    "options": [
-      "Ohm's law",
-      "Faraday's law",
-      "Lenz's law",
-      "Coulomb's law"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is half-life?",
-    "options": [
-      "The time for half of a radioactive sample to decay",
-      "The time for a wave to complete half a cycle",
-      "The midpoint of an orbit",
-      "Half the lifetime of a particle"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the term for the maximum displacement of a wave from equilibrium?",
-    "options": [
-      "Frequency",
-      "Amplitude",
-      "Wavelength",
-      "Period"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "Which type of radiation is stopped by a sheet of paper?",
-    "options": [
-      "Gamma",
-      "X-ray",
-      "Alpha",
-      "Beta"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Physics",
-    "difficulty": "hard",
-    "question": "What is the name of the effect where a magnetic field induces a current?",
-    "options": [
-      "Electromagnetic induction",
-      "The piezoelectric effect",
-      "The photoelectric effect",
-      "Thermionic emission"
-    ],
-    "answer": 0
-  }
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What force pulls objects towards the Earth?",
+  "options": [
+   "Gravity",
+   "Magnetism",
+   "Friction",
+   "Tension"
+  ],
+  "answer": 0,
+  "explanation": "Gravity is the attraction between masses. The Earth's mass pulls everything towards its centre."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What is the unit of electrical resistance?",
+  "options": [
+   "Volt",
+   "Ohm",
+   "Ampere",
+   "Watt"
+  ],
+  "answer": 1,
+  "explanation": "Resistance is measured in ohms. Volts measure potential difference and amperes measure current."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "Which travels faster?",
+  "options": [
+   "Sound",
+   "They are equal",
+   "Light",
+   "Neither moves"
+  ],
+  "answer": 2,
+  "explanation": "Light travels about 300,000 km per second; sound manages roughly 343 metres per second in air. That is why you see lightning before you hear thunder."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What state of matter has a fixed shape and volume?",
+  "options": [
+   "Liquid",
+   "Gas",
+   "Plasma",
+   "Solid"
+  ],
+  "answer": 3,
+  "explanation": "In a solid the particles are locked in place, so both shape and volume stay fixed."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What does a thermometer measure?",
+  "options": [
+   "Temperature",
+   "Pressure",
+   "Humidity",
+   "Speed"
+  ],
+  "answer": 0,
+  "explanation": "A thermometer measures temperature — how hot or cold something is."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "Which of these is a renewable source of energy?",
+  "options": [
+   "Coal",
+   "Solar",
+   "Natural gas",
+   "Petrol"
+  ],
+  "answer": 1,
+  "explanation": "Sunlight is replenished constantly, while coal, gas and petrol are finite fossil fuels."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What happens to most materials when they are heated?",
+  "options": [
+   "They contract",
+   "They vanish",
+   "They expand",
+   "Nothing changes"
+  ],
+  "answer": 2,
+  "explanation": "Heat makes particles move more and spread apart, so most materials expand — which is why bridges have expansion joints."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "Which simple machine is a seesaw an example of?",
+  "options": [
+   "Pulley",
+   "Wedge",
+   "Screw",
+   "Lever"
+  ],
+  "answer": 3,
+  "explanation": "A seesaw is a lever: a rigid bar turning about a pivot, or fulcrum."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What is the unit of force?",
+  "options": [
+   "Newton",
+   "Joule",
+   "Pascal",
+   "Hertz"
+  ],
+  "answer": 0,
+  "explanation": "Force is measured in newtons. Joules measure energy and pascals measure pressure."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "Which part of an atom carries a negative charge?",
+  "options": [
+   "Proton",
+   "Electron",
+   "Neutron",
+   "Nucleus"
+  ],
+  "answer": 1,
+  "explanation": "Electrons are negatively charged and orbit the nucleus of protons and neutrons."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What do we call the bending of light as it passes from air into water?",
+  "options": [
+   "Reflection",
+   "Diffusion",
+   "Refraction",
+   "Absorption"
+  ],
+  "answer": 2,
+  "explanation": "Refraction is the change of direction when light changes speed between materials. It makes a straw look bent in a glass."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "Which force slows a box sliding across the floor?",
+  "options": [
+   "Gravity",
+   "Magnetism",
+   "Buoyancy",
+   "Friction"
+  ],
+  "answer": 3,
+  "explanation": "Friction acts between surfaces in contact and opposes motion."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What is the boiling point of water at sea level in Celsius?",
+  "options": [
+   "50",
+   "90",
+   "100",
+   "120"
+  ],
+  "answer": 2,
+  "explanation": "Water boils at 100°C at standard atmospheric pressure. Higher up, where pressure is lower, it boils cooler."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "Sound cannot travel through which of these?",
+  "options": [
+   "A vacuum",
+   "Air",
+   "Water",
+   "Steel"
+  ],
+  "answer": 0,
+  "explanation": "Sound needs particles to carry the vibration, so it cannot travel through empty space."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What kind of energy does a moving object have?",
+  "options": [
+   "Potential",
+   "Kinetic",
+   "Chemical",
+   "Nuclear"
+  ],
+  "answer": 1,
+  "explanation": "Kinetic energy is energy of motion, and it grows with the square of speed."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "Which colour of visible light has the longest wavelength?",
+  "options": [
+   "Green",
+   "Blue",
+   "Red",
+   "Violet"
+  ],
+  "answer": 2,
+  "explanation": "Red sits at the long-wavelength end of the visible spectrum and violet at the short end."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "A magnet's north pole attracts which pole of another magnet?",
+  "options": [
+   "North",
+   "Both",
+   "Neither",
+   "South"
+  ],
+  "answer": 3,
+  "explanation": "Opposite poles attract; like poles repel."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What does a barometer measure?",
+  "options": [
+   "Air pressure",
+   "Wind speed",
+   "Rainfall",
+   "Temperature"
+  ],
+  "answer": 0,
+  "explanation": "A barometer measures atmospheric pressure, which is why falling readings often signal a storm."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "Which of these is a good conductor of electricity?",
+  "options": [
+   "Rubber",
+   "Copper",
+   "Glass",
+   "Wood"
+  ],
+  "answer": 1,
+  "explanation": "Copper's loose outer electrons carry current easily, which is why wiring is made from it."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "easy",
+  "question": "What do we call a push or a pull on an object?",
+  "options": [
+   "Energy",
+   "Power",
+   "Force",
+   "Mass"
+  ],
+  "answer": 2,
+  "explanation": "A force is any push or pull that can change an object's motion or shape."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "What is the approximate speed of light in a vacuum?",
+  "options": [
+   "300 km/s",
+   "3,000 km/s",
+   "300,000 km/s",
+   "3,000,000 km/s"
+  ],
+  "answer": 2,
+  "explanation": "Light travels at about 299,792 km per second, usually rounded to 300,000 km/s."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "Newton's first law says an object stays at rest or moves steadily unless acted on by what?",
+  "options": [
+   "An unbalanced force",
+   "Gravity",
+   "Friction",
+   "Momentum"
+  ],
+  "answer": 0,
+  "explanation": "This is the law of inertia: motion only changes when the forces on an object do not cancel out."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "What is the SI unit of power?",
+  "options": [
+   "Joule",
+   "Watt",
+   "Newton",
+   "Volt"
+  ],
+  "answer": 1,
+  "explanation": "Power is energy per second, measured in watts. One watt is one joule per second."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "In a circuit, what does an ammeter measure?",
+  "options": [
+   "Voltage",
+   "Resistance",
+   "Current",
+   "Power"
+  ],
+  "answer": 2,
+  "explanation": "An ammeter measures current in amperes and is connected in series with the circuit."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "Which law states that V = I × R?",
+  "options": [
+   "Hooke's law",
+   "Boyle's law",
+   "Faraday's law",
+   "Ohm's law"
+  ],
+  "answer": 3,
+  "explanation": "Ohm's law relates voltage, current and resistance in a conductor."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "What happens to the pressure of a gas when it is compressed at constant temperature?",
+  "options": [
+   "It rises",
+   "It falls",
+   "It stays the same",
+   "It becomes zero"
+  ],
+  "answer": 0,
+  "explanation": "Boyle's law: pressure and volume are inversely related, so squeezing the gas raises its pressure."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "Which type of heat transfer needs no medium at all?",
+  "options": [
+   "Conduction",
+   "Radiation",
+   "Convection",
+   "Diffusion"
+  ],
+  "answer": 1,
+  "explanation": "Radiation travels as electromagnetic waves, which is how the Sun's heat crosses empty space."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "What is the acceleration due to gravity near the Earth's surface?",
+  "options": [
+   "5.8 m/s²",
+   "9.8 m/s²",
+   "12.5 m/s²",
+   "19.6 m/s²"
+  ],
+  "answer": 1,
+  "explanation": "Objects in free fall speed up by about 9.8 metres per second every second."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "Which particle has no electric charge?",
+  "options": [
+   "Proton",
+   "Electron",
+   "Neutron",
+   "Ion"
+  ],
+  "answer": 2,
+  "explanation": "Neutrons are neutral, which is where the name comes from."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "What is the frequency unit named after Heinrich Hertz equal to?",
+  "options": [
+   "One metre per second",
+   "One joule per second",
+   "One newton per metre",
+   "One cycle per second"
+  ],
+  "answer": 3,
+  "explanation": "One hertz is one complete cycle or vibration per second."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "Why do objects float in water?",
+  "options": [
+   "Upthrust equals their weight",
+   "They have no mass",
+   "Water pushes sideways",
+   "Gravity stops working"
+  ],
+  "answer": 0,
+  "explanation": "An object floats when the upward buoyant force equals its weight, which happens when it is less dense than water."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "Which of these is NOT part of the electromagnetic spectrum?",
+  "options": [
+   "X-rays",
+   "Sound waves",
+   "Radio waves",
+   "Microwaves"
+  ],
+  "answer": 1,
+  "explanation": "Sound is a mechanical wave that needs matter to travel through; the others are electromagnetic."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "What does a transformer change in an AC supply?",
+  "options": [
+   "Frequency",
+   "Current direction",
+   "Voltage",
+   "Resistance"
+  ],
+  "answer": 2,
+  "explanation": "Transformers step voltage up or down, which is how power is sent efficiently over long distances."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "Energy cannot be created or destroyed. What is this principle called?",
+  "options": [
+   "Entropy",
+   "Relativity",
+   "Equilibrium",
+   "Conservation of energy"
+  ],
+  "answer": 3,
+  "explanation": "The first law of thermodynamics: energy only changes form; the total stays the same."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "What is the mass of an object a measure of?",
+  "options": [
+   "The amount of matter in it",
+   "Its weight on Earth",
+   "Its volume",
+   "Its density"
+  ],
+  "answer": 0,
+  "explanation": "Mass measures matter and stays the same everywhere. Weight is the force gravity exerts on that mass."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "Which lens shape makes parallel light rays converge?",
+  "options": [
+   "Concave",
+   "Convex",
+   "Flat",
+   "Prism"
+  ],
+  "answer": 1,
+  "explanation": "A convex lens is thicker in the middle and brings rays to a focus; a concave lens spreads them out."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "What is the echo of a sound caused by?",
+  "options": [
+   "Refraction",
+   "Absorption",
+   "Reflection",
+   "Diffraction"
+  ],
+  "answer": 2,
+  "explanation": "An echo is sound reflecting off a hard surface and returning to the listener."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "In which state of matter are particles furthest apart?",
+  "options": [
+   "Solid",
+   "Liquid",
+   "All the same",
+   "Gas"
+  ],
+  "answer": 3,
+  "explanation": "Gas particles are widely spaced and move freely, which is why gases can be compressed."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "What does 'AC' stand for in electricity?",
+  "options": [
+   "Alternating Current",
+   "Active Current",
+   "Ampere Circuit",
+   "Applied Charge"
+  ],
+  "answer": 0,
+  "explanation": "Alternating current reverses direction many times a second, unlike the steady flow of direct current."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "medium",
+  "question": "Which instrument is used to see very distant objects in space?",
+  "options": [
+   "Microscope",
+   "Telescope",
+   "Periscope",
+   "Spectrometer"
+  ],
+  "answer": 1,
+  "explanation": "Telescopes gather light from faint, distant objects using lenses or mirrors."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "Which equation expresses mass–energy equivalence?",
+  "options": [
+   "E = mc²",
+   "F = ma",
+   "V = IR",
+   "PV = nRT"
+  ],
+  "answer": 0,
+  "explanation": "Einstein's E = mc² says mass and energy are two forms of the same thing, linked by the speed of light squared."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "What is the SI unit of magnetic flux density?",
+  "options": [
+   "Weber",
+   "Tesla",
+   "Henry",
+   "Gauss"
+  ],
+  "answer": 1,
+  "explanation": "The tesla measures magnetic flux density. The weber measures total flux and the gauss is a smaller, non-SI unit."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "The second law of thermodynamics is usually stated in terms of which quantity?",
+  "options": [
+   "Momentum",
+   "Charge",
+   "Entropy",
+   "Frequency"
+  ],
+  "answer": 2,
+  "explanation": "Entropy, a measure of disorder, never decreases in an isolated system."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "What does the Doppler effect describe?",
+  "options": [
+   "Bending of light in a prism",
+   "Loss of energy as heat",
+   "Splitting of an atom",
+   "Change in observed frequency due to motion"
+  ],
+  "answer": 3,
+  "explanation": "A siren sounds higher as it approaches and lower as it leaves, because motion compresses or stretches the waves."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "Which particle carries the electromagnetic force?",
+  "options": [
+   "Photon",
+   "Gluon",
+   "Neutrino",
+   "Higgs boson"
+  ],
+  "answer": 0,
+  "explanation": "Photons are the force carriers of electromagnetism. Gluons carry the strong nuclear force."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "At absolute zero, what is the temperature in Celsius?",
+  "options": [
+   "0",
+   "−273",
+   "−100",
+   "−373"
+  ],
+  "answer": 1,
+  "explanation": "Absolute zero is −273.15°C, or 0 kelvin, the point where particle motion is at its minimum."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "What is the momentum of an object equal to?",
+  "options": [
+   "Force × time",
+   "Mass × acceleration",
+   "Mass × velocity",
+   "Energy ÷ time"
+  ],
+  "answer": 2,
+  "explanation": "Momentum p = mv. Force × time gives the change in momentum, called impulse."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "Which phenomenon proves light behaves as a wave?",
+  "options": [
+   "Photoelectric effect",
+   "Radioactive decay",
+   "Thermal expansion",
+   "Interference"
+  ],
+  "answer": 3,
+  "explanation": "Interference patterns, as in the double-slit experiment, can only be produced by waves."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "What is the half-life of a radioactive substance?",
+  "options": [
+   "Time for half the sample to decay",
+   "Time to double in mass",
+   "Half its total energy",
+   "Half the atomic number"
+  ],
+  "answer": 0,
+  "explanation": "Half-life is the time for half the radioactive nuclei in a sample to decay, and it is constant for each isotope."
+ },
+ {
+  "category": "Physics",
+  "difficulty": "hard",
+  "question": "In nuclear fusion, what happens to atomic nuclei?",
+  "options": [
+   "They split apart",
+   "They join together",
+   "They lose electrons",
+   "They gain neutrons only"
+  ],
+  "answer": 1,
+  "explanation": "Fusion joins light nuclei into heavier ones, releasing energy — the process that powers the Sun. Fission splits them."
+ }
 ]

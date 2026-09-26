@@ -33,6 +33,20 @@ describe('prepareQuestion', () => {
     expect(r.ok && r.value.answer).toBe(1);
   });
 
+  it('a numeric answer that is an option means that option, not a position', () => {
+    // Options 3,4,5,6 with answer "4" must store "4" — the old logic stored "6".
+    const r = prepareQuestion(
+      { category: 'math', question: 'What is 2 plus 2?', options: ['3', '4', '5', '6'], answer: '4' },
+      1,
+    );
+    expect(r.ok && r.value.answer).toBe(1);
+  });
+
+  it('rejects an unknown difficulty instead of silently using medium', () => {
+    const r = prepareQuestion({ ...base, difficulty: 'impossible' }, 1);
+    expect(r.ok).toBe(false);
+  });
+
   it('prefers a literal option match over the 1-based reading', () => {
     // "144" is one of the options, so it means the option, not "option 144".
     const r = prepareQuestion(
@@ -74,8 +88,8 @@ describe('prepareQuestion', () => {
     if (!r.ok) expect(r.error.row).toBe(42);
   });
 
-  it('defaults an unknown difficulty to medium rather than failing', () => {
-    const r = prepareQuestion({ ...base, difficulty: 'impossible' }, 1);
+  it('defaults a missing difficulty to medium', () => {
+    const r = prepareQuestion({ ...base, difficulty: undefined }, 1);
     expect(r.ok && r.value.difficulty).toBe('medium');
   });
 });

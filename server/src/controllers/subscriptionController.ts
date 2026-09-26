@@ -113,15 +113,23 @@ export async function verifyAppleSub(req: AuthRequest, res: Response) {
     sku: SubscriptionSku; transactionId: string; originalTransactionId?: string;
   };
   const userId = req.userId!;
-  const plan = SUBSCRIPTION_PLANS[sku];
+  const plan = typeof sku === 'string' && Object.hasOwn(SUBSCRIPTION_PLANS, sku) ? SUBSCRIPTION_PLANS[sku] : undefined;
   if (!plan) return res.status(400).json({ message: `Unknown SKU: ${sku}` });
-  if (!transactionId) return res.status(400).json({ message: 'transactionId required' });
+  if (typeof transactionId !== 'string' || !transactionId) return res.status(400).json({ message: 'transactionId required' });
 
   const result = await verifyAppleSubscriptionTx(transactionId, sku);
   if (!result.valid) return res.status(400).json({ message: 'Invalid or expired subscription', detail: result.error });
 
   const expiresAt = result.expiresAt ?? (() => { const d = new Date(); d.setDate(d.getDate() + plan.durationDays); return d; })();
-  const origTxId = originalTransactionId ?? result.originalTxId ?? transactionId;
+  // Apple's own answer wins over the client's claim — refund webhooks key on it.
+  const origTxId = result.originalTxId ?? originalTransactionId ?? transactionId;
+
+  // One store subscription = one account. Without this the same receipt made
+  // any number of accounts premium.
+  const owner = await Subscription.findOne({ appleOriginalTransactionId: origTxId, userId: { $ne: userId } })
+    .select('_id')
+    .lean();
+  if (owner) return res.status(403).json({ message: 'This subscription belongs to another account' });
 
   const sub = await Subscription.findOneAndUpdate(
     { appleOriginalTransactionId: origTxId, userId },
@@ -137,9 +145,14 @@ export async function verifyGoogleSub(req: AuthRequest, res: Response) {
     sku: SubscriptionSku; purchaseToken: string; packageName: string;
   };
   const userId = req.userId!;
-  const plan = SUBSCRIPTION_PLANS[sku];
+  const plan = typeof sku === 'string' && Object.hasOwn(SUBSCRIPTION_PLANS, sku) ? SUBSCRIPTION_PLANS[sku] : undefined;
   if (!plan) return res.status(400).json({ message: `Unknown SKU: ${sku}` });
-  if (!purchaseToken) return res.status(400).json({ message: 'purchaseToken required' });
+  if (typeof purchaseToken !== 'string' || !purchaseToken) return res.status(400).json({ message: 'purchaseToken required' });
+
+  const owner = await Subscription.findOne({ googlePurchaseToken: purchaseToken, userId: { $ne: userId } })
+    .select('_id')
+    .lean();
+  if (owner) return res.status(403).json({ message: 'This subscription belongs to another account' });
 
   const resolved = resolveTrustedPackageName(packageName);
   if ('error' in resolved) return res.status(400).json({ message: resolved.error });

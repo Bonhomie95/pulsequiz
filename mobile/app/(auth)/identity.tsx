@@ -287,7 +287,7 @@ export default function IdentityScreen() {
               style={[styles.emojiBtn, { backgroundColor: theme.colors.primary }]}
             
             accessibilityRole="button"
-            accessibilityLabel="Use"
+            accessibilityLabel="Use this emoji as my avatar"
             hitSlop={8}>
               <Text style={{ color: '#fff', fontWeight: '700' }}>Use</Text>
             </TouchableOpacity>

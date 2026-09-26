@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
+  Linking,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,6 +11,8 @@ import {
 } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme } from '@/src/theme/useTheme';
+import { LINKS } from '@/src/constants/links';
+import { usePrizesAvailable } from '@/src/store/useAuthStore';
 
 /**
  * How the game actually works.
@@ -22,6 +26,23 @@ import { useTheme } from '@/src/theme/useTheme';
 type Rule = { title: string; body: string };
 
 const RULES: { section: string; items: Rule[] }[] = [
+  {
+    section: 'Modes',
+    items: [
+      {
+        title: 'Ranked',
+        body: 'One wrong answer or a timeout ends the run. Only Ranked runs (and 1v1 matches) earn leaderboard points.',
+      },
+      {
+        title: 'Practice, Daily Quiz and friend challenges',
+        body: 'You answer all 10 questions and see an explanation where one exists. They earn league XP, not leaderboard points. The Daily Quiz is the same for everyone and can be played once a day.',
+      },
+      {
+        title: 'Weekly leagues',
+        body: 'Every correct answer, in any mode, earns league XP. Each week you race about 30 players at your level: the top of the group moves up a league, the bottom moves down, and the top 3 win coins.',
+      },
+    ],
+  },
   {
     section: 'Playing',
     items: [
@@ -37,6 +58,10 @@ const RULES: { section: string; items: Rule[] }[] = [
         title: 'Hints cost more each time',
         body: 'Up to 3 hints per quiz, one per question. Each removes a wrong option. They cost 10, then 20, then 50 coins.',
       },
+      {
+        title: 'Help never buys ranking points',
+        body: 'An answer helped by a hint or by extra time still keeps your run going, but it earns no leaderboard points and voids the perfect-run bonus. Prize rankings are decided by skill alone.',
+      },
     ],
   },
   {
@@ -48,7 +73,7 @@ const RULES: { section: string; items: Rule[] }[] = [
       },
       {
         title: 'A daily cap keeps it fair',
-        body: 'Only your first 20 quizzes each day count toward the leaderboard. You can keep playing after that — you just stop earning ranking points, so nobody can grind their way to a prize.',
+        body: 'Only your first 20 ranked quizzes each day count toward the leaderboard. You can keep playing after that — you just stop earning ranking points, so nobody can grind their way to a prize.',
       },
       {
         title: 'Weekly and monthly boards reset',
@@ -60,20 +85,24 @@ const RULES: { section: string; items: Rule[] }[] = [
     section: 'Prizes',
     items: [
       {
-        title: 'Top players win USDT',
-        body: 'How many places get paid is shown on the leaderboard from the start. The amounts stay hidden until the period ends, so the race stays about playing well rather than doing arithmetic.',
+        title: 'Top players win USDT or USDC',
+        body: 'How many places get paid is shown on the leaderboard from the start. The amounts stay hidden until the period ends, so the race stays about playing well rather than doing arithmetic. You choose USDT or USDC, and the network, in Settings.',
+      },
+      {
+        title: 'When prizes are paid',
+        body: 'Weekly boards close Monday 00:00 UTC and monthly boards on the 1st at 00:00 UTC. Payouts are processed automatically shortly after a board closes.',
       },
       {
         title: 'What you need to qualify',
-        body: 'A USDT wallet address saved in Settings, an account at least 7 days old, at least 5 completed quizzes, and no open review on your account. Your wallet screen shows exactly which of these you still need.',
+        body: 'A USDT or USDC wallet address saved in Settings, an account at least 7 days old, at least 5 completed quizzes, and no open review on your account. Your wallet screen shows exactly which of these you still need.',
       },
       {
         title: 'Small prizes roll over',
         body: 'Prizes under $5 accumulate and are paid once the total passes the threshold, so a payout is never eaten by network fees.',
       },
       {
-        title: 'Changing your wallet address pauses payouts',
-        body: 'For 72 hours after any change, so that if someone else ever got into your account you have time to notice and act.',
+        title: 'Changing your wallet pauses payouts',
+        body: 'For 72 hours after any change to your address, network or coin, so that if someone else ever got into your account you have time to notice and act. Crypto sent to an address or network you entered incorrectly cannot be recovered.',
       },
     ],
   },
@@ -82,11 +111,15 @@ const RULES: { section: string; items: Rule[] }[] = [
     items: [
       {
         title: 'Coins are not prize money',
-        body: 'Coins buy hints, extra time, wagers and tournament entries. USDT prizes come from your leaderboard rank, not your coin balance.',
+        body: 'Coins buy hints, extra time, wagers and tournament entries. They have no cash value, cannot be withdrawn, and cannot be exchanged for USDT or USDC. Prizes come only from your leaderboard rank.',
+      },
+      {
+        title: 'No purchase necessary',
+        body: 'Playing, ranking and winning prizes never require buying anything. Purchased coins cannot earn leaderboard points.',
       },
       {
         title: 'Wagers stake both players',
-        body: 'Both players put up the same amount, and the winner takes the pot. If a match is drawn, or ends because someone disconnected before playing, both stakes are returned.',
+        body: 'Both players put up the same amount of coins, and the winner takes the pot. If a match is drawn, or ends because someone disconnected before playing, both stakes are returned. Wagers are coins only — never real money.',
       },
     ],
   },
@@ -103,6 +136,25 @@ const RULES: { section: string; items: Rule[] }[] = [
       },
     ],
   },
+  {
+    section: 'Official rules',
+    items: [
+      {
+        title: 'Sponsor',
+        body: `The prize competition is sponsored and run solely by PulseQuiz. ${
+          Platform.OS === 'ios' ? 'Apple Inc.' : 'Google LLC'
+        } is not a sponsor of, and is not involved in, this competition in any way.`,
+      },
+      {
+        title: 'Eligibility',
+        body: 'Open to players aged 18 or over (or the age of majority where they live, if higher). Void where prohibited or restricted by law — you are responsible for making sure taking part and receiving crypto prizes is legal where you live. One account per person.',
+      },
+      {
+        title: 'Taxes and changes',
+        body: 'Winners are responsible for any taxes on prizes. PulseQuiz may disqualify accounts that break these rules and may change prize pools for future periods; a period already in progress is never changed.',
+      },
+    ],
+  },
 ];
 
 export function RulesSheet({
@@ -113,6 +165,7 @@ export function RulesSheet({
   onClose: () => void;
 }) {
   const theme = useTheme();
+  const prizes = usePrizesAvailable();
 
   return (
     <Modal
@@ -123,7 +176,7 @@ export function RulesSheet({
     >
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>How it works</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>{prizes ? 'Rules & prizes' : 'How it works'}</Text>
           <TouchableOpacity
             onPress={onClose}
             accessibilityRole="button"
@@ -136,7 +189,7 @@ export function RulesSheet({
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
-          {RULES.map((group) => (
+          {RULES.filter((g) => prizes || (g.section !== 'Prizes' && g.section !== 'Official rules')).map((group) => (
             <View key={group.section} style={{ marginBottom: 26 }}>
               <Text style={[styles.section, { color: theme.colors.primary }]}>
                 {group.section.toUpperCase()}
@@ -156,6 +209,15 @@ export function RulesSheet({
               ))}
             </View>
           ))}
+          {prizes && (
+            <Text
+              onPress={() => Linking.openURL(LINKS.RULES).catch(() => {})}
+              accessibilityRole="link"
+              style={{ color: theme.colors.primary, fontWeight: '700', textAlign: 'center', marginTop: 4 }}
+            >
+              Read the full official rules
+            </Text>
+          )}
         </ScrollView>
       </View>
     </Modal>

@@ -65,15 +65,34 @@ npm run seed
 
 These are the ones where the code is now ready but the provider side is not.
 
-### AdMob server-side verification — required
-Console → the rewarded ad unit → **Server-side verification** → set the callback to:
+### AdMob server-side verification — NOW ENFORCED
 
-```
-https://<host>/api/webhooks/admob/ssv
-```
+`ADMOB_SSV_ENABLED=1` is set, so the server credits rewarded-ad coins **only**
+when Google's signed callback arrives. Until the callback is configured, the
+"Watch video" button loads an ad and no coins land. Configure it:
 
-Until this is set and `ADMOB_SSV_ENABLED=1`, ad rewards do not credit at all in
-production (by design — the alternative is an open currency faucet).
+1. AdMob → Apps → PulseQuiz → **Ad units** → your rewarded unit → **Server-side
+   verification** → set the callback to:
+
+   ```
+   https://<api-host>/api/webhooks/admob/ssv
+   ```
+
+2. Repeat for every rewarded unit, on both platforms.
+3. List those units in `ADMOB_REWARDED_AD_UNIT_IDS` (comma-separated). Only
+   listed units are credited, so another publisher pointing their callback at
+   us earns nothing. Currently set to the Android rewarded unit.
+
+**iOS currently uses Google's test ad units** (`ca-app-pub-3940256099942544/…`)
+until you create real ones. Test units are Google's, so no verification
+callback can be attached to them — the app therefore hides "watch an ad"
+entirely on iOS rather than promising coins that can never arrive. Banners and
+interstitials still display; they simply earn nothing. Replace those three
+`EXPO_PUBLIC_ADMOB_*_ID_IOS` values in `eas.json` before release; any non-dev
+build logs a warning while a test unit is in use.
+
+The server verifies each callback against Google's published keys, rejects
+replays and stale callbacks, and enforces the daily cap.
 
 ### App Store Server Notifications V2
 App Store Connect → App Information → **App Store Server Notifications** →
@@ -85,6 +104,47 @@ https://<host>/api/webhooks/apple
 
 Without it, a user can buy coins, spend them, refund the purchase, and keep them.
 
+### Creating the first admin
+
+The admin panel needs an account before anyone can sign in. Run this against
+the same database the API uses (it prompts for the password, so it never
+reaches your shell history):
+
+```bash
+cd server && npm run create-admin -- you@example.com SUPER_ADMIN
+```
+
+Then sign in at the admin panel URL. Manage further admins from its Admins
+page rather than the CLI.
+
+### Google service account (`GOOGLE_SERVICE_ACCOUNT_JSON`)
+
+Needed for two things: checking Play purchases server-side, and receiving
+Play's subscription notifications. One service account covers both.
+
+1. **Play Console → Setup → API access.** If no Google Cloud project is
+   linked, click *Create new project* (or link an existing one). The rest of
+   this happens in that project.
+2. On the same page, **Create new service account** → it opens Google Cloud
+   Console → *Create service account*. Name it e.g. `pulsequiz-play`. No
+   project roles are needed at this step; Play grants the permissions.
+3. In Cloud Console open the new account → **Keys → Add key → Create new key
+   → JSON**. A `.json` file downloads. This is the only copy — Google won't
+   show it again.
+4. Back in **Play Console → API access**, the account now appears. Click
+   *Manage Play Console permissions* → grant **View financial data** and
+   **Manage orders and subscriptions** for the PulseQuiz app → Invite user.
+   Permissions take a few minutes to apply.
+5. Put the **whole JSON file, on one line** into `GOOGLE_SERVICE_ACCOUNT_JSON`
+   (Render → Environment → Add). To flatten it:
+   `node -e "console.log(JSON.stringify(require('./key.json')))"`.
+   Also set `ANDROID_PACKAGE_NAME=com.bonhomie95.pulsequiz`.
+6. Delete the downloaded file afterwards. If it ever leaks, delete that key in
+   Cloud Console and create a new one.
+
+Verify: buy a coin pack with a Play licence tester account; the server logs a
+successful verification and the coins land.
+
 ### Google Play Real-Time Developer Notifications
 Play Console → Monetisation setup → **Real-time developer notifications** →
 Pub/Sub topic, with a push subscription pointing at:
@@ -93,15 +153,105 @@ Pub/Sub topic, with a push subscription pointing at:
 https://<host>/api/webhooks/google?token=$GOOGLE_RTDN_SECRET
 ```
 
-Prefer OIDC: set `PUBSUB_VERIFICATION_AUDIENCE` and
-`PUBSUB_SERVICE_ACCOUNT_EMAIL` instead of the shared secret.
+`GOOGLE_RTDN_SECRET` is already set on the API, so paste the full URL above
+(with the token) as the Pub/Sub push endpoint. Anything without that token is
+refused.
 
-### NOWPayments
-Payouts need `NOWPAYMENTS_EMAIL` + `NOWPAYMENTS_PASSWORD` (for the bearer token)
-and, if the account has 2FA, `NOWPAYMENTS_2FA_CODE`. **Run one real payout of a
-trivial amount end to end before any period closes.**
+Prefer OIDC once the service account exists: set `PUBSUB_VERIFICATION_AUDIENCE`
+(whatever you set as the audience on the push subscription — use the webhook
+URL) and `PUBSUB_SERVICE_ACCOUNT_EMAIL` (the `client_email` from the service
+account JSON). With an audience set, the shared secret is ignored.
+
+**Note:** notifications about *subscriptions* are reconciled by calling Google
+Play, so they also need a real `GOOGLE_SERVICE_ACCOUNT_JSON`. Today that
+variable holds a placeholder, so Android purchase verification and subscription
+reconciliation are both off until you create the service account above.
+
+### NOWPayments (prize payouts)
+
+Only needed if you pay cash prizes. While `prizes_enabled` is off, or
+`PAYOUT_MOCK=1`, nothing here is required.
+
+1. Create an account at https://nowpayments.io and verify the email. Business
+   accounts need KYB before mass payouts are enabled — start this early, it is
+   the slow part.
+2. **Settings → Payments → API keys → Add new key** → `NOWPAYMENTS_API_KEY`.
+3. **Mass payouts** must be enabled on the account (Settings → Payouts). Ask
+   support if the section is missing. Payouts authenticate differently from
+   the API key: the server signs in with your account credentials to get a
+   bearer token, so set `NOWPAYMENTS_EMAIL` and `NOWPAYMENTS_PASSWORD`.
+4. Turn on 2FA for the account (they require it for payouts). Store the TOTP
+   *code source* in `NOWPAYMENTS_2FA_CODE`. A static code expires in 30s, so in
+   practice this env var holds the current code only for a manual run — for
+   unattended payouts use their whitelisted-address flow, or keep a human in
+   the loop with the admin Payouts screen.
+5. Fund the payout balance in the coins you pay in (USDT and/or USDC on the
+   networks in `validateWallet.ts`).
+6. `NOWPAYMENTS_IPN_URL` is sent to NOWPayments with each payout, but **there
+   is no IPN receiver in the server yet** — nothing listens on that URL. Payout
+   status is instead reconciled by the `payout-retry` cron and the stuck-payout
+   sweep, and anything indeterminate is parked for an admin to resolve on the
+   Payouts screen. Leave the variable unset, or treat building the receiver as
+   work still to do before prizes run at volume.
+
+**Before any period closes, run one real payout of a trivial amount end to
+end** (admin → Payouts → retry on a small test row) and confirm the coins
+arrive. A failed first payout during a real prize week is the worst time to
+discover a missing setting.
 
 ---
+
+### The question bank
+
+`server/src/seed/questions.<category>.json` is the source of truth: 50 questions
+per category (20 easy / 20 medium / 10 hard), each with an `explanation` shown
+to players after the answer.
+
+```bash
+npm run seed            # add/update questions, keep anything already there
+npm run seed -- --wipe  # replace the bank entirely
+```
+
+Re-running updates wording and explanations in place (matched on the question's
+fingerprint) and never resets a question's live calibration counters.
+
+The older generated bank (`npm run bank:build` → `question-bank/*.json`, then
+`npm run bank:seed`) predates explanations and would reintroduce the retired
+2,200-question set. Don't run it unless you mean to.
+
+### Facebook sign-in (currently OFF)
+
+Facebook sign-in is disabled in both the app and the server. To turn it on:
+set `FACEBOOK_LOGIN_ENABLED=true` plus `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET`
+on the server, and set `FACEBOOK_LOGIN_ENABLED = true` in
+`mobile/app/(auth)/login.tsx`. Both sides are needed — the server refuses the
+provider on its own.
+
+## 2a. After deploying this release
+
+```bash
+npm run sync-indexes   # new: challenge seed-slot unique index, user identity-hash index
+```
+
+New or now-required environment variables:
+
+| Variable | Why |
+|---|---|
+| `METRICS_TOKEN` | Now required in production (`/metrics` was public without it). |
+| `ADMOB_REWARDED_AD_UNIT_IDS` | Comma-separated rewarded units; SSV callbacks from other publishers' units are rejected. |
+| `PUBSUB_SERVICE_ACCOUNT_EMAIL` | Required with `PUBSUB_VERIFICATION_AUDIENCE` in production. |
+
+The server now also serves `/terms`, `/privacy`, `/rules`, `/support` and
+`/delete-account` (from `server/public/legal`). Replace the placeholder support
+email in those files before launch.
+
+### Upgrades in this release (leagues, daily quiz, duels, practice, prize regions)
+
+- New collections: `dailyquizzes`, `dailyattempts`, `leaguegroups`, `leaguemembers`, `duels`. Run `sync-indexes` after deploy — the unique indexes (one daily attempt per user+date, one league row per user+week) are what make these safe.
+- New cron `league-settle` at :15 every hour. It settles every unsettled group from a past week, and a re-run resumes where it stopped (per-member claim).
+- New settings: `prizes_enabled`, `prize_countries` (Admin → Settings → Payouts). A payout skipped for region shows `region_not_eligible`.
+- New env (optional): `APP_STORE_URL`, `PLAY_STORE_URL` for the `/d/:code` challenge landing page.
+- "A player says their league reward is missing": check `leaguemembers` for their `week` — `outcome` and `reward` are set when paid, and the coin ledger has a `league_reward` row.
 
 ## 2b. Retiring the old ten-year tokens
 
@@ -170,10 +320,14 @@ dedicated worker set `RUN_CRON=1` and on web nodes `RUN_CRON=0`.
 
 ### "A payout didn't arrive"
 1. Admin → Payouts, filter by `failed`. `failReason` says why.
-2. `retries: 99` means the outcome was **indeterminate** — the provider may or
-   may not have sent it. Do **not** retry. Check the provider dashboard for the
-   reference `{period}:{periodLabel}:{userId}` first.
-3. `skipped` with a reason means the user was ineligible; the same reason is
+2. `retries: 99` (shown as **CHECK** in the panel) means the outcome was
+   **indeterminate** — the provider may or may not have sent it. The Retry
+   button is hidden and the API refuses it. Check the provider dashboard for
+   the reference `{period}:{periodLabel}:{userId}` first.
+3. `superseded` means the amount was paid inside a later payout (balances roll
+   over). It is never sent on its own. A retry that finds the balance already
+   paid marks the row `superseded` instead of sending.
+4. `skipped` with a reason means the user was ineligible; the same reason is
    shown to them on their wallet screen.
 
 ### "Coins went missing / a balance looks wrong"
@@ -340,9 +494,24 @@ in the UI).
 | Anti-Cheat | Review queue, resolve flags | Any |
 | Coins | Adjust a balance with a reason (audited) | SUPER |
 | Payouts | Records, prize pools, retry, manual trigger, CSV export | View: any · rest SUPER |
-| Questions | CRUD, per-category coverage, CSV import with dry run, template download | Import: SUPER |
+| Questions | Create/edit (answer picked by clicking the option), enable/disable, reported-question queue, per-category coverage, **upload a .csv or .json file** (dry-run report with row numbers, then import), template download | Delete: SUPER · rest any |
+| Admins | Add admins (SUPER_ADMIN or MODERATOR), change role, deactivate/reactivate, reset password. Can't demote/deactivate yourself or the last super admin. 5 failed logins lock an account for 15 min | SUPER |
 | Challenges | List/filter, assign to a player, delete | Assign: SUPER |
-| Tournaments, Subscriptions, Purchases, Reports, Leaderboard, Analytics, Activity, Audit, Settings | Full | Audit: SUPER |
+| Tournaments | Create/edit (fee locked once players join), start, **cancel & refund all entries**, delete (only when nobody paid) | Changes: SUPER |
+| Subscriptions | List; revoke premium (does not stop store billing) | Revoke: SUPER |
+| Purchases, Reports, Leaderboard, Analytics, Activity, Audit, Settings | Full | Audit, Settings edit: SUPER |
+
+Bootstrap the first super admin with `npm run create-admin -- you@example.com`
+(password is prompted, never on the command line); manage the rest from the
+**Admins** page.
+
+### Prize currency (USDT / USDC)
+
+Players choose the coin and network in Settings. Supported pairs (must match
+`nowpaymentsService.getCurrency`): USDT on TRC20 / ERC20 / BEP20, USDC on
+ERC20 / Polygon / Solana. Changing coin, network or address starts the 72-hour
+payout hold. Each payout row records the currency; the CSV export includes it.
+Fund the NOWPayments balance in **both** coins.
 
 ### Streak ranking
 

@@ -1,6 +1,11 @@
+import crypto from 'crypto';
 import { Schema, model, Types } from 'mongoose';
 
-export type UsdtType = 'TRC20' | 'ERC20' | 'BEP20';
+import type { PayoutCurrency, PayoutNetwork } from '../utils/validateWallet';
+
+/** Payout network. Field names keep the historical `usdt` prefix to avoid a
+ *  data migration; they now apply to whichever stablecoin `payoutCurrency` is. */
+export type UsdtType = PayoutNetwork;
 
 export interface IUser {
   _id: Types.ObjectId;
@@ -13,6 +18,8 @@ export interface IUser {
 
   theme: 'light' | 'dark' | 'system';
 
+  /** Stablecoin prizes are paid in. Defaults to USDT for existing users. */
+  payoutCurrency: PayoutCurrency;
   usdtType?: UsdtType;
   usdtAddress?: string;
   /** When the payout address was last changed. Payouts are held for a cooling
@@ -29,6 +36,12 @@ export interface IUser {
   adRewardWindowDate?: string | null;
   lastSeenAt?: Date | null;
   isBanned: boolean;
+  /**
+   * A house account that pads out the leaderboards so early players are not
+   * staring at an empty board. Never eligible for a prize: payouts rank real
+   * players only. See services/syntheticPlayers.ts.
+   */
+  isSynthetic: boolean;
   hasCompletedFirstQuiz: boolean;
   moderationStrikes: number;
 
@@ -39,6 +52,17 @@ export interface IUser {
   /** Soft-delete marker for GDPR erasure; the row is anonymised, not dropped,
    *  so ledger and payout history stay referentially intact. */
   deletedAt?: Date | null;
+  /** sha256(provider:providerId) kept on a tombstone, so the same identity
+   *  re-registering can be recognised without keeping the raw id. */
+  deletedIdentityHash?: string | null;
+  /** Re-registration of a deleted identity: no referral bonuses. */
+  referralIneligible?: boolean;
+
+  /** ISO 3166 alpha-2, from the edge (CF-IPCountry) or the device region.
+   *  Decides whether real-money prizes are offered (see prizeRegion). */
+  country?: string | null;
+  /** League tier for the NEXT week the player joins (0 = Bronze). */
+  leagueTier: number;
 
   createdAt: Date;
 }
@@ -64,9 +88,14 @@ const UserSchema = new Schema<IUser>(
       default: 'system',
     },
 
+    payoutCurrency: {
+      type: String,
+      enum: ['USDT', 'USDC'],
+      default: 'USDT',
+    },
     usdtType: {
       type: String,
-      enum: ['TRC20', 'ERC20', 'BEP20'],
+      enum: ['TRC20', 'ERC20', 'BEP20', 'POLYGON', 'SOL'],
     },
 
     usdtAddress: {
@@ -97,10 +126,15 @@ const UserSchema = new Schema<IUser>(
     adRewardWindowDate: { type: String, default: null },
     lastSeenAt: { type: Date, default: null },
     isBanned: { type: Boolean, default: false },
+    isSynthetic: { type: Boolean, default: false },
     hasCompletedFirstQuiz: { type: Boolean, default: false },
     moderationStrikes: { type: Number, default: 0 },
     tokenVersion: { type: Number, default: 0 },
     deletedAt: { type: Date, default: null },
+    deletedIdentityHash: { type: String, default: null },
+    referralIneligible: { type: Boolean, default: false },
+    country: { type: String, default: null },
+    leagueTier: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true },
 );
@@ -111,6 +145,12 @@ const UserSchema = new Schema<IUser>(
 UserSchema.index({ provider: 1, providerId: 1 }, { unique: true });
 UserSchema.index({ email: 1 });
 UserSchema.index({ lastSeenAt: -1 });
+// Payout ranking and the synthetic seeder both filter on this.
+UserSchema.index({ isSynthetic: 1 });
+UserSchema.index(
+  { deletedIdentityHash: 1 },
+  { partialFilterExpression: { deletedIdentityHash: { $type: 'string' } } },
+);
 
 // Case-insensitive username uniqueness, index-backed. Usernames are normalised
 // to lowercase on write; the collation makes any legacy mixed-case row collide
@@ -140,5 +180,9 @@ UserSchema.index(
     name: 'username_prefix',
   },
 );
+
+export function identityHash(provider: string, providerId: string): string {
+  return crypto.createHash('sha256').update(`${provider}:${providerId}`).digest('hex');
+}
 
 export default model<IUser>('User', UserSchema);

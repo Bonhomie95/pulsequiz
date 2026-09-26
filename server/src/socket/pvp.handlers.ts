@@ -284,12 +284,14 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
     if (!match || match.settledAt) return;
 
     const room = `pvp:${matchId}`;
-    socket.join(room);
 
     const player = (match.players as any[]).find(
       (p) => p.userId.toString() === userId,
     );
     if (!player) return; // not a participant — ignore silently
+    // Join only after the membership check, or any user could subscribe to a
+    // stranger's match room and receive its questions and results.
+    socket.join(room);
 
     clearDisconnectTimer(userId);
 
@@ -397,8 +399,12 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
 
   /* ---------- KEEPALIVE ---------- */
 
+  let lastPingAt = 0;
   on(SOCKET_EVENTS.MATCH_PING, async ({ matchId }: { matchId: string }) => {
     if (!Types.ObjectId.isValid(matchId)) return;
+    // Each ping is a DB write; a client spamming it shouldn't cost us one each.
+    if (Date.now() - lastPingAt < 3000) return;
+    lastPingAt = Date.now();
     // Targeted update — no full document read-modify-write.
     await PvPMatch.updateOne(
       { _id: matchId, 'players.userId': new Types.ObjectId(userId) },
@@ -429,12 +435,12 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
       if (!match || match.settledAt || match.state === 'FINISHED') return;
 
       const room = `pvp:${matchId}`;
-      socket.join(room);
 
       const player = (match.players as any[]).find(
         (p) => p.userId.toString() === userId,
       );
       if (!player) return;
+      socket.join(room);
 
       clearDisconnectTimer(userId);
 
@@ -578,6 +584,12 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
             liveByUser.delete(userId);
             return;
           }
+
+          const me = (match.players as any[]).find((p) => p.userId.toString() === userId);
+          // Already finished before dropping: nothing to forfeit. The match
+          // settles when the opponent finishes, or via the deadline sweeper if
+          // they stall — never by handing them the pot for our disconnect.
+          if (me && (me.completed || typeof me.failedAtIndex === 'number')) return;
 
           const winner = (match.players as any[]).find(
             (p) => p.userId.toString() !== userId,

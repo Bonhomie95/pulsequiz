@@ -5,6 +5,8 @@ module.exports = {
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
+  globalSetup: '<rootDir>/src/__tests__/globalSetup.ts',
+  globalTeardown: '<rootDir>/src/__tests__/globalTeardown.ts',
   // An in-memory mongod takes a moment to download and boot on a cold cache.
   testTimeout: 30_000,
   // Integration tests share one mongod; running files in parallel against it

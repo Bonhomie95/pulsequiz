@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   AlertTriangle,
   TrendingUp,
+  Wallet2,
 } from 'lucide-react-native';
 import { useTheme } from '@/src/theme/useTheme';
 import { useCoinStore } from '@/src/store/useCoinStore';
@@ -27,9 +28,11 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
 import { PayoutChecklist, type Eligibility } from '@/src/components/PayoutChecklist';
 import { api, errorMessage } from '@/src/api/api';
-import { showRewardedAd } from '@/src/ads/admob';
+import { showRewardedAd, rewardedAdsAvailable } from '@/src/ads/admob';
 import { useAppStateStore } from '@/src/store/useAppStateStore';
 import { CoinRewardToast } from '@/src/components/CoinRewardToast';
+import { RulesSheet } from '@/src/components/RulesSheet';
+import { useAuthStore, usePrizesAvailable } from '@/src/store/useAuthStore';
 
 type Payout = {
   _id: string;
@@ -37,7 +40,9 @@ type Payout = {
   rank: number;
   period: string;
   periodLabel: string;
-  status: 'pending' | 'sent' | 'confirmed' | 'failed' | 'skipped';
+  status: 'pending' | 'processing' | 'sent' | 'confirmed' | 'failed' | 'skipped' | 'superseded';
+  currency?: 'USDT' | 'USDC';
+  usdtType?: string;
   txHash?: string;
   createdAt: string;
 };
@@ -54,12 +59,28 @@ const STATUS_COLOR: Record<string, string> = {
   confirmed: '#4ADE80',
   failed: '#FF5C5C',
   skipped: '#A6B0CF',
+  processing: '#5B7CFF',
+  superseded: '#A6B0CF',
+};
+
+/** Plain-language status; "superseded" means it was paid inside a later payout. */
+const STATUS_LABEL: Record<string, string> = {
+  pending: 'Pending',
+  processing: 'Sending',
+  sent: 'Sent',
+  confirmed: 'Confirmed',
+  failed: 'Retrying',
+  skipped: 'On hold',
+  superseded: 'Paid later',
 };
 
 export default function WalletScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { coins } = useCoinStore();
+  const user = useAuthStore((st) => st.user);
+  const prizes = usePrizesAvailable();
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [payoutData, setPayoutData] = useState<PayoutData | null>(null);
   const [eligibility, setEligibility] = useState<Eligibility | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -142,9 +163,9 @@ export default function WalletScreen() {
 
   const StatusIcon = ({ status }: { status: string }) => {
     const color = STATUS_COLOR[status] ?? '#A6B0CF';
-    if (status === 'confirmed' || status === 'sent')
+    if (status === 'confirmed' || status === 'sent' || status === 'superseded')
       return <CheckCircle size={16} color={color} />;
-    if (status === 'failed' || status === 'skipped')
+    if (status === 'skipped')
       return <XCircle size={16} color={color} />;
     return <Clock size={16} color={color} />;
   };
@@ -153,6 +174,7 @@ export default function WalletScreen() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
+      <RulesSheet visible={rulesOpen} onClose={() => setRulesOpen(false)} />
       <CoinRewardToast
         visible={coinToast.visible}
         coins={coinToast.coins}
@@ -190,7 +212,7 @@ export default function WalletScreen() {
         </View>
 
         {/* PAYOUT ELIGIBILITY — what is still blocking a payout, if anything */}
-        <PayoutChecklist eligibility={eligibility} />
+        {prizes && <PayoutChecklist eligibility={eligibility} />}
 
         {fetchError && (
           <View
@@ -214,8 +236,8 @@ export default function WalletScreen() {
           </View>
         )}
 
-        {/* USDT EARNINGS CARD */}
-        {payoutData && (
+        {/* PRIZE EARNINGS CARD */}
+        {prizes && payoutData && (
           <View
             style={[
               styles.card,
@@ -227,7 +249,7 @@ export default function WalletScreen() {
               ${payoutData.totalEarned.toFixed(2)}
             </Text>
             <Text style={[styles.label, { color: theme.colors.muted }]}>
-              Total USDT Earned
+              Total Prizes Earned (USD)
             </Text>
             {payoutData.pendingUSDT > 0 && (
               <View
@@ -243,34 +265,61 @@ export default function WalletScreen() {
           </View>
         )}
 
-        {/* ADDRESS WARNING */}
-        <View
+        {/* PRIZE WALLET — what payouts will be sent to */}
+        {prizes && (
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/settings')}
+          accessibilityRole="button"
+          accessibilityLabel={
+            user?.usdtAddress
+              ? `Prize wallet ${user.payoutCurrency ?? 'USDT'} on ${user.usdtType}. Change in Settings`
+              : 'Add a USDT or USDC wallet in Settings'
+          }
           style={[
             styles.warningCard,
-            { backgroundColor: '#FF5C5C15', borderColor: '#FF5C5C40' },
+            user?.usdtAddress
+              ? { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }
+              : { backgroundColor: theme.colors.danger + '15', borderColor: theme.colors.danger + '40' },
           ]}
         >
-          <AlertTriangle size={16} color="#FF5C5C" />
+          {user?.usdtAddress ? (
+            <Wallet2 size={16} color={theme.colors.primary} />
+          ) : (
+            <AlertTriangle size={16} color={theme.colors.danger} />
+          )}
           <Text
             style={{
-              color: '#FF5C5C',
+              color: user?.usdtAddress ? theme.colors.text : theme.colors.danger,
               fontSize: 12,
               flex: 1,
               marginLeft: 8,
               lineHeight: 18,
             }}
           >
-            <Text style={{ fontWeight: '800' }}>CONFIRM YOUR USDT ADDRESS</Text>{' '}
-            in Profile → Settings before Saturday or you may forfeit your prize.
+            {user?.usdtAddress ? (
+              <>
+                <Text style={{ fontWeight: '800' }}>
+                  Prizes go to {user.payoutCurrency ?? 'USDT'} · {user.usdtType}
+                </Text>
+                {'\n'}
+                {user.usdtAddress.slice(0, 8)}…{user.usdtAddress.slice(-6)} — tap to change
+              </>
+            ) : (
+              <>
+                <Text style={{ fontWeight: '800' }}>ADD A PRIZE WALLET</Text>{' '}
+                {"Save a USDT or USDC address in Settings — a winner without a wallet misses that period's payout."}
+              </>
+            )}
           </Text>
-        </View>
+        </TouchableOpacity>
+        )}
 
         {/* ACTIONS */}
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
           Earn Coins
         </Text>
         <View style={styles.actions}>
-          <TouchableOpacity
+          {rewardedAdsAvailable && <TouchableOpacity
             activeOpacity={0.85}
             style={[
               styles.actionCard,
@@ -280,7 +329,8 @@ export default function WalletScreen() {
             disabled={adLoading}
           
             accessibilityRole="button"
-            accessibilityLabel="Watch Video"
+            accessibilityLabel="Watch a video to earn free coins"
+            accessibilityState={{ disabled: adLoading, busy: adLoading }}
             hitSlop={8}>
             {adLoading ? (
               <ActivityIndicator color="#fff" size="small" />
@@ -291,7 +341,7 @@ export default function WalletScreen() {
               <Text style={styles.actionTitle}>Watch Video</Text>
               <Text style={styles.actionSub}>Earn free coins (max 5/day)</Text>
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity>}
 
           <TouchableOpacity
             activeOpacity={0.85}
@@ -320,9 +370,11 @@ export default function WalletScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* PAYOUT HISTORY */}
+        {/* PAYOUT HISTORY — kept visible if they were ever paid */}
+        {(prizes || (payoutData?.payouts.length ?? 0) > 0) && (
+        <>
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-          USDT Payout History
+          Prize Payout History
         </Text>
 
         {loading ? (
@@ -339,7 +391,7 @@ export default function WalletScreen() {
           >
             <Trophy size={32} color={theme.colors.muted} />
             <Text style={[styles.emptyText, { color: theme.colors.muted }]}>
-              No payouts yet. Rank in the top players to earn USDT!
+              No payouts yet. Finish in a paying rank to win USDT or USDC!
             </Text>
           </View>
         ) : (
@@ -357,7 +409,7 @@ export default function WalletScreen() {
                   <Text
                     style={[styles.payoutAmount, { color: theme.colors.text }]}
                   >
-                    ${p.amount.toFixed(2)} USDT
+                    ${p.amount.toFixed(2)} {p.currency ?? 'USDT'}
                   </Text>
                   <Text style={{ color: theme.colors.muted, fontSize: 12 }}>
                     Rank #{p.rank} • {p.period} • {p.periodLabel}
@@ -381,16 +433,25 @@ export default function WalletScreen() {
                     textTransform: 'capitalize',
                   }}
                 >
-                  {p.status}
+                  {STATUS_LABEL[p.status] ?? p.status}
                 </Text>
               </View>
             </View>
           ))
         )}
+        </>
+        )}
 
         <Text style={[styles.footerNote, { color: theme.colors.muted }]}>
-          💡 Coins are for hints, wagers & boosts. USDT is earned by ranking in
-          the top players each week/month.
+          💡 Coins are for hints, wagers & boosts and have no cash value.
+          {prizes ? ' Prizes (USDT/USDC) come only from your leaderboard rank.' : ''}{' '}
+          <Text
+            onPress={() => setRulesOpen(true)}
+            accessibilityRole="link"
+            style={{ color: theme.colors.primary, fontWeight: '700' }}
+          >
+            {prizes ? 'Rules & prizes' : 'How it works'}
+          </Text>
         </Text>
       </ScrollView>
     </SafeAreaView>

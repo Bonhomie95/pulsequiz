@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
@@ -10,18 +11,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Flame, ShieldAlert } from 'lucide-react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 
 import { api } from '../src/api/api';
 import { useTheme } from '../src/theme/useTheme';
 import { useStreakStore } from '../src/store/useStreakStore';
 import { useCoinStore } from '../src/store/useCoinStore';
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
-const TZ = 'Africa/Lagos';
+// Days are the device's local days: the API sends X-Timezone and the server
+// computes the streak boundary in that zone (it used to be Lagos for everyone).
 const CALENDAR_RANGE = 7; // centered today (-3 to +3)
 
 /* -------------------------------------------------------------------------- */
@@ -59,21 +56,17 @@ export default function StreakScreen() {
   /* ---------------- BACKEND SYNC ---------------- */
 
   const syncFromBackend = async () => {
-    const res = await api.get('/home/summary');
+    const res = await api.get('/home/summary').catch(() => null);
+    if (!res) return;
 
     setFromBackend(res.data.streak, res.data.lastCheckIn);
 
-    const now = dayjs().tz(TZ).startOf('day');
-    const last = res.data.lastCheckIn
-      ? dayjs(res.data.lastCheckIn).tz(TZ).startOf('day')
-      : null;
-
-    const nowLagos = dayjs().tz(TZ).startOf('day');
+    const today = dayjs().startOf('day');
     const lastCI = res.data.lastCheckIn
-      ? dayjs(res.data.lastCheckIn).tz(TZ).startOf('day')
+      ? dayjs(res.data.lastCheckIn).startOf('day')
       : null;
-    setCheckedInToday(!!lastCI && lastCI.isSame(nowLagos));
-    setMissedYesterday(!!lastCI && lastCI.isBefore(nowLagos.subtract(1, 'day')));
+    setCheckedInToday(!!lastCI && lastCI.isSame(today));
+    setMissedYesterday(!!lastCI && lastCI.isBefore(today.subtract(1, 'day')));
   };
 
   useFocusEffect(
@@ -90,21 +83,17 @@ export default function StreakScreen() {
     try {
       setLoading(true);
 
-      const res = await api.get('/home/summary');
+      // Actually check in — this used to only re-read /home/summary, so the
+      // button did nothing when opened from a streak-warning notification.
+      const res = await api.post('/streak/check-in');
 
       setFromBackend(res.data.streak, res.data.lastCheckIn);
-
-      setCheckedInToday(
-        !!res.data.lastCheckIn &&
-          dayjs(res.data.lastCheckIn).tz(TZ).isSame(dayjs().tz(TZ), 'day')
-      );
-
+      setCheckedInToday(true);
+      setMissedYesterday(false);
       useCoinStore.getState().syncFromServer(res.data);
-
-      // setCheckedInToday(true);
       pulse();
     } catch (e: any) {
-      alert(e?.response?.data?.message || 'Check-in failed');
+      Alert.alert('Check-in failed', e?.response?.data?.message || 'Please try again.');
     } finally {
       setLoading(false);
     }
@@ -116,15 +105,15 @@ export default function StreakScreen() {
     if (!lastCheckIn || streak <= 0) return [];
 
     return Array.from({ length: streak }).map((_, i) =>
-      dayjs(lastCheckIn).tz(TZ).subtract(i, 'day').format('YYYY-MM-DD')
+      dayjs(lastCheckIn).subtract(i, 'day').format('YYYY-MM-DD')
     );
   }, [lastCheckIn, streak]);
 
   /* ---------------- CALENDAR ---------------- */
 
   const days = useMemo(() => {
-    // Always anchor calendar to REAL today in Lagos TZ, not lastCheckIn
-    const today = dayjs().tz(TZ).startOf('day');
+    // Always anchor the calendar to real (local) today, not lastCheckIn
+    const today = dayjs().startOf('day');
 
     return Array.from({ length: CALENDAR_RANGE }).map((_, i) => {
       const date = today.subtract(3 - i, 'day');
@@ -216,12 +205,12 @@ export default function StreakScreen() {
 
         {/* CHECK-IN */}
         <TouchableOpacity
-          disabled={checkedInToday}
+          disabled={checkedInToday || loading}
           accessibilityRole="button"
           accessibilityLabel={
             checkedInToday ? 'Already checked in today' : 'Check in for today'
           }
-          accessibilityState={{ disabled: checkedInToday }}
+          accessibilityState={{ disabled: checkedInToday || loading, busy: loading }}
           onPress={checkIn}
           style={[
             styles.checkIn,
@@ -242,17 +231,6 @@ export default function StreakScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* STREAK FREEZE (FRONTEND READY) */}
-        {/* <TouchableOpacity
-          style={[styles.freeze, { backgroundColor: theme.colors.surface }]}
-        
-            accessibilityRole="button"
-            accessibilityLabel="Use Streak Freeze (Coming Soon)"
-            hitSlop={8}>
-          <Text style={{ color: theme.colors.text }}>
-            Use Streak Freeze (Coming Soon)
-          </Text>
-        </TouchableOpacity> */}
 
         {/* TIMELINE */}
         <Text style={[styles.section, { color: theme.colors.text }]}>
@@ -270,7 +248,7 @@ export default function StreakScreen() {
               ]}
             >
               <Text style={{ color: theme.colors.text }}>
-                {dayjs().tz(TZ).date(Number(d.date)).format('dddd, MMM D')}
+                {dayjs().date(Number(d.date)).format('dddd, MMM D')}
               </Text>
               <Text style={{ color: theme.colors.primary }}>Checked in</Text>
             </View>

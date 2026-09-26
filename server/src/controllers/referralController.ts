@@ -83,7 +83,12 @@ export async function applyReferralCode(req: AuthRequest, res: Response) {
 
   // A brand-new account claiming a code is the normal case; an established
   // account doing it is almost always someone farming their own referrals.
-  const me = await User.findById(req.userId).select('createdAt hasCompletedFirstQuiz').lean();
+  const me = await User.findById(req.userId)
+    .select('createdAt hasCompletedFirstQuiz referralIneligible')
+    .lean();
+  if (me?.referralIneligible) {
+    return res.status(400).json({ message: 'This account is not eligible for referral rewards' });
+  }
   if (me?.hasCompletedFirstQuiz) {
     return res.status(400).json({
       message: 'Referral codes can only be used before your first quiz',

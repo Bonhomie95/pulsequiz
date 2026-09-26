@@ -1,16 +1,30 @@
 import { Schema, model, Types } from 'mongoose';
 
-export type PayoutStatus = 'pending' | 'sent' | 'confirmed' | 'failed' | 'skipped';
+/**
+ * processing  — claimed by a retry that is talking to the provider right now.
+ * superseded  — its amount was paid as part of a later payout (balances roll
+ *               over), so it must never be sent on its own.
+ */
+export type PayoutStatus =
+  | 'pending'
+  | 'processing'
+  | 'sent'
+  | 'confirmed'
+  | 'failed'
+  | 'skipped'
+  | 'superseded';
 export type PayoutPeriod = 'weekly' | 'monthly' | 'event';
 
 export interface IPayout {
   userId: Types.ObjectId;
-  amount: number; // USDT
+  amount: number; // USD value, paid in `currency`
   rank: number;
   period: PayoutPeriod;
   periodLabel: string; // e.g. "2026-W08" or "2026-02"
   usdtAddress: string;
   usdtType: string;
+  /** USDT or USDC — snapshot of the user's choice when the row was created. */
+  currency: 'USDT' | 'USDC';
   status: PayoutStatus;
   txHash?: string;
   retries: number;
@@ -34,7 +48,12 @@ const PayoutSchema = new Schema<IPayout>(
     periodLabel: { type: String, required: true },
     usdtAddress: { type: String, required: true },
     usdtType: { type: String, required: true },
-    status: { type: String, enum: ['pending', 'sent', 'confirmed', 'failed', 'skipped'], default: 'pending' },
+    currency: { type: String, enum: ['USDT', 'USDC'], default: 'USDT' },
+    status: {
+      type: String,
+      enum: ['pending', 'processing', 'sent', 'confirmed', 'failed', 'skipped', 'superseded'],
+      default: 'pending',
+    },
     txHash: { type: String },
     retries: { type: Number, default: 0 },
     nowpaymentsPaymentId: { type: String },

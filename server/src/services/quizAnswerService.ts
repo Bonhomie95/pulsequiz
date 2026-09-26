@@ -1,6 +1,6 @@
 import ActiveQuizSession from '../models/ActiveQuizSession';
 import QuizQuestion from '../models/QuizQuestion';
-import { TIME_PER_QUESTION, isAnswerTooLate } from '../config/quizTiming';
+import { TIME_PER_QUESTION, isAnswerTooLate, revealPauseMs } from '../config/quizTiming';
 
 export async function submitQuizAnswer(params: {
   userId: string;
@@ -40,17 +40,27 @@ export async function submitQuizAnswer(params: {
   if (!q) throw new Error('Question not found');
 
   const isCorrect = selected !== null && selected === q.answer;
+  const explanation = q.explanation || null;
+  const now = Date.now();
 
   // Save answer
   session.answers.push({
     questionId: q._id,
     selected,
     isCorrect,
-    answeredAt: new Date(),
+    answeredAt: new Date(now),
   });
 
-  // ❌ Wrong or timeout ends game immediately (your rule)
-  if (!isCorrect || selected === null) {
+  if (isCorrect && session.questionDeadlineAt) {
+    session.timeLeftMs =
+      (session.timeLeftMs ?? 0) +
+      Math.max(0, Math.min(TIME_PER_QUESTION * 1000, session.questionDeadlineAt.getTime() - now));
+  }
+
+  // ❌ Classic is sudden death: a wrong answer or a timeout ends the run.
+  // Every other mode plays all the questions.
+  const suddenDeath = (session.mode ?? 'classic') === 'classic';
+  if (!isCorrect && suddenDeath) {
     session.finished = true;
     await session.save();
 
@@ -58,10 +68,11 @@ export async function submitQuizAnswer(params: {
       correct: false,
       finished: true,
       correctIndex: q.answer,
+      explanation,
     };
   }
 
-  // ✅ Correct → move to next question
+  // Move to the next question
   session.currentIndex += 1;
 
   // 🏁 Last question
@@ -70,9 +81,10 @@ export async function submitQuizAnswer(params: {
     await session.save();
 
     return {
-      correct: true,
+      correct: isCorrect,
       finished: true,
       correctIndex: q.answer,
+      explanation,
     };
   }
 
@@ -81,15 +93,18 @@ export async function submitQuizAnswer(params: {
 
   session.currentQuestionId = nextQ;
 
-  // ⏱ Reset deadline for next question
-  session.questionDeadlineAt = new Date(Date.now() + TIME_PER_QUESTION * 1000);
+  // ⏱ Next question's deadline. Unranked modes pause to show the answer (and
+  // its explanation) before the clock starts again.
+  const pause = suddenDeath ? 0 : revealPauseMs(!!explanation);
+  session.questionDeadlineAt = new Date(now + pause + TIME_PER_QUESTION * 1000);
 
   await session.save();
 
   return {
-    correct: true,
+    correct: isCorrect,
     finished: false,
     correctIndex: q.answer,
+    explanation,
     nextQuestionId: nextQ.toString(),
     deadlineAt: session.questionDeadlineAt,
   };

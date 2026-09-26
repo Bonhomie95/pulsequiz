@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>PulseQuiz — brag v2</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/music/audio-data.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0b0f1a; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0b0f1a; color: #fff; font-family: Montserrat, sans-serif; }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      .inner { position: absolute; inset: 0; will-change: transform, opacity, filter; }
+      .disp { font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: -0.03em; line-height: 1.02; color: #fff; will-change: transform, opacity, filter; }
+      .sub { font-family: Montserrat, sans-serif; font-weight: 700; letter-spacing: -0.01em; color: #a6b0cf; line-height: 1.25; will-change: transform, opacity; }
+      .glow { position: absolute; border-radius: 50%; pointer-events: none; opacity: 0;
+        background: radial-gradient(circle, rgba(63,87,201,0.9) 0%, rgba(63,87,201,0.35) 38%, rgba(11,15,26,0) 70%); }
+
+      /* phone chrome (shared) */
+      .phone { position: absolute; border-radius: 58px; background: #05070d; padding: 12px;
+        box-shadow: 0 40px 120px rgba(0,0,0,0.65), 0 0 0 2px #2a3350; will-change: transform, opacity; }
+      .screen.b { position: absolute; inset: 12px; width: auto; height: auto; opacity: 0; }
+      .diff.hard { background: #ff7a85; }
+      .overlay.bad { background: #c4213a; }
+      .screen { position: relative; width: 100%; height: 100%; border-radius: 47px; overflow: hidden; background: #0b0f1a;
+        padding: 54px 16px 26px; display: flex; flex-direction: column; font-family: Inter, sans-serif; color: #fff; }
+      .island { position: absolute; top: 12px; left: 50%; width: 112px; height: 30px; margin-left: -56px; border-radius: 20px; background: #05070d; }
+      .surf { background: #131a2e; border: 1px solid #1f2937; }
+
+      /* ── S1 ── */
+      #s1 { z-index: 1; }
+      #s1-pulse { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      #s1-line { fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.18; }
+      .s1-stack { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; padding: 0 160px; text-align: center; }
+      .s1-small { font-size: 84px; }
+      .s1-big { font-size: 116px; max-width: 1240px; margin-top: 18px; }
+
+      /* ── S2: phone hero ── */
+      #s2 { z-index: 2; }
+      #s2-glow { left: 560px; top: -20px; width: 900px; height: 1120px; }
+      #s2-phone { left: 780px; top: 64px; width: 440px; height: 952px; }
+      #s2-phone .screen { padding: 60px 18px 28px; }
+      .s2-left { position: absolute; left: 100px; top: 0; bottom: 0; width: 680px; display: flex; flex-direction: column; justify-content: center; }
+      #s2-h { font-size: 96px; }
+      .topbar { display: flex; align-items: center; justify-content: space-between; }
+      .tleft, .tright { display: flex; align-items: center; gap: 10px; }
+      .pill { border-radius: 999px; padding: 10px 15px; font-weight: 700; font-size: 15px; }
+      .diff { border-radius: 999px; background: #f59e0b; color: #0b0f1a; padding: 7px 11px; font-weight: 700; font-size: 12px; }
+      .ring { width: 48px; height: 48px; border-radius: 50%; background: conic-gradient(#5b7cff 0 144deg, #1f2937 144deg 360deg); display: grid; place-items: center; }
+      .ring i { width: 37px; height: 37px; border-radius: 50%; background: #0b0f1a; display: grid; place-items: center; font-style: normal; font-weight: 900; font-size: 12px; }
+      .avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; border: 1px solid #1f2937; }
+      .avatar img, .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .meta { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; }
+      .meta .q { font-size: 14px; font-weight: 700; color: #a6b0cf; }
+      .timer { display: grid; min-width: 76px; padding: 8px 12px; border-radius: 999px; text-align: center; }
+      .timer span { grid-area: 1/1; font-size: 15px; font-weight: 900; color: #5b7cff; font-variant-numeric: tabular-nums; opacity: 0; }
+      .timer span.on { opacity: 1; }
+      .timer span.hot { color: #ff7a85; }
+      .qcard { margin-top: 18px; padding: 24px 24px 14px; border-radius: 24px; box-shadow: 0 8px 16px rgba(0,0,0,0.18); }
+      .qcard p { font-size: 21px; font-weight: 700; line-height: 30px; text-align: center; }
+      .qcard .report { margin-top: 6px; text-align: right; font-size: 11px; font-weight: 700; color: #a6b0cf; }
+      .opts { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; }
+      .opt { position: relative; border-radius: 20px; padding: 19px 16px; text-align: center; font-size: 16px; font-weight: 700; color: #fff; will-change: transform; }
+      #tapB { position: absolute; left: 70%; top: 50%; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.28); border: 2px solid rgba(255,255,255,0.85); opacity: 0; }
+      #tap { position: absolute; left: 70%; top: 50%; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.28); border: 2px solid rgba(255,255,255,0.85); opacity: 0; }
+      #ripple { position: absolute; left: 70%; top: 50%; width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; opacity: 0; }
+      .foot { margin-top: auto; padding-top: 14px; display: flex; align-items: center; justify-content: space-between; }
+      .fl, .fr { display: flex; align-items: center; gap: 9px; }
+      .hint { border-radius: 16px; padding: 10px 14px; background: #3f57c9; color: #fff; text-align: center; }
+      .hint b { display: block; font-size: 16px; font-weight: 900; }
+      .hint small { display: block; font-size: 12px; font-weight: 700; }
+      .coins { border-radius: 999px; padding: 11px 12px; font-size: 15px; font-weight: 900; }
+      .plus { border-radius: 16px; padding: 9px 13px; text-align: center; }
+      .plus b { display: block; font-size: 15px; font-weight: 900; }
+      .plus small { display: block; font-size: 12px; color: #a6b0cf; }
+      .quit { border-radius: 16px; padding: 13px 14px; font-size: 15px; font-weight: 900; color: #a6b0cf; }
+      .overlay { position: absolute; left: 18px; right: 18px; bottom: 104px; z-index: 5; border-radius: 18px; background: #0f7a3d; padding: 16px; text-align: center; opacity: 0; will-change: transform, opacity; }
+      .overlay b { display: block; font-size: 18px; font-weight: 900; }
+      .overlay small { display: block; margin-top: 2px; font-size: 15px; font-weight: 700; opacity: 0.92; }
+
+      /* ── S3: VS ── */
+      #s3 { z-index: 3; }
+      #s3-glow { left: 510px; top: 150px; width: 900px; height: 900px; }
+      .s3-stage { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+      #s3-h { font-size: 100px; text-align: center; }
+      #s3-s { font-size: 38px; text-align: center; margin-top: 14px; }
+      .vs-row { display: flex; align-items: center; gap: 56px; position: relative; z-index: 2; }
+      .pcard { width: 400px; padding: 34px 26px; border-radius: 30px; background: #131a2e; display: flex; flex-direction: column; align-items: center; gap: 10px; will-change: transform, opacity; }
+      .pcard .av { width: 176px; height: 176px; border-radius: 50%; overflow: hidden; }
+      .pcard .name { font-size: 34px; font-weight: 900; }
+      .pcard .lv { font-size: 18px; font-weight: 700; color: #a6b0cf; }
+      #s3-vs { font-size: 96px; font-weight: 900; color: #5b7cff; letter-spacing: -0.02em; will-change: transform, opacity; }
+      .count { display: grid; width: 160px; height: 120px; place-items: center; }
+      .count span { grid-area: 1/1; font-size: 120px; font-weight: 900; color: #5b7cff; opacity: 0; line-height: 1; will-change: transform, opacity; }
+
+      /* ── S4: ladder ── */
+      #s4 { z-index: 4; }
+      .s4-left { position: absolute; left: 110px; top: 0; bottom: 0; width: 700px; display: flex; flex-direction: column; justify-content: center; gap: 24px; }
+      #s4-h { font-size: 92px; }
+      #s4-s { font-size: 36px; }
+      .ladder { position: absolute; left: 900px; top: 74px; width: 760px; display: flex; flex-direction: column; gap: 12px; }
+      .rung { height: 121px; border-radius: 26px; display: flex; align-items: center; gap: 22px; padding: 0 36px; font-size: 40px; font-weight: 900; color: #fff; letter-spacing: -0.01em; will-change: transform, opacity; opacity: 0.55; }
+      .rung em { font-style: normal; font-size: 44px; }
+      #s4-me { position: absolute; left: 1420px; top: 992px; height: 62px; display: flex; align-items: center; gap: 12px; padding: 0 20px 0 8px; border-radius: 999px; background: #fff; color: #0b0f1a; font-size: 24px; font-weight: 900; box-shadow: 0 12px 30px rgba(0,0,0,0.45); will-change: transform, opacity; }
+      #s4-me .av { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; }
+
+      /* ── S5: leaderboard ── */
+      #s5 { z-index: 5; }
+      #s5-glow { left: 1000px; top: 60px; width: 760px; height: 960px; }
+      #s5-phone { left: 1180px; top: 107px; width: 400px; height: 866px; }
+      .s5-left { position: absolute; left: 110px; top: 0; bottom: 0; width: 980px; display: flex; flex-direction: column; justify-content: center; gap: 30px; }
+      #s5-h { font-size: 96px; }
+      #s5-h .mint { color: #2ef2b3; }
+      #s5-s { font-size: 34px; }
+      .lbhead { display: flex; align-items: baseline; justify-content: space-between; }
+      .lbhead b { font-size: 24px; font-weight: 900; }
+      .lbhead small { font-size: 12px; font-weight: 700; color: #a6b0cf; }
+      .banner { margin-top: 14px; border-radius: 18px; padding: 14px 16px; background: linear-gradient(120deg, #3f57c9, #7c3aed); display: flex; align-items: center; justify-content: space-between; gap: 10px; will-change: transform, opacity; }
+      .banner b { display: block; font-size: 11px; font-weight: 900; letter-spacing: 0.1em; }
+      .banner small { display: block; margin-top: 4px; font-size: 12px; font-weight: 700; }
+      .units { display: flex; gap: 10px; }
+      .unit { text-align: center; min-width: 44px; }
+      .unit b { display: block; font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+      .unit small { display: block; margin-top: 0; font-size: 10px; font-weight: 900; letter-spacing: 0.06em; }
+      .tabs { margin-top: 14px; display: flex; gap: 8px; }
+      .tab { border-radius: 999px; padding: 8px 13px; font-size: 12px; font-weight: 700; color: #a6b0cf; }
+      .tab.on { background: #3f57c9; color: #fff; border-color: #3f57c9; }
+      .rows { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+      .row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: #131a2e; border: 1.5px solid #131a2e; will-change: transform, opacity; }
+      .row.me { background: #1a2140; border-color: #5b7cff; }
+      .row .rk { width: 26px; text-align: center; font-weight: 900; font-size: 15px; color: #a6b0cf; }
+      .row .av { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; }
+      .row .nm { flex: 1; font-weight: 700; font-size: 14px; }
+      .row .sc { font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+      /* ── S6 ── */
+      #s6 { z-index: 6; }
+      #s6-glow { left: 560px; top: 140px; width: 800px; height: 800px; }
+      .s6-stage { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; }
+      .lockup { display: flex; align-items: center; gap: 40px; position: relative; z-index: 2; }
+      #s6-icon { width: 180px; height: 180px; border-radius: 42px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.5); will-change: transform, opacity; }
+      #s6-icon img { width: 100%; height: 100%; display: block; }
+      #s6-word { font-size: 124px; }
+      #s6-tag { font-size: 44px; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="22" data-width="1920" data-height="1080">
+
+      <section id="s1" class="clip" data-start="0" data-duration="3.8" data-track-index="1">
+        <div class="inner" id="s1-in">
+          <svg id="s1-pulse" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" data-layout-ignore>
+            <path id="s1-line" d="M 0 900 H 640 L 720 800 L 810 990 L 900 720 L 980 900 H 1920" />
+          </svg>
+          <div class="s1-stack">
+            <div class="disp s1-small" id="s1-l1">Ten questions.</div>
+            <div class="disp s1-small" id="s1-l2">Fifteen seconds each.</div>
+            <div class="disp s1-big" id="s1-l3">One wrong answer ends the run.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="s2" class="clip" data-start="3.8" data-duration="5.85" data-track-index="2">
+        <div class="inner" id="s2-in">
+          <div class="glow" id="s2-glow" data-layout-ignore></div>
+          <div class="s2-left"><div class="disp" id="s2-h">Ranked.</div></div>
+          <div class="phone" id="s2-phone">
+            <div class="screen a" id="s2-screenA">
+              <div class="island" data-layout-ignore></div>
+              <div class="topbar">
+                <div class="tleft"><div class="pill surf">History</div><div class="diff">MEDIUM</div></div>
+                <div class="tright"><div class="ring"><i>4/10</i></div><div class="avatar"><img src="assets/img/avatar1.png" alt="" /></div></div>
+              </div>
+              <div class="meta">
+                <div class="q">Question 4 of 10</div>
+                <div class="timer surf" id="s2-timer" data-layout-allow-overlap>
+                  <span class="on" id="t11">11s</span><span id="t10">10s</span><span id="t9">9s</span><span id="t8">8s</span>
+                  <span id="t7">7s</span><span id="t6">6s</span><span class="hot" id="t5">5s</span>
+                </div>
+              </div>
+              <div class="qcard surf"><p>Which civilisation built Machu Picchu?</p><div class="report">⚑ Report</div></div>
+              <div class="opts">
+                <div class="opt surf" id="opt1"><span>The Inca</span><div id="tap" data-layout-ignore></div><div id="ripple" data-layout-ignore></div></div>
+                <div class="opt surf" id="opt2"><span>The Olmec</span></div>
+                <div class="opt surf" id="opt3"><span>The Aztec</span></div>
+                <div class="opt surf" id="opt4"><span>The Maya</span></div>
+              </div>
+              <div class="foot">
+                <div class="fl"><div class="hint"><b>Hint</b><small>10 coins</small></div><div class="coins surf">💰 240</div></div>
+                <div class="fr"><div class="plus surf"><b>+10s</b><small>20 coins</small></div><div class="quit surf">Quit</div></div>
+              </div>
+              <div class="overlay" id="s2-overlay" data-layout-allow-overlap data-layout-allow-occlusion><b>Correct ✅</b><small>Keep going!</small></div>
+            </div>
+            <div class="screen b" id="s2-screenB">
+              <div class="island" data-layout-ignore></div>
+              <div class="topbar">
+                <div class="tleft"><div class="pill surf">History</div><div class="diff hard">HARD</div></div>
+                <div class="tright"><div class="ring" style="background: conic-gradient(#5b7cff 0 252deg, #1f2937 252deg 360deg)"><i>7/10</i></div><div class="avatar"><img src="assets/img/avatar1.png" alt="" /></div></div>
+              </div>
+              <div class="meta">
+                <div class="q">Question 7 of 10</div>
+                <div class="timer surf" id="s2-timerB" data-layout-allow-overlap>
+                  <span class="on" id="u6">6s</span><span class="hot" id="u5">5s</span><span class="hot" id="u4">4s</span><span class="hot" id="u3">3s</span>
+                </div>
+              </div>
+              <div class="qcard surf"><p>Where was the Magna Carta signed?</p><div class="report">⚑ Report</div></div>
+              <div class="opts">
+                <div class="opt surf" id="bopt1"><span>Westminster</span><div id="tapB" data-layout-ignore></div></div>
+                <div class="opt surf" id="bopt2"><span>York</span></div>
+                <div class="opt surf" id="bopt3"><span>Runnymede</span></div>
+                <div class="opt surf" id="bopt4"><span>Canterbury</span></div>
+              </div>
+              <div class="foot">
+                <div class="fl"><div class="hint"><b>Hint</b><small>20 coins</small></div><div class="coins surf">💰 240</div></div>
+                <div class="fr"><div class="plus surf"><b>+10s</b><small>20 coins</small></div><div class="quit surf">Quit</div></div>
+              </div>
+              <div class="overlay bad" id="s2-overlayB" data-layout-allow-overlap data-layout-allow-occlusion><b>Not quite ❌</b><small>Game over.</small></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="s3" class="clip" data-start="9.4" data-duration="3.2" data-track-index="3">
+        <div class="inner" id="s3-in">
+          <div class="glow" id="s3-glow" data-layout-ignore></div>
+          <div class="s3-stage">
+            <div><div class="disp" id="s3-h">1v1 Live.</div><div class="sub" id="s3-s">Real opponent. Same questions. Speed matters.</div></div>
+            <div class="vs-row">
+              <div class="pcard" id="s3-me"><div class="av"><img src="assets/img/avatar1.png" alt="" /></div><div class="name">Amara</div><div class="lv">Lv 12 • #48</div></div>
+              <div id="s3-vs">VS</div>
+              <div class="pcard" id="s3-opp"><div class="av"><img src="assets/img/avatar3.png" alt="" /></div><div class="name">Tobi</div><div class="lv">Lv 9 • #131</div></div>
+            </div>
+            <div class="count" data-layout-allow-overlap><span id="c3">3</span><span id="c2">2</span><span id="c1">1</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="s4" class="clip" data-start="12.6" data-duration="2.4" data-track-index="4">
+        <div class="inner" id="s4-in">
+          <div class="s4-left"><div class="disp" id="s4-h">Weekly leagues.</div><div class="sub" id="s4-s">Finish on top to move up a league.</div></div>
+          <div class="ladder">
+            <div class="rung" style="background:#c2410c"><em>👑</em>Legend</div>
+            <div class="rung" style="background:#7c3aed"><em>🔮</em>Master</div>
+            <div class="rung" style="background:#3f57c9"><em>💎</em>Diamond</div>
+            <div class="rung" style="background:#23706f"><em>💠</em>Platinum</div>
+            <div class="rung" style="background:#8a6508"><em>🥇</em>Gold</div>
+            <div class="rung" style="background:#56657a"><em>🥈</em>Silver</div>
+            <div class="rung" style="background:#8b5530"><em>🥉</em>Bronze</div>
+          </div>
+          <div id="s4-me" data-layout-allow-overlap data-layout-allow-occlusion><div class="av"><img src="assets/img/avatar1.png" alt="" /></div>Amara</div>
+        </div>
+      </section>
+
+      <section id="s5" class="clip" data-start="15" data-duration="3.2" data-track-index="5">
+        <div class="inner" id="s5-in">
+          <div class="glow" id="s5-glow" data-layout-ignore></div>
+          <div class="s5-left">
+            <div class="disp" id="s5-h">Top players are paid in<br /><span class="mint">USDT or USDC.</span></div>
+            <div class="sub" id="s5-s">Skill only. No purchase necessary. 18+.</div>
+          </div>
+          <div class="phone" id="s5-phone">
+            <div class="screen">
+              <div class="island" data-layout-ignore></div>
+              <div class="lbhead"><b>Leaderboard</b><small>Sep 22 – Sep 28</small></div>
+              <div class="banner" id="s5-banner">
+                <div><b>WEEKLY PAYOUT</b><small>Prizes paid to top players every week</small></div>
+                <div class="units"><div class="unit"><b>3</b><small>DAYS</small></div><div class="unit"><b>14</b><small>HRS</small></div></div>
+              </div>
+              <div class="tabs"><div class="tab on">Weekly</div><div class="tab surf">Monthly</div><div class="tab surf">All Time</div><div class="tab surf">Friends</div></div>
+              <div class="rows">
+                <div class="row"><div class="rk">1</div><div class="av"><img src="assets/img/avatar2.png" alt="" /></div><div class="nm">Alex</div><div class="sc">1,200 pts</div></div>
+                <div class="row"><div class="rk">2</div><div class="av"><img src="assets/img/avatar4.png" alt="" /></div><div class="nm">Bella</div><div class="sc">1,100 pts</div></div>
+                <div class="row"><div class="rk">3</div><div class="av"><img src="assets/img/avatar5.png" alt="" /></div><div class="nm">Chris</div><div class="sc">980 pts</div></div>
+                <div class="row me"><div class="rk">4</div><div class="av"><img src="assets/img/avatar1.png" alt="" /></div><div class="nm">Amara (you)</div><div class="sc" id="s5-mepts">0 pts</div></div>
+                <div class="row"><div class="rk">5</div><div class="av"><img src="assets/img/avatar3.png" alt="" /></div><div class="nm">Daniel</div><div class="sc">880 pts</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="s6" class="clip" data-start="18.2" data-duration="3.8" data-track-index="6">
+        <div class="inner" id="s6-in">
+          <div class="glow" id="s6-glow" data-layout-ignore></div>
+          <div class="s6-stage">
+            <div class="lockup"><div id="s6-icon"><img src="assets/img/icon.png" alt="" /></div><div class="disp" id="s6-word">PulseQuiz</div></div>
+            <div class="sub" id="s6-tag">Decided by skill alone.</div>
+            <div class="sub" id="s6-soon" style="font-size: 28px; color: #6f7a9a">Coming soon to iOS and Android.</div>
+          </div>
+        </div>
+      </section>
+
+      <audio id="bg-music" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3" data-start="0" data-duration="22" data-track-index="10" data-timeline-role="music"
+        data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":0},{"t":0.3,"v":0.34},{"t":21,"v":0.34},{"t":22,"v":0}]}]}'></audio>
+      <audio id="sfx-hook1" src="assets/sfx/impact/impactSoft_medium_001.ogg" data-start="0.26" data-track-index="11" data-volume="0.5"></audio>
+      <audio id="sfx-hook2" src="assets/sfx/impact/impactSoft_medium_001.ogg" data-start="1.05" data-track-index="12" data-volume="0.5"></audio>
+      <audio id="sfx-hook3" src="assets/sfx/impact/impactSoft_heavy_003.ogg" data-start="2.15" data-track-index="13" data-volume="0.7"></audio>
+      <audio id="sfx-cut1" src="assets/sfx/impact/impactSoft_medium_001.ogg" data-start="3.78" data-track-index="14" data-volume="0.45"></audio>
+      <audio id="sfx-tapB" src="assets/sfx/interface/click_003.ogg" data-start="8.6" data-track-index="27" data-volume="0.6"></audio>
+      <audio id="sfx-wrong" src="assets/sfx/interface/error_005.ogg" data-start="8.74" data-track-index="28" data-volume="0.5"></audio>
+      <audio id="sfx-over" src="assets/sfx/impact/impactSoft_heavy_003.ogg" data-start="8.88" data-track-index="29" data-volume="0.6"></audio>
+      <audio id="sfx-tap" src="assets/sfx/interface/click_003.ogg" data-start="5.85" data-track-index="15" data-volume="0.6"></audio>
+      <audio id="sfx-correct" src="assets/sfx/impact/impactBell_heavy_000.ogg" data-start="6.0" data-track-index="16" data-volume="0.62"></audio>
+      <audio id="sfx-whip" src="assets/sfx/casino/card-slide-1.ogg" data-start="9.38" data-track-index="17" data-volume="0.5"></audio>
+      <audio id="sfx-vs" src="assets/sfx/impact/impactSoft_medium_001.ogg" data-start="10.35" data-track-index="18" data-volume="0.55"></audio>
+      <audio id="sfx-c3" src="assets/sfx/interface/click_002.ogg" data-start="10.93" data-track-index="19" data-volume="0.45"></audio>
+      <audio id="sfx-c2" src="assets/sfx/interface/click_002.ogg" data-start="11.46" data-track-index="20" data-volume="0.45"></audio>
+      <audio id="sfx-c1" src="assets/sfx/interface/click_002.ogg" data-start="12.02" data-track-index="21" data-volume="0.5"></audio>
+      <audio id="sfx-rungs" src="assets/sfx/interface/drop_001.ogg" data-start="12.68" data-track-index="22" data-volume="0.5"></audio>
+      <audio id="sfx-climb" src="assets/sfx/impact/impactSoft_medium_001.ogg" data-start="14.45" data-track-index="23" data-volume="0.55"></audio>
+      <audio id="sfx-rows" src="assets/sfx/interface/drop_001.ogg" data-start="15.03" data-track-index="24" data-volume="0.5"></audio>
+      <audio id="sfx-prize" src="assets/sfx/impact/impactSoft_heavy_003.ogg" data-start="16.35" data-track-index="25" data-volume="0.7"></audio>
+      <audio id="sfx-logo" src="assets/sfx/impact/impactBell_heavy_003.ogg" data-start="18.27" data-track-index="26" data-volume="0.62"></audio>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const slamScale = (sel, at, dur = 0.5, from = 1.18) =>
+        tl.fromTo(sel, { scale: from, opacity: 0, filter: "blur(14px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: dur, ease: "power4.out" }, at);
+      const snapX = (sel, at, fromX = -220, dur = 0.42) =>
+        tl.fromTo(sel, { x: fromX, opacity: 0 }, { x: 0, opacity: 1, duration: dur, ease: "expo.out" }, at);
+      const riseIn = (sel, at, fromY = 32, dur = 0.5) =>
+        tl.fromTo(sel, { y: fromY, opacity: 0 }, { y: 0, opacity: 1, duration: dur, ease: "power2.out" }, at);
+      const pop = (sel, at, dur = 0.42, fromScale = 0) =>
+        tl.fromTo(sel, { scale: fromScale, opacity: 0 }, { scale: 1, opacity: 1, duration: dur, ease: "power3.out" }, at);
+      // Continuous slow camera drift so no frame holds still.
+      const drift = (sel, at, dur, to, origin = "50% 50%") =>
+        tl.fromTo(sel, { scale: 1, transformOrigin: origin }, { scale: to, duration: dur, ease: "power1.inOut" }, at);
+
+      /* S1 (0→3.8) */
+      const line = document.getElementById("s1-line");
+      const lineLen = line.getTotalLength() * 1.02;
+      line.style.strokeDasharray = `${lineLen}`; line.style.strokeDashoffset = `${lineLen}`;
+      tl.to("#s1-line", { strokeDashoffset: 0, duration: 1.1, ease: "power2.out" }, 0.05);
+      slamScale("#s1-l1", 0.3, 0.45, 1.2);                                                                  // beat-grid 0.30
+      snapX("#s1-l2", 1.09, -240, 0.4);                                                                     // beat-grid 1.09
+      tl.fromTo("#s1-l3", { y: 80, scale: 1.08, opacity: 0, filter: "blur(10px)" }, { y: 0, scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.55, ease: "power4.out" }, 2.19); // beat-grid 2.19
+      drift(".s1-stack", 0, 3.8, 1.05);
+
+      /* S2 (3.8→9.4) — hard cut in, phone hero, push-in landing on the tap */
+      tl.fromTo("#s2-phone", { scale: 0.94, opacity: 0, y: 40 }, { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 3.8);
+      snapX("#s2-h", 4.1, -80, 0.45);
+      drift("#s2-phone", 4.3, 5.1, 1.18, "68% 37%");
+      const ticks = [["#t11","#t10",4.4],["#t10","#t9",5.0],["#t9","#t8",5.5]];
+      ticks.forEach(([p, n, at]) => { tl.set(p, { opacity: 0 }, at); tl.set(n, { opacity: 1 }, at); });
+      tl.set("#ripple", { xPercent: -50, yPercent: -50, scale: 0, opacity: 0 }, 0);
+      tl.fromTo("#tap", { xPercent: -50, yPercent: -50, scale: 0.6, opacity: 0 }, { xPercent: -50, yPercent: -50, scale: 1, opacity: 1, duration: 0.22, ease: "power2.out" }, 5.55);
+      tl.to("#tap", { scale: 0.82, duration: 0.08, ease: "power2.in", yoyo: true, repeat: 1 }, 5.85);
+      tl.to("#opt1", { scale: 0.97, duration: 0.08, ease: "power2.in", yoyo: true, repeat: 1 }, 5.85);
+      tl.fromTo("#ripple", { xPercent: -50, yPercent: -50, scale: 0, opacity: 0.9 }, { xPercent: -50, yPercent: -50, scale: 3.4, opacity: 0, duration: 0.6, ease: "power2.out", immediateRender: false }, 5.87);
+      tl.to("#tap", { opacity: 0, duration: 0.2, ease: "power1.in" }, 6.15);
+      tl.to("#opt1", { backgroundColor: "#0f7a3d", borderColor: "#0f7a3d", duration: 0.14, ease: "power2.out" }, 6.0); // beat-grid 6.00
+      tl.to(["#opt2", "#opt3", "#opt4"], { opacity: 0.6, duration: 0.25 }, 6.0);
+      tl.fromTo("#s2-overlay", { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, 6.1);
+      // hard cut inside the phone to a harder question
+      tl.set("#s2-screenA", { opacity: 0 }, 6.8); tl.set("#s2-screenB", { opacity: 1 }, 6.8);
+      const ticksB = [["#u6","#u5",7.3],["#u5","#u4",7.8],["#u4","#u3",8.3]];
+      ticksB.forEach(([p, n, at]) => { tl.set(p, { opacity: 0 }, at); tl.set(n, { opacity: 1 }, at); });
+      tl.set("#s2-timerB", { borderColor: "#ff7a85" }, 7.3);
+      tl.fromTo("#tapB", { xPercent: -50, yPercent: -50, scale: 0.6, opacity: 0 }, { xPercent: -50, yPercent: -50, scale: 1, opacity: 1, duration: 0.22, ease: "power2.out" }, 8.3);
+      tl.to("#tapB", { scale: 0.82, duration: 0.08, ease: "power2.in", yoyo: true, repeat: 1 }, 8.6);
+      tl.to("#bopt1", { scale: 0.97, duration: 0.08, ease: "power2.in", yoyo: true, repeat: 1 }, 8.6);
+      tl.to("#tapB", { opacity: 0, duration: 0.2, ease: "power1.in" }, 8.9);
+      tl.to("#bopt1", { backgroundColor: "#c4213a", borderColor: "#c4213a", duration: 0.14 }, 8.74); // beat-locked 8.74s: wrong
+      tl.to("#bopt3", { backgroundColor: "#0f7a3d", borderColor: "#0f7a3d", duration: 0.14 }, 8.74); // the app reveals the right answer
+      tl.to(["#bopt2", "#bopt4"], { opacity: 0.6, duration: 0.25 }, 8.74);
+      tl.fromTo("#s2-overlayB", { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, 8.9);
+      // whip out 2→3 (the only overlapping transition; the outgoing frame is blurred beyond reading)
+      tl.to("#s2-in", { x: -520, filter: "blur(24px)", opacity: 0, duration: 0.26, ease: "power3.in" }, 9.4);
+      tl.fromTo("#s3-in", { x: 520, filter: "blur(24px)", opacity: 0 }, { x: 0, filter: "blur(0px)", opacity: 1, duration: 0.32, ease: "power3.out" }, 9.42);
+
+      /* S3 (9.4→12.6) */
+      slamScale("#s3-h", 9.6, 0.5, 1.2);
+      riseIn("#s3-s", 9.95, 24, 0.45);
+      tl.fromTo("#s3-me", { x: -190, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 9.83);   // beat-grid 9.83
+      tl.fromTo("#s3-opp", { x: 190, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 9.83);
+      pop("#s3-vs", 10.37, 0.45);                                                                                     // beat-grid 10.37
+      tl.to("#s3-vs", { scale: 1.08, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 10.85);
+      pop("#c3", 10.93, 0.3, 0.4);  tl.to("#c3", { opacity: 0, scale: 1.3, duration: 0.18, ease: "power2.in" }, 11.46);
+      pop("#c2", 11.46, 0.3, 0.4);  tl.to("#c2", { opacity: 0, scale: 1.3, duration: 0.18, ease: "power2.in" }, 12.02);
+      pop("#c1", 12.02, 0.36, 0.3);                                                                                   // beat-locked 12.02s
+      drift(".s3-stage", 9.4, 3.2, 1.06);
+
+      /* S4 (12.6→15.0) — ladder, hard cut in */
+      slamScale("#s4-h", 12.62, 0.45, 1.2);
+      riseIn("#s4-s", 12.95, 24, 0.4);
+      const rungs = gsap.utils.toArray(".rung").reverse(); // Bronze first
+      rungs.forEach((el, i) => tl.fromTo(el, { x: 120, opacity: 0 }, { x: 0, opacity: 0.55, duration: 0.4, ease: "power3.out" }, 12.66 + i * 0.08));
+      tl.fromTo("#s4-me", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" }, 13.25);
+      // climb four rungs (rung pitch 133px), lighting each rung as the chip passes
+      tl.to("#s4-me", { y: -532, duration: 1.2, ease: "power2.inOut" }, 13.4);
+      [6, 5, 4, 3, 2].forEach((idx, k) => tl.to(gsap.utils.toArray(".rung")[idx], { opacity: 1, duration: 0.25 }, 13.4 + k * 0.26));
+      tl.to("#s4-me", { scale: 1.08, duration: 0.12, yoyo: true, repeat: 1, ease: "power2.out" }, 14.55);
+      drift("#s4-in", 12.6, 2.4, 1.04);
+
+      /* S5 (15.0→18.2) — leaderboard + prize, hard cut in */
+      tl.fromTo("#s5-phone", { scale: 0.94, opacity: 0, y: 40 }, { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 15.0);
+      tl.fromTo("#s5-banner", { scale: 0.96, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" }, 15.15);
+      gsap.utils.toArray(".row").forEach((el, i) => tl.fromTo(el, { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 15.29 + i * 0.09)); // beat-grid 15.29
+      const pts = { v: 0 }, ptsEl = document.getElementById("s5-mepts");
+      tl.to(pts, { v: 920, duration: 0.8, ease: "power2.out", onUpdate: () => { ptsEl.textContent = Math.round(pts.v).toLocaleString("en-US") + " pts"; } }, 15.7);
+      tl.fromTo("#s5-h", { scale: 1.24, opacity: 0, filter: "blur(16px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "power4.out" }, 16.38); // beat-grid 16.38 (slam)
+      riseIn("#s5-s", 16.93, 24, 0.45);                                                                               // beat-grid 16.93
+      drift("#s5-in", 15.0, 3.2, 1.05, "1380px 540px");
+
+      /* S6 (18.2→20.0) */
+      tl.fromTo("#s6-icon", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" }, 18.3);
+      snapX("#s6-word", 18.45, -60, 0.45);
+      riseIn("#s6-tag", 18.85, 22, 0.4);
+      riseIn("#s6-soon", 20.2, 18, 0.4);
+      drift(".s6-stage", 18.2, 3.8, 1.04);
+
+      /* audio-reactive glow: pure function of time */
+      const AD = window.AUDIO_DATA;
+      const glows = [
+        { el: document.getElementById("s2-glow"), start: 3.9, bloom: 0.7, end: 9.65, base: 0.3, amp: 0.1 },
+        { el: document.getElementById("s3-glow"), start: 9.6, bloom: 0.5, end: 12.6, base: 0.24, amp: 0.1 },
+        { el: document.getElementById("s5-glow"), start: 15.0, bloom: 0.6, end: 18.2, base: 0.26, amp: 0.1 },
+        { el: document.getElementById("s6-glow"), start: 18.3, bloom: 0.45, end: 22.0, base: 0.3, amp: 0.1 },
+      ];
+      const bassAt = (t) => { const f = Math.min(AD.totalFrames - 1, Math.max(0, Math.floor(t * AD.fps))); const r = AD.frames[f]; return Math.min(1, r[1] * 0.7 + r[2] * 0.3); };
+      const drive = { t: 0 };
+      tl.to(drive, { t: 22, duration: 22, ease: "none", onUpdate: () => {
+        const t = drive.t, b = bassAt(t);
+        for (const g of glows) {
+          let env = 0; if (t >= g.start && t < g.end) env = Math.min(1, (t - g.start) / g.bloom);
+          const e = env * env * (3 - 2 * env);
+          g.el.style.opacity = String(e * Math.min(0.42, g.base + b * g.amp));
+          g.el.style.transform = `scale(${0.85 + e * 0.15 + b * 0.06})`;
+        }
+      } }, 0);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

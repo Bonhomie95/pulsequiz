@@ -3,7 +3,8 @@ import LeaderboardSnapshot, {
   type LeaderboardEntry,
 } from '../models/LeaderboardSnapshot';
 import PrizePool from '../models/PrizePool';
-import { buildLeaderboard, getUserStanding } from '../services/leaderboardService';
+import { TOP_N, buildLeaderboard, getUserStanding } from '../services/leaderboardService';
+import User from '../models/User';
 import { currentPeriodLabel } from '../utils/dateRanges';
 import { AuthRequest } from '../middlewares/auth';
 
@@ -71,13 +72,53 @@ export async function getLeaderboard(req: AuthRequest, res: Response) {
     // score moved them past someone, the order was wrong too. Their own number
     // is the one they check immediately, so it has to be current; everyone
     // else's may stay cached, since a minute of drift there is invisible.
-    const mineIdx = data.findIndex((e) => e.userId === req.userId);
-    if (mineIdx >= 0 && data[mineIdx].points !== standing.points) {
-      data[mineIdx] = { ...data[mineIdx], points: standing.points };
+    const rerank = () => {
       data.sort((a, b) => b.points - a.points);
       data.forEach((e, i) => {
         e.rank = i + 1;
       });
+    };
+
+    const mineIdx = data.findIndex((e) => e.userId === req.userId);
+
+    if (mineIdx >= 0) {
+      if (data[mineIdx].points !== standing.points) {
+        data[mineIdx] = { ...data[mineIdx], points: standing.points };
+        rerank();
+      }
+    } else if (standing.points > 0) {
+      // They are not on the cached board at all.
+      //
+      // The snapshot is up to a minute old, so a player who just finished their
+      // first quiz of the period is missing from a board they already belong
+      // on. Opening the leaderboard and not finding yourself reads as the run
+      // not having counted, which is the one thing a player checks for straight
+      // after playing. Place them from their live total instead of waiting for
+      // the cron. Everyone else's row stays cached, as before.
+      const last = data[data.length - 1];
+
+      if (data.length < TOP_N || !last || standing.points > last.points) {
+        // Banned and deleted accounts are off the board entirely, matching how
+        // the snapshot itself is built.
+        const mine = await User.findOne({
+          _id: req.userId,
+          isBanned: { $ne: true },
+          deletedAt: null,
+        })
+          .select('username avatar')
+          .lean();
+
+        if (mine) {
+          data.push({
+            userId: req.userId,
+            username: mine.username ?? 'Anonymous',
+            avatar: mine.avatar ?? '',
+            points: standing.points,
+          });
+          rerank();
+          if (data.length > TOP_N) data.length = TOP_N;
+        }
+      }
     }
 
     const idx = data.findIndex((e) => e.userId === req.userId);

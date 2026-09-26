@@ -92,12 +92,19 @@ router.post(
 
     const { questionId, reason, details } = parsed.data;
 
-    const question = await QuizQuestion.findByIdAndUpdate(
-      questionId,
-      { $inc: { reportCount: 1 } },
+    // One report per player per question: repeat reports from the same
+    // account used to count again, so one person could pull any question.
+    const question = await QuizQuestion.findOneAndUpdate(
+      { _id: questionId, reportedBy: { $ne: req.userId } },
+      { $inc: { reportCount: 1 }, $addToSet: { reportedBy: req.userId } },
       { returnDocument: 'after' },
     );
-    if (!question) return res.status(404).json({ message: 'Question not found' });
+    if (!question) {
+      if (!(await QuizQuestion.exists({ _id: questionId }))) {
+        return res.status(404).json({ message: 'Question not found' });
+      }
+      return res.json({ ok: true, message: "Thanks — you've already reported this question." });
+    }
 
     // Auto-pull from rotation once enough players agree.
     if (question.reportCount >= AUTO_DISABLE_REPORTS && !question.disabled) {

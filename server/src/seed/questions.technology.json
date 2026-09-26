@@ -1,767 +1,652 @@
 [
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'CPU' stand for?",
-    "options": [
-      "Central Processing Unit",
-      "Computer Personal Unit",
-      "Central Program Unit",
-      "Core Processing Utility"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'WWW' stand for in a web address?",
-    "options": [
-      "World Wide Web",
-      "World Web Works",
-      "Wide Web World",
-      "Worldwide Website"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Which company makes the iPhone?",
-    "options": ["Samsung", "Google", "Apple", "Microsoft"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'USB' stand for?",
-    "options": [
-      "Universal Serial Bus",
-      "United System Bridge",
-      "Universal Storage Base",
-      "Unified Serial Board"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Which programming language is primarily used for web page styling?",
-    "options": ["JavaScript", "HTML", "CSS", "Python"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'PDF' stand for?",
-    "options": [
-      "Portable Document Format",
-      "Printed Document File",
-      "Public Data Form",
-      "Personal Document Format"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Who co-founded Apple with Steve Jobs and Ronald Wayne?",
-    "options": ["Bill Gates", "Steve Wozniak", "Paul Allen", "Larry Page"],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What is the most widely used search engine in the world?",
-    "options": ["Bing", "Yahoo", "Google", "DuckDuckGo"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'RAM' stand for in computing?",
-    "options": [
-      "Read Access Memory",
-      "Random Access Memory",
-      "Rapid Application Memory",
-      "Read And Modify"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Which social media platform is primarily known for professional networking?",
-    "options": ["Facebook", "Twitter", "Instagram", "LinkedIn"],
-    "answer": 3
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What is the binary representation of the decimal number 5?",
-    "options": ["011", "100", "101", "110"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Which company created the Android operating system?",
-    "options": ["Apple", "Microsoft", "Google", "Samsung"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'AI' stand for?",
-    "options": [
-      "Automated Interface",
-      "Artificial Intelligence",
-      "Advanced Integration",
-      "Automated Intelligence"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What type of device is an iPad?",
-    "options": ["Laptop", "Smartphone", "Tablet", "Desktop"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What is the name of Amazon's virtual assistant?",
-    "options": ["Siri", "Cortana", "Alexa", "Google Assistant"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Which file extension is used for Microsoft Word documents?",
-    "options": [".xls", ".ppt", ".doc or .docx", ".pdf"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'GPS' stand for?",
-    "options": [
-      "Global Positioning System",
-      "General Path System",
-      "Ground Positioning Software",
-      "Geographic Precision Satellite"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Who is the CEO of Tesla and SpaceX?",
-    "options": ["Jeff Bezos", "Mark Zuckerberg", "Tim Cook", "Elon Musk"],
-    "answer": 3
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'HTML' stand for?",
-    "options": [
-      "Hyper Text Markup Language",
-      "High Transfer Machine Language",
-      "Hyperlink Text Management Language",
-      "Hypertext Methodology and Links"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Which company developed the Windows operating system?",
-    "options": ["Apple", "IBM", "Google", "Microsoft"],
-    "answer": 3
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What is the name of Apple's virtual assistant?",
-    "options": ["Cortana", "Alexa", "Siri", "Google Assistant"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'URL' stand for?",
-    "options": [
-      "Uniform Resource Locator",
-      "Universal Research Link",
-      "Unified Record Location",
-      "User Resource Language"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Which social media platform has a character limit of 280 characters per post?",
-    "options": ["Facebook", "Instagram", "Twitter/X", "TikTok"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What is the storage capacity unit that comes after gigabyte?",
-    "options": ["Megabyte", "Kilobyte", "Terabyte", "Petabyte"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What color is the Twitter/X bird logo?",
-    "options": ["Red", "Green", "Blue", "Black"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'Wi-Fi' stand for?",
-    "options": [
-      "Wireless Fidelity",
-      "Wide Field",
-      "Wire Free",
-      "Wireless Frequency Interface"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Which company owns YouTube?",
-    "options": ["Facebook", "Apple", "Microsoft", "Google"],
-    "answer": 3
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What programming language is primarily used for iOS app development?",
-    "options": ["Java", "Kotlin", "Python", "Swift"],
-    "answer": 3
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "What does 'VPN' stand for?",
-    "options": [
-      "Virtual Private Network",
-      "Very Protected Node",
-      "Virtual Public Network",
-      "Verified Private Node"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "easy",
-    "question": "Which tech company's logo is a multicolored window?",
-    "options": ["Apple", "Google", "Microsoft", "IBM"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What is the process of converting plaintext into coded text to prevent unauthorized access?",
-    "options": ["Compression", "Encryption", "Hashing", "Tokenization"],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "Which programming paradigm treats computation as the evaluation of mathematical functions?",
-    "options": ["Object-Oriented", "Procedural", "Functional", "Imperative"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What does 'HTTP' stand for?",
-    "options": [
-      "HyperText Transfer Protocol",
-      "High Transfer Technical Protocol",
-      "Hypertext Text Processing Protocol",
-      "Host Transfer Protocol"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "In computing, what is a 'kernel'?",
-    "options": [
-      "A type of virus",
-      "The core of an operating system",
-      "A type of data structure",
-      "An encryption method"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What year was the first iPhone released?",
-    "options": ["2005", "2006", "2007", "2008"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "Which data structure follows the LIFO (Last In First Out) principle?",
-    "options": ["Queue", "Linked List", "Stack", "Tree"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What does 'API' stand for?",
-    "options": [
-      "Application Protocol Interface",
-      "Application Programming Interface",
-      "Automated Process Integration",
-      "Advanced Programming Input"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What is the name of the open-source operating system kernel created by Linus Torvalds?",
-    "options": ["Unix", "FreeBSD", "Linux", "Solaris"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "In networking, what does 'IP' stand for in IP address?",
-    "options": [
-      "Internet Protocol",
-      "Internal Path",
-      "Interconnected Port",
-      "Interface Point"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "Which of these is NOT a type of machine learning?",
-    "options": [
-      "Supervised learning",
-      "Unsupervised learning",
-      "Reinforcement learning",
-      "Accelerated learning"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What does 'SSD' stand for in storage devices?",
-    "options": [
-      "Solid State Drive",
-      "Super Speed Disk",
-      "Serial Storage Device",
-      "System Storage Drive"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "Which programming language was created by Guido van Rossum?",
-    "options": ["Java", "C++", "Ruby", "Python"],
-    "answer": 3
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What is the function of a firewall in cybersecurity?",
-    "options": [
-      "Speed up internet",
-      "Monitor and filter network traffic",
-      "Store data",
-      "Encrypt communications"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What does 'SQL' stand for?",
-    "options": [
-      "Structured Query Language",
-      "Standard Question Language",
-      "Sequential Query Logic",
-      "System Query Layer"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What is the name of the world's first commercially successful smartphone?",
-    "options": [
-      "Nokia 3310",
-      "BlackBerry 850",
-      "IBM Simon",
-      "Motorola DynaTAC"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "Which company invented the transistor at Bell Labs in 1947?",
-    "options": ["IBM", "Intel", "AT&T", "Texas Instruments"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What is the primary purpose of a Content Delivery Network (CDN)?",
-    "options": [
-      "Store data",
-      "Speed up content delivery by distributing it globally",
-      "Secure websites",
-      "Manage domains"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "Which protocol is used to securely transfer files over a network?",
-    "options": ["FTP", "HTTP", "SFTP", "Telnet"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What does 'IoT' stand for?",
-    "options": [
-      "Internet of Technology",
-      "Internet of Things",
-      "Interconnected of Technology",
-      "Infrastructure of Things"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "In JavaScript, which keyword is used to declare a variable that cannot be reassigned?",
-    "options": ["var", "let", "const", "static"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What is the name of the process where light is converted to digital images in a camera?",
-    "options": [
-      "Digitization",
-      "Rendering",
-      "Image sensing",
-      "Photolithography"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What company makes the Galaxy smartphone series?",
-    "options": ["Apple", "Huawei", "LG", "Samsung"],
-    "answer": 3
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What type of attack floods a server with traffic to make it unavailable?",
-    "options": ["Phishing", "SQL Injection", "DDoS", "Man-in-the-Middle"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "Which cloud platform is operated by Amazon?",
-    "options": ["Azure", "Google Cloud", "AWS", "Oracle Cloud"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What does 'ROM' stand for in computing?",
-    "options": [
-      "Read Only Memory",
-      "Random Output Module",
-      "Rewritable Open Memory",
-      "Read Offset Module"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What is the standard port number for HTTPS?",
-    "options": ["80", "443", "8080", "21"],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "Which company created the Java programming language?",
-    "options": ["Microsoft", "IBM", "Sun Microsystems", "Bell Labs"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What is 'open source' software?",
-    "options": [
-      "Software that is free of charge",
-      "Software whose source code is publicly available",
-      "Software made by volunteers",
-      "Software without copyright"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "In cybersecurity, what is 'phishing'?",
-    "options": [
-      "Hacking servers directly",
-      "Tricking users into revealing sensitive info",
-      "Installing malware via USB",
-      "Network scanning"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "medium",
-    "question": "What does Moore's Law predict?",
-    "options": [
-      "Internet speeds double yearly",
-      "The number of transistors on a chip doubles roughly every two years",
-      "Storage costs halve yearly",
-      "Power consumption of CPUs"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What is the time complexity of a binary search algorithm?",
-    "options": ["O(n)", "O(n²)", "O(log n)", "O(n log n)"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "Which cryptographic hash function produces a 256-bit output and is used in Bitcoin?",
-    "options": ["MD5", "SHA-1", "SHA-256", "SHA-512"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "In computer networking, what is the purpose of the ARP protocol?",
-    "options": [
-      "Assign IP addresses",
-      "Resolve IP addresses to MAC addresses",
-      "Encrypt network traffic",
-      "Route packets between networks"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What is 'Turing completeness'?",
-    "options": [
-      "A benchmark for CPU performance",
-      "The ability to simulate any Turing machine",
-      "A programming certification",
-      "A network protocol"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "Which sorting algorithm has the best average-case time complexity?",
-    "options": [
-      "Bubble Sort",
-      "Merge Sort",
-      "Insertion Sort",
-      "Selection Sort"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What is 'Byzantine fault tolerance' in distributed systems?",
-    "options": [
-      "Handling network partitions",
-      "Tolerating nodes that send incorrect or malicious data",
-      "Handling power failures",
-      "Managing load balancing"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "In quantum computing, what is a 'qubit'?",
-    "options": [
-      "A type of processor",
-      "A quantum bit that can exist in superposition",
-      "A unit of quantum memory",
-      "A quantum encryption key"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What does 'ACID' stand for in database systems?",
-    "options": [
-      "Atomicity, Consistency, Isolation, Durability",
-      "Access, Control, Input, Data",
-      "Automatic Consistent Integrated Database",
-      "Atomic Command Interface Database"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "Which design pattern decouples object creation from its implementation?",
-    "options": ["Observer", "Singleton", "Factory", "Decorator"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What is the CAP theorem in distributed systems?",
-    "options": [
-      "A network security framework",
-      "States that a system can only guarantee two of: Consistency, Availability, Partition tolerance",
-      "A CPU benchmarking standard",
-      "A cloud computing model"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "In machine learning, what is 'overfitting'?",
-    "options": [
-      "Model performs well on all data",
-      "Model performs well on training data but poorly on new data",
-      "Model that requires too much memory",
-      "Model trained on too little data"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What is a 'race condition' in software development?",
-    "options": [
-      "A performance benchmark",
-      "A bug where program behavior depends on timing of events",
-      "A competitive coding challenge",
-      "A multithreading optimization"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "Which network topology connects all nodes to a central hub?",
-    "options": ["Ring", "Mesh", "Bus", "Star"],
-    "answer": 3
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What is 'zero-day vulnerability'?",
-    "options": [
-      "A bug discovered on release day",
-      "A security flaw exploited before developers patch it",
-      "A vulnerability that appears after midnight",
-      "An unpatched system"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What is the difference between TCP and UDP?",
-    "options": [
-      "TCP is faster, UDP is more reliable",
-      "TCP provides reliable, ordered delivery; UDP is connectionless and faster",
-      "UDP provides encryption, TCP does not",
-      "They are the same protocol"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What algorithm does Bitcoin use for its proof-of-work consensus mechanism?",
-    "options": ["Ethash", "Scrypt", "SHA-256", "Blake2"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "In computer graphics, what is 'ray tracing'?",
-    "options": [
-      "Compressing image files",
-      "Simulating light behavior to render realistic images",
-      "Converting vector to raster graphics",
-      "A type of GPU architecture"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What is 'garbage collection' in programming?",
-    "options": [
-      "Deleting unused code",
-      "Automatic memory management to free unused memory",
-      "Cleaning up log files",
-      "Removing duplicate data"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "Which data structure is ideal for implementing a priority queue efficiently?",
-    "options": ["Array", "Linked List", "Heap", "Binary Search Tree"],
-    "answer": 2
-  },
-  {
-    "category": "Technology",
-    "difficulty": "hard",
-    "question": "What is 'serverless computing'?",
-    "options": [
-      "Computing without any servers",
-      "A cloud model where providers manage server infrastructure automatically",
-      "Computing using only client machines",
-      "A type of P2P network"
-    ],
-    "answer": 1
-  }
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What does 'CPU' stand for?",
+  "options": [
+   "Central Processing Unit",
+   "Computer Power Unit",
+   "Central Program Utility",
+   "Core Processing Unit"
+  ],
+  "answer": 0,
+  "explanation": "The CPU is the chip that carries out a computer's instructions — its brain."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which company makes the iPhone?",
+  "options": [
+   "Samsung",
+   "Apple",
+   "Google",
+   "Nokia"
+  ],
+  "answer": 1,
+  "explanation": "Apple launched the first iPhone in 2007."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What does 'Wi-Fi' let devices do?",
+  "options": [
+   "Charge without cables",
+   "Store more files",
+   "Connect wirelessly to a network",
+   "Run faster"
+  ],
+  "answer": 2,
+  "explanation": "Wi-Fi is wireless networking, using radio waves to link devices to a router."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which device is used to point and click on a computer screen?",
+  "options": [
+   "Scanner",
+   "Printer",
+   "Speaker",
+   "Mouse"
+  ],
+  "answer": 3,
+  "explanation": "The mouse moves the on-screen pointer and selects items with its buttons."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What does 'www' begin in a web address?",
+  "options": [
+   "World Wide Web",
+   "Web Wide World",
+   "Wireless Web Work",
+   "World Web Window"
+  ],
+  "answer": 0,
+  "explanation": "The prefix stands for World Wide Web, the system of linked pages served over the internet."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which of these is an operating system?",
+  "options": [
+   "Chrome",
+   "Windows",
+   "Excel",
+   "Photoshop"
+  ],
+  "answer": 1,
+  "explanation": "Windows runs the computer itself. The others are applications that run on top of an operating system."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What is a 'password' used for?",
+  "options": [
+   "Speeding up the internet",
+   "Storing photos",
+   "Proving who you are",
+   "Printing documents"
+  ],
+  "answer": 2,
+  "explanation": "A password authenticates you — it proves you are the account's owner."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which key is used to make a capital letter on a keyboard?",
+  "options": [
+   "Tab",
+   "Alt",
+   "Ctrl",
+   "Shift"
+  ],
+  "answer": 3,
+  "explanation": "Holding Shift while typing a letter makes it uppercase."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What does 'email' stand for?",
+  "options": [
+   "Electronic mail",
+   "Express mail",
+   "Encrypted mail",
+   "External mail"
+  ],
+  "answer": 0,
+  "explanation": "Email is short for electronic mail, messages sent between computers."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which of these stores data?",
+  "options": [
+   "Monitor",
+   "Hard drive",
+   "Mouse",
+   "Speaker"
+  ],
+  "answer": 1,
+  "explanation": "A hard drive stores files permanently. A monitor only displays them."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What is a computer virus?",
+  "options": [
+   "A faulty cable",
+   "A type of screen",
+   "Harmful software",
+   "A cooling fan"
+  ],
+  "answer": 2,
+  "explanation": "A virus is malicious software that spreads between computers and can damage or steal data."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which symbol is used in every email address?",
+  "options": [
+   "#",
+   "&",
+   "%",
+   "@"
+  ],
+  "answer": 3,
+  "explanation": "The @ sign separates the user name from the domain, as in name@example.com."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What does a printer do?",
+  "options": [
+   "Puts digital documents on paper",
+   "Scans photos",
+   "Connects to Wi-Fi only",
+   "Stores files"
+  ],
+  "answer": 0,
+  "explanation": "A printer produces a paper copy of a digital document or image."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which of these is a web browser?",
+  "options": [
+   "Windows",
+   "Firefox",
+   "Android",
+   "Linux"
+  ],
+  "answer": 1,
+  "explanation": "Firefox browses the web. The others are operating systems."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What does 'GPS' help you do?",
+  "options": [
+   "Take photos",
+   "Send email",
+   "Find your location",
+   "Play music"
+  ],
+  "answer": 2,
+  "explanation": "The Global Positioning System uses satellite signals to work out where you are."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which unit is bigger?",
+  "options": [
+   "Megabyte",
+   "Kilobyte",
+   "Byte",
+   "Gigabyte"
+  ],
+  "answer": 3,
+  "explanation": "Each step up is about a thousand times larger: byte, kilobyte, megabyte, gigabyte."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What is 'app' short for?",
+  "options": [
+   "Application",
+   "Appliance",
+   "Approval",
+   "Appointment"
+  ],
+  "answer": 0,
+  "explanation": "An app is an application — a program that performs a task for the user."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which technology lets a phone connect to wireless headphones?",
+  "options": [
+   "Wi-Fi",
+   "Bluetooth",
+   "NFC",
+   "Infrared"
+  ],
+  "answer": 1,
+  "explanation": "Bluetooth is short-range wireless designed for connecting devices like headphones and speakers."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "What is the internet?",
+  "options": [
+   "A single large computer",
+   "A type of software",
+   "A global network of computers",
+   "A cable company"
+  ],
+  "answer": 2,
+  "explanation": "The internet is the worldwide network that links computers and the services running on them."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "easy",
+  "question": "Which part of a laptop shows the picture?",
+  "options": [
+   "Keyboard",
+   "Battery",
+   "Touchpad",
+   "Screen"
+  ],
+  "answer": 3,
+  "explanation": "The screen, or display, shows the output of the computer."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What does 'HTTP' stand for?",
+  "options": [
+   "HyperText Transfer Protocol",
+   "High Traffic Transfer Process",
+   "Host Transfer Text Protocol",
+   "Hyperlink Transport Text Program"
+  ],
+  "answer": 0,
+  "explanation": "HTTP is the protocol browsers use to request pages. HTTPS is its encrypted version."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "Who co-founded Microsoft with Paul Allen?",
+  "options": [
+   "Steve Jobs",
+   "Bill Gates",
+   "Larry Page",
+   "Mark Zuckerberg"
+  ],
+  "answer": 1,
+  "explanation": "Bill Gates and Paul Allen founded Microsoft in 1975."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What does 'RAM' do in a computer?",
+  "options": [
+   "Stores files permanently",
+   "Displays graphics",
+   "Stores data temporarily while running",
+   "Cools the processor"
+  ],
+  "answer": 2,
+  "explanation": "RAM is fast, temporary working memory. Its contents are lost when power is cut."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "Which language is mainly used to style web pages?",
+  "options": [
+   "HTML",
+   "SQL",
+   "Python",
+   "CSS"
+  ],
+  "answer": 3,
+  "explanation": "CSS controls colours, fonts and layout. HTML provides the structure and content."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What is 'open source' software?",
+  "options": [
+   "Its source code is publicly available",
+   "It is always free of bugs",
+   "It only runs on Linux",
+   "It has no licence"
+  ],
+  "answer": 0,
+  "explanation": "Open source means anyone can read, modify and share the source code, under its licence terms."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What does 'VPN' stand for?",
+  "options": [
+   "Verified Public Node",
+   "Virtual Private Network",
+   "Variable Packet Number",
+   "Virtual Protected Name"
+  ],
+  "answer": 1,
+  "explanation": "A VPN tunnels your traffic through an encrypted connection to another network."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "Which company developed the Android operating system?",
+  "options": [
+   "Apple",
+   "Microsoft",
+   "Google",
+   "IBM"
+  ],
+  "answer": 2,
+  "explanation": "Google acquired Android Inc. in 2005 and now leads its development."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What is the binary number system based on?",
+  "options": [
+   "Eight digits",
+   "Ten digits",
+   "Sixteen digits",
+   "Two digits"
+  ],
+  "answer": 3,
+  "explanation": "Binary uses only 0 and 1, matching the two states a circuit can hold."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What does a firewall do?",
+  "options": [
+   "Filters network traffic",
+   "Cools the computer",
+   "Backs up files",
+   "Speeds up Wi-Fi"
+  ],
+  "answer": 0,
+  "explanation": "A firewall blocks or allows traffic by rules, keeping unwanted connections out."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "Which file format is a common way to store photographs?",
+  "options": [
+   "MP3",
+   "JPEG",
+   "DOCX",
+   "EXE"
+  ],
+  "answer": 1,
+  "explanation": "JPEG compresses photographs. MP3 is audio, DOCX a document and EXE a program."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What does 'AI' stand for in technology?",
+  "options": [
+   "Automatic Input",
+   "Applied Informatics",
+   "Artificial Intelligence",
+   "Advanced Interface"
+  ],
+  "answer": 2,
+  "explanation": "Artificial Intelligence covers systems that perform tasks normally needing human intelligence."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "Which protocol turns a domain name into an IP address?",
+  "options": [
+   "FTP",
+   "SMTP",
+   "TCP",
+   "DNS"
+  ],
+  "answer": 3,
+  "explanation": "The Domain Name System is the internet's address book, mapping names to numeric addresses."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What is 'cloud storage'?",
+  "options": [
+   "Files kept on remote servers",
+   "Files on your hard drive",
+   "Deleted files",
+   "Printed backups"
+  ],
+  "answer": 0,
+  "explanation": "Cloud storage keeps your files on someone else's servers, reachable over the internet."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "Which of these is a programming language?",
+  "options": [
+   "Ethernet",
+   "Python",
+   "Bluetooth",
+   "Firewall"
+  ],
+  "answer": 1,
+  "explanation": "Python is a widely used programming language. The others are networking or security terms."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What does 'USB' stand for?",
+  "options": [
+   "United System Bus",
+   "Universal Storage Box",
+   "Universal Serial Bus",
+   "User Serial Board"
+  ],
+  "answer": 2,
+  "explanation": "USB is the standard connector for linking devices to computers."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What is phishing?",
+  "options": [
+   "Slowing a network",
+   "Copying software",
+   "Overheating a chip",
+   "Tricking people into giving up details"
+  ],
+  "answer": 3,
+  "explanation": "Phishing uses fake messages or sites to trick people into revealing passwords or card numbers."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "Which part of a computer handles graphics?",
+  "options": [
+   "GPU",
+   "RAM",
+   "PSU",
+   "SSD"
+  ],
+  "answer": 0,
+  "explanation": "The graphics processing unit renders images and video, and is also used for AI workloads."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What does two-factor authentication add to a password?",
+  "options": [
+   "A longer password",
+   "A second, separate proof of identity",
+   "Automatic login",
+   "A password hint"
+  ],
+  "answer": 1,
+  "explanation": "A second factor — a code, key or fingerprint — means a stolen password alone is not enough."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "Which company created the first mass-produced personal computer operating system MS-DOS?",
+  "options": [
+   "Apple",
+   "IBM",
+   "Microsoft",
+   "Intel"
+  ],
+  "answer": 2,
+  "explanation": "Microsoft licensed MS-DOS to IBM for its PC in 1981, which set up its later dominance."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "medium",
+  "question": "What does an SSD do better than a traditional hard drive?",
+  "options": [
+   "Holds more data always",
+   "Costs less per gigabyte",
+   "Works without power",
+   "Reads and writes faster"
+  ],
+  "answer": 3,
+  "explanation": "Solid-state drives have no moving parts, so they are much faster and more robust, though usually dearer per gigabyte."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "Who is credited with proposing the World Wide Web in 1989?",
+  "options": [
+   "Tim Berners-Lee",
+   "Vint Cerf",
+   "Alan Turing",
+   "Linus Torvalds"
+  ],
+  "answer": 0,
+  "explanation": "Berners-Lee proposed the web at CERN and wrote the first browser and server."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "What does 'RSA' refer to in security?",
+  "options": [
+   "A network cable",
+   "A public-key encryption system",
+   "A password manager",
+   "A file format"
+  ],
+  "answer": 1,
+  "explanation": "RSA, named after Rivest, Shamir and Adleman, is a public-key cryptosystem widely used for secure communication."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "In computing, what is a 'race condition'?",
+  "options": [
+   "A slow processor",
+   "A network delay",
+   "A bug from unpredictable timing between tasks",
+   "A full hard disk"
+  ],
+  "answer": 2,
+  "explanation": "A race condition occurs when the result depends on which of two concurrent operations happens first."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "What is the maximum number of IPv4 addresses, roughly?",
+  "options": [
+   "4.3 billion",
+   "43 million",
+   "4.3 trillion",
+   "430 billion"
+  ],
+  "answer": 0,
+  "explanation": "IPv4 uses 32-bit addresses, giving about 4.3 billion — which is why IPv6 was created."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "Who wrote the first algorithm intended for a machine, in the 1840s?",
+  "options": [
+   "Grace Hopper",
+   "Charles Babbage",
+   "John von Neumann",
+   "Ada Lovelace"
+  ],
+  "answer": 3,
+  "explanation": "Ada Lovelace's notes on Babbage's Analytical Engine included what is regarded as the first computer program."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "What does 'SQL' stand for?",
+  "options": [
+   "Structured Query Language",
+   "System Quality Loop",
+   "Sequential Query Logic",
+   "Server Query Link"
+  ],
+  "answer": 0,
+  "explanation": "SQL is the language used to query and manage relational databases."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "Which sorting algorithm has an average time of O(n log n) and is often used in practice?",
+  "options": [
+   "Bubble sort",
+   "Quicksort",
+   "Insertion sort",
+   "Selection sort"
+  ],
+  "answer": 1,
+  "explanation": "Quicksort averages O(n log n). Bubble, insertion and selection sorts are O(n²) on average."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "What does 'end-to-end encryption' mean?",
+  "options": [
+   "The server scans it first",
+   "It is encrypted only in storage",
+   "Only sender and recipient can read it",
+   "It uses two passwords"
+  ],
+  "answer": 2,
+  "explanation": "The message is encrypted on the sender's device and decrypted on the recipient's, so the service in between cannot read it."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "What is Moore's law about?",
+  "options": [
+   "Networks doubling in speed yearly",
+   "Storage halving in price monthly",
+   "Screens doubling in size",
+   "Transistor counts roughly doubling every two years"
+  ],
+  "answer": 3,
+  "explanation": "Gordon Moore observed in 1965 that the number of transistors on a chip was doubling at a steady rate."
+ },
+ {
+  "category": "Technology",
+  "difficulty": "hard",
+  "question": "In version control, what does a 'commit' do?",
+  "options": [
+   "Records a snapshot of changes",
+   "Deletes the repository",
+   "Publishes an app",
+   "Compiles the code"
+  ],
+  "answer": 0,
+  "explanation": "A commit saves a set of changes to the project's history, with a message describing them."
+ }
 ]

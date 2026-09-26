@@ -40,7 +40,7 @@ export function AvatarPickerModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
           <FlatList
@@ -115,7 +115,7 @@ export function AvatarPickerModal({
                 style={[styles.emojiBtn, { backgroundColor: theme.colors.primary }]}
               
             accessibilityRole="button"
-            accessibilityLabel="Use"
+            accessibilityLabel="Use this emoji as my avatar"
             hitSlop={8}>
                 <Text style={{ color: '#fff', fontWeight: '700' }}>Use</Text>
               </TouchableOpacity>

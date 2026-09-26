@@ -29,6 +29,8 @@ export const SOCKET_EVENTS = {
   ROOM_JOIN: 'room:join',
   ROOM_GUEST_JOINED: 'room:guest_joined',
   ROOM_CANCELLED: 'room:cancelled',
+  /** Host backs out of a waiting room. */
+  ROOM_LEAVE: 'room:leave',
 
   /* ---------------- ERRORS ---------------- */
   ERROR: 'match:error',

@@ -1,662 +1,652 @@
 [
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many continents are there on Earth?",
-    "options": ["5", "6", "7", "8"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many days are in a leap year?",
-    "options": ["364", "365", "366", "367"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the largest planet in our solar system?",
-    "options": ["Saturn", "Neptune", "Uranus", "Jupiter"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many colors are in a rainbow?",
-    "options": ["5", "6", "7", "8"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the hardest natural substance on Earth?",
-    "options": ["Ruby", "Diamond", "Sapphire", "Quartz"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the smallest country in the world?",
-    "options": ["Monaco", "San Marino", "Liechtenstein", "Vatican City"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many letters are in the English alphabet?",
-    "options": ["24", "25", "26", "27"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "Which planet is closest to the Sun?",
-    "options": ["Venus", "Earth", "Mars", "Mercury"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the currency of Japan?",
-    "options": ["Yuan", "Won", "Yen", "Baht"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many sides does a hexagon have?",
-    "options": ["5", "6", "7", "8"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "In which direction does the Sun rise?",
-    "options": ["West", "North", "East", "South"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the capital of the United Kingdom?",
-    "options": ["Edinburgh", "Manchester", "Birmingham", "London"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "Which gas do plants absorb during photosynthesis?",
-    "options": ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the largest ocean on Earth?",
-    "options": ["Atlantic", "Indian", "Arctic", "Pacific"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many seconds are in one minute?",
-    "options": ["30", "60", "90", "100"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the chemical symbol for gold?",
-    "options": ["Go", "Gd", "Au", "Ag"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many players are on a chess team during a match?",
-    "options": ["1", "2", "4", "8"],
-    "answer": 0
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the name of the force that keeps planets in orbit around the Sun?",
-    "options": [
-      "Magnetic force",
-      "Centrifugal force",
-      "Gravity",
-      "Nuclear force"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "Which is the tallest mountain in the world?",
-    "options": ["K2", "Mont Blanc", "Kilimanjaro", "Mount Everest"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the most spoken language in the world by number of native speakers?",
-    "options": ["English", "Spanish", "Hindi", "Mandarin Chinese"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many hours are in a day?",
-    "options": ["12", "20", "24", "48"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the capital of Australia?",
-    "options": ["Sydney", "Melbourne", "Brisbane", "Canberra"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "Which organ pumps blood through the human body?",
-    "options": ["Lungs", "Kidneys", "Heart", "Liver"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What color do you get when you mix red and blue?",
-    "options": ["Green", "Orange", "Purple", "Brown"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many planets are in our solar system?",
-    "options": ["7", "8", "9", "10"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the longest bone in the human body?",
-    "options": ["Humerus", "Tibia", "Femur", "Fibula"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "Which country is the Eiffel Tower located in?",
-    "options": ["Italy", "Spain", "United Kingdom", "France"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "How many teeth does a healthy adult human have?",
-    "options": ["28", "30", "32", "34"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "Which animal is known as the fastest land animal?",
-    "options": ["Lion", "Horse", "Cheetah", "Gazelle"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "easy",
-    "question": "What is the name of the international date line in the sky?",
-    "options": [
-      "Prime Meridian",
-      "Equator",
-      "Tropic of Cancer",
-      "Greenwich Meridian"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the speed of light approximately in miles per second?",
-    "options": ["100,000", "186,000", "250,000", "300,000"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "Who invented the telephone?",
-    "options": [
-      "Thomas Edison",
-      "Nikola Tesla",
-      "Alexander Graham Bell",
-      "Guglielmo Marconi"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the chemical formula for table salt?",
-    "options": ["NaCl", "KCl", "CaCO3", "MgSO4"],
-    "answer": 0
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "In what year did World War I begin?",
-    "options": ["1912", "1913", "1914", "1915"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the term for animals that eat only plants?",
-    "options": ["Carnivore", "Omnivore", "Herbivore", "Decomposer"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the name of the process by which water vapor turns into liquid water?",
-    "options": ["Evaporation", "Sublimation", "Condensation", "Precipitation"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "Which ancient wonder of the world is still standing today?",
-    "options": [
-      "Hanging Gardens of Babylon",
-      "Colossus of Rhodes",
-      "Great Pyramid of Giza",
-      "Lighthouse of Alexandria"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What does the Roman numeral 'X' represent?",
-    "options": ["5", "10", "50", "100"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the name of the natural satellite that orbits Earth?",
-    "options": ["Io", "Europa", "The Moon", "Titan"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What are the primary colors in the RYB color model?",
-    "options": [
-      "Red, Yellow, Blue",
-      "Red, Green, Blue",
-      "Cyan, Magenta, Yellow",
-      "Red, Orange, Yellow"
-    ],
-    "answer": 0
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the name of the longest river in the Americas?",
-    "options": ["Mississippi", "Orinoco", "Amazon", "Paraná"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the term for a word that reads the same forwards and backwards?",
-    "options": ["Homonym", "Palindrome", "Anagram", "Acronym"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "In what century did the Renaissance begin?",
-    "options": ["12th", "13th", "14th", "15th"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the boiling point of water in Fahrenheit?",
-    "options": ["100°F", "180°F", "212°F", "250°F"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "How many bones are in the adult human body?",
-    "options": ["186", "206", "226", "246"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the name of the galaxy containing our solar system?",
-    "options": ["Andromeda", "Triangulum", "The Milky Way", "Centaurus A"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "Which element has the highest melting point?",
-    "options": ["Iron", "Gold", "Tungsten", "Platinum"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the name of the longest wall ever built?",
-    "options": [
-      "Hadrian's Wall",
-      "Great Wall of China",
-      "Berlin Wall",
-      "Aurelian Wall"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the square root of 144?",
-    "options": ["10", "11", "12", "13"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "In which year did the Berlin Wall fall?",
-    "options": ["1985", "1987", "1989", "1991"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the largest desert in the world (including polar deserts)?",
-    "options": ["Sahara", "Arabian", "Gobi", "Antarctic"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the study of earthquakes called?",
-    "options": ["Geology", "Seismology", "Volcanology", "Tectonics"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "Which scientist developed the theory of general relativity?",
-    "options": ["Isaac Newton", "Niels Bohr", "Max Planck", "Albert Einstein"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "How many chambers does the human heart have?",
-    "options": ["2", "3", "4", "5"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the name of the scale used to measure the intensity of earthquakes?",
-    "options": [
-      "Beaufort scale",
-      "Richter scale",
-      "Fujita scale",
-      "Saffir-Simpson scale"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "In which country is the Amazon rainforest primarily located?",
-    "options": ["Colombia", "Venezuela", "Peru", "Brazil"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the term for the outer layer of the Earth?",
-    "options": ["Mantle", "Inner Core", "Outer Core", "Crust"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the name of the first artificial satellite launched into space?",
-    "options": ["Explorer 1", "Vostok 1", "Apollo 1", "Sputnik 1"],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "What is the name of the protein that carries oxygen in red blood cells?",
-    "options": ["Myosin", "Collagen", "Hemoglobin", "Keratin"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "medium",
-    "question": "In geometry, how many degrees are in a circle?",
-    "options": ["180", "270", "360", "400"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the name of the enzyme that unwinds the DNA double helix during replication?",
-    "options": ["DNA Polymerase", "Helicase", "Ligase", "Primase"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is Avogadro's number?",
-    "options": ["6.022 × 10²³", "6.022 × 10²²", "6.022 × 10²⁴", "3.14 × 10²³"],
-    "answer": 0
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the name of the phenomenon where light bends around massive objects due to gravity?",
-    "options": [
-      "Doppler effect",
-      "Gravitational lensing",
-      "Redshift",
-      "Dark matter"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the Coriolis effect?",
-    "options": [
-      "The bending of ocean currents",
-      "Deflection of moving objects due to Earth's rotation",
-      "The magnetic pole shift",
-      "Tidal forces from the moon"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the name of the theoretical boundary around a black hole beyond which nothing can escape?",
-    "options": [
-      "Photon sphere",
-      "Schwarzschild radius",
-      "Event horizon",
-      "Hawking point"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the Fibonacci sequence?",
-    "options": [
-      "A series where each number is double the previous",
-      "A series where each number is the sum of the two preceding",
-      "A series of prime numbers",
-      "A geometric series"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the name of the chemical process by which cells produce energy from glucose?",
-    "options": [
-      "Photosynthesis",
-      "Fermentation",
-      "Cellular respiration",
-      "Glycolysis only"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the term for the phenomenon of two quantum particles being correlated regardless of distance?",
-    "options": [
-      "Quantum tunneling",
-      "Superposition",
-      "Quantum entanglement",
-      "Wave-particle duality"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the Pythagorean theorem?",
-    "options": ["a+b=c", "a²+b²=c²", "a×b=c", "a/b=c"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the name of the deepest part of the world's oceans?",
-    "options": [
-      "Puerto Rico Trench",
-      "Java Trench",
-      "Tonga Trench",
-      "Challenger Deep (Mariana Trench)"
-    ],
-    "answer": 3
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the correct definition of 'entropy' in thermodynamics?",
-    "options": [
-      "A measure of energy in a system",
-      "A measure of disorder or randomness in a system",
-      "The efficiency of energy conversion",
-      "The rate of heat transfer"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the name of the first element on the periodic table?",
-    "options": ["Helium", "Lithium", "Hydrogen", "Beryllium"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the approximate age of the universe?",
-    "options": [
-      "10 billion years",
-      "13.8 billion years",
-      "15 billion years",
-      "20 billion years"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the name of the force carrier particle for the electromagnetic force?",
-    "options": ["Gluon", "W boson", "Photon", "Z boson"],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is Schrodinger's Cat thought experiment illustrating?",
-    "options": [
-      "Animal psychology",
-      "The paradox of quantum superposition",
-      "Quantum tunneling",
-      "The uncertainty principle"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What does E=mc² represent in Einstein's theory?",
-    "options": [
-      "Energy equals mass times the speed of light",
-      "Energy equals mass times the speed of light squared",
-      "Electromagnetism equals mass times force",
-      "Entropy equals mass times light"
-    ],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the name of the process by which the Sun generates energy?",
-    "options": [
-      "Nuclear fission",
-      "Chemical combustion",
-      "Nuclear fusion",
-      "Gravitational compression"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the approximate number of neurons in the human brain?",
-    "options": ["10 billion", "100 billion", "500 billion", "1 trillion"],
-    "answer": 1
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the name of the first successful powered airplane flight in 1903?",
-    "options": [
-      "Kitty Hawk Flyer",
-      "Spirit of St. Louis",
-      "Wright Flyer",
-      "Biplane Pioneer"
-    ],
-    "answer": 2
-  },
-  {
-    "category": "General Knowledge",
-    "difficulty": "hard",
-    "question": "What is the study of the origin and development of the universe called?",
-    "options": ["Astronomy", "Astrophysics", "Cosmology", "Cosmography"],
-    "answer": 2
-  }
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "How many days are in a leap year?",
+  "options": [
+   "364",
+   "365",
+   "366",
+   "367"
+  ],
+  "answer": 2,
+  "explanation": "A leap year adds 29 February, making 366 days. It keeps the calendar in step with the Earth's orbit, which takes about 365.25 days."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "Mixing blue and yellow paint gives which colour?",
+  "options": [
+   "Green",
+   "Purple",
+   "Orange",
+   "Brown"
+  ],
+  "answer": 0,
+  "explanation": "Blue and yellow are two of the three subtractive primary colours used in paint; together they produce green."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "How many sides does a hexagon have?",
+  "options": [
+   "Five",
+   "Six",
+   "Seven",
+   "Eight"
+  ],
+  "answer": 1,
+  "explanation": "The prefix 'hexa-' means six, as in hexagon. Honeycomb cells are the best known natural example."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "How many minutes are there in one hour?",
+  "options": [
+   "30",
+   "50",
+   "60",
+   "100"
+  ],
+  "answer": 2,
+  "explanation": "An hour is divided into 60 minutes, and each minute into 60 seconds — a counting system inherited from ancient Babylon."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "At what temperature does water freeze in degrees Celsius?",
+  "options": [
+   "0",
+   "10",
+   "32",
+   "100"
+  ],
+  "answer": 0,
+  "explanation": "The Celsius scale sets 0 as the freezing point of water and 100 as its boiling point at sea level."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "How many letters are in the English alphabet?",
+  "options": [
+   "24",
+   "25",
+   "26",
+   "28"
+  ],
+  "answer": 2,
+  "explanation": "The modern English alphabet has 26 letters, from A to Z."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "Which insect produces honey?",
+  "options": [
+   "Wasp",
+   "Ant",
+   "Bee",
+   "Beetle"
+  ],
+  "answer": 2,
+  "explanation": "Honey bees gather nectar and concentrate it into honey, which feeds the colony through winter."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "Which musical instrument has 88 keys?",
+  "options": [
+   "Organ",
+   "Accordion",
+   "Harp",
+   "Piano"
+  ],
+  "answer": 3,
+  "explanation": "A standard modern piano has 88 keys: 52 white and 36 black."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "How many colours are traditionally listed in a rainbow?",
+  "options": [
+   "Seven",
+   "Five",
+   "Six",
+   "Nine"
+  ],
+  "answer": 0,
+  "explanation": "Newton described seven: red, orange, yellow, green, blue, indigo and violet. The real spectrum is continuous."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "What is the chemical formula H2O better known as?",
+  "options": [
+   "Salt",
+   "Water",
+   "Sugar",
+   "Air"
+  ],
+  "answer": 1,
+  "explanation": "H2O means two hydrogen atoms bonded to one oxygen atom — a water molecule."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "How many hours are there in two full days?",
+  "options": [
+   "24",
+   "36",
+   "48",
+   "60"
+  ],
+  "answer": 2,
+  "explanation": "One day is 24 hours, so two days are 48 hours."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "Which month is the last of the calendar year?",
+  "options": [
+   "October",
+   "November",
+   "December",
+   "January"
+  ],
+  "answer": 2,
+  "explanation": "December is the twelfth and final month of the Gregorian calendar year."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "How many wheels does a standard bicycle have?",
+  "options": [
+   "One",
+   "Three",
+   "Four",
+   "Two"
+  ],
+  "answer": 3,
+  "explanation": "'Bi-' means two: a bicycle has two wheels, while a tricycle has three."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "Which shape has all sides of equal length and four right angles?",
+  "options": [
+   "Square",
+   "Rectangle",
+   "Rhombus",
+   "Trapezium"
+  ],
+  "answer": 0,
+  "explanation": "A square is the special rectangle whose four sides are equal. A rhombus has equal sides but not necessarily right angles."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "Which organ do humans use to smell?",
+  "options": [
+   "Ear",
+   "Nose",
+   "Tongue",
+   "Skin"
+  ],
+  "answer": 1,
+  "explanation": "Scent molecules are detected by receptors in the lining of the nose and read by the olfactory bulb in the brain."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "How many seconds are in one minute?",
+  "options": [
+   "10",
+   "30",
+   "60",
+   "100"
+  ],
+  "answer": 2,
+  "explanation": "A minute contains 60 seconds, the same base-60 system that divides an hour into 60 minutes."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "What do you call a baby cat?",
+  "options": [
+   "Cub",
+   "Puppy",
+   "Kitten",
+   "Calf"
+  ],
+  "answer": 2,
+  "explanation": "A young cat is a kitten. Cubs are young bears, lions and foxes; puppies are young dogs."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "How many days are in a week?",
+  "options": [
+   "Five",
+   "Six",
+   "Ten",
+   "Seven"
+  ],
+  "answer": 3,
+  "explanation": "The seven-day week is used almost worldwide and dates back thousands of years."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "Which of these is a primary colour of light?",
+  "options": [
+   "Red",
+   "Brown",
+   "Pink",
+   "Grey"
+  ],
+  "answer": 0,
+  "explanation": "The primary colours of light are red, green and blue. Screens mix these three to make every other colour."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "easy",
+  "question": "What is the opposite of 'ancient'?",
+  "options": [
+   "Elderly",
+   "Modern",
+   "Historic",
+   "Fragile"
+  ],
+  "answer": 1,
+  "explanation": "'Ancient' means very old, so its opposite is 'modern', meaning of the present time."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "How many degrees are in a full circle?",
+  "options": [
+   "180",
+   "270",
+   "360",
+   "400"
+  ],
+  "answer": 2,
+  "explanation": "A full turn is 360 degrees, a number chosen because it divides evenly by many whole numbers."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "Which Roman numeral represents 50?",
+  "options": [
+   "L",
+   "V",
+   "X",
+   "C"
+  ],
+  "answer": 0,
+  "explanation": "L is 50. V is 5, X is 10 and C is 100."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "What does the abbreviation 'www' stand for?",
+  "options": [
+   "Wide World Web",
+   "World Wide Web",
+   "Web World Wide",
+   "World Web Wire"
+  ],
+  "answer": 1,
+  "explanation": "The World Wide Web, proposed by Tim Berners-Lee in 1989, is the system of linked pages that runs on the internet."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "What is a group of lions called?",
+  "options": [
+   "Pack",
+   "Herd",
+   "Pride",
+   "Flock"
+  ],
+  "answer": 2,
+  "explanation": "Lions live in prides, usually related females with their cubs and a small number of males."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "Which unit is used to measure the loudness of sound?",
+  "options": [
+   "Hertz",
+   "Watt",
+   "Lumen",
+   "Decibel"
+  ],
+  "answer": 3,
+  "explanation": "Decibels measure sound level. Hertz measures frequency — how high or low a sound is."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "How many squares are on a standard chessboard?",
+  "options": [
+   "36",
+   "49",
+   "64",
+   "81"
+  ],
+  "answer": 2,
+  "explanation": "A chessboard is 8 by 8, so 8 × 8 = 64 squares, alternating light and dark."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "What is the currency of Japan?",
+  "options": [
+   "Yen",
+   "Won",
+   "Yuan",
+   "Baht"
+  ],
+  "answer": 0,
+  "explanation": "Japan uses the yen. The won is Korean, the yuan Chinese and the baht Thai."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "What is the study of earthquakes called?",
+  "options": [
+   "Geology",
+   "Seismology",
+   "Meteorology",
+   "Volcanology"
+  ],
+  "answer": 1,
+  "explanation": "Seismology studies earthquakes and the waves they send through the Earth. Geology is the wider study of the Earth itself."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "How many strings does a standard violin have?",
+  "options": [
+   "Five",
+   "Six",
+   "Four",
+   "Seven"
+  ],
+  "answer": 2,
+  "explanation": "A violin has four strings, tuned G, D, A and E from lowest to highest."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "Which word describes text that reads the same forwards and backwards?",
+  "options": [
+   "Anagram",
+   "Acronym",
+   "Homonym",
+   "Palindrome"
+  ],
+  "answer": 3,
+  "explanation": "'Level' and 'racecar' are palindromes. An anagram rearranges letters into a different word."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "How many players are on the court for one volleyball team?",
+  "options": [
+   "Six",
+   "Five",
+   "Seven",
+   "Eleven"
+  ],
+  "answer": 0,
+  "explanation": "Indoor volleyball is six a side; beach volleyball is played two a side."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "Which language has the most native speakers worldwide?",
+  "options": [
+   "English",
+   "Mandarin Chinese",
+   "Spanish",
+   "Hindi"
+  ],
+  "answer": 1,
+  "explanation": "Mandarin Chinese has the most native speakers. English has more total speakers once second-language use is counted."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "How many cards are in a standard deck, not counting jokers?",
+  "options": [
+   "48",
+   "50",
+   "52",
+   "54"
+  ],
+  "answer": 2,
+  "explanation": "A standard deck has 52 cards: four suits of 13. Jokers are extra and not part of the 52."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "What is the more common name for sodium chloride?",
+  "options": [
+   "Chalk",
+   "Baking soda",
+   "Table salt",
+   "Sugar"
+  ],
+  "answer": 2,
+  "explanation": "Sodium chloride is ordinary table salt. Baking soda is sodium bicarbonate."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "How many sides does a dodecagon have?",
+  "options": [
+   "Ten",
+   "Eleven",
+   "Twenty",
+   "Twelve"
+  ],
+  "answer": 3,
+  "explanation": "'Dodeca-' means twelve, so a dodecagon has twelve sides. A decagon has ten."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "Which of these is a mammal?",
+  "options": [
+   "Dolphin",
+   "Shark",
+   "Crocodile",
+   "Tuna"
+  ],
+  "answer": 0,
+  "explanation": "Dolphins are mammals: they breathe air, are warm-blooded and feed their young milk. Sharks and tuna are fish."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "What does the 'E' stand for in UNESCO?",
+  "options": [
+   "Economic",
+   "Educational",
+   "Environmental",
+   "European"
+  ],
+  "answer": 1,
+  "explanation": "UNESCO is the United Nations Educational, Scientific and Cultural Organization."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "How many minutes are in one full day?",
+  "options": [
+   "720",
+   "1,000",
+   "1,440",
+   "2,400"
+  ],
+  "answer": 2,
+  "explanation": "24 hours × 60 minutes = 1,440 minutes in a day."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "Which blood type is known as the universal red-cell donor?",
+  "options": [
+   "AB positive",
+   "A positive",
+   "O negative",
+   "B negative"
+  ],
+  "answer": 2,
+  "explanation": "O negative red cells carry neither A, B nor RhD antigens, so almost any patient can receive them in an emergency."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "medium",
+  "question": "What is the name for an animal that eats both plants and meat?",
+  "options": [
+   "Herbivore",
+   "Carnivore",
+   "Insectivore",
+   "Omnivore"
+  ],
+  "answer": 3,
+  "explanation": "Omnivores eat both. Humans, pigs and bears are typical examples."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "What is the SI unit of luminous intensity?",
+  "options": [
+   "Candela",
+   "Lux",
+   "Lumen",
+   "Watt"
+  ],
+  "answer": 0,
+  "explanation": "The candela is one of the seven SI base units. The lumen measures total light output and lux measures light falling on a surface."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "Which Greek letter is used in mathematics to mean 'sum of'?",
+  "options": [
+   "Pi",
+   "Sigma",
+   "Delta",
+   "Omega"
+  ],
+  "answer": 1,
+  "explanation": "Capital sigma denotes summation. Capital delta usually means a change in a quantity."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "Which country has the only national flag that is not a rectangle or square?",
+  "options": [
+   "Bhutan",
+   "Switzerland",
+   "Nepal",
+   "Vatican City"
+  ],
+  "answer": 2,
+  "explanation": "Nepal's flag is two stacked pennants. Switzerland's and the Vatican's flags are square, which is still four-sided."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "What is the study of the origin of words called?",
+  "options": [
+   "Entomology",
+   "Ecology",
+   "Epistemology",
+   "Etymology"
+  ],
+  "answer": 3,
+  "explanation": "Etymology traces where words come from. Entomology, which sounds similar, is the study of insects."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "How many bones are in the adult human body?",
+  "options": [
+   "186",
+   "206",
+   "226",
+   "256"
+  ],
+  "answer": 1,
+  "explanation": "An adult has about 206 bones. Babies are born with roughly 270, many of which fuse as they grow."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "What is a group of crows called?",
+  "options": [
+   "A murder",
+   "A parliament",
+   "A gaggle",
+   "A shoal"
+  ],
+  "answer": 0,
+  "explanation": "Crows form a 'murder'. A parliament is owls, a gaggle is geese on the ground and a shoal is fish."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "Which author created the detective Sherlock Holmes?",
+  "options": [
+   "Agatha Christie",
+   "Arthur Conan Doyle",
+   "Charles Dickens",
+   "Edgar Allan Poe"
+  ],
+  "answer": 1,
+  "explanation": "Arthur Conan Doyle introduced Holmes in 'A Study in Scarlet' in 1887."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "What does the acronym 'laser' stand for?",
+  "options": [
+   "Light Amplified Steady Energy Ray",
+   "Linear Amplification of Stored Energy Radiation",
+   "Light Amplification by Stimulated Emission of Radiation",
+   "Light Aligned Single Emission Ray"
+  ],
+  "answer": 2,
+  "explanation": "Laser stands for Light Amplification by Stimulated Emission of Radiation, describing exactly how the beam is produced."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "Which number is neither prime nor composite?",
+  "options": [
+   "0",
+   "1",
+   "2",
+   "9"
+  ],
+  "answer": 1,
+  "explanation": "1 has only one divisor, itself, so it fits neither definition. 2 is the smallest prime and 9 is composite."
+ },
+ {
+  "category": "General Knowledge",
+  "difficulty": "hard",
+  "question": "What is the name for the study of flags?",
+  "options": [
+   "Heraldry",
+   "Cartography",
+   "Philately",
+   "Vexillology"
+  ],
+  "answer": 3,
+  "explanation": "Vexillology is the study of flags. Heraldry covers coats of arms, cartography maps and philately stamps."
+ }
 ]

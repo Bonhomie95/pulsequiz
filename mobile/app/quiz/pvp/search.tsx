@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   ActivityIndicator,
@@ -28,14 +29,10 @@ export default function PvPSearchScreen() {
     category,
     wager: wagerParam,
     rematchWith,
-    challengeUser,
-    challengeName,
   } = useLocalSearchParams<{
     category: string;
     wager?: string;
     rematchWith?: string;
-    challengeUser?: string;
-    challengeName?: string;
   }>();
   const wager = wagerParam ? Number(wagerParam) : 0;
   const router = useRouter();
@@ -92,35 +89,41 @@ export default function PvPSearchScreen() {
       rematchWith: rematchWith || undefined,
     });
 
-    socket.on(SOCKET_EVENTS.MATCH_FOUND, (payload) => {
-      // payload.matchId is now a real MongoDB ObjectId (not pairId)
+    // Named handlers, removed by reference. `socket.off(EVENT)` with no
+    // handler also stripped the app-wide listeners from registerListeners.ts,
+    // which are registered once and never come back.
+    const onMatchFound = (payload: any) => {
+      const myUserId = useAuthStore.getState().user?.id;
+      if (!myUserId) return;
       usePvPStore.getState().setMatched({
         matchId: payload.matchId,
         players: payload.players ?? [],
-        myUserId: useAuthStore.getState().user!.id,
+        myUserId,
         wager: payload.wager ?? 0,
       });
-
       router.replace('/quiz/pvp/vs');
-    });
-
-    socket.on(SOCKET_EVENTS.QUEUE_TIMEOUT, () => {
+    };
+    const onTimeout = () => {
       reset();
-      router.replace(`/quiz/play?category=${category}` as const);
-    });
-
-    socket.on(SOCKET_EVENTS.ERROR, () => {
+      router.replace(`/quiz/play?category=${encodeURIComponent(category)}` as any);
+    };
+    const onError = (err?: { message?: string }) => {
       reset();
+      if (err?.message) Alert.alert('Matchmaking', err.message);
       router.back();
-    });
+    };
+
+    socket.on(SOCKET_EVENTS.MATCH_FOUND, onMatchFound);
+    socket.on(SOCKET_EVENTS.QUEUE_TIMEOUT, onTimeout);
+    socket.on(SOCKET_EVENTS.ERROR, onError);
 
     return () => {
       socket.emit(SOCKET_EVENTS.LEAVE_QUEUE);
       usePvPStore.getState().reset();
 
-      socket.off(SOCKET_EVENTS.MATCH_FOUND);
-      socket.off(SOCKET_EVENTS.QUEUE_TIMEOUT);
-      socket.off(SOCKET_EVENTS.ERROR);
+      socket.off(SOCKET_EVENTS.MATCH_FOUND, onMatchFound);
+      socket.off(SOCKET_EVENTS.QUEUE_TIMEOUT, onTimeout);
+      socket.off(SOCKET_EVENTS.ERROR, onError);
     };
   }, [category]);
 
@@ -164,9 +167,7 @@ export default function PvPSearchScreen() {
         >
           {rematchWith
             ? '⚔️ Rematch'
-            : challengeUser
-              ? `Challenging ${challengeName ?? 'Player'}…`
-              : 'Finding opponent…'}
+            : 'Finding opponent…'}
         </Text>
 
         {/* Category + Wager pill */}

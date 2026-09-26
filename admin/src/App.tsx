@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import RequireAdmin from './auth/RequireAdmin';
@@ -17,6 +17,14 @@ import Leaderboard from './pages/Leaderboard';
 import Analytics from './pages/Analytics';
 import ActivityLog from './pages/ActivityLog';
 import AuditLog from './pages/AuditLog';
+import Admins from './pages/Admins';
+import { useAdminRole } from './auth/useAdminRole';
+
+/** SUPER_ADMIN-only pages. The server enforces this too; this avoids a page of 403s. */
+function RequireSuper() {
+  const { isSuperAdmin } = useAdminRole();
+  return isSuperAdmin ? <Outlet /> : <Navigate to="/" replace />;
+}
 
 export default function App() {
   return (
@@ -32,16 +40,20 @@ export default function App() {
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/questions" element={<Questions />} />
             <Route path="/tournaments" element={<Tournaments />} />
-          <Route path="/challenges" element={<Challenges />} />
+            <Route path="/challenges" element={<Challenges />} />
             <Route path="/anticheat" element={<AntiCheat />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/activity" element={<ActivityLog />} />
-            <Route path="/audit" element={<AuditLog />} />
+            <Route element={<RequireSuper />}>
+              <Route path="/audit" element={<AuditLog />} />
+              <Route path="/admins" element={<Admins />} />
+            </Route>
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

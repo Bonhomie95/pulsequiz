@@ -10,6 +10,8 @@ import { soundManager } from '@/src/audio/SoundManager';
 import { useTheme } from '@/src/theme/useTheme';
 import { enterImmersiveMode, exitImmersiveMode } from '@/src/utils/immersive';
 import { useAppStateStore } from '@/src/store/useAppStateStore';
+import { LINKS, duelLink } from '@/src/constants/links';
+import { dailyNumber, resultGrid } from '@/src/utils/share';
 
 const SCORE_MESSAGES = [
   { min: 100, emoji: '🏆', text: "Perfect score! You're unstoppable!" },
@@ -26,18 +28,40 @@ function getShareMessage(
 ): string {
   const msg =
     SCORE_MESSAGES.find((m) => accuracyNum >= m.min) ?? SCORE_MESSAGES[3];
-  return `${msg.emoji} Just scored ${pointsNum} pts on PulseQuiz! (${correctNum}/${totalNum} correct, ${accuracyNum}% accuracy)\n\n${msg.text}\n\nChallenge me 👉 https://pulsequiz.app`;
+  return `${msg.emoji} Just scored ${pointsNum} pts on PulseQuiz! (${correctNum}/${totalNum} correct, ${accuracyNum}% accuracy)\n\n${msg.text}\n\nChallenge me 👉 ${LINKS.WEBSITE}`;
 }
 
 export default function QuizResult() {
   const theme = useTheme();
   const router = useRouter();
 
-  const { correct, total, points, level, accuracy, leveledUp } =
-    useLocalSearchParams<{
+  const {
+    correct,
+    total,
+    points,
+    level,
+    accuracy,
+    leveledUp,
+    assisted,
+    capExceeded,
+    mode = 'classic',
+    results = '',
+    leagueXp,
+    dailyDate,
+    duelCode,
+    dailyCoins,
+  } = useLocalSearchParams<{
+      mode?: string;
+      results?: string;
+      leagueXp?: string;
+      dailyDate?: string;
+      duelCode?: string;
+      dailyCoins?: string;
       correct: string;
       total: string;
       points: string;
+      assisted?: string;
+      capExceeded?: string;
       level: string;
       accuracy: string;
       leveledUp?: string;
@@ -51,20 +75,33 @@ export default function QuizResult() {
   const accuracyNum = Number(accuracy);
   const didLevelUp = leveledUp === 'true';
   const perfect = correctNum === totalNum;
+  const ranked = mode === 'classic';
+  const xpNum = Number(leagueXp ?? 0);
 
   /* ---------------- SOUND + ADS ONCE ---------------- */
   useEffect(() => {
     if (playedRef.current) return;
     playedRef.current = true;
 
+    // At most one interstitial every 4 runs, and none in a new player's
+    // first 5 — the first sessions decide whether they stay.
     (async () => {
-      const raw = await AsyncStorage.getItem('SESSIONS_SINCE_AD');
-      const count = Number(raw ?? 0) + 1;
-      if (count >= 2) {
-        await AsyncStorage.setItem('SESSIONS_SINCE_AD', '0');
-        await showInterstitialAd();
-      } else {
-        await AsyncStorage.setItem('SESSIONS_SINCE_AD', String(count));
+      try {
+        const [rawSince, rawTotal] = await Promise.all([
+          AsyncStorage.getItem('SESSIONS_SINCE_AD'),
+          AsyncStorage.getItem('RUNS_TOTAL'),
+        ]);
+        const runs = Number(rawTotal ?? 0) + 1;
+        const since = Number(rawSince ?? 0) + 1;
+        await AsyncStorage.setItem('RUNS_TOTAL', String(runs));
+        if (runs > 5 && since >= 4) {
+          await AsyncStorage.setItem('SESSIONS_SINCE_AD', '0');
+          await showInterstitialAd();
+        } else {
+          await AsyncStorage.setItem('SESSIONS_SINCE_AD', String(since));
+        }
+      } catch {
+        /* storage unavailable — skip the ad rather than risk one every run */
       }
     })();
 
@@ -103,12 +140,19 @@ export default function QuizResult() {
   const goHome = () => router.replace('/(tabs)/home');
   const startAnotherQuiz = () => router.replace('/quiz/categories');
 
+  const shareMessage = () => {
+    if (mode === 'daily' && dailyDate) {
+      return `PulseQuiz Daily #${dailyNumber(dailyDate)}  ${correctNum}/${totalNum}\n${resultGrid(results)}\n\n${LINKS.WEBSITE}`;
+    }
+    if (mode === 'duel' && duelCode) {
+      return `I got ${correctNum}/${totalNum} on PulseQuiz. Same 10 questions — can you beat me?\n${resultGrid(results)}\n\n👉 ${duelLink(duelCode)}\n(or enter code ${duelCode} in the app)`;
+    }
+    return getShareMessage(correctNum, totalNum, pointsNum, accuracyNum);
+  };
+
   const shareResult = async () => {
     try {
-      await Share.share({
-        message: getShareMessage(correctNum, totalNum, pointsNum, accuracyNum),
-        title: 'PulseQuiz Score',
-      });
+      await Share.share({ message: shareMessage(), title: 'PulseQuiz' });
     } catch {
       /* user cancelled */
     }
@@ -124,11 +168,35 @@ export default function QuizResult() {
         <Text
           style={{ fontSize: 28, fontWeight: '800', color: theme.colors.text }}
         >
-          Quiz Complete 🎯
+          {mode === 'daily'
+            ? `Daily #${dailyDate ? dailyNumber(dailyDate) : ''} done 📅`
+            : mode === 'duel'
+              ? 'Challenge played 🤝'
+              : mode === 'relaxed'
+                ? 'Practice complete 📘'
+                : 'Quiz Complete 🎯'}
         </Text>
         <Text style={{ color: theme.colors.muted, marginTop: 6 }}>
           {correctNum} / {totalNum} correct • {accuracyNum}% accuracy
         </Text>
+
+        {/* The daily pays for turning up, so say so — finishing and seeing
+            nothing change reads as the run not having counted. */}
+        {Number(dailyCoins) > 0 && (
+          <Text style={{ color: theme.colors.text, marginTop: 8, fontWeight: '800' }}>
+            +{Number(dailyCoins)} coins{correctNum === totalNum ? ' — perfect round! 🏅' : ''}
+          </Text>
+        )}
+
+        {/* Answer grid */}
+        {results.length > 0 && (
+          <Text
+            style={{ fontSize: 22, marginTop: 14, letterSpacing: 2 }}
+            accessibilityLabel={`${correctNum} of ${totalNum} correct`}
+          >
+            {resultGrid(results)}
+          </Text>
+        )}
 
         {/* Points card */}
         <View
@@ -140,7 +208,9 @@ export default function QuizResult() {
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: theme.colors.coin }}>Points Earned</Text>
+          <Text style={{ color: theme.colors.coin }}>
+            {ranked ? 'Points Earned' : 'League XP'}
+          </Text>
           <Text
             style={{
               fontSize: 36,
@@ -148,8 +218,29 @@ export default function QuizResult() {
               color: theme.colors.coin,
             }}
           >
-            +{pointsNum}
+            +{ranked ? pointsNum : xpNum}
           </Text>
+          {ranked && xpNum > 0 && (
+            <Text style={{ color: theme.colors.muted, fontSize: 12, marginTop: 4 }}>
+              +{xpNum} league XP
+            </Text>
+          )}
+          {!ranked && (
+            <Text style={{ color: theme.colors.muted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
+              Only Ranked runs count for the leaderboard.
+            </Text>
+          )}
+          {Number(assisted) > 0 && (
+            <Text style={{ color: theme.colors.muted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
+              {Number(assisted)} answer{Number(assisted) > 1 ? 's' : ''} used a hint or extra time,
+              so {Number(assisted) > 1 ? "they don't" : "it doesn't"} count toward the leaderboard.
+            </Text>
+          )}
+          {capExceeded === 'true' && (
+            <Text style={{ color: theme.colors.muted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
+              Daily leaderboard limit reached — keep playing for fun, points resume tomorrow.
+            </Text>
+          )}
         </View>
 
         {/* Level up banner */}
@@ -177,7 +268,33 @@ export default function QuizResult() {
 
         {/* Actions */}
         <View style={{ marginTop: 32, gap: 14 }}>
+          {mode === 'daily' && (
+            <TouchableOpacity
+              onPress={() => router.replace('/daily')}
+              accessibilityRole="button"
+              style={{ backgroundColor: theme.colors.primary, paddingVertical: 16, borderRadius: 18, alignItems: 'center' }}
+              hitSlop={8}
+            >
+              <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>
+                📅 See today&apos;s standings
+              </Text>
+            </TouchableOpacity>
+          )}
+          {mode === 'duel' && duelCode && (
+            <TouchableOpacity
+              onPress={() => router.replace({ pathname: '/duel/[code]', params: { code: duelCode } })}
+              accessibilityRole="button"
+              style={{ backgroundColor: theme.colors.primary, paddingVertical: 16, borderRadius: 18, alignItems: 'center' }}
+              hitSlop={8}
+            >
+              <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>
+                🤝 View challenge
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* Start Another Quiz */}
+          {(mode === 'classic' || mode === 'relaxed') && (
           <TouchableOpacity
             onPress={startAnotherQuiz}
             accessibilityLabel="Play another quiz"
@@ -194,6 +311,7 @@ export default function QuizResult() {
               🔁 Start Another Quiz
             </Text>
           </TouchableOpacity>
+          )}
 
           {/* Share Result */}
           <TouchableOpacity
@@ -221,7 +339,7 @@ export default function QuizResult() {
                 fontSize: 15,
               }}
             >
-              Share Result
+              {mode === 'duel' ? 'Send to a friend' : 'Share Result'}
             </Text>
           </TouchableOpacity>
 

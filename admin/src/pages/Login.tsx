@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { adminApi } from '../api/client';
+import { errMsg, errStatus } from '../utils/errMsg';
 import { useAdminStore } from '../store/adminStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,16 +22,16 @@ export default function Login() {
       const res = await adminApi.post('/admin/login', { email, password });
       setAdmin(res.data.admin);
       nav('/', { replace: true });
-    } catch (e: any) {
+    } catch (e) {
       // Without this the promise rejected unhandled and the button simply did
       // nothing — a wrong password looked identical to a broken page.
-      const status = e?.response?.status;
+      const status = errStatus(e);
       setError(
         status === 401
           ? 'Incorrect email or password.'
           : status === 429
-            ? 'Too many attempts. Try again shortly.'
-            : e?.response?.data?.message ?? 'Could not sign in. Check your connection.',
+            ? errMsg(e, 'Too many attempts. Try again shortly.')
+            : errMsg(e, 'Could not sign in. Check your connection.'),
       );
     } finally {
       setSubmitting(false);

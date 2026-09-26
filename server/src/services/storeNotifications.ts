@@ -137,6 +137,17 @@ function decodeNested(jws?: string): any | null {
 export async function revokePurchase(purchase: any, reason: string) {
   if (!purchase || purchase.state === 'REFUNDED') return;
 
+  // Claim the transition first. Stores re-deliver notifications, and two
+  // concurrent deliveries both passed the stale state check above and clawed
+  // the coins back twice.
+  const claimed = await Purchase.findOneAndUpdate(
+    { _id: purchase._id, state: { $ne: 'REFUNDED' } },
+    { $set: { state: 'REFUNDED', refundedAt: new Date(), refundReason: reason } },
+  );
+  if (!claimed) return;
+  // Only coins that were actually credited are clawed back.
+  if (claimed.state !== 'CREDITED') return;
+
   const coins = purchase.creditedCoins ?? 0;
   if (coins > 0) {
     const wallet = await CoinWallet.findOneAndUpdate(
@@ -154,11 +165,6 @@ export async function revokePurchase(purchase: any, reason: string) {
     });
   }
 
-  await Purchase.updateOne(
-    { _id: purchase._id },
-    { $set: { state: 'REFUNDED', refundedAt: new Date(), refundReason: reason } },
-  );
-
   logger.warn('Purchase refunded — coins clawed back', {
     purchaseId: purchase._id.toString(),
     coins,
@@ -168,7 +174,42 @@ export async function revokePurchase(purchase: any, reason: string) {
 
 /* ── Apple notification handling ────────────────────────────────────────── */
 
-const APPLE_REVOKE_TYPES = new Set(['REFUND', 'REVOKE', 'CONSUMPTION_REQUEST']);
+// CONSUMPTION_REQUEST is deliberately absent: it means the customer ASKED for
+// a refund, not that Apple granted one. Clawing back on it took coins from
+// users whose refund was then declined.
+const APPLE_REVOKE_TYPES = new Set(['REFUND', 'REVOKE']);
+
+/** Apple reversed a refund it had granted — give the coins back once. */
+async function restoreRefundedPurchase(purchase: any) {
+  // A purchase refunded before it was ever credited has nothing to restore —
+  // put it back to PENDING so a later verify can still credit it.
+  const coinsToRestore = purchase.creditedCoins ?? 0;
+  const claimed = await Purchase.findOneAndUpdate(
+    { _id: purchase._id, state: 'REFUNDED' },
+    {
+      $set:
+        coinsToRestore > 0
+          ? { state: 'CREDITED', refundedAt: null, refundReason: null }
+          : { state: 'PENDING', refundedAt: null, refundReason: null },
+    },
+  );
+  if (!claimed) return;
+  const coins = claimed.creditedCoins ?? 0;
+  if (coins <= 0) return;
+  const wallet = await CoinWallet.findOneAndUpdate(
+    { userId: claimed.userId },
+    { $inc: { coins } },
+    { upsert: true, returnDocument: 'after' },
+  );
+  await CoinTransaction.create({
+    userId: claimed.userId,
+    delta: coins,
+    balanceAfter: wallet?.coins ?? coins,
+    reason: 'iap_purchase',
+    meta: `refund_reversed:${claimed.uniqueKey}`,
+  });
+  logger.warn('Apple refund reversed — coins restored', { purchaseId: claimed._id.toString(), coins });
+}
 
 export async function handleAppleNotification(payload: any) {
   const notificationType: string = payload?.notificationType ?? '';
@@ -191,6 +232,14 @@ export async function handleAppleNotification(payload: any) {
     const purchase = await Purchase.findOne({ uniqueKey: `apple:${transactionId}` });
     if (purchase) {
       await revokePurchase(purchase, `apple_${notificationType.toLowerCase()}`);
+      return { handled: true };
+    }
+  }
+
+  if (notificationType === 'REFUND_REVERSED' && transactionId) {
+    const purchase = await Purchase.findOne({ uniqueKey: `apple:${transactionId}` });
+    if (purchase) {
+      await restoreRefundedPurchase(purchase);
       return { handled: true };
     }
   }

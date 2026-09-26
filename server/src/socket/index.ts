@@ -6,6 +6,7 @@ import { registerPvpHandlers } from './pvp.handlers';
 import { registerMatchmakingHandlers, setIoInstance, stopMatchmaking } from './matchmaking';
 import { registerRoomHandlers } from './room.handlers';
 import { safeHandler } from './safeHandler';
+import { setKickIo, userRoom } from './kick';
 import User from '../models/User';
 import { getAllowedOrigins } from '../app';
 import { logger } from '../utils/logger';
@@ -28,9 +29,11 @@ export function createSocketServer(server: http.Server) {
 
   io.use(verifySocketAuth);
   setIoInstance(io);
+  setKickIo(io);
 
   io.on('connection', (socket) => {
     const userId = socket.data.userId as string;
+    socket.join(userRoom(userId));
 
     User.updateOne({ _id: userId }, { lastSeenAt: new Date() }).catch(() => {});
 

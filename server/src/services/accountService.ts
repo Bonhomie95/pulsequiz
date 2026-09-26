@@ -14,7 +14,7 @@
  */
 import { Types } from 'mongoose';
 
-import User from '../models/User';
+import User, { identityHash } from '../models/User';
 import Progress from '../models/Progress';
 import QuizSession from '../models/QuizSession';
 import ActiveQuizSession from '../models/ActiveQuizSession';
@@ -35,6 +35,7 @@ import Subscription from '../models/Subscription';
 import AdReward from '../models/AdReward';
 import PvPMatch from '../models/PvPMatch';
 import { logger } from '../utils/logger';
+import { kickUser } from '../socket/kick';
 
 export interface DeletionSummary {
   quizHistory: number;
@@ -49,6 +50,7 @@ export interface DeletionSummary {
 export async function anonymiseUser(userId: string): Promise<DeletionSummary> {
   const oid = new Types.ObjectId(userId);
   const stamp = Date.now();
+  const original = await User.findById(oid).select('provider providerId').lean();
 
   // 1. Data that exists solely to serve this user — remove it outright.
   const [quizHistory, challenges, friendships, devices, questionHistory, activity] =
@@ -94,19 +96,25 @@ export async function anonymiseUser(userId: string): Promise<DeletionSummary> {
         username: null,
         avatar: null,
         providerId: `deleted_${stamp}_${userId}`,
-        usdtAddress: undefined,
-        usdtType: undefined,
         usdtAddressChangedAt: null,
         withdrawalEnabled: false,
         publicProfile: false,
         deletedAt: new Date(),
         lastSeenAt: null,
+        deletedIdentityHash:
+          original && !original.providerId.startsWith('deleted_')
+            ? identityHash(original.provider, original.providerId)
+            : null,
       },
+      // $unset, not `undefined` in $set — Mongoose strips undefined keys, which
+      // silently left the payout wallet on a "deleted" account.
+      $unset: { usdtAddress: 1, usdtType: 1, payoutCurrency: 1 },
       // Invalidates every outstanding token for the account.
       $inc: { tokenVersion: 1 },
     },
     { strict: false },
   );
+  kickUser(userId);
 
   logger.info('Account anonymised', { userId, quizHistory, challenges });
 
@@ -182,6 +190,7 @@ export async function buildUserExport(userId: string) {
           createdAt: user.createdAt,
           theme: user.theme,
           publicProfile: user.publicProfile,
+          payoutCurrency: user.payoutCurrency ?? 'USDT',
           usdtType: user.usdtType ?? null,
           usdtAddress: user.usdtAddress ?? null,
         }
