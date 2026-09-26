@@ -52,11 +52,20 @@ export default function PvPPlayScreen() {
   const [picked, setPicked] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!lastAnswer || lastAnswer.questionIndex !== shownIndex) {
-      // No verdict pending for what is on screen: follow the server.
-      if (currentIndex !== shownIndex && !lastAnswer) setShownIndex(currentIndex);
+    const pending = lastAnswer && lastAnswer.questionIndex === shownIndex;
+
+    // No verdict pending for what is on screen: follow the server. This has to
+    // resync unconditionally — an earlier version bailed out whenever *any*
+    // stale verdict was held, which left the screen pinned to a question the
+    // server had moved past and every tap doing nothing.
+    if (!pending) {
+      if (currentIndex !== shownIndex) {
+        setShownIndex(currentIndex);
+        setPicked(null);
+      }
       return;
     }
+
     const t = setTimeout(() => {
       setShownIndex(currentIndex);
       setPicked(null);
@@ -64,6 +73,35 @@ export default function PvPPlayScreen() {
     }, REVEAL_MS);
     return () => clearTimeout(t);
   }, [lastAnswer, shownIndex, currentIndex, clearLastAnswer]);
+
+  /**
+   * Let go of a tap the server never answered.
+   *
+   * `picked` locks the options so a double tap cannot send two answers. If the
+   * reply is lost — a dropped socket, a rejected write — nothing cleared it and
+   * the player sat unable to answer until the clock ran out. Releasing it lets
+   * them try again while they still have time.
+   */
+  useEffect(() => {
+    if (picked === null) return;
+    const t = setTimeout(() => setPicked(null), 2_500);
+    return () => clearTimeout(t);
+  }, [picked]);
+
+  /**
+   * Ask again for the question set if it never arrived.
+   *
+   * MATCH_START is requested when the match is found, but that single emit can
+   * be lost to a reconnect or a race with the opponent's readiness, and the
+   * screen then has nothing to draw.
+   */
+  useEffect(() => {
+    if (questions.length > 0 || !matchId) return;
+    const t = setInterval(() => {
+      socket.emit(SOCKET_EVENTS.MATCH_START, { matchId });
+    }, 1_500);
+    return () => clearInterval(t);
+  }, [questions.length, matchId]);
 
   const revealed = lastAnswer && lastAnswer.questionIndex === shownIndex ? lastAnswer : null;
 
