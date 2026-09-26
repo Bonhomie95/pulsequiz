@@ -168,6 +168,9 @@ export async function getDailyView(userId: string, date: string) {
         avatar: byId.get(String(r.userId))!.avatar ?? '',
         correct: r.correct,
         total: r.total,
+        // Equal scores are separated by speed, so the board has to show it —
+        // otherwise two players on 9/10 look arbitrarily ordered.
+        timeLeftMs: r.timeLeftMs ?? 0,
         isMe: String(r.userId) === String(userId),
       })),
   };

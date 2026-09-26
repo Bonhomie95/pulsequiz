@@ -16,6 +16,7 @@ import { CalendarDays, Share2 } from 'lucide-react-native';
 import { api, errorMessage } from '@/src/api/api';
 import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { PlayerRow } from '@/src/components/PlayerRow';
+import { UserAvatar } from '@/src/components/UserAvatar';
 import { LINKS } from '@/src/constants/links';
 import { useTheme } from '@/src/theme/useTheme';
 import { dailyNumber, localDateKey, resultGrid } from '@/src/utils/share';
@@ -26,7 +27,7 @@ type DailyView = {
   totalQuestions: number;
   played: boolean;
   finished: boolean;
-  result: { correct: number; total: number; results: boolean[] } | null;
+  result: { correct: number; total: number; results: boolean[]; timeLeftMs?: number } | null;
   myRank: number | null;
   players: number;
   top: {
@@ -36,9 +37,20 @@ type DailyView = {
     avatar: string;
     correct: number;
     total: number;
+    /** Unused time. Higher = faster, and the tie-break between equal scores. */
+    timeLeftMs: number;
     isMe: boolean;
   }[];
 };
+
+/** 15s per question is the clock the server runs; unused time inverts to speed. */
+const SECONDS_PER_QUESTION = 15;
+
+/** "1:48" — how long the run actually took. */
+function timeTaken(total: number, timeLeftMs: number) {
+  const secs = Math.max(0, Math.round(total * SECONDS_PER_QUESTION - timeLeftMs / 1000));
+  return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+}
 
 /** Time until the player's local midnight, e.g. "5h 12m". */
 function untilMidnight() {
@@ -170,16 +182,76 @@ export default function DailyScreen() {
               <Text style={{ color: theme.colors.muted }}>Nobody has finished yet — be the first.</Text>
             ) : (
               <View style={{ gap: 8 }}>
-                {data.top.map((p) => (
+                {/* Podium, same shape as the leaderboard's top three. */}
+                <View style={styles.podium}>
+                  {data.top.slice(0, 3).map((p, i) => (
+                    <View
+                      key={p.userId}
+                      style={[
+                        styles.podiumCard,
+                        {
+                          backgroundColor: p.isMe
+                            ? theme.colors.primary + '1F'
+                            : theme.colors.surface,
+                          borderColor: p.isMe ? theme.colors.primary : 'transparent',
+                          // 1st sits highest, as on a real podium.
+                          marginTop: i === 0 ? 0 : 14,
+                        },
+                      ]}
+                      accessible
+                      accessibilityLabel={`Rank ${p.rank}, ${p.isMe ? 'you' : p.username}, ${p.correct} of ${p.total} in ${timeTaken(p.total, p.timeLeftMs)}`}
+                    >
+                      <Text style={styles.podiumMedal}>
+                        {['🥇', '🥈', '🥉'][i]}
+                      </Text>
+                      <UserAvatar avatar={p.avatar} size={i === 0 ? 46 : 38} />
+                      <Text
+                        numberOfLines={1}
+                        style={[styles.podiumName, { color: theme.colors.text }]}
+                      >
+                        {p.isMe ? 'You' : p.username}
+                      </Text>
+                      <Text style={[styles.podiumScore, { color: theme.colors.text }]}>
+                        {p.correct}/{p.total}
+                      </Text>
+                      <Text style={{ color: theme.colors.muted, fontSize: 11 }}>
+                        {timeTaken(p.total, p.timeLeftMs)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+
+                {data.top.slice(3).map((p) => (
                   <PlayerRow
                     key={p.userId}
                     rank={p.rank}
                     username={p.username}
                     avatar={p.avatar}
-                    score={`${p.correct}/${p.total}`}
+                    score={`${p.correct}/${p.total} · ${timeTaken(p.total, p.timeLeftMs)}`}
                     isMe={p.isMe}
                   />
                 ))}
+
+                {/* Pinned at the end when you are past the visible board, so
+                    you never have to hunt for yourself. */}
+                {data.myRank != null &&
+                  data.result &&
+                  !data.top.some((p) => p.isMe) && (
+                    <View style={{ gap: 6, marginTop: 6 }}>
+                      <Text style={{ color: theme.colors.muted, fontSize: 12, fontWeight: '700' }}>
+                        YOUR POSITION
+                      </Text>
+                      <PlayerRow
+                        rank={data.myRank}
+                        username="You"
+                        score={`${data.result.correct}/${data.result.total} · ${timeTaken(
+                          data.result.total,
+                          data.result.timeLeftMs ?? 0,
+                        )}`}
+                        isMe
+                      />
+                    </View>
+                  )}
               </View>
             )}
             <Text style={{ color: theme.colors.muted, fontSize: 12 }}>
@@ -210,4 +282,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   section: { fontSize: 15, fontWeight: '800' },
+  podium: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
+  podiumCard: {
+    flex: 1,
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    gap: 4,
+  },
+  podiumMedal: { fontSize: 20 },
+  podiumName: { fontSize: 13, fontWeight: '800', maxWidth: '100%' },
+  podiumScore: { fontSize: 15, fontWeight: '900' },
 });

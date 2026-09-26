@@ -668,6 +668,27 @@ export default function LeaderboardScreen() {
           data={loading || error ? [] : rest}
           keyExtractor={(i) => i.userId}
           contentContainerStyle={{ paddingBottom: 80 }}
+          /**
+           * "Jump to me" threw:
+           *   scrollToIndex should be used in conjunction with getItemLayout
+           *   or onScrollToIndexFailed
+           *
+           * FlatList only renders a window of rows, so it cannot measure a row
+           * that far down. Rows here are a fixed height, so getItemLayout can
+           * be given outright — that makes the jump exact and instant instead
+           * of a guess. onScrollToIndexFailed stays as a backstop.
+           */
+          getItemLayout={(_, index) => ({
+            length: ROW_HEIGHT,
+            offset: ROW_HEIGHT * index,
+            index,
+          })}
+          onScrollToIndexFailed={({ index, averageItemLength }) => {
+            listRef.current?.scrollToOffset({
+              offset: index * (averageItemLength || ROW_HEIGHT),
+              animated: true,
+            });
+          }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -801,6 +822,14 @@ function AnimatedPodiumCard({
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
+/**
+ * Fixed row geometry, so getItemLayout can place a row the list has not
+ * rendered yet. 32px avatar + 14px padding top and bottom, + the 10px gap.
+ */
+const ROW_CONTENT_HEIGHT = 60;
+const ROW_GAP = 10;
+const ROW_HEIGHT = ROW_CONTENT_HEIGHT + ROW_GAP;
+
 const styles = StyleSheet.create({
   standingCard: {
     borderRadius: 14,
@@ -918,11 +947,12 @@ const styles = StyleSheet.create({
 
   // Row
   row: {
-    padding: 14,
+    height: ROW_CONTENT_HEIGHT,
+    paddingHorizontal: 14,
     borderRadius: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: ROW_GAP,
   },
 });
