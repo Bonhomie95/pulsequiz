@@ -7,17 +7,25 @@ import { getBalance } from '../services/coinService';
 import crypto from 'crypto';
 
 /**
- * 8 characters from an unambiguous alphabet (no O/0, I/1) — ~1.8e12 codes,
- * which with the join rate limit makes enumeration impractical. The previous
- * 6-hex-character code was only 16.7M wide.
+ * 4 characters from an unambiguous alphabet (no O/0, I/1). Room codes get read
+ * aloud and typed by hand, and eight characters was too many for that — the
+ * length is a usability decision, taken knowingly.
+ *
+ * That leaves 32^4 = 1,048,576 codes. Guessing one *specific* room is still
+ * hopeless at 20 join attempts per 10 minutes, but with many rooms open at once
+ * a persistent attacker could eventually land in a stranger's room and play
+ * their wager. Only `status: 'waiting'` rooms are joinable and they are
+ * short-lived, which is what keeps the exposed window small. If gate-crashing
+ * ever shows up, the levers are RATE_LIMIT_ROOM_JOIN_MAX and a shorter room
+ * lifetime, not a longer code.
  */
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const CODE_LENGTH = 8;
+export const ROOM_CODE_LENGTH = 4;
 
 function generateRoomCode(): string {
-  const bytes = crypto.randomBytes(CODE_LENGTH);
+  const bytes = crypto.randomBytes(ROOM_CODE_LENGTH);
   let out = '';
-  for (let i = 0; i < CODE_LENGTH; i++) {
+  for (let i = 0; i < ROOM_CODE_LENGTH; i++) {
     out += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
   }
   return out;
@@ -52,7 +60,7 @@ export async function createRoom(req: AuthRequest, res: Response) {
   // Let the unique index arbitrate collisions rather than a check-then-insert
   // race — and fail loudly instead of inserting a duplicate after 10 tries.
   let room = null;
-  for (let attempt = 0; attempt < 8 && !room; attempt++) {
+  for (let attempt = 0; attempt < 16 && !room; attempt++) {
     try {
       room = await Room.create({
         code: generateRoomCode(),
@@ -77,7 +85,7 @@ export async function joinRoom(req: AuthRequest, res: Response) {
   if (!req.userId) return res.status(401).json({ message: 'Unauthorized' });
 
   const parsedJoin = z
-    .object({ code: z.string().trim().min(4).max(10).regex(/^[A-Za-z0-9]+$/) })
+    .object({ code: z.string().trim().min(ROOM_CODE_LENGTH).max(10).regex(/^[A-Za-z0-9]+$/) })
     .safeParse(req.body);
 
   if (!parsedJoin.success) {

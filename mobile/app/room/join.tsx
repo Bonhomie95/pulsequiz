@@ -13,21 +13,27 @@ import { SOCKET_EVENTS } from '@/src/socket/events';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { usePvPStore } from '@/src/store/usePvPStore';
 
+/**
+ * Must match ROOM_CODE_LENGTH on the server. The join field used to hardcode
+ * 6 while the server issued 8, so no code a friend read out could be entered.
+ */
+const ROOM_CODE_LENGTH = 4;
+
 export default function JoinRoomScreen() {
   const theme = useTheme();
   const router = useRouter();
   // A `code` param can arrive from a room-invite push notification deep link.
   const { code: codeParam } = useLocalSearchParams<{ code?: string }>();
   const [code, setCode] = useState(
-    typeof codeParam === 'string' ? codeParam.toUpperCase().slice(0, 6) : '',
+    typeof codeParam === 'string' ? codeParam.toUpperCase().slice(0, ROOM_CODE_LENGTH) : '',
   );
   const [joining, setJoining] = useState(false);
   const socket = getSocket();
 
   const joinRoom = async () => {
     const clean = code.trim().toUpperCase();
-    if (clean.length !== 6) {
-      Alert.alert('Invalid Code', 'Room codes are 6 characters long.');
+    if (clean.length !== ROOM_CODE_LENGTH) {
+      Alert.alert('Invalid Code', `Room codes are ${ROOM_CODE_LENGTH} characters long.`);
       return;
     }
     setJoining(true);
@@ -91,30 +97,30 @@ export default function JoinRoomScreen() {
 
           <Text style={[styles.heading, { color: theme.colors.text }]}>Enter Room Code</Text>
           <Text style={[styles.sub, { color: theme.colors.muted }]}>
-            Ask your friend for their 6-character room code
+            Ask your friend for their {ROOM_CODE_LENGTH}-character room code
           </Text>
 
           <TextInput
             value={code}
             onChangeText={(t) => setCode(t.toUpperCase())}
-            placeholder='ABC123'
+            placeholder='AB2C'
             placeholderTextColor={theme.colors.muted}
-            maxLength={6}
+            maxLength={ROOM_CODE_LENGTH}
             autoCapitalize='characters'
             autoFocus
             style={[styles.input, {
               backgroundColor: theme.colors.surface,
               color: theme.colors.text,
-              borderColor: code.length === 6 ? theme.colors.primary : theme.colors.border,
+              borderColor: code.length === ROOM_CODE_LENGTH ? theme.colors.primary : theme.colors.border,
             }]}
           />
 
           <TouchableOpacity
             style={[styles.joinBtn, {
-              backgroundColor: code.length === 6 ? theme.colors.primary : theme.colors.border,
+              backgroundColor: code.length === ROOM_CODE_LENGTH ? theme.colors.primary : theme.colors.border,
             }]}
             onPress={joinRoom}
-            disabled={joining || code.length !== 6}
+            disabled={joining || code.length !== ROOM_CODE_LENGTH}
           
             accessibilityRole="button"
             accessibilityLabel="Join Game"
