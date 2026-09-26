@@ -1,652 +1,1848 @@
 [
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 7 + 8?",
-  "options": [
-   "13",
-   "14",
-   "15",
-   "16"
-  ],
-  "answer": 2,
-  "explanation": "7 + 8 = 15. Think of it as 7 + 7 = 14, then one more."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 9 × 6?",
-  "options": [
-   "48",
-   "54",
-   "56",
-   "63"
-  ],
-  "answer": 1,
-  "explanation": "9 × 6 = 54. A quick check: 10 × 6 = 60, minus one 6 gives 54."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 100 − 37?",
-  "options": [
-   "53",
-   "63",
-   "67",
-   "73"
-  ],
-  "answer": 1,
-  "explanation": "100 − 37 = 63, because 37 + 63 = 100."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 48 ÷ 6?",
-  "options": [
-   "6",
-   "7",
-   "8",
-   "9"
-  ],
-  "answer": 2,
-  "explanation": "6 × 8 = 48, so 48 ÷ 6 = 8."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is half of 90?",
-  "options": [
-   "35",
-   "40",
-   "45",
-   "50"
-  ],
-  "answer": 2,
-  "explanation": "Half of 90 is 45, since 45 + 45 = 90."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 12 × 12?",
-  "options": [
-   "124",
-   "132",
-   "144",
-   "154"
-  ],
-  "answer": 2,
-  "explanation": "12 × 12 = 144, the twelfth square number."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 25% of 200?",
-  "options": [
-   "25",
-   "40",
-   "50",
-   "75"
-  ],
-  "answer": 2,
-  "explanation": "25% is a quarter, and a quarter of 200 is 50."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "How many minutes are in three quarters of an hour?",
-  "options": [
-   "35",
-   "40",
-   "45",
-   "50"
-  ],
-  "answer": 2,
-  "explanation": "An hour is 60 minutes, and three quarters of 60 is 45."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is the next number: 2, 4, 6, 8, ...?",
-  "options": [
-   "9",
-   "10",
-   "11",
-   "12"
-  ],
-  "answer": 1,
-  "explanation": "The sequence adds 2 each time, so after 8 comes 10."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 15 + 27?",
-  "options": [
-   "32",
-   "40",
-   "42",
-   "52"
-  ],
-  "answer": 2,
-  "explanation": "15 + 27 = 42. Add 15 + 25 = 40, then the remaining 2."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "Which number is even?",
-  "options": [
-   "17",
-   "23",
-   "36",
-   "41"
-  ],
-  "answer": 2,
-  "explanation": "An even number divides exactly by 2. Only 36 does."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 5 squared?",
-  "options": [
-   "10",
-   "20",
-   "25",
-   "55"
-  ],
-  "answer": 2,
-  "explanation": "5 squared means 5 × 5, which is 25."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "How many sides does a triangle have?",
-  "options": [
-   "Three",
-   "Two",
-   "Four",
-   "Five"
-  ],
-  "answer": 0,
-  "explanation": "A triangle has three sides and three angles that add up to 180 degrees."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 3 × 7 + 1?",
-  "options": [
-   "21",
-   "22",
-   "23",
-   "24"
-  ],
-  "answer": 1,
-  "explanation": "Multiply first: 3 × 7 = 21, then add 1 to get 22."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 1000 ÷ 10?",
-  "options": [
-   "10",
-   "100",
-   "110",
-   "1000"
-  ],
-  "answer": 1,
-  "explanation": "Dividing by 10 removes one zero: 1000 ÷ 10 = 100."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is the value of 2 + 2 × 3?",
-  "options": [
-   "8",
-   "10",
-   "12",
-   "18"
-  ],
-  "answer": 0,
-  "explanation": "Multiplication comes before addition: 2 × 3 = 6, then 2 + 6 = 8."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "How many cents are in $2.50?",
-  "options": [
-   "205",
-   "225",
-   "250",
-   "255"
-  ],
-  "answer": 2,
-  "explanation": "One dollar is 100 cents, so $2.50 is 250 cents."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 81 ÷ 9?",
-  "options": [
-   "7",
-   "8",
-   "9",
-   "11"
-  ],
-  "answer": 2,
-  "explanation": "9 × 9 = 81, so 81 ÷ 9 = 9."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "Which fraction equals one half?",
-  "options": [
-   "2/5",
-   "3/6",
-   "4/9",
-   "5/12"
-  ],
-  "answer": 1,
-  "explanation": "3/6 cancels down to 1/2 because 3 divides into both parts."
- },
- {
-  "category": "Math",
-  "difficulty": "easy",
-  "question": "What is 40 + 60 − 25?",
-  "options": [
-   "65",
-   "70",
-   "75",
-   "85"
-  ],
-  "answer": 2,
-  "explanation": "40 + 60 = 100, and 100 − 25 = 75."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is 15% of 240?",
-  "options": [
-   "24",
-   "36",
-   "40",
-   "48"
-  ],
-  "answer": 1,
-  "explanation": "10% is 24 and 5% is 12, so 15% is 24 + 12 = 36."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is the area of a rectangle 12 cm long and 7 cm wide?",
-  "options": [
-   "19 cm²",
-   "38 cm²",
-   "84 cm²",
-   "96 cm²"
-  ],
-  "answer": 2,
-  "explanation": "Area = length × width = 12 × 7 = 84 square centimetres."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "Solve for x: 3x + 5 = 20",
-  "options": [
-   "3",
-   "5",
-   "7",
-   "15"
-  ],
-  "answer": 1,
-  "explanation": "Subtract 5 to get 3x = 15, then divide by 3 to get x = 5."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is the average of 4, 9, 11 and 16?",
-  "options": [
-   "9",
-   "10",
-   "11",
-   "12"
-  ],
-  "answer": 1,
-  "explanation": "The total is 40 and there are 4 numbers, so the mean is 40 ÷ 4 = 10."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is 2 to the power of 6?",
-  "options": [
-   "32",
-   "48",
-   "64",
-   "128"
-  ],
-  "answer": 2,
-  "explanation": "2⁶ = 2×2×2×2×2×2 = 64."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "A shirt costs $40 and is reduced by 30%. What is the new price?",
-  "options": [
-   "$28",
-   "$24",
-   "$30",
-   "$32"
-  ],
-  "answer": 0,
-  "explanation": "30% of 40 is 12, and 40 − 12 = 28."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is the perimeter of a square with sides of 9 cm?",
-  "options": [
-   "18 cm",
-   "27 cm",
-   "36 cm",
-   "81 cm"
-  ],
-  "answer": 2,
-  "explanation": "A square has four equal sides: 4 × 9 = 36 cm. 81 would be its area."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is 7 × 13?",
-  "options": [
-   "81",
-   "84",
-   "91",
-   "97"
-  ],
-  "answer": 2,
-  "explanation": "7 × 13 = 7 × 10 + 7 × 3 = 70 + 21 = 91."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is the next number: 3, 6, 12, 24, ...?",
-  "options": [
-   "30",
-   "36",
-   "48",
-   "60"
-  ],
-  "answer": 2,
-  "explanation": "Each term doubles, so after 24 comes 48."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "How many degrees are in each angle of an equilateral triangle?",
-  "options": [
-   "45",
-   "60",
-   "90",
-   "120"
-  ],
-  "answer": 1,
-  "explanation": "The three angles are equal and add to 180, so each is 60 degrees."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is 0.25 written as a fraction in lowest terms?",
-  "options": [
-   "1/2",
-   "1/4",
-   "1/3",
-   "1/5"
-  ],
-  "answer": 1,
-  "explanation": "0.25 is 25/100, which cancels to 1/4."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "If a car travels 180 km in 3 hours, what is its average speed?",
-  "options": [
-   "50 km/h",
-   "55 km/h",
-   "60 km/h",
-   "70 km/h"
-  ],
-  "answer": 2,
-  "explanation": "Speed = distance ÷ time = 180 ÷ 3 = 60 km/h."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is the greatest common divisor of 24 and 36?",
-  "options": [
-   "4",
-   "6",
-   "8",
-   "12"
-  ],
-  "answer": 3,
-  "explanation": "12 divides both 24 and 36, and no larger number does."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is 3/4 + 1/4?",
-  "options": [
-   "1/2",
-   "3/4",
-   "1",
-   "4/8"
-  ],
-  "answer": 2,
-  "explanation": "The denominators match, so 3/4 + 1/4 = 4/4, which is 1."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "A bag has 3 red and 7 blue balls. What is the chance of drawing red?",
-  "options": [
-   "10%",
-   "20%",
-   "30%",
-   "37%"
-  ],
-  "answer": 2,
-  "explanation": "3 of the 10 balls are red, so the probability is 3/10 = 30%."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is 144 ÷ 12?",
-  "options": [
-   "10",
-   "11",
-   "12",
-   "14"
-  ],
-  "answer": 2,
-  "explanation": "12 × 12 = 144, so the answer is 12."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "Which number is prime?",
-  "options": [
-   "21",
-   "27",
-   "29",
-   "33"
-  ],
-  "answer": 2,
-  "explanation": "29 has no divisors but 1 and itself. 21 = 3×7, 27 = 3×9 and 33 = 3×11."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is the value of 5! (five factorial)?",
-  "options": [
-   "25",
-   "60",
-   "120",
-   "720"
-  ],
-  "answer": 2,
-  "explanation": "5! = 5 × 4 × 3 × 2 × 1 = 120."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "Convert 3/5 to a percentage.",
-  "options": [
-   "35%",
-   "50%",
-   "60%",
-   "65%"
-  ],
-  "answer": 2,
-  "explanation": "3 ÷ 5 = 0.6, and 0.6 × 100 = 60%."
- },
- {
-  "category": "Math",
-  "difficulty": "medium",
-  "question": "What is the sum of the angles inside any quadrilateral?",
-  "options": [
-   "180°",
-   "270°",
-   "360°",
-   "540°"
-  ],
-  "answer": 2,
-  "explanation": "A quadrilateral splits into two triangles, so 2 × 180 = 360 degrees."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "What is the area of a circle with radius 5, using π ≈ 3.14?",
-  "options": [
-   "31.4",
-   "62.8",
-   "78.5",
-   "157"
-  ],
-  "answer": 2,
-  "explanation": "Area = πr² = 3.14 × 25 = 78.5. The value 31.4 is the circumference."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "Solve: 2x − 7 = 3x + 4",
-  "options": [
-   "−11",
-   "−3",
-   "3",
-   "11"
-  ],
-  "answer": 0,
-  "explanation": "Subtract 2x: −7 = x + 4. Subtract 4: x = −11."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "What is the square root of 169?",
-  "options": [
-   "11",
-   "12",
-   "13",
-   "14"
-  ],
-  "answer": 2,
-  "explanation": "13 × 13 = 169."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "A right triangle has legs of 6 and 8. How long is the hypotenuse?",
-  "options": [
-   "9",
-   "10",
-   "12",
-   "14"
-  ],
-  "answer": 1,
-  "explanation": "By Pythagoras: 6² + 8² = 36 + 64 = 100, and √100 = 10."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "What is the sum of the first 10 positive whole numbers?",
-  "options": [
-   "45",
-   "50",
-   "55",
-   "60"
-  ],
-  "answer": 2,
-  "explanation": "Use n(n+1)/2 = 10 × 11 ÷ 2 = 55."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "If 5 workers build a wall in 12 days, how long do 10 workers take at the same rate?",
-  "options": [
-   "3 days",
-   "6 days",
-   "10 days",
-   "24 days"
-  ],
-  "answer": 1,
-  "explanation": "The job takes 60 worker-days. Split between 10 workers, that is 6 days."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "What is 0.125 as a fraction in lowest terms?",
-  "options": [
-   "1/4",
-   "1/8",
-   "1/6",
-   "1/12"
-  ],
-  "answer": 1,
-  "explanation": "0.125 is 125/1000, which cancels to 1/8."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "How many diagonals does a hexagon have?",
-  "options": [
-   "6",
-   "9",
-   "12",
-   "15"
-  ],
-  "answer": 1,
-  "explanation": "Use n(n−3)/2 = 6 × 3 ÷ 2 = 9."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "A price rises by 20% then falls by 20%. Compared with the start, the final price is:",
-  "options": [
-   "The same",
-   "4% higher",
-   "4% lower",
-   "20% lower"
-  ],
-  "answer": 2,
-  "explanation": "100 → 120 → 96. The fall is taken from the larger number, so you end 4% below where you began."
- },
- {
-  "category": "Math",
-  "difficulty": "hard",
-  "question": "What is the volume of a cube with edges of 4 cm?",
-  "options": [
-   "12 cm³",
-   "16 cm³",
-   "48 cm³",
-   "64 cm³"
-  ],
-  "answer": 3,
-  "explanation": "Volume = side³ = 4 × 4 × 4 = 64 cubic centimetres."
- }
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 7 + 8?",
+    "options": [
+      "13",
+      "14",
+      "15",
+      "16"
+    ],
+    "answer": 2,
+    "explanation": "7 + 8 = 15. Think of it as 7 + 7 = 14, then one more."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 9 × 6?",
+    "options": [
+      "48",
+      "54",
+      "56",
+      "63"
+    ],
+    "answer": 1,
+    "explanation": "9 × 6 = 54. A quick check: 10 × 6 = 60, minus one 6 gives 54."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 100 − 37?",
+    "options": [
+      "53",
+      "63",
+      "67",
+      "73"
+    ],
+    "answer": 1,
+    "explanation": "100 − 37 = 63, because 37 + 63 = 100."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 48 ÷ 6?",
+    "options": [
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "answer": 2,
+    "explanation": "6 × 8 = 48, so 48 ÷ 6 = 8."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is half of 90?",
+    "options": [
+      "35",
+      "40",
+      "45",
+      "50"
+    ],
+    "answer": 2,
+    "explanation": "Half of 90 is 45, since 45 + 45 = 90."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 12 × 12?",
+    "options": [
+      "124",
+      "132",
+      "144",
+      "154"
+    ],
+    "answer": 2,
+    "explanation": "12 × 12 = 144, the twelfth square number."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 25% of 200?",
+    "options": [
+      "25",
+      "40",
+      "50",
+      "75"
+    ],
+    "answer": 2,
+    "explanation": "25% is a quarter, and a quarter of 200 is 50."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many minutes are in three quarters of an hour?",
+    "options": [
+      "35",
+      "40",
+      "45",
+      "50"
+    ],
+    "answer": 2,
+    "explanation": "An hour is 60 minutes, and three quarters of 60 is 45."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is the next number: 2, 4, 6, 8, ...?",
+    "options": [
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "answer": 1,
+    "explanation": "The sequence adds 2 each time, so after 8 comes 10."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 15 + 27?",
+    "options": [
+      "32",
+      "40",
+      "42",
+      "52"
+    ],
+    "answer": 2,
+    "explanation": "15 + 27 = 42. Add 15 + 25 = 40, then the remaining 2."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "Which number is even?",
+    "options": [
+      "17",
+      "23",
+      "36",
+      "41"
+    ],
+    "answer": 2,
+    "explanation": "An even number divides exactly by 2. Only 36 does."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 5 squared?",
+    "options": [
+      "10",
+      "20",
+      "25",
+      "55"
+    ],
+    "answer": 2,
+    "explanation": "5 squared means 5 × 5, which is 25."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many sides does a triangle have?",
+    "options": [
+      "Three",
+      "Two",
+      "Four",
+      "Five"
+    ],
+    "answer": 0,
+    "explanation": "A triangle has three sides and three angles that add up to 180 degrees."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 3 × 7 + 1?",
+    "options": [
+      "21",
+      "22",
+      "23",
+      "24"
+    ],
+    "answer": 1,
+    "explanation": "Multiply first: 3 × 7 = 21, then add 1 to get 22."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 1000 ÷ 10?",
+    "options": [
+      "10",
+      "100",
+      "110",
+      "1000"
+    ],
+    "answer": 1,
+    "explanation": "Dividing by 10 removes one zero: 1000 ÷ 10 = 100."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is the value of 2 + 2 × 3?",
+    "options": [
+      "8",
+      "10",
+      "12",
+      "18"
+    ],
+    "answer": 0,
+    "explanation": "Multiplication comes before addition: 2 × 3 = 6, then 2 + 6 = 8."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many cents are in $2.50?",
+    "options": [
+      "205",
+      "225",
+      "250",
+      "255"
+    ],
+    "answer": 2,
+    "explanation": "One dollar is 100 cents, so $2.50 is 250 cents."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 81 ÷ 9?",
+    "options": [
+      "7",
+      "8",
+      "9",
+      "11"
+    ],
+    "answer": 2,
+    "explanation": "9 × 9 = 81, so 81 ÷ 9 = 9."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "Which fraction equals one half?",
+    "options": [
+      "2/5",
+      "3/6",
+      "4/9",
+      "5/12"
+    ],
+    "answer": 1,
+    "explanation": "3/6 cancels down to 1/2 because 3 divides into both parts."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 40 + 60 − 25?",
+    "options": [
+      "65",
+      "70",
+      "75",
+      "85"
+    ],
+    "answer": 2,
+    "explanation": "40 + 60 = 100, and 100 − 25 = 75."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 15% of 240?",
+    "options": [
+      "24",
+      "36",
+      "40",
+      "48"
+    ],
+    "answer": 1,
+    "explanation": "10% is 24 and 5% is 12, so 15% is 24 + 12 = 36."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the area of a rectangle 12 cm long and 7 cm wide?",
+    "options": [
+      "19 cm²",
+      "38 cm²",
+      "84 cm²",
+      "96 cm²"
+    ],
+    "answer": 2,
+    "explanation": "Area = length × width = 12 × 7 = 84 square centimetres."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "Solve for x: 3x + 5 = 20",
+    "options": [
+      "3",
+      "5",
+      "7",
+      "15"
+    ],
+    "answer": 1,
+    "explanation": "Subtract 5 to get 3x = 15, then divide by 3 to get x = 5."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the average of 4, 9, 11 and 16?",
+    "options": [
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "answer": 1,
+    "explanation": "The total is 40 and there are 4 numbers, so the mean is 40 ÷ 4 = 10."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 2 to the power of 6?",
+    "options": [
+      "32",
+      "48",
+      "64",
+      "128"
+    ],
+    "answer": 2,
+    "explanation": "2⁶ = 2×2×2×2×2×2 = 64."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "A shirt costs $40 and is reduced by 30%. What is the new price?",
+    "options": [
+      "$28",
+      "$24",
+      "$30",
+      "$32"
+    ],
+    "answer": 0,
+    "explanation": "30% of 40 is 12, and 40 − 12 = 28."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the perimeter of a square with sides of 9 cm?",
+    "options": [
+      "18 cm",
+      "27 cm",
+      "36 cm",
+      "81 cm"
+    ],
+    "answer": 2,
+    "explanation": "A square has four equal sides: 4 × 9 = 36 cm. 81 would be its area."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 7 × 13?",
+    "options": [
+      "81",
+      "84",
+      "91",
+      "97"
+    ],
+    "answer": 2,
+    "explanation": "7 × 13 = 7 × 10 + 7 × 3 = 70 + 21 = 91."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the next number: 3, 6, 12, 24, ...?",
+    "options": [
+      "30",
+      "36",
+      "48",
+      "60"
+    ],
+    "answer": 2,
+    "explanation": "Each term doubles, so after 24 comes 48."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "How many degrees are in each angle of an equilateral triangle?",
+    "options": [
+      "45",
+      "60",
+      "90",
+      "120"
+    ],
+    "answer": 1,
+    "explanation": "The three angles are equal and add to 180, so each is 60 degrees."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 0.25 written as a fraction in lowest terms?",
+    "options": [
+      "1/2",
+      "1/4",
+      "1/3",
+      "1/5"
+    ],
+    "answer": 1,
+    "explanation": "0.25 is 25/100, which cancels to 1/4."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "If a car travels 180 km in 3 hours, what is its average speed?",
+    "options": [
+      "50 km/h",
+      "55 km/h",
+      "60 km/h",
+      "70 km/h"
+    ],
+    "answer": 2,
+    "explanation": "Speed = distance ÷ time = 180 ÷ 3 = 60 km/h."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the greatest common divisor of 24 and 36?",
+    "options": [
+      "4",
+      "6",
+      "8",
+      "12"
+    ],
+    "answer": 3,
+    "explanation": "12 divides both 24 and 36, and no larger number does."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 3/4 + 1/4?",
+    "options": [
+      "1/2",
+      "3/4",
+      "1",
+      "4/8"
+    ],
+    "answer": 2,
+    "explanation": "The denominators match, so 3/4 + 1/4 = 4/4, which is 1."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "A bag has 3 red and 7 blue balls. What is the chance of drawing red?",
+    "options": [
+      "10%",
+      "20%",
+      "30%",
+      "37%"
+    ],
+    "answer": 2,
+    "explanation": "3 of the 10 balls are red, so the probability is 3/10 = 30%."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 144 ÷ 12?",
+    "options": [
+      "10",
+      "11",
+      "12",
+      "14"
+    ],
+    "answer": 2,
+    "explanation": "12 × 12 = 144, so the answer is 12."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "Which number is prime?",
+    "options": [
+      "21",
+      "27",
+      "29",
+      "33"
+    ],
+    "answer": 2,
+    "explanation": "29 has no divisors but 1 and itself. 21 = 3×7, 27 = 3×9 and 33 = 3×11."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the value of 5! (five factorial)?",
+    "options": [
+      "25",
+      "60",
+      "120",
+      "720"
+    ],
+    "answer": 2,
+    "explanation": "5! = 5 × 4 × 3 × 2 × 1 = 120."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "Convert 3/5 to a percentage.",
+    "options": [
+      "35%",
+      "50%",
+      "60%",
+      "65%"
+    ],
+    "answer": 2,
+    "explanation": "3 ÷ 5 = 0.6, and 0.6 × 100 = 60%."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the sum of the angles inside any quadrilateral?",
+    "options": [
+      "180°",
+      "270°",
+      "360°",
+      "540°"
+    ],
+    "answer": 2,
+    "explanation": "A quadrilateral splits into two triangles, so 2 × 180 = 360 degrees."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the area of a circle with radius 5, using π ≈ 3.14?",
+    "options": [
+      "31.4",
+      "62.8",
+      "78.5",
+      "157"
+    ],
+    "answer": 2,
+    "explanation": "Area = πr² = 3.14 × 25 = 78.5. The value 31.4 is the circumference."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "Solve: 2x − 7 = 3x + 4",
+    "options": [
+      "−11",
+      "−3",
+      "3",
+      "11"
+    ],
+    "answer": 0,
+    "explanation": "Subtract 2x: −7 = x + 4. Subtract 4: x = −11."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the square root of 169?",
+    "options": [
+      "11",
+      "12",
+      "13",
+      "14"
+    ],
+    "answer": 2,
+    "explanation": "13 × 13 = 169."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "A right triangle has legs of 6 and 8. How long is the hypotenuse?",
+    "options": [
+      "9",
+      "10",
+      "12",
+      "14"
+    ],
+    "answer": 1,
+    "explanation": "By Pythagoras: 6² + 8² = 36 + 64 = 100, and √100 = 10."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the sum of the first 10 positive whole numbers?",
+    "options": [
+      "45",
+      "50",
+      "55",
+      "60"
+    ],
+    "answer": 2,
+    "explanation": "Use n(n+1)/2 = 10 × 11 ÷ 2 = 55."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "If 5 workers build a wall in 12 days, how long do 10 workers take at the same rate?",
+    "options": [
+      "3 days",
+      "6 days",
+      "10 days",
+      "24 days"
+    ],
+    "answer": 1,
+    "explanation": "The job takes 60 worker-days. Split between 10 workers, that is 6 days."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is 0.125 as a fraction in lowest terms?",
+    "options": [
+      "1/4",
+      "1/8",
+      "1/6",
+      "1/12"
+    ],
+    "answer": 1,
+    "explanation": "0.125 is 125/1000, which cancels to 1/8."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "How many diagonals does a hexagon have?",
+    "options": [
+      "6",
+      "9",
+      "12",
+      "15"
+    ],
+    "answer": 1,
+    "explanation": "Use n(n−3)/2 = 6 × 3 ÷ 2 = 9."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "A price rises by 20% then falls by 20%. Compared with the start, the final price is:",
+    "options": [
+      "The same",
+      "4% higher",
+      "4% lower",
+      "20% lower"
+    ],
+    "answer": 2,
+    "explanation": "100 → 120 → 96. The fall is taken from the larger number, so you end 4% below where you began."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the volume of a cube with edges of 4 cm?",
+    "options": [
+      "12 cm³",
+      "16 cm³",
+      "48 cm³",
+      "64 cm³"
+    ],
+    "answer": 3,
+    "explanation": "Volume = side³ = 4 × 4 × 4 = 64 cubic centimetres."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 12 × 5?",
+    "options": [
+      "50",
+      "55",
+      "60",
+      "65"
+    ],
+    "answer": 2,
+    "explanation": "12 × 5 = 60, the same as 10 × 5 plus 2 × 5."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many sides does a hexagon have?",
+    "options": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "answer": 1,
+    "explanation": "'Hex' means six, so a hexagon has six sides."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 9 × 9?",
+    "options": [
+      "72",
+      "81",
+      "88",
+      "99"
+    ],
+    "answer": 1,
+    "explanation": "9 × 9 = 81."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many minutes are in 2 hours?",
+    "options": [
+      "100",
+      "110",
+      "120",
+      "140"
+    ],
+    "answer": 2,
+    "explanation": "Each hour is 60 minutes, so 2 × 60 = 120."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 15 + 26?",
+    "options": [
+      "31",
+      "39",
+      "41",
+      "45"
+    ],
+    "answer": 2,
+    "explanation": "15 + 26 = 41."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 8 ÷ 2?",
+    "options": [
+      "2",
+      "3",
+      "4",
+      "6"
+    ],
+    "answer": 2,
+    "explanation": "8 ÷ 2 = 4."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 3²?",
+    "options": [
+      "6",
+      "9",
+      "12",
+      "27"
+    ],
+    "answer": 1,
+    "explanation": "3² means 3 × 3, which is 9."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many degrees are in a right angle?",
+    "options": [
+      "45",
+      "60",
+      "90",
+      "180"
+    ],
+    "answer": 2,
+    "explanation": "A right angle is exactly 90 degrees."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 50% of 80?",
+    "options": [
+      "30",
+      "40",
+      "45",
+      "50"
+    ],
+    "answer": 1,
+    "explanation": "50% is one half, and half of 80 is 40."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 7 × 6?",
+    "options": [
+      "36",
+      "42",
+      "48",
+      "54"
+    ],
+    "answer": 1,
+    "explanation": "7 × 6 = 42."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many centimetres are in a metre?",
+    "options": [
+      "10",
+      "1000",
+      "12",
+      "100"
+    ],
+    "answer": 3,
+    "explanation": "'Centi' means one hundredth, so a metre holds 100 centimetres."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 20 − 8 + 3?",
+    "options": [
+      "9",
+      "12",
+      "15",
+      "18"
+    ],
+    "answer": 2,
+    "explanation": "Work left to right: 20 − 8 = 12, then 12 + 3 = 15."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What comes next: 2, 4, 6, 8, ...?",
+    "options": [
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "answer": 1,
+    "explanation": "The sequence adds 2 each time, so 8 + 2 = 10."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 11 × 11?",
+    "options": [
+      "111",
+      "121",
+      "131",
+      "144"
+    ],
+    "answer": 1,
+    "explanation": "11 × 11 = 121."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "Which is largest?",
+    "options": [
+      "0.35",
+      "0.5",
+      "0.45",
+      "0.09"
+    ],
+    "answer": 1,
+    "explanation": "0.5 is 50 hundredths, more than 45, 35 or 9 hundredths."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 25 + 25 + 25?",
+    "options": [
+      "50",
+      "65",
+      "75",
+      "85"
+    ],
+    "answer": 2,
+    "explanation": "Three lots of 25 make 75."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many days are in a fortnight?",
+    "options": [
+      "7",
+      "10",
+      "14",
+      "20"
+    ],
+    "answer": 2,
+    "explanation": "A fortnight is two weeks, so 14 days."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 6 × 0?",
+    "options": [
+      "0",
+      "1",
+      "6",
+      "60"
+    ],
+    "answer": 0,
+    "explanation": "Anything multiplied by zero is zero."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is the next odd number after 17?",
+    "options": [
+      "18",
+      "19",
+      "20",
+      "21"
+    ],
+    "answer": 1,
+    "explanation": "Odd numbers go up in twos, so 17 + 2 = 19."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 45 ÷ 9?",
+    "options": [
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "answer": 1,
+    "explanation": "9 × 5 = 45, so 45 ÷ 9 = 5."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many millimetres are in a centimetre?",
+    "options": [
+      "5",
+      "10",
+      "100",
+      "1000"
+    ],
+    "answer": 1,
+    "explanation": "There are 10 millimetres in every centimetre."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 14 + 14?",
+    "options": [
+      "24",
+      "26",
+      "28",
+      "30"
+    ],
+    "answer": 2,
+    "explanation": "Double 14 is 28."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "Which shape has four equal sides and four right angles?",
+    "options": [
+      "Rectangle",
+      "Square",
+      "Rhombus",
+      "Trapezium"
+    ],
+    "answer": 1,
+    "explanation": "A square needs both: equal sides and right angles. A rhombus has equal sides but not always right angles."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 3 × 12?",
+    "options": [
+      "24",
+      "30",
+      "36",
+      "42"
+    ],
+    "answer": 2,
+    "explanation": "3 × 12 = 36."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 99 + 1?",
+    "options": [
+      "90",
+      "100",
+      "101",
+      "110"
+    ],
+    "answer": 1,
+    "explanation": "99 + 1 = 100."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many zeros are in one thousand?",
+    "options": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "answer": 1,
+    "explanation": "1,000 is written with three zeros."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 10% of 200?",
+    "options": [
+      "10",
+      "20",
+      "30",
+      "40"
+    ],
+    "answer": 1,
+    "explanation": "10% is one tenth, and 200 ÷ 10 = 20."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 5 × 5 × 2?",
+    "options": [
+      "30",
+      "40",
+      "50",
+      "60"
+    ],
+    "answer": 2,
+    "explanation": "5 × 5 = 25, then 25 × 2 = 50."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many hours are in three days?",
+    "options": [
+      "48",
+      "60",
+      "72",
+      "96"
+    ],
+    "answer": 2,
+    "explanation": "3 × 24 = 72 hours."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "Which of these is a prime number?",
+    "options": [
+      "9",
+      "15",
+      "21",
+      "23"
+    ],
+    "answer": 3,
+    "explanation": "23 has no divisors except 1 and itself; the others all divide by 3."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 200 − 150?",
+    "options": [
+      "40",
+      "50",
+      "60",
+      "70"
+    ],
+    "answer": 1,
+    "explanation": "200 − 150 = 50."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "How many quarters make a whole?",
+    "options": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "answer": 2,
+    "explanation": "Four quarters make one whole."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is 13 × 2?",
+    "options": [
+      "24",
+      "26",
+      "28",
+      "32"
+    ],
+    "answer": 1,
+    "explanation": "13 doubled is 26."
+  },
+  {
+    "category": "Math",
+    "difficulty": "easy",
+    "question": "What is the value of 4 + 4 × 2?",
+    "options": [
+      "12",
+      "16",
+      "10",
+      "14"
+    ],
+    "answer": 0,
+    "explanation": "Multiplication comes first: 4 × 2 = 8, then 4 + 8 = 12."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "Solve for x: 3x + 6 = 21",
+    "options": [
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "answer": 2,
+    "explanation": "Subtract 6 to get 3x = 15, then divide by 3 to get x = 5."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the area of a rectangle 8 cm by 7 cm?",
+    "options": [
+      "15 cm²",
+      "30 cm²",
+      "64 cm²",
+      "56 cm²"
+    ],
+    "answer": 3,
+    "explanation": "Area is length × width, so 8 × 7 = 56 cm²."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the square root of 144?",
+    "options": [
+      "11",
+      "12",
+      "13",
+      "14"
+    ],
+    "answer": 1,
+    "explanation": "12 × 12 = 144."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the sum of the interior angles of a triangle?",
+    "options": [
+      "180°",
+      "90°",
+      "270°",
+      "360°"
+    ],
+    "answer": 0,
+    "explanation": "The three interior angles of any triangle always add to 180°."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 3/4 as a decimal?",
+    "options": [
+      "0.25",
+      "0.34",
+      "0.75",
+      "0.80"
+    ],
+    "answer": 2,
+    "explanation": "3 ÷ 4 = 0.75."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "If a shirt costs 40 and is reduced by 25%, what is the new price?",
+    "options": [
+      "10",
+      "25",
+      "30",
+      "35"
+    ],
+    "answer": 2,
+    "explanation": "25% of 40 is 10, so the price drops to 30."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 2⁵?",
+    "options": [
+      "10",
+      "16",
+      "32",
+      "64"
+    ],
+    "answer": 2,
+    "explanation": "2 multiplied by itself five times: 2×2×2×2×2 = 32."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the median of 3, 7, 9, 12, 20?",
+    "options": [
+      "7",
+      "9",
+      "10",
+      "12"
+    ],
+    "answer": 1,
+    "explanation": "The median is the middle value once sorted, which is 9."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 0.2 × 0.3?",
+    "options": [
+      "0.006",
+      "0.06",
+      "0.6",
+      "6"
+    ],
+    "answer": 1,
+    "explanation": "2 × 3 = 6, and there are two decimal places in total, giving 0.06."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "How many degrees are in the interior angles of a quadrilateral?",
+    "options": [
+      "180°",
+      "270°",
+      "360°",
+      "540°"
+    ],
+    "answer": 2,
+    "explanation": "A quadrilateral splits into two triangles, so 2 × 180° = 360°."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the mean of 4, 8, 10, 14?",
+    "options": [
+      "8",
+      "9",
+      "10",
+      "12"
+    ],
+    "answer": 1,
+    "explanation": "The total is 36 and there are 4 values, so 36 ÷ 4 = 9."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 7! ÷ 6!?",
+    "options": [
+      "6",
+      "7",
+      "42",
+      "5040"
+    ],
+    "answer": 1,
+    "explanation": "7! is 7 × 6!, so dividing by 6! leaves 7."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "Which fraction is equivalent to 0.125?",
+    "options": [
+      "1/8",
+      "1/4",
+      "1/6",
+      "1/12"
+    ],
+    "answer": 0,
+    "explanation": "1 ÷ 8 = 0.125."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the next number: 1, 4, 9, 16, ...?",
+    "options": [
+      "20",
+      "24",
+      "25",
+      "36"
+    ],
+    "answer": 2,
+    "explanation": "These are square numbers, and the next is 5² = 25."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "A car travels 150 km in 2 hours. What is its average speed?",
+    "options": [
+      "50 km/h",
+      "65 km/h",
+      "100 km/h",
+      "75 km/h"
+    ],
+    "answer": 3,
+    "explanation": "Speed is distance ÷ time, so 150 ÷ 2 = 75 km/h."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the highest common factor of 24 and 36?",
+    "options": [
+      "4",
+      "6",
+      "12",
+      "18"
+    ],
+    "answer": 2,
+    "explanation": "12 divides both, and nothing larger does."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 5/8 + 1/8?",
+    "options": [
+      "3/4",
+      "5/16",
+      "6/16",
+      "6/8 + 1"
+    ],
+    "answer": 0,
+    "explanation": "5/8 + 1/8 = 6/8, which simplifies to 3/4."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the volume of a cube with 4 cm edges?",
+    "options": [
+      "16 cm³",
+      "48 cm³",
+      "64 cm³",
+      "96 cm³"
+    ],
+    "answer": 2,
+    "explanation": "Volume is edge cubed: 4 × 4 × 4 = 64 cm³."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 120 as a percentage of 400?",
+    "options": [
+      "25%",
+      "30%",
+      "33%",
+      "40%"
+    ],
+    "answer": 1,
+    "explanation": "120 ÷ 400 = 0.3, which is 30%."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "Solve: 2(x − 3) = 10",
+    "options": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "answer": 3,
+    "explanation": "Divide by 2 to get x − 3 = 5, so x = 8."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the lowest common multiple of 4 and 6?",
+    "options": [
+      "10",
+      "12",
+      "18",
+      "24"
+    ],
+    "answer": 1,
+    "explanation": "12 is the smallest number both 4 and 6 divide into."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the circumference formula for a circle?",
+    "options": [
+      "2πr",
+      "πr²",
+      "πd²",
+      "2πr²"
+    ],
+    "answer": 0,
+    "explanation": "Circumference is 2πr, or equivalently πd. πr² is the area."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 1/3 of 81?",
+    "options": [
+      "9",
+      "18",
+      "27",
+      "36"
+    ],
+    "answer": 2,
+    "explanation": "81 ÷ 3 = 27."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "If 5 pens cost 60, what do 8 pens cost?",
+    "options": [
+      "84",
+      "90",
+      "96",
+      "100"
+    ],
+    "answer": 2,
+    "explanation": "One pen costs 12, so 8 cost 96."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the value of 10⁰?",
+    "options": [
+      "0",
+      "1",
+      "10",
+      "100"
+    ],
+    "answer": 1,
+    "explanation": "Any non-zero number raised to the power 0 equals 1."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 3.6 ÷ 0.4?",
+    "options": [
+      "0.9",
+      "6",
+      "9",
+      "14.4"
+    ],
+    "answer": 2,
+    "explanation": "Multiply both by 10 to get 36 ÷ 4 = 9."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "A triangle has angles of 40° and 75°. What is the third?",
+    "options": [
+      "55°",
+      "75°",
+      "85°",
+      "65°"
+    ],
+    "answer": 3,
+    "explanation": "The angles total 180°, so 180 − 40 − 75 = 65°."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the range of 5, 12, 3, 20, 8?",
+    "options": [
+      "12",
+      "15",
+      "17",
+      "20"
+    ],
+    "answer": 2,
+    "explanation": "Range is largest minus smallest: 20 − 3 = 17."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 2/5 written as a percentage?",
+    "options": [
+      "20%",
+      "25%",
+      "40%",
+      "45%"
+    ],
+    "answer": 2,
+    "explanation": "2 ÷ 5 = 0.4, which is 40%."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "How many diagonals does a pentagon have?",
+    "options": [
+      "4",
+      "5",
+      "6",
+      "10"
+    ],
+    "answer": 1,
+    "explanation": "A pentagon has five diagonals, one from each vertex to a non-adjacent one."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is −7 + 12?",
+    "options": [
+      "−19",
+      "5",
+      "−5",
+      "19"
+    ],
+    "answer": 1,
+    "explanation": "Moving 12 up from −7 lands on 5."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the probability of rolling a 6 on a fair die?",
+    "options": [
+      "1/4",
+      "1/5",
+      "1/6",
+      "1/12"
+    ],
+    "answer": 2,
+    "explanation": "There is one favourable face out of six, so 1/6."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 45 × 11?",
+    "options": [
+      "450",
+      "485",
+      "495",
+      "505"
+    ],
+    "answer": 2,
+    "explanation": "45 × 11 = 45 × 10 + 45 = 450 + 45 = 495."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is the slope of the line y = 4x − 3?",
+    "options": [
+      "4",
+      "−3",
+      "1",
+      "3"
+    ],
+    "answer": 0,
+    "explanation": "In y = mx + c, the slope m is the coefficient of x, here 4."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 0.75 as a fraction in simplest form?",
+    "options": [
+      "7/10",
+      "75/100",
+      "3/4",
+      "5/8"
+    ],
+    "answer": 2,
+    "explanation": "0.75 is 75/100, which cancels to 3/4."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "How many faces does a cube have?",
+    "options": [
+      "4",
+      "6",
+      "8",
+      "12"
+    ],
+    "answer": 1,
+    "explanation": "A cube has six square faces."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "What is 18 squared?",
+    "options": [
+      "308",
+      "324",
+      "336",
+      "361"
+    ],
+    "answer": 1,
+    "explanation": "18 × 18 = 324."
+  },
+  {
+    "category": "Math",
+    "difficulty": "medium",
+    "question": "If x = 3, what is 2x² + 1?",
+    "options": [
+      "13",
+      "19",
+      "37",
+      "49"
+    ],
+    "answer": 1,
+    "explanation": "x² = 9, so 2 × 9 = 18, then 18 + 1 = 19."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the derivative of x³ with respect to x?",
+    "options": [
+      "3x²",
+      "x²",
+      "2x²",
+      "3x"
+    ],
+    "answer": 0,
+    "explanation": "The power rule gives 3x²: multiply by the exponent, then reduce it by one."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the sum of the first 100 positive integers?",
+    "options": [
+      "4950",
+      "5050",
+      "5100",
+      "10000"
+    ],
+    "answer": 1,
+    "explanation": "n(n+1)/2 with n = 100 gives 100 × 101 ÷ 2 = 5050."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the value of i², where i is the imaginary unit?",
+    "options": [
+      "0",
+      "1",
+      "i",
+      "−1"
+    ],
+    "answer": 3,
+    "explanation": "The imaginary unit is defined so that i² = −1."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is log₁₀(1000)?",
+    "options": [
+      "2",
+      "3",
+      "10",
+      "100"
+    ],
+    "answer": 1,
+    "explanation": "10 must be raised to the power 3 to give 1000."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "In a right triangle with legs 5 and 12, what is the hypotenuse?",
+    "options": [
+      "13",
+      "15",
+      "17",
+      "60"
+    ],
+    "answer": 0,
+    "explanation": "5² + 12² = 25 + 144 = 169, and √169 = 13."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the integral of 2x with respect to x?",
+    "options": [
+      "2",
+      "x² + C",
+      "2x² + C",
+      "x + C"
+    ],
+    "answer": 1,
+    "explanation": "Integrating 2x raises the power and divides by it, giving x² + C."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "How many ways can 5 distinct books be arranged on a shelf?",
+    "options": [
+      "25",
+      "60",
+      "120",
+      "720"
+    ],
+    "answer": 2,
+    "explanation": "5! = 5 × 4 × 3 × 2 × 1 = 120."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the value of sin(90°)?",
+    "options": [
+      "1",
+      "0",
+      "0.5",
+      "√2/2"
+    ],
+    "answer": 0,
+    "explanation": "Sine reaches its maximum of 1 at 90°."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the discriminant of x² − 4x + 4?",
+    "options": [
+      "−16",
+      "0",
+      "4",
+      "16"
+    ],
+    "answer": 1,
+    "explanation": "b² − 4ac = 16 − 16 = 0, meaning one repeated root."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the determinant of the matrix [[2, 3], [1, 4]]?",
+    "options": [
+      "2",
+      "5",
+      "8",
+      "11"
+    ],
+    "answer": 1,
+    "explanation": "For [[a,b],[c,d]] the determinant is ad − bc: 8 − 3 = 5."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the limit of (1 + 1/n)ⁿ as n approaches infinity?",
+    "options": [
+      "1",
+      "2",
+      "infinity",
+      "e"
+    ],
+    "answer": 3,
+    "explanation": "This is the classic definition of e, roughly 2.718."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "How many prime numbers are there below 20?",
+    "options": [
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "answer": 2,
+    "explanation": "2, 3, 5, 7, 11, 13, 17 and 19 — eight in total."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the sum of an infinite geometric series with a = 1 and r = 1/2?",
+    "options": [
+      "1",
+      "1.5",
+      "infinite",
+      "2"
+    ],
+    "answer": 3,
+    "explanation": "The sum is a/(1 − r) = 1 ÷ 0.5 = 2."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is cos(0°)?",
+    "options": [
+      "0",
+      "0.5",
+      "1",
+      "−1"
+    ],
+    "answer": 2,
+    "explanation": "Cosine starts at its maximum, so cos(0°) = 1."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "In how many ways can you choose 3 items from 6?",
+    "options": [
+      "18",
+      "20",
+      "36",
+      "120"
+    ],
+    "answer": 1,
+    "explanation": "6C3 = 6! / (3!3!) = 20."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the value of 0! (zero factorial)?",
+    "options": [
+      "1",
+      "0",
+      "undefined",
+      "infinity"
+    ],
+    "answer": 0,
+    "explanation": "0! is defined as 1, which keeps the factorial and combination formulas consistent."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the standard equation of a circle centred at the origin?",
+    "options": [
+      "x + y = r",
+      "x² − y² = r²",
+      "x² + y² = r²",
+      "xy = r²"
+    ],
+    "answer": 2,
+    "explanation": "Every point at distance r from the origin satisfies x² + y² = r²."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the 10th term of the Fibonacci sequence starting 1, 1?",
+    "options": [
+      "34",
+      "55",
+      "89",
+      "144"
+    ],
+    "answer": 1,
+    "explanation": "The sequence runs 1, 1, 2, 3, 5, 8, 13, 21, 34, 55."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "If a fair coin is flipped 3 times, what is the probability of exactly 2 heads?",
+    "options": [
+      "1/8",
+      "3/8",
+      "1/4",
+      "1/2"
+    ],
+    "answer": 1,
+    "explanation": "Three of the eight equally likely outcomes have exactly two heads."
+  },
+  {
+    "category": "Math",
+    "difficulty": "hard",
+    "question": "What is the derivative of sin(x)?",
+    "options": [
+      "−sin(x)",
+      "−cos(x)",
+      "cos(x)",
+      "tan(x)"
+    ],
+    "answer": 2,
+    "explanation": "The derivative of sin(x) is cos(x)."
+  }
 ]

@@ -63,9 +63,9 @@ const auth = (r: request.Test) => r.set('Authorization', `Bearer ${token}`);
 
 describe('the app boots and serves its surface', () => {
   it('seeds a usable question bank', async () => {
-    // 11 categories x 50 explained questions (20 easy / 20 medium / 10 hard).
+    // 11 categories, ~140 explained questions each.
     const total = await QuizQuestion.countDocuments({});
-    expect(total).toBeGreaterThanOrEqual(550);
+    expect(total).toBeGreaterThanOrEqual(1500);
 
     // Every category must support at least a few distinct quizzes before it
     // starts recycling — seven of them used to manage two.
@@ -76,8 +76,11 @@ describe('the app boots and serves its surface', () => {
         QuizQuestion.countDocuments({ category, difficulty: 'medium' }),
         QuizQuestion.countDocuments({ category, difficulty: 'hard' }),
       ]);
+      // How many distinct quizzes a category can serve before the pool
+      // recycles and questions start repeating. At 5 a regular player saw
+      // repeats within an afternoon, which is exactly what was reported.
       const sessions = Math.min(Math.floor(easy / 4), Math.floor(medium / 4), Math.floor(hard / 2));
-      expect(sessions).toBeGreaterThanOrEqual(5);
+      expect(sessions).toBeGreaterThanOrEqual(12);
     }
   });
 

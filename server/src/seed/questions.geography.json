@@ -1,652 +1,1718 @@
 [
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which is the largest ocean on Earth?",
-  "options": [
-   "Pacific",
-   "Atlantic",
-   "Indian",
-   "Arctic"
-  ],
-  "answer": 0,
-  "explanation": "The Pacific covers about a third of the planet's surface — more than all the land put together."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "What is the capital city of France?",
-  "options": [
-   "Lyon",
-   "Paris",
-   "Marseille",
-   "Nice"
-  ],
-  "answer": 1,
-  "explanation": "Paris has been France's capital and largest city for centuries."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which continent is Egypt mainly located on?",
-  "options": [
-   "Asia",
-   "Europe",
-   "Africa",
-   "Oceania"
-  ],
-  "answer": 2,
-  "explanation": "Egypt sits in north-east Africa, with the Sinai Peninsula extending into Asia."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which is the longest river in South America?",
-  "options": [
-   "Nile",
-   "Paraná",
-   "Orinoco",
-   "Amazon"
-  ],
-  "answer": 3,
-  "explanation": "The Amazon crosses South America and carries more water than any other river on Earth."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "How many continents are there?",
-  "options": [
-   "Seven",
-   "Five",
-   "Six",
-   "Eight"
-  ],
-  "answer": 0,
-  "explanation": "The usual count is seven: Africa, Antarctica, Asia, Europe, North America, South America and Oceania."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which country is home to the kangaroo?",
-  "options": [
-   "Brazil",
-   "Australia",
-   "South Africa",
-   "India"
-  ],
-  "answer": 1,
-  "explanation": "Kangaroos are native to Australia and appear on its coat of arms."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "What is the capital of Japan?",
-  "options": [
-   "Osaka",
-   "Kyoto",
-   "Tokyo",
-   "Nagoya"
-  ],
-  "answer": 2,
-  "explanation": "Tokyo has been Japan's capital since 1868, when the emperor moved there from Kyoto."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which desert is the largest hot desert in the world?",
-  "options": [
-   "Gobi",
-   "Kalahari",
-   "Atacama",
-   "Sahara"
-  ],
-  "answer": 3,
-  "explanation": "The Sahara stretches across North Africa and is roughly the size of the United States."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Mount Everest lies on the border of Nepal and which country?",
-  "options": [
-   "China",
-   "India",
-   "Bhutan",
-   "Pakistan"
-  ],
-  "answer": 0,
-  "explanation": "Everest straddles the border between Nepal and Tibet, an autonomous region of China."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which country has the most people?",
-  "options": [
-   "China",
-   "India",
-   "United States",
-   "Indonesia"
-  ],
-  "answer": 1,
-  "explanation": "India passed China as the most populous country in 2023, with over 1.4 billion people."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which sea separates Europe from Africa?",
-  "options": [
-   "Baltic Sea",
-   "Black Sea",
-   "Mediterranean Sea",
-   "North Sea"
-  ],
-  "answer": 2,
-  "explanation": "The Mediterranean lies between southern Europe and North Africa, narrowing to the Strait of Gibraltar."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "What is the capital of Nigeria?",
-  "options": [
-   "Lagos",
-   "Kano",
-   "Ibadan",
-   "Abuja"
-  ],
-  "answer": 3,
-  "explanation": "Abuja replaced Lagos as the capital in 1991 because of its central position."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which country is shaped like a boot?",
-  "options": [
-   "Italy",
-   "Greece",
-   "Portugal",
-   "Norway"
-  ],
-  "answer": 0,
-  "explanation": "Italy's long peninsula, with Sicily at the 'toe', gives it its famous boot shape."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which continent is the coldest?",
-  "options": [
-   "Europe",
-   "Antarctica",
-   "Asia",
-   "North America"
-  ],
-  "answer": 1,
-  "explanation": "Antarctica is the coldest, driest and windiest continent, with almost all of it under ice."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "The Eiffel Tower stands in which city?",
-  "options": [
-   "Rome",
-   "Vienna",
-   "Paris",
-   "Brussels"
-  ],
-  "answer": 2,
-  "explanation": "The tower was built in Paris for the 1889 World's Fair."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which country is both a continent and an island nation?",
-  "options": [
-   "Greenland",
-   "Madagascar",
-   "New Zealand",
-   "Australia"
-  ],
-  "answer": 3,
-  "explanation": "Australia is the only country that is also a continent. Greenland is part of North America and belongs to Denmark."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "What is the capital of Kenya?",
-  "options": [
-   "Nairobi",
-   "Mombasa",
-   "Kisumu",
-   "Nakuru"
-  ],
-  "answer": 0,
-  "explanation": "Nairobi is Kenya's capital and largest city, and a major hub for East Africa."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which US state is the largest by area?",
-  "options": [
-   "Texas",
-   "Alaska",
-   "California",
-   "Montana"
-  ],
-  "answer": 1,
-  "explanation": "Alaska is more than twice the size of Texas, the second largest state."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which imaginary line divides the Earth into northern and southern halves?",
-  "options": [
-   "Prime Meridian",
-   "Tropic of Cancer",
-   "Equator",
-   "International Date Line"
-  ],
-  "answer": 2,
-  "explanation": "The equator is the line of zero latitude, splitting the globe into the northern and southern hemispheres."
- },
- {
-  "category": "Geography",
-  "difficulty": "easy",
-  "question": "Which country's capital is Ottawa?",
-  "options": [
-   "Australia",
-   "Ireland",
-   "South Africa",
-   "Canada"
-  ],
-  "answer": 3,
-  "explanation": "Ottawa is Canada's capital, though Toronto and Montreal are larger cities."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which is the longest river in the world by most measurements?",
-  "options": [
-   "Nile",
-   "Amazon",
-   "Yangtze",
-   "Mississippi"
-  ],
-  "answer": 0,
-  "explanation": "The Nile is usually given as the longest at about 6,650 km, though some studies put the Amazon ahead."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which country has the most time zones?",
-  "options": [
-   "Russia",
-   "France",
-   "United States",
-   "China"
-  ],
-  "answer": 1,
-  "explanation": "Counting its overseas territories, France spans the most time zones. China uses just one despite its width."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "The Andes mountain range runs along which continent?",
-  "options": [
-   "Africa",
-   "Asia",
-   "South America",
-   "Europe"
-  ],
-  "answer": 2,
-  "explanation": "The Andes run roughly 7,000 km down the western edge of South America."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which strait separates Asia from North America?",
-  "options": [
-   "Strait of Malacca",
-   "Strait of Hormuz",
-   "Bass Strait",
-   "Bering Strait"
-  ],
-  "answer": 3,
-  "explanation": "The Bering Strait separates Russia from Alaska by about 82 km of water."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "What is the capital of Brazil?",
-  "options": [
-   "Brasília",
-   "Rio de Janeiro",
-   "São Paulo",
-   "Salvador"
-  ],
-  "answer": 0,
-  "explanation": "Brasília was purpose-built inland and became the capital in 1960."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which African lake is the largest by surface area?",
-  "options": [
-   "Lake Tanganyika",
-   "Lake Victoria",
-   "Lake Chad",
-   "Lake Malawi"
-  ],
-  "answer": 1,
-  "explanation": "Lake Victoria, bordered by Uganda, Kenya and Tanzania, is Africa's largest lake by area."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which country contains the southern tip of mainland Africa?",
-  "options": [
-   "Namibia",
-   "Mozambique",
-   "South Africa",
-   "Angola"
-  ],
-  "answer": 2,
-  "explanation": "Cape Agulhas in South Africa is mainland Africa's southernmost point."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which mountain range separates Europe from Asia?",
-  "options": [
-   "Alps",
-   "Carpathians",
-   "Pyrenees",
-   "Urals"
-  ],
-  "answer": 3,
-  "explanation": "The Ural Mountains run north to south through Russia and form the usual boundary between Europe and Asia."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which is the smallest country in the world by area?",
-  "options": [
-   "Vatican City",
-   "Monaco",
-   "Nauru",
-   "San Marino"
-  ],
-  "answer": 0,
-  "explanation": "Vatican City covers about 0.44 square kilometres inside Rome."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "The Sahara Desert does NOT touch which of these countries?",
-  "options": [
-   "Algeria",
-   "Kenya",
-   "Libya",
-   "Chad"
-  ],
-  "answer": 1,
-  "explanation": "Kenya lies in East Africa, well south and east of the Sahara's range."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which country is landlocked?",
-  "options": [
-   "Peru",
-   "Chile",
-   "Bolivia",
-   "Ecuador"
-  ],
-  "answer": 2,
-  "explanation": "Bolivia lost its coastline to Chile in the 19th century and now has no sea access."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which city is known as the Eternal City?",
-  "options": [
-   "Athens",
-   "Cairo",
-   "Istanbul",
-   "Rome"
-  ],
-  "answer": 3,
-  "explanation": "Rome earned the nickname in antiquity, from the belief that the city would last forever."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which ocean lies between Africa and Australia?",
-  "options": [
-   "Indian",
-   "Atlantic",
-   "Pacific",
-   "Southern"
-  ],
-  "answer": 0,
-  "explanation": "The Indian Ocean stretches from East Africa to Australia and south to the Southern Ocean."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which country has the longest coastline?",
-  "options": [
-   "Russia",
-   "Canada",
-   "Australia",
-   "Indonesia"
-  ],
-  "answer": 1,
-  "explanation": "Canada's coastline runs over 200,000 km once its many Arctic islands are counted."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "What is the capital of Turkey?",
-  "options": [
-   "Istanbul",
-   "Izmir",
-   "Ankara",
-   "Bursa"
-  ],
-  "answer": 2,
-  "explanation": "Ankara became the capital in 1923. Istanbul is larger but is not the seat of government."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "The Amazon rainforest lies mostly in which country?",
-  "options": [
-   "Peru",
-   "Colombia",
-   "Venezuela",
-   "Brazil"
-  ],
-  "answer": 3,
-  "explanation": "About 60 per cent of the Amazon rainforest is in Brazil, with the rest spread across eight other countries."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which two countries share the longest international border?",
-  "options": [
-   "United States and Canada",
-   "Russia and China",
-   "India and China",
-   "Argentina and Chile"
-  ],
-  "answer": 0,
-  "explanation": "The US–Canada border runs about 8,890 km, the longest between any two countries."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which sea is actually a salt lake between Israel and Jordan?",
-  "options": [
-   "Red Sea",
-   "Dead Sea",
-   "Caspian Sea",
-   "Aral Sea"
-  ],
-  "answer": 1,
-  "explanation": "The Dead Sea is a landlocked salt lake, and its shore is the lowest land point on Earth."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which country uses the rand as its currency?",
-  "options": [
-   "Ghana",
-   "Egypt",
-   "South Africa",
-   "Morocco"
-  ],
-  "answer": 2,
-  "explanation": "The rand is South Africa's currency, named after the Witwatersrand gold reef."
- },
- {
-  "category": "Geography",
-  "difficulty": "medium",
-  "question": "Which European capital sits on the River Danube?",
-  "options": [
-   "Prague",
-   "Warsaw",
-   "Madrid",
-   "Budapest"
-  ],
-  "answer": 3,
-  "explanation": "The Danube splits Budapest into Buda and Pest. Prague sits on the Vltava and Warsaw on the Vistula."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "Which is the deepest point in the world's oceans?",
-  "options": [
-   "Mariana Trench",
-   "Puerto Rico Trench",
-   "Java Trench",
-   "Tonga Trench"
-  ],
-  "answer": 0,
-  "explanation": "The Challenger Deep in the Mariana Trench reaches about 10,900 metres below sea level."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "Which country has the most volcanoes?",
-  "options": [
-   "Japan",
-   "Indonesia",
-   "Chile",
-   "Iceland"
-  ],
-  "answer": 1,
-  "explanation": "Indonesia sits on the Pacific Ring of Fire and has more active volcanoes than any other country."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "Lake Baikal, the world's deepest lake, is in which country?",
-  "options": [
-   "Mongolia",
-   "Kazakhstan",
-   "Russia",
-   "China"
-  ],
-  "answer": 2,
-  "explanation": "Baikal, in Siberia, is over 1,600 m deep and holds about a fifth of the world's unfrozen fresh water."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "Which line of longitude is defined as 0 degrees?",
-  "options": [
-   "Equator",
-   "Tropic of Capricorn",
-   "Antarctic Circle",
-   "Prime Meridian"
-  ],
-  "answer": 3,
-  "explanation": "The Prime Meridian passes through Greenwich in London and is the reference for longitude and world time."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "Which country is entirely surrounded by South Africa?",
-  "options": [
-   "Lesotho",
-   "Eswatini",
-   "Botswana",
-   "Zimbabwe"
-  ],
-  "answer": 0,
-  "explanation": "Lesotho is one of only three countries completely enclosed by another; Eswatini also borders Mozambique."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "What is the highest waterfall in the world?",
-  "options": [
-   "Niagara Falls",
-   "Angel Falls",
-   "Victoria Falls",
-   "Iguazu Falls"
-  ],
-  "answer": 1,
-  "explanation": "Angel Falls in Venezuela drops 979 metres, the tallest uninterrupted fall on Earth."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "Which desert is the driest non-polar place on Earth?",
-  "options": [
-   "Gobi",
-   "Namib",
-   "Atacama",
-   "Mojave"
-  ],
-  "answer": 2,
-  "explanation": "Parts of Chile's Atacama Desert have gone decades without measurable rain."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "Which capital city is the highest above sea level?",
-  "options": [
-   "Kathmandu",
-   "Quito",
-   "Addis Ababa",
-   "La Paz"
-  ],
-  "answer": 3,
-  "explanation": "La Paz in Bolivia sits above 3,600 m, making it the world's highest capital by common reckoning."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "The Great Barrier Reef lies off the coast of which Australian state?",
-  "options": [
-   "Queensland",
-   "Victoria",
-   "Western Australia",
-   "Tasmania"
-  ],
-  "answer": 0,
-  "explanation": "The reef stretches roughly 2,300 km along the Queensland coast and is visible from space."
- },
- {
-  "category": "Geography",
-  "difficulty": "hard",
-  "question": "Which river flows through Baghdad?",
-  "options": [
-   "Euphrates",
-   "Tigris",
-   "Jordan",
-   "Orontes"
-  ],
-  "answer": 1,
-  "explanation": "Baghdad sits on the Tigris. With the Euphrates it forms Mesopotamia, 'the land between the rivers'."
- }
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which is the largest ocean on Earth?",
+    "options": [
+      "Pacific",
+      "Atlantic",
+      "Indian",
+      "Arctic"
+    ],
+    "answer": 0,
+    "explanation": "The Pacific covers about a third of the planet's surface — more than all the land put together."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital city of France?",
+    "options": [
+      "Lyon",
+      "Paris",
+      "Marseille",
+      "Nice"
+    ],
+    "answer": 1,
+    "explanation": "Paris has been France's capital and largest city for centuries."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which continent is Egypt mainly located on?",
+    "options": [
+      "Asia",
+      "Europe",
+      "Africa",
+      "Oceania"
+    ],
+    "answer": 2,
+    "explanation": "Egypt sits in north-east Africa, with the Sinai Peninsula extending into Asia."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which is the longest river in South America?",
+    "options": [
+      "Nile",
+      "Paraná",
+      "Orinoco",
+      "Amazon"
+    ],
+    "answer": 3,
+    "explanation": "The Amazon crosses South America and carries more water than any other river on Earth."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "How many continents are there?",
+    "options": [
+      "Seven",
+      "Five",
+      "Six",
+      "Eight"
+    ],
+    "answer": 0,
+    "explanation": "The usual count is seven: Africa, Antarctica, Asia, Europe, North America, South America and Oceania."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country is home to the kangaroo?",
+    "options": [
+      "Brazil",
+      "Australia",
+      "South Africa",
+      "India"
+    ],
+    "answer": 1,
+    "explanation": "Kangaroos are native to Australia and appear on its coat of arms."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Japan?",
+    "options": [
+      "Osaka",
+      "Kyoto",
+      "Tokyo",
+      "Nagoya"
+    ],
+    "answer": 2,
+    "explanation": "Tokyo has been Japan's capital since 1868, when the emperor moved there from Kyoto."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which desert is the largest hot desert in the world?",
+    "options": [
+      "Gobi",
+      "Kalahari",
+      "Atacama",
+      "Sahara"
+    ],
+    "answer": 3,
+    "explanation": "The Sahara stretches across North Africa and is roughly the size of the United States."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Mount Everest lies on the border of Nepal and which country?",
+    "options": [
+      "China",
+      "India",
+      "Bhutan",
+      "Pakistan"
+    ],
+    "answer": 0,
+    "explanation": "Everest straddles the border between Nepal and Tibet, an autonomous region of China."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country has the most people?",
+    "options": [
+      "China",
+      "India",
+      "United States",
+      "Indonesia"
+    ],
+    "answer": 1,
+    "explanation": "India passed China as the most populous country in 2023, with over 1.4 billion people."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which sea separates Europe from Africa?",
+    "options": [
+      "Baltic Sea",
+      "Black Sea",
+      "Mediterranean Sea",
+      "North Sea"
+    ],
+    "answer": 2,
+    "explanation": "The Mediterranean lies between southern Europe and North Africa, narrowing to the Strait of Gibraltar."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Nigeria?",
+    "options": [
+      "Lagos",
+      "Kano",
+      "Ibadan",
+      "Abuja"
+    ],
+    "answer": 3,
+    "explanation": "Abuja replaced Lagos as the capital in 1991 because of its central position."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country is shaped like a boot?",
+    "options": [
+      "Italy",
+      "Greece",
+      "Portugal",
+      "Norway"
+    ],
+    "answer": 0,
+    "explanation": "Italy's long peninsula, with Sicily at the 'toe', gives it its famous boot shape."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which continent is the coldest?",
+    "options": [
+      "Europe",
+      "Antarctica",
+      "Asia",
+      "North America"
+    ],
+    "answer": 1,
+    "explanation": "Antarctica is the coldest, driest and windiest continent, with almost all of it under ice."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "The Eiffel Tower stands in which city?",
+    "options": [
+      "Rome",
+      "Vienna",
+      "Paris",
+      "Brussels"
+    ],
+    "answer": 2,
+    "explanation": "The tower was built in Paris for the 1889 World's Fair."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country is both a continent and an island nation?",
+    "options": [
+      "Greenland",
+      "Madagascar",
+      "New Zealand",
+      "Australia"
+    ],
+    "answer": 3,
+    "explanation": "Australia is the only country that is also a continent. Greenland is part of North America and belongs to Denmark."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Kenya?",
+    "options": [
+      "Nairobi",
+      "Mombasa",
+      "Kisumu",
+      "Nakuru"
+    ],
+    "answer": 0,
+    "explanation": "Nairobi is Kenya's capital and largest city, and a major hub for East Africa."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which US state is the largest by area?",
+    "options": [
+      "Texas",
+      "Alaska",
+      "California",
+      "Montana"
+    ],
+    "answer": 1,
+    "explanation": "Alaska is more than twice the size of Texas, the second largest state."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which imaginary line divides the Earth into northern and southern halves?",
+    "options": [
+      "Prime Meridian",
+      "Tropic of Cancer",
+      "Equator",
+      "International Date Line"
+    ],
+    "answer": 2,
+    "explanation": "The equator is the line of zero latitude, splitting the globe into the northern and southern hemispheres."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country's capital is Ottawa?",
+    "options": [
+      "Australia",
+      "Ireland",
+      "South Africa",
+      "Canada"
+    ],
+    "answer": 3,
+    "explanation": "Ottawa is Canada's capital, though Toronto and Montreal are larger cities."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which is the longest river in the world by most measurements?",
+    "options": [
+      "Nile",
+      "Amazon",
+      "Yangtze",
+      "Mississippi"
+    ],
+    "answer": 0,
+    "explanation": "The Nile is usually given as the longest at about 6,650 km, though some studies put the Amazon ahead."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country has the most time zones?",
+    "options": [
+      "Russia",
+      "France",
+      "United States",
+      "China"
+    ],
+    "answer": 1,
+    "explanation": "Counting its overseas territories, France spans the most time zones. China uses just one despite its width."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "The Andes mountain range runs along which continent?",
+    "options": [
+      "Africa",
+      "Asia",
+      "South America",
+      "Europe"
+    ],
+    "answer": 2,
+    "explanation": "The Andes run roughly 7,000 km down the western edge of South America."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which strait separates Asia from North America?",
+    "options": [
+      "Strait of Malacca",
+      "Strait of Hormuz",
+      "Bass Strait",
+      "Bering Strait"
+    ],
+    "answer": 3,
+    "explanation": "The Bering Strait separates Russia from Alaska by about 82 km of water."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Brazil?",
+    "options": [
+      "Brasília",
+      "Rio de Janeiro",
+      "São Paulo",
+      "Salvador"
+    ],
+    "answer": 0,
+    "explanation": "Brasília was purpose-built inland and became the capital in 1960."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which African lake is the largest by surface area?",
+    "options": [
+      "Lake Tanganyika",
+      "Lake Victoria",
+      "Lake Chad",
+      "Lake Malawi"
+    ],
+    "answer": 1,
+    "explanation": "Lake Victoria, bordered by Uganda, Kenya and Tanzania, is Africa's largest lake by area."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country contains the southern tip of mainland Africa?",
+    "options": [
+      "Namibia",
+      "Mozambique",
+      "South Africa",
+      "Angola"
+    ],
+    "answer": 2,
+    "explanation": "Cape Agulhas in South Africa is mainland Africa's southernmost point."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which mountain range separates Europe from Asia?",
+    "options": [
+      "Alps",
+      "Carpathians",
+      "Pyrenees",
+      "Urals"
+    ],
+    "answer": 3,
+    "explanation": "The Ural Mountains run north to south through Russia and form the usual boundary between Europe and Asia."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which is the smallest country in the world by area?",
+    "options": [
+      "Vatican City",
+      "Monaco",
+      "Nauru",
+      "San Marino"
+    ],
+    "answer": 0,
+    "explanation": "Vatican City covers about 0.44 square kilometres inside Rome."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "The Sahara Desert does NOT touch which of these countries?",
+    "options": [
+      "Algeria",
+      "Kenya",
+      "Libya",
+      "Chad"
+    ],
+    "answer": 1,
+    "explanation": "Kenya lies in East Africa, well south and east of the Sahara's range."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country is landlocked?",
+    "options": [
+      "Peru",
+      "Chile",
+      "Bolivia",
+      "Ecuador"
+    ],
+    "answer": 2,
+    "explanation": "Bolivia lost its coastline to Chile in the 19th century and now has no sea access."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which city is known as the Eternal City?",
+    "options": [
+      "Athens",
+      "Cairo",
+      "Istanbul",
+      "Rome"
+    ],
+    "answer": 3,
+    "explanation": "Rome earned the nickname in antiquity, from the belief that the city would last forever."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which ocean lies between Africa and Australia?",
+    "options": [
+      "Indian",
+      "Atlantic",
+      "Pacific",
+      "Southern"
+    ],
+    "answer": 0,
+    "explanation": "The Indian Ocean stretches from East Africa to Australia and south to the Southern Ocean."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country has the longest coastline?",
+    "options": [
+      "Russia",
+      "Canada",
+      "Australia",
+      "Indonesia"
+    ],
+    "answer": 1,
+    "explanation": "Canada's coastline runs over 200,000 km once its many Arctic islands are counted."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Turkey?",
+    "options": [
+      "Istanbul",
+      "Izmir",
+      "Ankara",
+      "Bursa"
+    ],
+    "answer": 2,
+    "explanation": "Ankara became the capital in 1923. Istanbul is larger but is not the seat of government."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "The Amazon rainforest lies mostly in which country?",
+    "options": [
+      "Peru",
+      "Colombia",
+      "Venezuela",
+      "Brazil"
+    ],
+    "answer": 3,
+    "explanation": "About 60 per cent of the Amazon rainforest is in Brazil, with the rest spread across eight other countries."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which two countries share the longest international border?",
+    "options": [
+      "United States and Canada",
+      "Russia and China",
+      "India and China",
+      "Argentina and Chile"
+    ],
+    "answer": 0,
+    "explanation": "The US–Canada border runs about 8,890 km, the longest between any two countries."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which sea is actually a salt lake between Israel and Jordan?",
+    "options": [
+      "Red Sea",
+      "Dead Sea",
+      "Caspian Sea",
+      "Aral Sea"
+    ],
+    "answer": 1,
+    "explanation": "The Dead Sea is a landlocked salt lake, and its shore is the lowest land point on Earth."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country uses the rand as its currency?",
+    "options": [
+      "Ghana",
+      "Egypt",
+      "South Africa",
+      "Morocco"
+    ],
+    "answer": 2,
+    "explanation": "The rand is South Africa's currency, named after the Witwatersrand gold reef."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which European capital sits on the River Danube?",
+    "options": [
+      "Prague",
+      "Warsaw",
+      "Madrid",
+      "Budapest"
+    ],
+    "answer": 3,
+    "explanation": "The Danube splits Budapest into Buda and Pest. Prague sits on the Vltava and Warsaw on the Vistula."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which is the deepest point in the world's oceans?",
+    "options": [
+      "Mariana Trench",
+      "Puerto Rico Trench",
+      "Java Trench",
+      "Tonga Trench"
+    ],
+    "answer": 0,
+    "explanation": "The Challenger Deep in the Mariana Trench reaches about 10,900 metres below sea level."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which country has the most volcanoes?",
+    "options": [
+      "Japan",
+      "Indonesia",
+      "Chile",
+      "Iceland"
+    ],
+    "answer": 1,
+    "explanation": "Indonesia sits on the Pacific Ring of Fire and has more active volcanoes than any other country."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Lake Baikal, the world's deepest lake, is in which country?",
+    "options": [
+      "Mongolia",
+      "Kazakhstan",
+      "Russia",
+      "China"
+    ],
+    "answer": 2,
+    "explanation": "Baikal, in Siberia, is over 1,600 m deep and holds about a fifth of the world's unfrozen fresh water."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which line of longitude is defined as 0 degrees?",
+    "options": [
+      "Equator",
+      "Tropic of Capricorn",
+      "Antarctic Circle",
+      "Prime Meridian"
+    ],
+    "answer": 3,
+    "explanation": "The Prime Meridian passes through Greenwich in London and is the reference for longitude and world time."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which country is entirely surrounded by South Africa?",
+    "options": [
+      "Lesotho",
+      "Eswatini",
+      "Botswana",
+      "Zimbabwe"
+    ],
+    "answer": 0,
+    "explanation": "Lesotho is one of only three countries completely enclosed by another; Eswatini also borders Mozambique."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "What is the highest waterfall in the world?",
+    "options": [
+      "Niagara Falls",
+      "Angel Falls",
+      "Victoria Falls",
+      "Iguazu Falls"
+    ],
+    "answer": 1,
+    "explanation": "Angel Falls in Venezuela drops 979 metres, the tallest uninterrupted fall on Earth."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which desert is the driest non-polar place on Earth?",
+    "options": [
+      "Gobi",
+      "Namib",
+      "Atacama",
+      "Mojave"
+    ],
+    "answer": 2,
+    "explanation": "Parts of Chile's Atacama Desert have gone decades without measurable rain."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which capital city is the highest above sea level?",
+    "options": [
+      "Kathmandu",
+      "Quito",
+      "Addis Ababa",
+      "La Paz"
+    ],
+    "answer": 3,
+    "explanation": "La Paz in Bolivia sits above 3,600 m, making it the world's highest capital by common reckoning."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "The Great Barrier Reef lies off the coast of which Australian state?",
+    "options": [
+      "Queensland",
+      "Victoria",
+      "Western Australia",
+      "Tasmania"
+    ],
+    "answer": 0,
+    "explanation": "The reef stretches roughly 2,300 km along the Queensland coast and is visible from space."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which river flows through Baghdad?",
+    "options": [
+      "Euphrates",
+      "Tigris",
+      "Jordan",
+      "Orontes"
+    ],
+    "answer": 1,
+    "explanation": "Baghdad sits on the Tigris. With the Euphrates it forms Mesopotamia, 'the land between the rivers'."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which is the largest ocean?",
+    "options": [
+      "Pacific",
+      "Atlantic",
+      "Indian",
+      "Arctic"
+    ],
+    "answer": 0,
+    "explanation": "The Pacific covers about a third of the Earth's surface."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "On which continent is Egypt mainly located?",
+    "options": [
+      "Africa",
+      "Asia",
+      "Europe",
+      "Oceania"
+    ],
+    "answer": 0,
+    "explanation": "Egypt is in north-east Africa, though the Sinai Peninsula sits in Asia."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of France?",
+    "options": [
+      "Lyon",
+      "Paris",
+      "Marseille",
+      "Nice"
+    ],
+    "answer": 1,
+    "explanation": "Paris has been the French capital for centuries."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the longest river in Africa?",
+    "options": [
+      "Nile",
+      "Congo",
+      "Niger",
+      "Zambezi"
+    ],
+    "answer": 0,
+    "explanation": "The Nile runs roughly 6,650 km through north-east Africa."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which desert is the largest hot desert?",
+    "options": [
+      "Gobi",
+      "Kalahari",
+      "Atacama",
+      "Sahara"
+    ],
+    "answer": 3,
+    "explanation": "The Sahara spans about 9 million km² across North Africa."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the smallest continent by land area?",
+    "options": [
+      "Europe",
+      "Australia",
+      "Antarctica",
+      "South America"
+    ],
+    "answer": 1,
+    "explanation": "Australia is the smallest of the seven continents."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which sea lies between Europe and Africa?",
+    "options": [
+      "Red Sea",
+      "Mediterranean Sea",
+      "Black Sea",
+      "Caspian Sea"
+    ],
+    "answer": 1,
+    "explanation": "The Mediterranean separates southern Europe from North Africa."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Canada?",
+    "options": [
+      "Ottawa",
+      "Toronto",
+      "Vancouver",
+      "Montreal"
+    ],
+    "answer": 0,
+    "explanation": "Ottawa is the capital, though Toronto is the largest city."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country is known as the Land of the Rising Sun?",
+    "options": [
+      "Japan",
+      "China",
+      "Thailand",
+      "South Korea"
+    ],
+    "answer": 0,
+    "explanation": "Japan's name in Japanese, Nihon, means 'origin of the sun'."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country contains the Amazon rainforest's largest share?",
+    "options": [
+      "Brazil",
+      "Peru",
+      "Colombia",
+      "Venezuela"
+    ],
+    "answer": 0,
+    "explanation": "Around 60% of the Amazon lies within Brazil."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Germany?",
+    "options": [
+      "Munich",
+      "Hamburg",
+      "Berlin",
+      "Frankfurt"
+    ],
+    "answer": 2,
+    "explanation": "Berlin became the reunified capital in 1990."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Australia?",
+    "options": [
+      "Sydney",
+      "Canberra",
+      "Melbourne",
+      "Perth"
+    ],
+    "answer": 1,
+    "explanation": "Canberra was chosen as a compromise between Sydney and Melbourne."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which river runs through London?",
+    "options": [
+      "Severn",
+      "Thames",
+      "Mersey",
+      "Tyne"
+    ],
+    "answer": 1,
+    "explanation": "The Thames flows through central London to the North Sea."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Italy?",
+    "options": [
+      "Milan",
+      "Naples",
+      "Rome",
+      "Turin"
+    ],
+    "answer": 2,
+    "explanation": "Rome has been Italy's capital since 1871."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Spain?",
+    "options": [
+      "Barcelona",
+      "Madrid",
+      "Seville",
+      "Valencia"
+    ],
+    "answer": 1,
+    "explanation": "Madrid sits near the centre of the country and is its capital."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which ocean lies east of the United States?",
+    "options": [
+      "Pacific",
+      "Atlantic",
+      "Indian",
+      "Arctic"
+    ],
+    "answer": 1,
+    "explanation": "The Atlantic forms the eastern seaboard of the USA."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Ghana?",
+    "options": [
+      "Kumasi",
+      "Accra",
+      "Tamale",
+      "Takoradi"
+    ],
+    "answer": 1,
+    "explanation": "Accra, on the Gulf of Guinea, is Ghana's capital."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country is both in Europe and Asia?",
+    "options": [
+      "Greece",
+      "Italy",
+      "Turkey",
+      "Poland"
+    ],
+    "answer": 2,
+    "explanation": "Turkey spans the Bosphorus, with land on both continents."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of China?",
+    "options": [
+      "Shanghai",
+      "Shenzhen",
+      "Beijing",
+      "Guangzhou"
+    ],
+    "answer": 2,
+    "explanation": "Beijing is China's capital; Shanghai is its largest city."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which mountain range separates France and Spain?",
+    "options": [
+      "Pyrenees",
+      "Alps",
+      "Carpathians",
+      "Apennines"
+    ],
+    "answer": 0,
+    "explanation": "The Pyrenees run along the French–Spanish border."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of India?",
+    "options": [
+      "Mumbai",
+      "New Delhi",
+      "Kolkata",
+      "Chennai"
+    ],
+    "answer": 1,
+    "explanation": "New Delhi is India's capital."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which island country lies south-east of India?",
+    "options": [
+      "Maldives",
+      "Sri Lanka",
+      "Madagascar",
+      "Mauritius"
+    ],
+    "answer": 1,
+    "explanation": "Sri Lanka sits just off India's south-eastern coast."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of South Africa's legislature?",
+    "options": [
+      "Cape Town",
+      "Pretoria",
+      "Durban",
+      "Johannesburg"
+    ],
+    "answer": 0,
+    "explanation": "South Africa has three capitals; Cape Town hosts parliament."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which country is famous for the Eiffel Tower?",
+    "options": [
+      "France",
+      "Belgium",
+      "Switzerland",
+      "Austria"
+    ],
+    "answer": 0,
+    "explanation": "The Eiffel Tower stands in Paris, France."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the largest country by land area?",
+    "options": [
+      "Canada",
+      "China",
+      "United States",
+      "Russia"
+    ],
+    "answer": 3,
+    "explanation": "Russia spans about 17 million km², far ahead of any other country."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which line divides the Earth into north and south?",
+    "options": [
+      "Prime Meridian",
+      "Equator",
+      "Tropic of Cancer",
+      "Arctic Circle"
+    ],
+    "answer": 1,
+    "explanation": "The Equator is the zero line of latitude."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Egypt?",
+    "options": [
+      "Alexandria",
+      "Cairo",
+      "Giza",
+      "Luxor"
+    ],
+    "answer": 1,
+    "explanation": "Cairo is Egypt's capital and the largest city in the Arab world."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "Which continent has the most countries?",
+    "options": [
+      "Africa",
+      "Asia",
+      "Europe",
+      "South America"
+    ],
+    "answer": 0,
+    "explanation": "Africa has 54 sovereign states, more than any other continent."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "easy",
+    "question": "What is the capital of Argentina?",
+    "options": [
+      "Córdoba",
+      "Rosario",
+      "Mendoza",
+      "Buenos Aires"
+    ],
+    "answer": 3,
+    "explanation": "Buenos Aires sits on the Río de la Plata."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the deepest point in the ocean?",
+    "options": [
+      "Mariana Trench",
+      "Puerto Rico Trench",
+      "Java Trench",
+      "Tonga Trench"
+    ],
+    "answer": 0,
+    "explanation": "The Mariana Trench reaches about 11 km at Challenger Deep."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Switzerland?",
+    "options": [
+      "Zurich",
+      "Geneva",
+      "Basel",
+      "Bern"
+    ],
+    "answer": 3,
+    "explanation": "Bern is the de facto capital, not the larger Zurich or Geneva."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which lake is the largest by surface area?",
+    "options": [
+      "Lake Superior",
+      "Lake Victoria",
+      "Lake Baikal",
+      "Caspian Sea"
+    ],
+    "answer": 3,
+    "explanation": "The Caspian Sea is technically the largest lake on Earth."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country was formerly called Persia?",
+    "options": [
+      "Iran",
+      "Iraq",
+      "Turkey",
+      "Syria"
+    ],
+    "answer": 0,
+    "explanation": "Persia officially became Iran in 1935."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which African country is landlocked and surrounded by South Africa?",
+    "options": [
+      "Eswatini",
+      "Botswana",
+      "Malawi",
+      "Lesotho"
+    ],
+    "answer": 3,
+    "explanation": "Lesotho is entirely enclosed by South Africa."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which desert covers much of Mongolia and northern China?",
+    "options": [
+      "Taklamakan",
+      "Thar",
+      "Gobi",
+      "Karakum"
+    ],
+    "answer": 2,
+    "explanation": "The Gobi is a cold desert spanning Mongolia and China."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the longest river in the world by most measures?",
+    "options": [
+      "Amazon",
+      "Yangtze",
+      "Mississippi",
+      "Nile"
+    ],
+    "answer": 3,
+    "explanation": "The Nile is usually given as the longest, though the Amazon carries far more water."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "The Strait of Gibraltar connects the Mediterranean to which ocean?",
+    "options": [
+      "Indian",
+      "Atlantic",
+      "Arctic",
+      "Pacific"
+    ],
+    "answer": 1,
+    "explanation": "It is the Mediterranean's western outlet to the Atlantic."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Morocco?",
+    "options": [
+      "Rabat",
+      "Casablanca",
+      "Marrakesh",
+      "Fez"
+    ],
+    "answer": 0,
+    "explanation": "Rabat is the capital; Casablanca is the largest city."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the smallest country in the world?",
+    "options": [
+      "Monaco",
+      "Nauru",
+      "San Marino",
+      "Vatican City"
+    ],
+    "answer": 3,
+    "explanation": "Vatican City covers about 0.44 km²."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which sea is the saltiest large body of water?",
+    "options": [
+      "Red Sea",
+      "Dead Sea",
+      "Black Sea",
+      "Caspian Sea"
+    ],
+    "answer": 1,
+    "explanation": "The Dead Sea is roughly ten times saltier than the ocean."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Vietnam?",
+    "options": [
+      "Ho Chi Minh City",
+      "Hanoi",
+      "Da Nang",
+      "Hue"
+    ],
+    "answer": 1,
+    "explanation": "Hanoi is the capital; Ho Chi Minh City is larger."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which mountain is the tallest measured from base to peak?",
+    "options": [
+      "Everest",
+      "Mauna Kea",
+      "K2",
+      "Denali"
+    ],
+    "answer": 1,
+    "explanation": "Mauna Kea rises over 10 km from the sea floor, though most is underwater."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country is Greenland an autonomous territory of?",
+    "options": [
+      "Denmark",
+      "Norway",
+      "Iceland",
+      "Canada"
+    ],
+    "answer": 0,
+    "explanation": "Greenland is an autonomous territory within the Kingdom of Denmark."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Peru?",
+    "options": [
+      "Lima",
+      "Cusco",
+      "Arequipa",
+      "Trujillo"
+    ],
+    "answer": 0,
+    "explanation": "Lima, on the Pacific coast, is Peru's capital."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which canal links the Mediterranean and the Red Sea?",
+    "options": [
+      "Panama Canal",
+      "Suez Canal",
+      "Kiel Canal",
+      "Corinth Canal"
+    ],
+    "answer": 1,
+    "explanation": "The Suez Canal opened in 1869, cutting the route from Europe to Asia."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which is the most populous city in Africa?",
+    "options": [
+      "Lagos",
+      "Cairo",
+      "Kinshasa",
+      "Johannesburg"
+    ],
+    "answer": 0,
+    "explanation": "Lagos is generally counted as Africa's largest city by population."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Norway?",
+    "options": [
+      "Oslo",
+      "Bergen",
+      "Stavanger",
+      "Trondheim"
+    ],
+    "answer": 0,
+    "explanation": "Oslo sits at the head of the Oslofjord."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country has no rivers?",
+    "options": [
+      "All of these",
+      "Qatar",
+      "Saudi Arabia",
+      "Kuwait"
+    ],
+    "answer": 0,
+    "explanation": "None of these Gulf states has a permanent natural river."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which continent has no permanent human residents?",
+    "options": [
+      "Australia",
+      "South America",
+      "Europe",
+      "Antarctica"
+    ],
+    "answer": 3,
+    "explanation": "Antarctica has only rotating research staff, no permanent population."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Ethiopia?",
+    "options": [
+      "Addis Ababa",
+      "Dire Dawa",
+      "Mekelle",
+      "Gondar"
+    ],
+    "answer": 0,
+    "explanation": "Addis Ababa also hosts the African Union headquarters."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "The Great Barrier Reef lies off the coast of which state?",
+    "options": [
+      "Western Australia",
+      "Victoria",
+      "Queensland",
+      "Tasmania"
+    ],
+    "answer": 2,
+    "explanation": "It stretches along the Queensland coast for over 2,300 km."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country is divided by the 38th parallel?",
+    "options": [
+      "Vietnam",
+      "Germany",
+      "Cyprus",
+      "Korea"
+    ],
+    "answer": 3,
+    "explanation": "The 38th parallel roughly divides North and South Korea."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of New Zealand?",
+    "options": [
+      "Wellington",
+      "Auckland",
+      "Christchurch",
+      "Dunedin"
+    ],
+    "answer": 0,
+    "explanation": "Wellington is the capital, though Auckland is larger."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which river flows through Cairo?",
+    "options": [
+      "Tigris",
+      "Euphrates",
+      "Jordan",
+      "Nile"
+    ],
+    "answer": 3,
+    "explanation": "Cairo sits on the banks of the Nile."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the largest island in the world?",
+    "options": [
+      "Borneo",
+      "Madagascar",
+      "Greenland",
+      "New Guinea"
+    ],
+    "answer": 2,
+    "explanation": "Greenland is the largest island not classed as a continent."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country's flag features a maple leaf?",
+    "options": [
+      "Lebanon",
+      "Norway",
+      "Japan",
+      "Canada"
+    ],
+    "answer": 3,
+    "explanation": "The red maple leaf has been on Canada's flag since 1965."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Portugal?",
+    "options": [
+      "Porto",
+      "Lisbon",
+      "Faro",
+      "Coimbra"
+    ],
+    "answer": 1,
+    "explanation": "Lisbon sits on the estuary of the Tagus."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which African lake is the largest by area?",
+    "options": [
+      "Lake Tanganyika",
+      "Lake Malawi",
+      "Lake Chad",
+      "Lake Victoria"
+    ],
+    "answer": 3,
+    "explanation": "Lake Victoria is Africa's largest lake by surface area."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Saudi Arabia?",
+    "options": [
+      "Jeddah",
+      "Mecca",
+      "Riyadh",
+      "Medina"
+    ],
+    "answer": 2,
+    "explanation": "Riyadh is the capital and largest city."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which mountain range runs along western South America?",
+    "options": [
+      "Rockies",
+      "Atlas",
+      "Andes",
+      "Urals"
+    ],
+    "answer": 2,
+    "explanation": "The Andes run some 7,000 km down the Pacific side of the continent."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "Which country is entirely within another country's borders besides Lesotho?",
+    "options": [
+      "San Marino",
+      "Andorra",
+      "Liechtenstein",
+      "Luxembourg"
+    ],
+    "answer": 0,
+    "explanation": "San Marino is enclosed entirely by Italy."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "medium",
+    "question": "What is the capital of Poland?",
+    "options": [
+      "Kraków",
+      "Gdańsk",
+      "Wrocław",
+      "Warsaw"
+    ],
+    "answer": 3,
+    "explanation": "Warsaw has been Poland's capital since the late 16th century."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which country has the most UNESCO World Heritage Sites?",
+    "options": [
+      "China",
+      "Italy",
+      "Spain",
+      "France"
+    ],
+    "answer": 1,
+    "explanation": "Italy leads the list, closely followed by China."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "What is the capital of Kazakhstan?",
+    "options": [
+      "Almaty",
+      "Shymkent",
+      "Karaganda",
+      "Astana"
+    ],
+    "answer": 3,
+    "explanation": "Astana has been the capital since 1997, briefly renamed Nur-Sultan."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which strait separates Australia from Tasmania?",
+    "options": [
+      "Torres Strait",
+      "Cook Strait",
+      "Foveaux Strait",
+      "Bass Strait"
+    ],
+    "answer": 3,
+    "explanation": "The Bass Strait lies between Victoria and Tasmania."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which is the least densely populated country?",
+    "options": [
+      "Australia",
+      "Namibia",
+      "Mongolia",
+      "Iceland"
+    ],
+    "answer": 2,
+    "explanation": "Mongolia has roughly two people per square kilometre."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "What is the driest non-polar desert?",
+    "options": [
+      "Atacama",
+      "Sahara",
+      "Gobi",
+      "Namib"
+    ],
+    "answer": 0,
+    "explanation": "Parts of Chile's Atacama have gone decades without measurable rain."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which two countries does the island of Hispaniola contain?",
+    "options": [
+      "Cuba and Jamaica",
+      "Trinidad and Tobago",
+      "Puerto Rico and Haiti",
+      "Haiti and Dominican Republic"
+    ],
+    "answer": 3,
+    "explanation": "Hispaniola is split between Haiti in the west and the Dominican Republic in the east."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "What is the capital of Myanmar?",
+    "options": [
+      "Yangon",
+      "Naypyidaw",
+      "Mandalay",
+      "Bago"
+    ],
+    "answer": 1,
+    "explanation": "The capital moved from Yangon to the purpose-built Naypyidaw in 2005."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which river forms much of the border between the USA and Mexico?",
+    "options": [
+      "Rio Grande",
+      "Colorado",
+      "Pecos",
+      "Brazos"
+    ],
+    "answer": 0,
+    "explanation": "The Rio Grande runs along the Texas–Mexico border."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which country was once known as Ceylon?",
+    "options": [
+      "Sri Lanka",
+      "Myanmar",
+      "Bangladesh",
+      "Maldives"
+    ],
+    "answer": 0,
+    "explanation": "Ceylon was renamed Sri Lanka in 1972."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "What is the deepest freshwater lake?",
+    "options": [
+      "Lake Superior",
+      "Lake Baikal",
+      "Lake Tanganyika",
+      "Great Slave Lake"
+    ],
+    "answer": 1,
+    "explanation": "Lake Baikal in Siberia reaches about 1,642 metres deep."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which country has Africa's southernmost point?",
+    "options": [
+      "Namibia",
+      "South Africa",
+      "Mozambique",
+      "Botswana"
+    ],
+    "answer": 1,
+    "explanation": "Cape Agulhas in South Africa is the continent's southern tip."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "What is the capital of Bolivia's government?",
+    "options": [
+      "La Paz",
+      "Sucre",
+      "Santa Cruz",
+      "Cochabamba"
+    ],
+    "answer": 0,
+    "explanation": "La Paz is the seat of government; Sucre is the constitutional capital."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which sea has no coastline?",
+    "options": [
+      "Coral Sea",
+      "Bering Sea",
+      "Timor Sea",
+      "Sargasso Sea"
+    ],
+    "answer": 3,
+    "explanation": "The Sargasso Sea is bounded by ocean currents rather than land."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which country contains the confluence of the Blue and White Nile?",
+    "options": [
+      "Sudan",
+      "Egypt",
+      "Ethiopia",
+      "Uganda"
+    ],
+    "answer": 0,
+    "explanation": "They meet at Khartoum, the capital of Sudan."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "What is the largest country in South America by area?",
+    "options": [
+      "Argentina",
+      "Peru",
+      "Colombia",
+      "Brazil"
+    ],
+    "answer": 3,
+    "explanation": "Brazil covers nearly half the continent."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which European capital sits on two continents?",
+    "options": [
+      "Istanbul",
+      "Athens",
+      "Moscow",
+      "Lisbon"
+    ],
+    "answer": 0,
+    "explanation": "Istanbul spans Europe and Asia — though Ankara is Turkey's capital."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which is the world's highest capital city?",
+    "options": [
+      "Quito",
+      "La Paz",
+      "Bogotá",
+      "Thimphu"
+    ],
+    "answer": 1,
+    "explanation": "La Paz sits above 3,600 metres."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "What is the name of the supercontinent that existed 300 million years ago?",
+    "options": [
+      "Gondwana",
+      "Laurasia",
+      "Pangaea",
+      "Rodinia"
+    ],
+    "answer": 2,
+    "explanation": "Pangaea later split into Laurasia and Gondwana."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which country has the largest Muslim population?",
+    "options": [
+      "Saudi Arabia",
+      "Indonesia",
+      "Pakistan",
+      "India"
+    ],
+    "answer": 1,
+    "explanation": "Indonesia has more Muslims than any other country."
+  },
+  {
+    "category": "Geography",
+    "difficulty": "hard",
+    "question": "Which line of longitude is 0 degrees?",
+    "options": [
+      "Equator",
+      "International Date Line",
+      "Prime Meridian",
+      "Tropic of Capricorn"
+    ],
+    "answer": 2,
+    "explanation": "The Prime Meridian runs through Greenwich, London."
+  }
 ]

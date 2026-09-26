@@ -1,652 +1,1874 @@
 [
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What is the chemical symbol for water?",
-  "options": [
-   "H2O",
-   "CO2",
-   "O2",
-   "NaCl"
-  ],
-  "answer": 0,
-  "explanation": "Water is two hydrogen atoms bonded to one oxygen atom, written H2O."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What is the chemical symbol for gold?",
-  "options": [
-   "Go",
-   "Au",
-   "Gd",
-   "Ag"
-  ],
-  "answer": 1,
-  "explanation": "Gold's symbol Au comes from the Latin 'aurum'. Ag is silver, from 'argentum'."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "Which gas makes up most of the air we breathe?",
-  "options": [
-   "Oxygen",
-   "Carbon dioxide",
-   "Nitrogen",
-   "Hydrogen"
-  ],
-  "answer": 2,
-  "explanation": "Air is about 78 per cent nitrogen and 21 per cent oxygen."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What is the common name for sodium chloride?",
-  "options": [
-   "Sugar",
-   "Baking soda",
-   "Vinegar",
-   "Salt"
-  ],
-  "answer": 3,
-  "explanation": "Sodium chloride is ordinary table salt, made of sodium and chlorine ions."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What do we call a substance that speeds up a reaction without being used up?",
-  "options": [
-   "Catalyst",
-   "Solvent",
-   "Solute",
-   "Reactant"
-  ],
-  "answer": 0,
-  "explanation": "A catalyst lowers the energy needed for a reaction and is unchanged at the end."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "Which of these is an element?",
-  "options": [
-   "Water",
-   "Oxygen",
-   "Bronze",
-   "Air"
-  ],
-  "answer": 1,
-  "explanation": "An element has only one kind of atom. Water is a compound, and bronze and air are mixtures."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What is the pH of a neutral solution?",
-  "options": [
-   "0",
-   "7",
-   "10",
-   "14"
-  ],
-  "answer": 1,
-  "explanation": "The pH scale runs 0 to 14, with 7 neutral, below 7 acidic and above 7 alkaline."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "Which gas do we exhale in large amounts?",
-  "options": [
-   "Oxygen",
-   "Helium",
-   "Carbon dioxide",
-   "Argon"
-  ],
-  "answer": 2,
-  "explanation": "Carbon dioxide is the waste product of respiration, breathed out with each breath."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What is the chemical symbol for oxygen?",
-  "options": [
-   "Ox",
-   "Og",
-   "On",
-   "O"
-  ],
-  "answer": 3,
-  "explanation": "Oxygen's symbol is O. In air it occurs as O2, two oxygen atoms bonded together."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "Which of these is an acid?",
-  "options": [
-   "Lemon juice",
-   "Soap",
-   "Baking soda",
-   "Bleach"
-  ],
-  "answer": 0,
-  "explanation": "Lemon juice contains citric acid and has a pH around 2. The others are alkaline."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What state is water at −10°C?",
-  "options": [
-   "Liquid",
-   "Solid",
-   "Gas",
-   "Plasma"
-  ],
-  "answer": 1,
-  "explanation": "Below 0°C water freezes into ice, a solid."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What is rust mainly made of?",
-  "options": [
-   "Copper sulfate",
-   "Zinc chloride",
-   "Iron oxide",
-   "Carbon"
-  ],
-  "answer": 2,
-  "explanation": "Rust forms when iron reacts with oxygen and water to make hydrated iron oxide."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "Which metal is liquid at room temperature?",
-  "options": [
-   "Lead",
-   "Aluminium",
-   "Tin",
-   "Mercury"
-  ],
-  "answer": 3,
-  "explanation": "Mercury is the only metal that is liquid at ordinary room temperature."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What is the centre of an atom called?",
-  "options": [
-   "Nucleus",
-   "Shell",
-   "Orbit",
-   "Core electron"
-  ],
-  "answer": 0,
-  "explanation": "The nucleus holds protons and neutrons, with electrons around it."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "Which substance is used to make glass?",
-  "options": [
-   "Clay",
-   "Sand",
-   "Limestone only",
-   "Iron ore"
-  ],
-  "answer": 1,
-  "explanation": "Glass is made mainly from silica sand, melted at very high temperature."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What do you call a mixture of two or more metals?",
-  "options": [
-   "Compound",
-   "Solution",
-   "Alloy",
-   "Isotope"
-  ],
-  "answer": 2,
-  "explanation": "An alloy blends metals to improve their properties. Steel and bronze are examples."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What happens to water at 100°C at sea level?",
-  "options": [
-   "It freezes",
-   "It condenses",
-   "Nothing",
-   "It boils"
-  ],
-  "answer": 3,
-  "explanation": "Water boils at 100°C at standard pressure, turning from liquid to steam."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "Which gas is used to fill party balloons so they float?",
-  "options": [
-   "Helium",
-   "Oxygen",
-   "Nitrogen",
-   "Carbon dioxide"
-  ],
-  "answer": 0,
-  "explanation": "Helium is much less dense than air, so balloons filled with it rise. It is also non-flammable."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "What is the chemical symbol for carbon?",
-  "options": [
-   "Ca",
-   "C",
-   "Co",
-   "Cr"
-  ],
-  "answer": 1,
-  "explanation": "Carbon is C. Ca is calcium, Co cobalt and Cr chromium."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "easy",
-  "question": "Which of these is a physical change, not a chemical one?",
-  "options": [
-   "Burning wood",
-   "Rusting iron",
-   "Melting ice",
-   "Baking a cake"
-  ],
-  "answer": 2,
-  "explanation": "Melting changes state but not the substance. The others create new substances."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "How many elements are in the periodic table's first row?",
-  "options": [
-   "Two",
-   "Four",
-   "Eight",
-   "Eighteen"
-  ],
-  "answer": 0,
-  "explanation": "Period 1 holds only hydrogen and helium, because the first electron shell fits just two electrons."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What is the atomic number of an element equal to?",
-  "options": [
-   "Number of neutrons",
-   "Number of protons",
-   "Mass of the atom",
-   "Number of shells"
-  ],
-  "answer": 1,
-  "explanation": "The atomic number is the proton count, and it defines which element an atom is."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "Which chemical is commonly called baking soda?",
-  "options": [
-   "Sodium chloride",
-   "Calcium carbonate",
-   "Sodium bicarbonate",
-   "Potassium nitrate"
-  ],
-  "answer": 2,
-  "explanation": "Sodium bicarbonate releases carbon dioxide when heated or mixed with acid, making cakes rise."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What type of bond involves sharing electrons?",
-  "options": [
-   "Ionic",
-   "Metallic",
-   "Hydrogen",
-   "Covalent"
-  ],
-  "answer": 3,
-  "explanation": "Covalent bonds share electron pairs. Ionic bonds transfer electrons, creating charged ions."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "Which acid is found in the human stomach?",
-  "options": [
-   "Hydrochloric acid",
-   "Sulfuric acid",
-   "Nitric acid",
-   "Acetic acid"
-  ],
-  "answer": 0,
-  "explanation": "Stomach acid is dilute hydrochloric acid, which helps digest food and kill germs."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What does the periodic table's group number tell you about an atom?",
-  "options": [
-   "Its mass",
-   "Its outer electrons",
-   "Its neutrons",
-   "Its density"
-  ],
-  "answer": 1,
-  "explanation": "Elements in a group share the same number of outer-shell electrons, which is why they react alike."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "Which element has the chemical symbol Fe?",
-  "options": [
-   "Fluorine",
-   "Francium",
-   "Iron",
-   "Fermium"
-  ],
-  "answer": 2,
-  "explanation": "Fe comes from the Latin 'ferrum', meaning iron."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What is produced when an acid reacts with a base?",
-  "options": [
-   "Oxygen and heat",
-   "Hydrogen only",
-   "Carbon dioxide only",
-   "Salt and water"
-  ],
-  "answer": 3,
-  "explanation": "Neutralisation produces a salt and water, for example hydrochloric acid plus sodium hydroxide."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "Which gas is responsible for the fizz in carbonated drinks?",
-  "options": [
-   "Carbon dioxide",
-   "Oxygen",
-   "Nitrogen",
-   "Hydrogen"
-  ],
-  "answer": 0,
-  "explanation": "Carbon dioxide is dissolved under pressure and escapes as bubbles when the bottle is opened."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What are isotopes?",
-  "options": [
-   "Atoms with different protons",
-   "Atoms with different numbers of neutrons",
-   "Charged atoms",
-   "Two bonded atoms"
-  ],
-  "answer": 1,
-  "explanation": "Isotopes of an element have the same protons but different neutron counts, so different masses."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "Which element is the most abundant in the Earth's crust?",
-  "options": [
-   "Iron",
-   "Silicon",
-   "Oxygen",
-   "Aluminium"
-  ],
-  "answer": 2,
-  "explanation": "Oxygen makes up nearly half the crust by mass, mostly locked in silicate minerals."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What is the process of a gas turning directly into a solid called?",
-  "options": [
-   "Condensation",
-   "Sublimation",
-   "Evaporation",
-   "Deposition"
-  ],
-  "answer": 3,
-  "explanation": "Deposition skips the liquid stage, as when frost forms from water vapour. Sublimation is the reverse."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "Which family of elements is almost completely unreactive?",
-  "options": [
-   "Noble gases",
-   "Alkali metals",
-   "Halogens",
-   "Transition metals"
-  ],
-  "answer": 0,
-  "explanation": "Noble gases have full outer electron shells, so they rarely form compounds."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What is the main gas in natural gas used for cooking?",
-  "options": [
-   "Propane",
-   "Methane",
-   "Butane",
-   "Ethanol"
-  ],
-  "answer": 1,
-  "explanation": "Natural gas is mostly methane, CH4, the simplest hydrocarbon."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "Which particle determines an element's chemical behaviour most directly?",
-  "options": [
-   "Neutrons",
-   "Nucleus size",
-   "Outer electrons",
-   "Protons in the shell"
-  ],
-  "answer": 2,
-  "explanation": "Bonding is controlled by the outermost, or valence, electrons."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What colour does litmus paper turn in acid?",
-  "options": [
-   "Blue",
-   "Green",
-   "Yellow",
-   "Red"
-  ],
-  "answer": 3,
-  "explanation": "Litmus turns red in acid and blue in alkali — an easy way to tell them apart."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "Which type of reaction releases heat?",
-  "options": [
-   "Exothermic",
-   "Endothermic",
-   "Neutral",
-   "Reversible only"
-  ],
-  "answer": 0,
-  "explanation": "Exothermic reactions give out heat, like burning. Endothermic ones take heat in."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What is the chemical formula of carbon dioxide?",
-  "options": [
-   "CO",
-   "CO2",
-   "C2O",
-   "CaO"
-  ],
-  "answer": 1,
-  "explanation": "One carbon atom bonded to two oxygen atoms: CO2. CO is the poisonous carbon monoxide."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "Which metal is most commonly used in electrical wiring?",
-  "options": [
-   "Iron",
-   "Zinc",
-   "Copper",
-   "Nickel"
-  ],
-  "answer": 2,
-  "explanation": "Copper conducts electricity very well and is relatively cheap and easy to draw into wire."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "medium",
-  "question": "What does a solvent do in a solution?",
-  "options": [
-   "Is dissolved",
-   "Speeds the reaction",
-   "Blocks mixing",
-   "Dissolves the solute"
-  ],
-  "answer": 3,
-  "explanation": "The solvent is the liquid doing the dissolving; the solute is what dissolves in it."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "What is Avogadro's number, to three significant figures?",
-  "options": [
-   "6.02 × 10²³",
-   "3.14 × 10⁸",
-   "9.81 × 10⁶",
-   "1.60 × 10⁻¹⁹"
-  ],
-  "answer": 0,
-  "explanation": "One mole contains about 6.02 × 10²³ particles, the bridge between atoms and grams."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "Which element has the highest electronegativity?",
-  "options": [
-   "Oxygen",
-   "Fluorine",
-   "Chlorine",
-   "Nitrogen"
-  ],
-  "answer": 1,
-  "explanation": "Fluorine pulls bonding electrons more strongly than any other element."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "What is the oxidation state of hydrogen in most of its compounds?",
-  "options": [
-   "−1",
-   "0",
-   "+1",
-   "+2"
-  ],
-  "answer": 2,
-  "explanation": "Hydrogen is usually +1, except in metal hydrides such as NaH where it is −1."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "Which law states that pressure and volume of a gas are inversely proportional at constant temperature?",
-  "options": [
-   "Charles's law",
-   "Avogadro's law",
-   "Dalton's law",
-   "Boyle's law"
-  ],
-  "answer": 3,
-  "explanation": "Boyle's law: P × V stays constant if temperature does. Charles's law links volume and temperature."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "What is the name of the bond between water molecules that gives water its high boiling point?",
-  "options": [
-   "Hydrogen bond",
-   "Ionic bond",
-   "Covalent bond",
-   "Metallic bond"
-  ],
-  "answer": 0,
-  "explanation": "Hydrogen bonding between molecules takes extra energy to break, so water boils far higher than its size suggests."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "Which subatomic particle was discovered by James Chadwick in 1932?",
-  "options": [
-   "Proton",
-   "Neutron",
-   "Electron",
-   "Positron"
-  ],
-  "answer": 1,
-  "explanation": "Chadwick identified the neutron, explaining why atomic masses exceeded proton counts."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "In the reaction 2H2 + O2 → 2H2O, what is O2 called?",
-  "options": [
-   "Product",
-   "Catalyst",
-   "Reactant",
-   "Solvent"
-  ],
-  "answer": 2,
-  "explanation": "Reactants are on the left of the arrow; the product, water, is on the right."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "What does a pH change of one unit represent?",
-  "options": [
-   "A doubling",
-   "A 1% change",
-   "No real change",
-   "A tenfold change in acidity"
-  ],
-  "answer": 3,
-  "explanation": "The pH scale is logarithmic, so pH 4 is ten times more acidic than pH 5."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "Which organic family contains a carbon-carbon double bond?",
-  "options": [
-   "Alkenes",
-   "Alkanes",
-   "Alcohols",
-   "Ethers"
-  ],
-  "answer": 0,
-  "explanation": "Alkenes, such as ethene, contain C=C. Alkanes have only single bonds."
- },
- {
-  "category": "Chemistry",
-  "difficulty": "hard",
-  "question": "What is the term for a reaction where a substance loses electrons?",
-  "options": [
-   "Reduction",
-   "Oxidation",
-   "Hydrolysis",
-   "Precipitation"
-  ],
-  "answer": 1,
-  "explanation": "Oxidation is loss of electrons, reduction is gain — remembered as OIL RIG."
- }
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for water?",
+    "options": [
+      "H2O",
+      "CO2",
+      "O2",
+      "NaCl"
+    ],
+    "answer": 0,
+    "explanation": "Water is two hydrogen atoms bonded to one oxygen atom, written H2O."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for gold?",
+    "options": [
+      "Go",
+      "Au",
+      "Gd",
+      "Ag"
+    ],
+    "answer": 1,
+    "explanation": "Gold's symbol Au comes from the Latin 'aurum'. Ag is silver, from 'argentum'."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which gas makes up most of the air we breathe?",
+    "options": [
+      "Oxygen",
+      "Carbon dioxide",
+      "Nitrogen",
+      "Hydrogen"
+    ],
+    "answer": 2,
+    "explanation": "Air is about 78 per cent nitrogen and 21 per cent oxygen."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the common name for sodium chloride?",
+    "options": [
+      "Sugar",
+      "Baking soda",
+      "Vinegar",
+      "Salt"
+    ],
+    "answer": 3,
+    "explanation": "Sodium chloride is ordinary table salt, made of sodium and chlorine ions."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What do we call a substance that speeds up a reaction without being used up?",
+    "options": [
+      "Catalyst",
+      "Solvent",
+      "Solute",
+      "Reactant"
+    ],
+    "answer": 0,
+    "explanation": "A catalyst lowers the energy needed for a reaction and is unchanged at the end."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which of these is an element?",
+    "options": [
+      "Water",
+      "Oxygen",
+      "Bronze",
+      "Air"
+    ],
+    "answer": 1,
+    "explanation": "An element has only one kind of atom. Water is a compound, and bronze and air are mixtures."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the pH of a neutral solution?",
+    "options": [
+      "0",
+      "7",
+      "10",
+      "14"
+    ],
+    "answer": 1,
+    "explanation": "The pH scale runs 0 to 14, with 7 neutral, below 7 acidic and above 7 alkaline."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which gas do we exhale in large amounts?",
+    "options": [
+      "Oxygen",
+      "Helium",
+      "Carbon dioxide",
+      "Argon"
+    ],
+    "answer": 2,
+    "explanation": "Carbon dioxide is the waste product of respiration, breathed out with each breath."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for oxygen?",
+    "options": [
+      "Ox",
+      "Og",
+      "On",
+      "O"
+    ],
+    "answer": 3,
+    "explanation": "Oxygen's symbol is O. In air it occurs as O2, two oxygen atoms bonded together."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which of these is an acid?",
+    "options": [
+      "Lemon juice",
+      "Soap",
+      "Baking soda",
+      "Bleach"
+    ],
+    "answer": 0,
+    "explanation": "Lemon juice contains citric acid and has a pH around 2. The others are alkaline."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What state is water at −10°C?",
+    "options": [
+      "Liquid",
+      "Solid",
+      "Gas",
+      "Plasma"
+    ],
+    "answer": 1,
+    "explanation": "Below 0°C water freezes into ice, a solid."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is rust mainly made of?",
+    "options": [
+      "Copper sulfate",
+      "Zinc chloride",
+      "Iron oxide",
+      "Carbon"
+    ],
+    "answer": 2,
+    "explanation": "Rust forms when iron reacts with oxygen and water to make hydrated iron oxide."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which metal is liquid at room temperature?",
+    "options": [
+      "Lead",
+      "Aluminium",
+      "Tin",
+      "Mercury"
+    ],
+    "answer": 3,
+    "explanation": "Mercury is the only metal that is liquid at ordinary room temperature."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the centre of an atom called?",
+    "options": [
+      "Nucleus",
+      "Shell",
+      "Orbit",
+      "Core electron"
+    ],
+    "answer": 0,
+    "explanation": "The nucleus holds protons and neutrons, with electrons around it."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which substance is used to make glass?",
+    "options": [
+      "Clay",
+      "Sand",
+      "Limestone only",
+      "Iron ore"
+    ],
+    "answer": 1,
+    "explanation": "Glass is made mainly from silica sand, melted at very high temperature."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What do you call a mixture of two or more metals?",
+    "options": [
+      "Compound",
+      "Solution",
+      "Alloy",
+      "Isotope"
+    ],
+    "answer": 2,
+    "explanation": "An alloy blends metals to improve their properties. Steel and bronze are examples."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What happens to water at 100°C at sea level?",
+    "options": [
+      "It freezes",
+      "It condenses",
+      "Nothing",
+      "It boils"
+    ],
+    "answer": 3,
+    "explanation": "Water boils at 100°C at standard pressure, turning from liquid to steam."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which gas is used to fill party balloons so they float?",
+    "options": [
+      "Helium",
+      "Oxygen",
+      "Nitrogen",
+      "Carbon dioxide"
+    ],
+    "answer": 0,
+    "explanation": "Helium is much less dense than air, so balloons filled with it rise. It is also non-flammable."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for carbon?",
+    "options": [
+      "Ca",
+      "C",
+      "Co",
+      "Cr"
+    ],
+    "answer": 1,
+    "explanation": "Carbon is C. Ca is calcium, Co cobalt and Cr chromium."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which of these is a physical change, not a chemical one?",
+    "options": [
+      "Burning wood",
+      "Rusting iron",
+      "Melting ice",
+      "Baking a cake"
+    ],
+    "answer": 2,
+    "explanation": "Melting changes state but not the substance. The others create new substances."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "How many elements are in the periodic table's first row?",
+    "options": [
+      "Two",
+      "Four",
+      "Eight",
+      "Eighteen"
+    ],
+    "answer": 0,
+    "explanation": "Period 1 holds only hydrogen and helium, because the first electron shell fits just two electrons."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the atomic number of an element equal to?",
+    "options": [
+      "Number of neutrons",
+      "Number of protons",
+      "Mass of the atom",
+      "Number of shells"
+    ],
+    "answer": 1,
+    "explanation": "The atomic number is the proton count, and it defines which element an atom is."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which chemical is commonly called baking soda?",
+    "options": [
+      "Sodium chloride",
+      "Calcium carbonate",
+      "Sodium bicarbonate",
+      "Potassium nitrate"
+    ],
+    "answer": 2,
+    "explanation": "Sodium bicarbonate releases carbon dioxide when heated or mixed with acid, making cakes rise."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What type of bond involves sharing electrons?",
+    "options": [
+      "Ionic",
+      "Metallic",
+      "Hydrogen",
+      "Covalent"
+    ],
+    "answer": 3,
+    "explanation": "Covalent bonds share electron pairs. Ionic bonds transfer electrons, creating charged ions."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which acid is found in the human stomach?",
+    "options": [
+      "Hydrochloric acid",
+      "Sulfuric acid",
+      "Nitric acid",
+      "Acetic acid"
+    ],
+    "answer": 0,
+    "explanation": "Stomach acid is dilute hydrochloric acid, which helps digest food and kill germs."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What does the periodic table's group number tell you about an atom?",
+    "options": [
+      "Its mass",
+      "Its outer electrons",
+      "Its neutrons",
+      "Its density"
+    ],
+    "answer": 1,
+    "explanation": "Elements in a group share the same number of outer-shell electrons, which is why they react alike."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which element has the chemical symbol Fe?",
+    "options": [
+      "Fluorine",
+      "Francium",
+      "Iron",
+      "Fermium"
+    ],
+    "answer": 2,
+    "explanation": "Fe comes from the Latin 'ferrum', meaning iron."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is produced when an acid reacts with a base?",
+    "options": [
+      "Oxygen and heat",
+      "Hydrogen only",
+      "Carbon dioxide only",
+      "Salt and water"
+    ],
+    "answer": 3,
+    "explanation": "Neutralisation produces a salt and water, for example hydrochloric acid plus sodium hydroxide."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which gas is responsible for the fizz in carbonated drinks?",
+    "options": [
+      "Carbon dioxide",
+      "Oxygen",
+      "Nitrogen",
+      "Hydrogen"
+    ],
+    "answer": 0,
+    "explanation": "Carbon dioxide is dissolved under pressure and escapes as bubbles when the bottle is opened."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What are isotopes?",
+    "options": [
+      "Atoms with different protons",
+      "Atoms with different numbers of neutrons",
+      "Charged atoms",
+      "Two bonded atoms"
+    ],
+    "answer": 1,
+    "explanation": "Isotopes of an element have the same protons but different neutron counts, so different masses."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which element is the most abundant in the Earth's crust?",
+    "options": [
+      "Iron",
+      "Silicon",
+      "Oxygen",
+      "Aluminium"
+    ],
+    "answer": 2,
+    "explanation": "Oxygen makes up nearly half the crust by mass, mostly locked in silicate minerals."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the process of a gas turning directly into a solid called?",
+    "options": [
+      "Condensation",
+      "Sublimation",
+      "Evaporation",
+      "Deposition"
+    ],
+    "answer": 3,
+    "explanation": "Deposition skips the liquid stage, as when frost forms from water vapour. Sublimation is the reverse."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which family of elements is almost completely unreactive?",
+    "options": [
+      "Noble gases",
+      "Alkali metals",
+      "Halogens",
+      "Transition metals"
+    ],
+    "answer": 0,
+    "explanation": "Noble gases have full outer electron shells, so they rarely form compounds."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the main gas in natural gas used for cooking?",
+    "options": [
+      "Propane",
+      "Methane",
+      "Butane",
+      "Ethanol"
+    ],
+    "answer": 1,
+    "explanation": "Natural gas is mostly methane, CH4, the simplest hydrocarbon."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which particle determines an element's chemical behaviour most directly?",
+    "options": [
+      "Neutrons",
+      "Nucleus size",
+      "Outer electrons",
+      "Protons in the shell"
+    ],
+    "answer": 2,
+    "explanation": "Bonding is controlled by the outermost, or valence, electrons."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What colour does litmus paper turn in acid?",
+    "options": [
+      "Blue",
+      "Green",
+      "Yellow",
+      "Red"
+    ],
+    "answer": 3,
+    "explanation": "Litmus turns red in acid and blue in alkali — an easy way to tell them apart."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which type of reaction releases heat?",
+    "options": [
+      "Exothermic",
+      "Endothermic",
+      "Neutral",
+      "Reversible only"
+    ],
+    "answer": 0,
+    "explanation": "Exothermic reactions give out heat, like burning. Endothermic ones take heat in."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the chemical formula of carbon dioxide?",
+    "options": [
+      "CO",
+      "CO2",
+      "C2O",
+      "CaO"
+    ],
+    "answer": 1,
+    "explanation": "One carbon atom bonded to two oxygen atoms: CO2. CO is the poisonous carbon monoxide."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which metal is most commonly used in electrical wiring?",
+    "options": [
+      "Iron",
+      "Zinc",
+      "Copper",
+      "Nickel"
+    ],
+    "answer": 2,
+    "explanation": "Copper conducts electricity very well and is relatively cheap and easy to draw into wire."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What does a solvent do in a solution?",
+    "options": [
+      "Is dissolved",
+      "Speeds the reaction",
+      "Blocks mixing",
+      "Dissolves the solute"
+    ],
+    "answer": 3,
+    "explanation": "The solvent is the liquid doing the dissolving; the solute is what dissolves in it."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is Avogadro's number, to three significant figures?",
+    "options": [
+      "6.02 × 10²³",
+      "3.14 × 10⁸",
+      "9.81 × 10⁶",
+      "1.60 × 10⁻¹⁹"
+    ],
+    "answer": 0,
+    "explanation": "One mole contains about 6.02 × 10²³ particles, the bridge between atoms and grams."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which element has the highest electronegativity?",
+    "options": [
+      "Oxygen",
+      "Fluorine",
+      "Chlorine",
+      "Nitrogen"
+    ],
+    "answer": 1,
+    "explanation": "Fluorine pulls bonding electrons more strongly than any other element."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the oxidation state of hydrogen in most of its compounds?",
+    "options": [
+      "−1",
+      "0",
+      "+1",
+      "+2"
+    ],
+    "answer": 2,
+    "explanation": "Hydrogen is usually +1, except in metal hydrides such as NaH where it is −1."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which law states that pressure and volume of a gas are inversely proportional at constant temperature?",
+    "options": [
+      "Charles's law",
+      "Avogadro's law",
+      "Dalton's law",
+      "Boyle's law"
+    ],
+    "answer": 3,
+    "explanation": "Boyle's law: P × V stays constant if temperature does. Charles's law links volume and temperature."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the name of the bond between water molecules that gives water its high boiling point?",
+    "options": [
+      "Hydrogen bond",
+      "Ionic bond",
+      "Covalent bond",
+      "Metallic bond"
+    ],
+    "answer": 0,
+    "explanation": "Hydrogen bonding between molecules takes extra energy to break, so water boils far higher than its size suggests."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which subatomic particle was discovered by James Chadwick in 1932?",
+    "options": [
+      "Proton",
+      "Neutron",
+      "Electron",
+      "Positron"
+    ],
+    "answer": 1,
+    "explanation": "Chadwick identified the neutron, explaining why atomic masses exceeded proton counts."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "In the reaction 2H2 + O2 → 2H2O, what is O2 called?",
+    "options": [
+      "Product",
+      "Catalyst",
+      "Reactant",
+      "Solvent"
+    ],
+    "answer": 2,
+    "explanation": "Reactants are on the left of the arrow; the product, water, is on the right."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What does a pH change of one unit represent?",
+    "options": [
+      "A doubling",
+      "A 1% change",
+      "No real change",
+      "A tenfold change in acidity"
+    ],
+    "answer": 3,
+    "explanation": "The pH scale is logarithmic, so pH 4 is ten times more acidic than pH 5."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which organic family contains a carbon-carbon double bond?",
+    "options": [
+      "Alkenes",
+      "Alkanes",
+      "Alcohols",
+      "Ethers"
+    ],
+    "answer": 0,
+    "explanation": "Alkenes, such as ethene, contain C=C. Alkanes have only single bonds."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the term for a reaction where a substance loses electrons?",
+    "options": [
+      "Reduction",
+      "Oxidation",
+      "Hydrolysis",
+      "Precipitation"
+    ],
+    "answer": 1,
+    "explanation": "Oxidation is loss of electrons, reduction is gain — remembered as OIL RIG."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is table salt chemically?",
+    "options": [
+      "Calcium carbonate",
+      "Potassium nitrate",
+      "Sodium chloride",
+      "Magnesium oxide"
+    ],
+    "answer": 2,
+    "explanation": "Table salt is sodium chloride, NaCl."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which gas makes drinks fizzy?",
+    "options": [
+      "Oxygen",
+      "Nitrogen",
+      "Helium",
+      "Carbon dioxide"
+    ],
+    "answer": 3,
+    "explanation": "Dissolved carbon dioxide creates the fizz."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for iron?",
+    "options": [
+      "Fe",
+      "Ir",
+      "In",
+      "Io"
+    ],
+    "answer": 0,
+    "explanation": "Fe comes from the Latin 'ferrum'."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "How many states of matter are commonly taught?",
+    "options": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "answer": 1,
+    "explanation": "Solid, liquid and gas are the three everyday states."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which particle has a negative charge?",
+    "options": [
+      "Electron",
+      "Proton",
+      "Neutron",
+      "Nucleus"
+    ],
+    "answer": 0,
+    "explanation": "Electrons carry a negative charge."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What do we call a substance that speeds up a reaction?",
+    "options": [
+      "Solvent",
+      "Catalyst",
+      "Reactant",
+      "Product"
+    ],
+    "answer": 1,
+    "explanation": "A catalyst speeds a reaction without being consumed."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which gas do we exhale most of as waste?",
+    "options": [
+      "Oxygen",
+      "Carbon dioxide",
+      "Hydrogen",
+      "Neon"
+    ],
+    "answer": 1,
+    "explanation": "Respiration produces carbon dioxide."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for sodium?",
+    "options": [
+      "So",
+      "Sd",
+      "Sn",
+      "Na"
+    ],
+    "answer": 3,
+    "explanation": "Na comes from the Latin 'natrium'."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Is vinegar an acid or a base?",
+    "options": [
+      "Base",
+      "Acid",
+      "Neutral",
+      "Salt"
+    ],
+    "answer": 1,
+    "explanation": "Vinegar contains acetic acid."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the lightest element?",
+    "options": [
+      "Hydrogen",
+      "Helium",
+      "Lithium",
+      "Carbon"
+    ],
+    "answer": 0,
+    "explanation": "Hydrogen has one proton and is the lightest element."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which of these is a noble gas?",
+    "options": [
+      "Oxygen",
+      "Nitrogen",
+      "Helium",
+      "Chlorine"
+    ],
+    "answer": 2,
+    "explanation": "Helium is a noble gas and barely reacts."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is rust made of?",
+    "options": [
+      "Copper sulfate",
+      "Iron oxide",
+      "Zinc chloride",
+      "Lead nitrate"
+    ],
+    "answer": 1,
+    "explanation": "Rust is hydrated iron oxide, formed with oxygen and water."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which instrument measures acidity?",
+    "options": [
+      "Thermometer",
+      "Barometer",
+      "Voltmeter",
+      "pH meter"
+    ],
+    "answer": 3,
+    "explanation": "A pH meter measures how acidic or alkaline something is."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for helium?",
+    "options": [
+      "H",
+      "Hl",
+      "He",
+      "Hm"
+    ],
+    "answer": 2,
+    "explanation": "Helium is He."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is a mixture of metals called?",
+    "options": [
+      "Alloy",
+      "Compound",
+      "Solution",
+      "Element"
+    ],
+    "answer": 0,
+    "explanation": "An alloy is a mixture of metals, like brass or steel."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which process turns liquid into gas?",
+    "options": [
+      "Condensation",
+      "Evaporation",
+      "Freezing",
+      "Melting"
+    ],
+    "answer": 1,
+    "explanation": "Evaporation turns a liquid into a vapour."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the pH of pure water?",
+    "options": [
+      "0",
+      "7",
+      "10",
+      "14"
+    ],
+    "answer": 1,
+    "explanation": "Pure water is neutral, with a pH of 7."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which metal is used in most electrical wiring?",
+    "options": [
+      "Iron",
+      "Lead",
+      "Tin",
+      "Copper"
+    ],
+    "answer": 3,
+    "explanation": "Copper conducts electricity well and is easy to draw into wire."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for nitrogen?",
+    "options": [
+      "N",
+      "Ni",
+      "Nt",
+      "Na"
+    ],
+    "answer": 0,
+    "explanation": "Nitrogen is N."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What does an acid turn blue litmus paper?",
+    "options": [
+      "Green",
+      "Red",
+      "Blue",
+      "Yellow"
+    ],
+    "answer": 1,
+    "explanation": "Acids turn blue litmus red."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which element do diamonds consist of?",
+    "options": [
+      "Silicon",
+      "Quartz",
+      "Carbon",
+      "Boron"
+    ],
+    "answer": 2,
+    "explanation": "Diamond is pure carbon in a crystal lattice."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for calcium?",
+    "options": [
+      "C",
+      "Cl",
+      "Cm",
+      "Ca"
+    ],
+    "answer": 3,
+    "explanation": "Calcium is Ca."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which gas is most common in Earth's air?",
+    "options": [
+      "Oxygen",
+      "Argon",
+      "Carbon dioxide",
+      "Nitrogen"
+    ],
+    "answer": 3,
+    "explanation": "Nitrogen makes up about 78% of the atmosphere."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is dry ice?",
+    "options": [
+      "Solid carbon dioxide",
+      "Frozen water",
+      "Frozen nitrogen",
+      "Salt ice"
+    ],
+    "answer": 0,
+    "explanation": "Dry ice is solid CO₂, which sublimes straight to gas."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the smallest unit of an element?",
+    "options": [
+      "Molecule",
+      "Cell",
+      "Ion",
+      "Atom"
+    ],
+    "answer": 3,
+    "explanation": "An atom is the smallest unit retaining an element's properties."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which household item is a base?",
+    "options": [
+      "Baking soda",
+      "Lemon juice",
+      "Vinegar",
+      "Cola"
+    ],
+    "answer": 0,
+    "explanation": "Baking soda, sodium bicarbonate, is alkaline."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for potassium?",
+    "options": [
+      "P",
+      "Po",
+      "K",
+      "Pt"
+    ],
+    "answer": 2,
+    "explanation": "K comes from the Latin 'kalium'."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which state of matter has a fixed shape and volume?",
+    "options": [
+      "Liquid",
+      "Gas",
+      "Plasma",
+      "Solid"
+    ],
+    "answer": 3,
+    "explanation": "Solids hold both shape and volume."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What do you call a liquid that dissolves another substance?",
+    "options": [
+      "Solute",
+      "Solution",
+      "Solvent",
+      "Suspension"
+    ],
+    "answer": 2,
+    "explanation": "The solvent does the dissolving; the solute dissolves."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for silver?",
+    "options": [
+      "Si",
+      "Sv",
+      "Ag",
+      "Au"
+    ],
+    "answer": 2,
+    "explanation": "Ag comes from the Latin 'argentum'."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which gas is used in balloons to make them float?",
+    "options": [
+      "Oxygen",
+      "Argon",
+      "Neon",
+      "Helium"
+    ],
+    "answer": 3,
+    "explanation": "Helium is lighter than air and non-flammable."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is formed when an acid reacts with a base?",
+    "options": [
+      "A gas only",
+      "A salt and water",
+      "An alloy",
+      "A metal"
+    ],
+    "answer": 1,
+    "explanation": "Neutralisation produces a salt and water."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "Which element is essential in fertilisers for plant growth?",
+    "options": [
+      "Nitrogen",
+      "Gold",
+      "Lead",
+      "Argon"
+    ],
+    "answer": 0,
+    "explanation": "Nitrogen is a key plant nutrient."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "easy",
+    "question": "What is the chemical symbol for hydrogen?",
+    "options": [
+      "Hy",
+      "Hd",
+      "Hg",
+      "H"
+    ],
+    "answer": 3,
+    "explanation": "Hydrogen is H; Hg is mercury."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the atomic number of carbon?",
+    "options": [
+      "4",
+      "6",
+      "8",
+      "12"
+    ],
+    "answer": 1,
+    "explanation": "Carbon has six protons."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which subatomic particle determines the element?",
+    "options": [
+      "Electron",
+      "Neutron",
+      "Positron",
+      "Proton"
+    ],
+    "answer": 3,
+    "explanation": "The number of protons defines the element."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is Avogadro's number approximately?",
+    "options": [
+      "3.14 × 10^8",
+      "9.81 × 10^5",
+      "6.02 × 10^23",
+      "1.6 × 10^-19"
+    ],
+    "answer": 2,
+    "explanation": "One mole contains about 6.02 × 10²³ particles."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which type of bond involves sharing electrons?",
+    "options": [
+      "Ionic",
+      "Covalent",
+      "Metallic",
+      "Hydrogen"
+    ],
+    "answer": 1,
+    "explanation": "Covalent bonds share electron pairs between atoms."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the chemical formula for methane?",
+    "options": [
+      "CH2",
+      "C2H6",
+      "CO2",
+      "CH4"
+    ],
+    "answer": 3,
+    "explanation": "Methane is one carbon and four hydrogens."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which acid is found in the stomach?",
+    "options": [
+      "Sulfuric acid",
+      "Nitric acid",
+      "Hydrochloric acid",
+      "Citric acid"
+    ],
+    "answer": 2,
+    "explanation": "Stomach acid is dilute hydrochloric acid."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is an isotope?",
+    "options": [
+      "Same electrons, different protons",
+      "Same protons, different neutrons",
+      "A charged atom",
+      "A molecule"
+    ],
+    "answer": 1,
+    "explanation": "Isotopes share proton count but differ in neutrons."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which element has the symbol Pb?",
+    "options": [
+      "Lead",
+      "Phosphorus",
+      "Platinum",
+      "Potassium"
+    ],
+    "answer": 0,
+    "explanation": "Pb is lead, from the Latin 'plumbum'."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is an exothermic reaction?",
+    "options": [
+      "Releases heat",
+      "Absorbs heat",
+      "Produces light only",
+      "Needs a catalyst"
+    ],
+    "answer": 0,
+    "explanation": "Exothermic reactions give out energy as heat."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Who created the modern periodic table?",
+    "options": [
+      "Dalton",
+      "Bohr",
+      "Rutherford",
+      "Mendeleev"
+    ],
+    "answer": 3,
+    "explanation": "Dmitri Mendeleev arranged elements by atomic mass and properties in 1869."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the charge on a proton?",
+    "options": [
+      "Negative",
+      "Neutral",
+      "Variable",
+      "Positive"
+    ],
+    "answer": 3,
+    "explanation": "Protons carry a single positive charge."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which gas is produced when metals react with acids?",
+    "options": [
+      "Hydrogen",
+      "Oxygen",
+      "Chlorine",
+      "Nitrogen"
+    ],
+    "answer": 0,
+    "explanation": "Metal plus acid gives a salt and hydrogen gas."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the formula for sulfuric acid?",
+    "options": [
+      "HCl",
+      "HNO3",
+      "H3PO4",
+      "H2SO4"
+    ],
+    "answer": 3,
+    "explanation": "Sulfuric acid is H₂SO₄."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which group of the periodic table contains the halogens?",
+    "options": [
+      "Group 1",
+      "Group 18",
+      "Group 17",
+      "Group 2"
+    ],
+    "answer": 2,
+    "explanation": "Group 17 holds fluorine, chlorine, bromine and iodine."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the process of a solid turning directly into gas?",
+    "options": [
+      "Evaporation",
+      "Condensation",
+      "Sublimation",
+      "Deposition"
+    ],
+    "answer": 2,
+    "explanation": "Sublimation skips the liquid phase, as dry ice does."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which element is the most electronegative?",
+    "options": [
+      "Fluorine",
+      "Oxygen",
+      "Chlorine",
+      "Nitrogen"
+    ],
+    "answer": 0,
+    "explanation": "Fluorine has the highest electronegativity of all elements."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the formula for ammonia?",
+    "options": [
+      "NH2",
+      "NH3",
+      "N2H4",
+      "NO2"
+    ],
+    "answer": 1,
+    "explanation": "Ammonia is one nitrogen and three hydrogens."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which bond type holds sodium chloride together?",
+    "options": [
+      "Covalent",
+      "Metallic",
+      "Ionic",
+      "Hydrogen"
+    ],
+    "answer": 2,
+    "explanation": "Sodium donates an electron to chlorine, forming an ionic bond."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the pH range of acids?",
+    "options": [
+      "Exactly 7",
+      "Above 7",
+      "Below 7",
+      "Above 14"
+    ],
+    "answer": 2,
+    "explanation": "Acids have a pH below 7."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which alloy is made of copper and tin?",
+    "options": [
+      "Brass",
+      "Steel",
+      "Bronze",
+      "Pewter"
+    ],
+    "answer": 2,
+    "explanation": "Bronze is copper and tin; brass is copper and zinc."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the main component of natural gas?",
+    "options": [
+      "Propane",
+      "Butane",
+      "Ethane",
+      "Methane"
+    ],
+    "answer": 3,
+    "explanation": "Natural gas is mostly methane."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "How many electrons fill the first shell of an atom?",
+    "options": [
+      "2",
+      "6",
+      "8",
+      "18"
+    ],
+    "answer": 0,
+    "explanation": "The innermost shell holds a maximum of two electrons."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is oxidation?",
+    "options": [
+      "Gain of electrons",
+      "Loss of electrons",
+      "Gain of protons",
+      "Loss of neutrons"
+    ],
+    "answer": 1,
+    "explanation": "Oxidation is loss of electrons; reduction is gain."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which element is liquid at room temperature besides mercury?",
+    "options": [
+      "Gallium",
+      "Sodium",
+      "Bromine",
+      "Iodine"
+    ],
+    "answer": 2,
+    "explanation": "Bromine is the only other element liquid at room temperature."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the formula for glucose?",
+    "options": [
+      "C6H12O6",
+      "C12H22O11",
+      "C2H5OH",
+      "CH3COOH"
+    ],
+    "answer": 0,
+    "explanation": "Glucose is C₆H₁₂O₆."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which particle has roughly the same mass as a proton?",
+    "options": [
+      "Neutron",
+      "Electron",
+      "Photon",
+      "Positron"
+    ],
+    "answer": 0,
+    "explanation": "Neutrons and protons have nearly identical masses."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What does a catalyst do to activation energy?",
+    "options": [
+      "Raises it",
+      "Removes it",
+      "Doubles it",
+      "Lowers it"
+    ],
+    "answer": 3,
+    "explanation": "Catalysts provide a lower-energy pathway."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which acid is in citrus fruit?",
+    "options": [
+      "Lactic acid",
+      "Acetic acid",
+      "Formic acid",
+      "Citric acid"
+    ],
+    "answer": 3,
+    "explanation": "Citric acid gives lemons and oranges their sharpness."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the chemical symbol for tin?",
+    "options": [
+      "Ti",
+      "Sn",
+      "Tn",
+      "St"
+    ],
+    "answer": 1,
+    "explanation": "Sn comes from the Latin 'stannum'."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which group contains the alkali metals?",
+    "options": [
+      "Group 2",
+      "Group 17",
+      "Group 1",
+      "Group 18"
+    ],
+    "answer": 2,
+    "explanation": "Group 1 holds lithium, sodium, potassium and the rest."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the formula for carbon dioxide?",
+    "options": [
+      "CO2",
+      "CO",
+      "C2O",
+      "CO3"
+    ],
+    "answer": 0,
+    "explanation": "One carbon bonded to two oxygens."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which process separates liquids by boiling point?",
+    "options": [
+      "Filtration",
+      "Distillation",
+      "Chromatography",
+      "Centrifuging"
+    ],
+    "answer": 1,
+    "explanation": "Distillation exploits differing boiling points."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the mass number of an atom?",
+    "options": [
+      "Protons only",
+      "Protons plus neutrons",
+      "Electrons plus protons",
+      "Neutrons only"
+    ],
+    "answer": 1,
+    "explanation": "Mass number counts protons and neutrons together."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which gas is responsible for the greenhouse effect most by volume from human activity?",
+    "options": [
+      "Methane",
+      "Ozone",
+      "Carbon dioxide",
+      "Nitrous oxide"
+    ],
+    "answer": 2,
+    "explanation": "CO₂ is emitted in the greatest quantity."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is a polymer?",
+    "options": [
+      "A single atom",
+      "A long chain of repeating units",
+      "A type of acid",
+      "A noble gas"
+    ],
+    "answer": 1,
+    "explanation": "Polymers are built from many repeating monomers."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which element is used in pencil 'lead'?",
+    "options": [
+      "Lead",
+      "Graphite",
+      "Charcoal",
+      "Silicon"
+    ],
+    "answer": 1,
+    "explanation": "Pencils contain graphite, a form of carbon."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the chemical name for baking soda?",
+    "options": [
+      "Sodium carbonate",
+      "Sodium bicarbonate",
+      "Sodium chloride",
+      "Sodium hydroxide"
+    ],
+    "answer": 1,
+    "explanation": "Baking soda is sodium bicarbonate, NaHCO₃."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which type of reaction combines two substances into one?",
+    "options": [
+      "Decomposition",
+      "Synthesis",
+      "Displacement",
+      "Combustion"
+    ],
+    "answer": 1,
+    "explanation": "Synthesis, or combination, joins reactants into a single product."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "What is the valency of oxygen?",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "answer": 1,
+    "explanation": "Oxygen typically forms two bonds."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "medium",
+    "question": "Which state of matter is plasma closest to?",
+    "options": [
+      "Solid",
+      "Liquid",
+      "Crystal",
+      "Ionised gas"
+    ],
+    "answer": 3,
+    "explanation": "Plasma is a gas whose atoms have been ionised."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the electron configuration of neon?",
+    "options": [
+      "1s² 2s² 2p⁴",
+      "1s² 2s¹",
+      "1s² 2p⁶",
+      "1s² 2s² 2p⁶"
+    ],
+    "answer": 3,
+    "explanation": "Neon has ten electrons filling 1s, 2s and 2p."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What does Le Chatelier's principle describe?",
+    "options": [
+      "Reaction rates",
+      "Gas volumes",
+      "Acid strength",
+      "Response of equilibrium to change"
+    ],
+    "answer": 3,
+    "explanation": "A system at equilibrium shifts to counteract an imposed change."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which law relates pressure and volume at constant temperature?",
+    "options": [
+      "Boyle's law",
+      "Charles's law",
+      "Avogadro's law",
+      "Dalton's law"
+    ],
+    "answer": 0,
+    "explanation": "Boyle's law states that pressure and volume are inversely proportional."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the conjugate base of water?",
+    "options": [
+      "H3O+",
+      "H2O2",
+      "O2−",
+      "OH−"
+    ],
+    "answer": 3,
+    "explanation": "Removing a proton from water leaves the hydroxide ion."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which quantum number describes electron spin?",
+    "options": [
+      "n",
+      "l",
+      "m_s",
+      "m_l"
+    ],
+    "answer": 2,
+    "explanation": "The spin quantum number m_s is ±½."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the molar mass of water, approximately?",
+    "options": [
+      "16 g/mol",
+      "20 g/mol",
+      "18 g/mol",
+      "22 g/mol"
+    ],
+    "answer": 2,
+    "explanation": "Two hydrogens (2) plus oxygen (16) gives 18 g/mol."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which type of isomerism involves mirror images?",
+    "options": [
+      "Optical",
+      "Structural",
+      "Geometric",
+      "Chain"
+    ],
+    "answer": 0,
+    "explanation": "Optical isomers are non-superimposable mirror images."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the oxidation state of sulfur in H₂SO₄?",
+    "options": [
+      "+2",
+      "+4",
+      "−2",
+      "+6"
+    ],
+    "answer": 3,
+    "explanation": "With hydrogen at +1 and oxygen at −2, sulfur must be +6."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which principle states no two electrons share all four quantum numbers?",
+    "options": [
+      "Hund's rule",
+      "Pauli exclusion principle",
+      "Aufbau principle",
+      "Heisenberg principle"
+    ],
+    "answer": 1,
+    "explanation": "The Pauli exclusion principle forbids identical quantum states."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the pH of a 0.01 M HCl solution?",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "12"
+    ],
+    "answer": 1,
+    "explanation": "pH = −log(0.01) = 2."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which compound class contains a carboxyl group?",
+    "options": [
+      "Carboxylic acids",
+      "Alcohols",
+      "Ketones",
+      "Ethers"
+    ],
+    "answer": 0,
+    "explanation": "Carboxylic acids carry the −COOH group."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the name for a reaction where a compound splits apart?",
+    "options": [
+      "Synthesis",
+      "Substitution",
+      "Decomposition",
+      "Addition"
+    ],
+    "answer": 2,
+    "explanation": "Decomposition breaks one compound into simpler products."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which catalyst is used in the Haber process?",
+    "options": [
+      "Iron",
+      "Platinum",
+      "Nickel",
+      "Vanadium oxide"
+    ],
+    "answer": 0,
+    "explanation": "The Haber process uses an iron catalyst to make ammonia."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What does entropy measure?",
+    "options": [
+      "Energy content",
+      "Disorder",
+      "Temperature",
+      "Pressure"
+    ],
+    "answer": 1,
+    "explanation": "Entropy is a measure of disorder or the number of microstates."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which element was named after a Swedish village?",
+    "options": [
+      "Ytterbium",
+      "Polonium",
+      "Curium",
+      "Einsteinium"
+    ],
+    "answer": 0,
+    "explanation": "Ytterbium, along with yttrium, terbium and erbium, is named after Ytterby."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the hybridisation of carbon in methane?",
+    "options": [
+      "sp",
+      "sp²",
+      "sp³d",
+      "sp³"
+    ],
+    "answer": 3,
+    "explanation": "Methane's four equivalent bonds arise from sp³ hybridisation."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which spectroscopy identifies functional groups by bond vibration?",
+    "options": [
+      "Infrared",
+      "NMR",
+      "Mass spectrometry",
+      "UV-visible"
+    ],
+    "answer": 0,
+    "explanation": "Infrared spectroscopy detects characteristic bond vibrations."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is the common name for ethanoic acid?",
+    "options": [
+      "Formic acid",
+      "Lactic acid",
+      "Acetic acid",
+      "Citric acid"
+    ],
+    "answer": 2,
+    "explanation": "Ethanoic acid is better known as acetic acid, the acid in vinegar."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "Which law states that total pressure is the sum of partial pressures?",
+    "options": [
+      "Boyle's law",
+      "Graham's law",
+      "Henry's law",
+      "Dalton's law"
+    ],
+    "answer": 3,
+    "explanation": "Dalton's law of partial pressures."
+  },
+  {
+    "category": "Chemistry",
+    "difficulty": "hard",
+    "question": "What is a buffer solution?",
+    "options": [
+      "A strong acid",
+      "A solution resisting pH change",
+      "A pure solvent",
+      "A saturated solution"
+    ],
+    "answer": 1,
+    "explanation": "Buffers resist pH change when small amounts of acid or base are added."
+  }
 ]
