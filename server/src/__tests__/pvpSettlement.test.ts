@@ -100,8 +100,9 @@ describe('settleMatch', () => {
     });
 
     expect(result.settled).toBe(true);
-    expect(await getBalance(userA.toString())).toBe(600); // 400 + 200 pot
-    expect(await getBalance(userB.toString())).toBe(400);
+    // 400 + 200 pot + 20 win reward; the loser keeps 400 and gets 5 for playing.
+    expect(await getBalance(userA.toString())).toBe(620);
+    expect(await getBalance(userB.toString())).toBe(405);
   });
 
   it('pays out on a FORFEIT — the stakes are not destroyed', async () => {
@@ -118,6 +119,8 @@ describe('settleMatch', () => {
       reason: 'forfeit',
     });
 
+    // The pot moves, but no match reward: a forfeit is not a contest, and
+    // paying one would make "opponent quits" a faucet for a pair of accounts.
     expect(await getBalance(userA.toString())).toBe(600);
     expect(await getBalance(userB.toString())).toBe(400);
     // Nothing vanished: 600 + 400 === the 1000 they started with.
@@ -134,8 +137,9 @@ describe('settleMatch', () => {
     const { io } = fakeIo();
     await settleMatch(io, match._id.toString(), { kind: 'draw' });
 
-    expect(await getBalance(userA.toString())).toBe(500);
-    expect(await getBalance(userB.toString())).toBe(500);
+    // Stakes back, plus 10 each for the draw.
+    expect(await getBalance(userA.toString())).toBe(510);
+    expect(await getBalance(userB.toString())).toBe(510);
   });
 
   it('refunds both stakes when a match is cancelled unplayed', async () => {
@@ -170,8 +174,46 @@ describe('settleMatch', () => {
     ]);
 
     expect(results.filter((r) => r.settled)).toHaveLength(1);
-    // Pot paid once, not twice.
-    expect(await getBalance(userA.toString())).toBe(600);
+    // Pot and reward each paid once, not twice.
+    expect(await getBalance(userA.toString())).toBe(620);
+  });
+
+  it('pays a reward for a friendly match with no wager', async () => {
+    // The report: finished a 1v1 against a friend and nothing was credited.
+    await seedWallets(0);
+    const match = await createMatch({ wager: 0, aCorrect: 7, bCorrect: 4 });
+
+    const { io } = fakeIo();
+    await settleMatch(io, match._id.toString(), {
+      kind: 'winner',
+      winnerUserId: userA.toString(),
+      reason: 'normal',
+    });
+
+    expect(await getBalance(userA.toString())).toBe(20);
+    expect(await getBalance(userB.toString())).toBe(5);
+  });
+
+  it('pays both players on a friendly draw', async () => {
+    await seedWallets(0);
+    const match = await createMatch({ wager: 0, aCorrect: 5, bCorrect: 5 });
+
+    const { io } = fakeIo();
+    await settleMatch(io, match._id.toString(), { kind: 'draw' });
+
+    expect(await getBalance(userA.toString())).toBe(10);
+    expect(await getBalance(userB.toString())).toBe(10);
+  });
+
+  it('pays nothing when a match is cancelled unplayed', async () => {
+    await seedWallets(0);
+    const match = await createMatch({ wager: 0, aCorrect: 0, bCorrect: 0 });
+
+    const { io } = fakeIo();
+    await settleMatch(io, match._id.toString(), { kind: 'cancelled', reason: 'opponent_left' });
+
+    expect(await getBalance(userA.toString())).toBe(0);
+    expect(await getBalance(userB.toString())).toBe(0);
   });
 
   it('awards leaderboard points and writes one session row per player', async () => {

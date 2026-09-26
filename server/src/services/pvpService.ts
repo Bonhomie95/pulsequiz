@@ -20,7 +20,7 @@ import Progress from '../models/Progress';
 import QuizSession from '../models/QuizSession';
 import User from '../models/User';
 import { SOCKET_EVENTS } from '../socket/events';
-import { awardWagerToWinner, refundWager } from './coinService';
+import { awardWagerToWinner, creditCoins, refundWager } from './coinService';
 import { isDailyCapExceeded } from './antiCheatService';
 import { addLeagueXp } from './leagueService';
 import { applyMatchRating } from './ratingService';
@@ -171,6 +171,44 @@ export async function settleMatch(
         } else {
           // Winner takes the whole pot (both stakes).
           await awardWagerToWinner(outcome.winnerUserId, wager, matchId);
+        }
+      }
+
+      // ── Match reward ──────────────────────────────────────────────────────
+      // Separate from the wager: a friendly 1v1 stakes nothing, and finishing
+      // one used to pay nothing at all, so a match you had just won changed
+      // no number on the screen.
+      //
+      // Only for genuine head-to-heads, the same guard the rating uses. A
+      // forfeit is not a contest, and paying out on one would make
+      // "opponent quits" a coin faucet for a pair of accounts.
+      if (a && b && (outcome.kind === 'draw' || outcome.reason === 'normal')) {
+        const [winCoins, lossCoins, drawCoins] = await Promise.all([
+          getSetting(SETTINGS_KEYS.PVP_WIN_COINS, 20),
+          getSetting(SETTINGS_KEYS.PVP_LOSS_COINS, 5),
+          getSetting(SETTINGS_KEYS.PVP_DRAW_COINS, 10),
+        ]);
+
+        const payouts: { userId: string; coins: number }[] =
+          outcome.kind === 'draw'
+            ? [
+                { userId: a.userId.toString(), coins: Number(drawCoins) },
+                { userId: b.userId.toString(), coins: Number(drawCoins) },
+              ]
+            : [a, b].map((p) => ({
+                userId: p.userId.toString(),
+                coins:
+                  p.userId.toString() === outcome.winnerUserId
+                    ? Number(winCoins)
+                    : Number(lossCoins),
+              }));
+
+        for (const payout of payouts) {
+          if (payout.coins > 0) {
+            await creditCoins(payout.userId, payout.coins, 'pvp_match_reward', {
+              matchId,
+            });
+          }
         }
       }
 

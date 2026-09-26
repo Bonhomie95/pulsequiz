@@ -227,7 +227,10 @@ export async function seedSyntheticLadder(
       // player has better and worse weeks — while staying recognisably the
       // same person.
       const jitter = 0.88 + Math.random() * 0.24;
-      const points = Math.max(1, Math.round(strength * jitter * ceiling * period.scale));
+      // The ceiling is a hard cap, not a target: it is what keeps these
+      // scores reachable. Jitter must not lift an account over it.
+      const cap = Math.round(ceiling * period.scale);
+      const points = Math.min(cap, Math.max(1, Math.round(strength * jitter * ceiling * period.scale)));
 
       return {
         updateOne: {

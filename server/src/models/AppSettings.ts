@@ -31,6 +31,9 @@ export const SETTINGS_KEYS = {
   MIN_SESSIONS_FOR_PAYOUT: 'min_sessions_for_payout',   // min total sessions
   PRIZES_ENABLED: 'prizes_enabled',                     // real-money prizes on/off
   PRIZE_COUNTRIES: 'prize_countries',                   // ISO codes, blank = all
+  PVP_WIN_COINS: 'pvp_win_coins',                       // coins for winning a 1v1
+  PVP_LOSS_COINS: 'pvp_loss_coins',                     // coins for playing and losing
+  PVP_DRAW_COINS: 'pvp_draw_coins',                     // coins each on a draw
   DAILY_QUIZ_COINS: 'daily_quiz_coins',                 // coins for finishing the daily
   DAILY_QUIZ_PERFECT_COINS: 'daily_quiz_perfect_coins', // coins for a clean sweep
   // House accounts that pad the boards. See services/syntheticPlayers.ts.
@@ -83,6 +86,9 @@ export function clearSettingsCache() {
 
 export async function initDefaultSettings() {
   const defaults: Record<string, number | string | boolean> = {
+    [SETTINGS_KEYS.PVP_WIN_COINS]: 20,
+    [SETTINGS_KEYS.PVP_LOSS_COINS]: 5,
+    [SETTINGS_KEYS.PVP_DRAW_COINS]: 10,
     [SETTINGS_KEYS.DAILY_QUIZ_COINS]: 10,
     [SETTINGS_KEYS.DAILY_QUIZ_PERFECT_COINS]: 50,
     [SETTINGS_KEYS.SYNTHETIC_ENABLED]: true,
