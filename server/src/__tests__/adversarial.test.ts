@@ -155,8 +155,13 @@ describe('wagered matches conserve coins under every ending', () => {
     });
 
     const after = (await getBalance(a._id.toString())) + (await getBalance(b._id.toString()));
-    // Both stakes are already out of the wallets; settling returns exactly 2x.
-    expect(after).toBe(before + 600);
+
+    // Both stakes are already out of the wallets, so settling returns exactly
+    // 2x. A genuine head-to-head also mints the match reward (20 + 5) on top —
+    // that is new money by design, and paid only when the match was really
+    // contested, never on a forfeit.
+    const reward = reason === 'normal' ? 25 : 0;
+    expect(after).toBe(before + 600 + reward);
   });
 
   it('cannot be settled twice by racing terminal paths', async () => {
@@ -169,7 +174,9 @@ describe('wagered matches conserve coins under every ending', () => {
     ]);
 
     const total = (await getBalance(a._id.toString())) + (await getBalance(b._id.toString()));
-    expect(total).toBe(2000); // the two 1000-coin wallets, unchanged in total
+    // The two 1000-coin wallets, unchanged in total, plus exactly one match
+    // reward — whichever settlement won the race ran once and only once.
+    expect(total).toBe(2000 + 25);
   });
 
   it('a player cannot stake coins they do not have', async () => {
