@@ -68,8 +68,16 @@ export async function requireAuth(
 
     // Throttle the lastSeenAt write: only bump it once per window, and do it
     // fire-and-forget so it never adds latency to the request path.
+    //
+    // The exception is an account that has never been seen. There the write is
+    // awaited, because the very first thing a new player's app does is load
+    // the home screen — and a fire-and-forget write loses that race, so they
+    // were missing from the "ready to play" carousel they had just joined.
+    // One awaited write per account is a cost worth paying.
     const last = user.lastSeenAt ? new Date(user.lastSeenAt).getTime() : 0;
-    if (Date.now() - last > LAST_SEEN_THROTTLE_MS) {
+    if (!user.lastSeenAt) {
+      await User.updateOne({ _id: userId }, { $set: { lastSeenAt: new Date() } }).catch(() => {});
+    } else if (Date.now() - last > LAST_SEEN_THROTTLE_MS) {
       User.updateOne({ _id: userId }, { $set: { lastSeenAt: new Date() } })
         .exec()
         .catch(() => {});

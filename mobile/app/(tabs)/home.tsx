@@ -49,7 +49,17 @@ const todayKey = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-type ReadyPlayer = { _id: string; username: string; avatar?: string | null };
+type ReadyPlayer = {
+  _id: string;
+  username: string;
+  avatar?: string | null;
+  /**
+   * `in_game` is mid-quiz and cannot take a challenge; `online` has the app
+   * open; `away` was here recently. Nothing reports a logout, so `away` covers
+   * a closed app, a dead battery and a dropped network alike.
+   */
+  status?: 'in_game' | 'online' | 'away';
+};
 
 function ReadyCarousel({
   players,
@@ -84,7 +94,7 @@ function ReadyCarousel({
           Ready to Play
         </Text>
         <Text style={[styles.carouselCount, { color: theme.colors.muted }]}>
-          {players.length} online
+          {players.filter((p) => p.status !== 'away').length} online
         </Text>
       </View>
       <FlatList
@@ -99,7 +109,11 @@ function ReadyCarousel({
             <TouchableOpacity
               onPress={() => onPress(item)}
               accessibilityRole="button"
-              accessibilityLabel={`Challenge ${item.username} to a match`}
+              accessibilityLabel={
+                item.status === 'in_game'
+                  ? `${item.username} is currently in a game`
+                  : `Challenge ${item.username} to a match`
+              }
               style={[
                 styles.carouselCard,
                 { backgroundColor: theme.colors.surface },
@@ -123,10 +137,20 @@ function ReadyCarousel({
               <View
                 style={[
                   styles.challengeChip,
-                  { backgroundColor: theme.colors.primary },
+                  {
+                    backgroundColor:
+                      item.status === 'in_game' ? theme.colors.border : theme.colors.primary,
+                  },
                 ]}
               >
-                <Text style={styles.challengeChipText}>⚔️ Play</Text>
+                <Text
+                  style={[
+                    styles.challengeChipText,
+                    item.status === 'in_game' ? { color: theme.colors.muted } : null,
+                  ]}
+                >
+                  {item.status === 'in_game' ? '🎮 In a game' : '⚔️ Play'}
+                </Text>
               </View>
             </TouchableOpacity>
           );
@@ -285,6 +309,46 @@ export default function HomeScreen() {
       enterImmersiveMode();
     }, []),
   );
+
+  /**
+   * Keep the "ready to play" row honest while the player sits on this screen.
+   *
+   * Everything else here changes because of something *this* player did, so
+   * reloading on focus is enough. Presence does not: someone else starts a
+   * quiz, closes the app or drops off the network, and nothing tells us. So
+   * this re-reads just that list — it is a small response, and polling only
+   * the part that goes stale avoids refetching the whole home payload every
+   * half minute.
+   *
+   * Only while focused and foregrounded, so a backgrounded app is silent.
+   */
+  useEffect(() => {
+    if (!isFocused) return;
+
+    let alive = true;
+    const refreshPlayers = async () => {
+      try {
+        const res = await api.get('/home/ready-players');
+        if (alive) setReadyPlayers(res.data.players ?? []);
+      } catch {
+        // A blip here just leaves the previous list up; the next tick retries.
+      }
+    };
+
+    const iv = setInterval(refreshPlayers, 30_000);
+    const sub = AppState.addEventListener('change', (state) => {
+      // Coming back from the background: the whole screen may be stale, not
+      // just presence — a quiz could have finished, coins changed, the daily
+      // rolled over.
+      if (state === 'active') loadHome();
+    });
+
+    return () => {
+      alive = false;
+      clearInterval(iv);
+      sub.remove();
+    };
+  }, [isFocused, loadHome]);
 
   useEffect(() => {
     (async () => {

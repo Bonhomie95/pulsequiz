@@ -7,6 +7,8 @@ import LeaderboardSnapshot from '../models/LeaderboardSnapshot';
 import PrizePool from '../models/PrizePool';
 import User from '../models/User';
 import Progress from '../models/Progress';
+import ActiveQuizSession from '../models/ActiveQuizSession';
+import PvPMatch from '../models/PvPMatch';
 import { currentPeriodLabel } from '../utils/dateRanges';
 import { getUserStanding } from '../services/leaderboardService';
 import { seedChallengesForUser } from '../services/challengeService';
@@ -107,6 +109,20 @@ export async function getHomeSummary(req: AuthRequest, res: Response) {
 }
 
 /**
+ * How long after their last request a player still appears in the carousel,
+ * and how long they count as "online" rather than "away".
+ *
+ * There is no logout event: a closed app, a dead battery or a dropped network
+ * all look identical from here, so presence is inferred from the last request
+ * we saw. ONLINE_WINDOW_MS is deliberately just above the lastSeenAt throttle
+ * in the auth middleware, so an app that is genuinely open always refreshes in
+ * time to stay "online".
+ */
+const READY_WINDOW_MS = 30 * 60 * 1000;
+const ONLINE_WINDOW_MS = 6 * 60 * 1000;
+const READY_LIMIT = 20;
+
+/**
  * GET /home/ready-players
  *
  * Recently active public users for the "ready to play" carousel.
@@ -117,7 +133,8 @@ export async function getHomeSummary(req: AuthRequest, res: Response) {
  */
 export async function getReadyPlayers(req: AuthRequest, res: Response) {
   const userId = req.userId!;
-  const since = new Date(Date.now() - 30 * 60 * 1000); // active in last 30 min
+  const now = Date.now();
+  const since = new Date(now - READY_WINDOW_MS);
 
   const users = await User.find({
     _id: { $ne: userId },
@@ -126,17 +143,59 @@ export async function getReadyPlayers(req: AuthRequest, res: Response) {
     isBanned: { $ne: true },
     deletedAt: null,
     username: { $ne: null },
+    // House accounts pad the leaderboards, but they cannot actually accept a
+    // challenge — offering them here would be a dead end.
+    isSynthetic: { $ne: true },
   })
     .select('username avatar lastSeenAt')
     .sort({ lastSeenAt: -1 })
-    .limit(20)
+    .limit(READY_LIMIT)
     .lean();
 
+  const ids = users.map((u) => u._id);
+
+  // Who is mid-quiz right now. An unfinished session that has not expired is
+  // the same signal the quiz engine itself trusts.
+  const [busySolo, busyPvp] = await Promise.all([
+    ActiveQuizSession.find({
+      userId: { $in: ids },
+      finished: false,
+      expiresAt: { $gt: new Date() },
+    })
+      .select('userId')
+      .lean(),
+    PvPMatch.find({
+      'players.userId': { $in: ids },
+      status: { $in: ['MATCHED', 'ACTIVE', 'WAITING_ON_OPPONENT'] },
+    })
+      .select('players.userId')
+      .lean(),
+  ]);
+
+  const busy = new Set<string>(busySolo.map((s) => String(s.userId)));
+  for (const m of busyPvp as any[]) {
+    for (const p of m.players ?? []) busy.add(String(p.userId));
+  }
+
   return res.json({
-    players: users.map((u) => ({
-      _id: u._id.toString(),
-      username: u.username,
-      avatar: u.avatar,
-    })),
+    players: users.map((u) => {
+      const id = u._id.toString();
+      const seen = u.lastSeenAt ? new Date(u.lastSeenAt).getTime() : 0;
+      return {
+        _id: id,
+        username: u.username,
+        avatar: u.avatar,
+        /**
+         * `in_game` cannot take a challenge right now; `online` has the app
+         * open; `away` was here recently but may have closed it or dropped off
+         * the network — nothing tells us they left, so this is inferred from
+         * how long since we last heard from them.
+         */
+        status: busy.has(id) ? 'in_game' : now - seen <= ONLINE_WINDOW_MS ? 'online' : 'away',
+        lastSeenAt: u.lastSeenAt ?? null,
+      };
+    }),
+    /** Lets the client poll only as often as the data can actually change. */
+    refreshAfterMs: ONLINE_WINDOW_MS,
   });
 }
