@@ -12,6 +12,7 @@ import { settleMatch, computeWinner } from '../services/pvpService';
 import { isTooFast } from '../services/antiCheatService';
 import { logger } from '../utils/logger';
 import { botPlayerIn, startBotPlay, stopBot } from './pvpBot';
+import { createRematch } from './matchmaking';
 import { TIME_PER_QUESTION, ANSWER_GRACE_MS } from '../config/quizTiming';
 
 /* ---------------------------------- */
@@ -45,6 +46,9 @@ const readyTimers = new Map<string, NodeJS.Timeout>();      // matchId -> timer
 const liveByUser = new Map<string, { matchId: string }>();   // userId -> live match
 const disconnectTimers = new Map<string, NodeJS.Timeout>();  // userId -> timer
 export const userSocketMap = new Map<string, string>();      // userId -> socketId
+
+/** Pair key -> the players who have agreed to a rematch. */
+const rematchIntents = new Map<string, Set<string>>();
 
 function clearReadyTimer(matchId: string) {
   const t = readyTimers.get(matchId);
@@ -265,15 +269,26 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
 
   /* ---------- REMATCH ---------- */
 
+  /**
+   * Who has asked to replay against whom: "<a>:<b>" (ids sorted) -> the set of
+   * players who have said yes. When both are in, the match is created here
+   * rather than sending each client back to the matchmaking queue and hoping
+   * the sweeper pairs them.
+   */
+  const pairKey = (x: string, y: string) => [x, y].sort().join(':');
+
   const relay = (event: string) =>
-    on(event, ({ opponentId, category, wager }: any) => {
+    on(event, async ({ opponentId, category, wager }: any) => {
+      if (typeof opponentId !== 'string' || !opponentId) return;
+
       const opponentSocketId = userSocketMap.get(opponentId);
 
       if (!opponentSocketId) {
-        // The opponent has closed the app or dropped off. Dropping this
-        // silently left the requester staring at a spinner until a 30s
-        // timeout — the rematch button looked broken. Tell them instead.
-        if (event === SOCKET_EVENTS.REMATCH_REQUEST) {
+        // They have closed the app or dropped off. Dropping this silently left
+        // the requester on a spinner until a 30s timeout, so the button looked
+        // broken; a bare error is no better. Say what actually happened.
+        rematchIntents.delete(pairKey(userId, opponentId));
+        if (event !== SOCKET_EVENTS.REMATCH_DECLINED) {
           socket.emit(SOCKET_EVENTS.REMATCH_DECLINED, {
             fromUserId: opponentId,
             reason: 'offline',
@@ -282,6 +297,39 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
         return;
       }
 
+      if (event === SOCKET_EVENTS.REMATCH_DECLINED) {
+        rematchIntents.delete(pairKey(userId, opponentId));
+        io.to(opponentSocketId).emit(event, { fromUserId: userId, category, wager });
+        return;
+      }
+
+      // Record this player's intent. A request and an acceptance both count —
+      // two people tapping "rematch" at the same moment is agreement, not a
+      // collision.
+      const key = pairKey(userId, opponentId);
+      const agreed = rematchIntents.get(key) ?? new Set<string>();
+      agreed.add(userId);
+      rematchIntents.set(key, agreed);
+
+      if (agreed.has(opponentId)) {
+        rematchIntents.delete(key);
+        const created = await createRematch(
+          io,
+          { userId, socketId: socket.id, rating: 1000 },
+          { userId: opponentId, socketId: opponentSocketId, rating: 1000 },
+          String(category ?? 'General Knowledge'),
+          Number(wager) || 0,
+        );
+        if (!created) {
+          socket.emit(SOCKET_EVENTS.ERROR, { message: 'Could not start the rematch.' });
+          io.to(opponentSocketId).emit(SOCKET_EVENTS.ERROR, {
+            message: 'Could not start the rematch.',
+          });
+        }
+        return;
+      }
+
+      // Only one side so far — let the other know they have been asked.
       io.to(opponentSocketId).emit(event, { fromUserId: userId, category, wager });
     });
 

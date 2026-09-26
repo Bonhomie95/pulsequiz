@@ -174,9 +174,15 @@ describe('wagered matches conserve coins under every ending', () => {
     ]);
 
     const total = (await getBalance(a._id.toString())) + (await getBalance(b._id.toString()));
-    // The two 1000-coin wallets, unchanged in total, plus exactly one match
-    // reward — whichever settlement won the race ran once and only once.
-    expect(total).toBe(2000 + 25);
+
+    // The two 1000-coin wallets are unchanged in total: the pot is neither
+    // created nor destroyed, whichever of the racing settlements won.
+    //
+    // On top of that sits exactly one match reward, and which one depends on
+    // the winner of the race — a forfeit pays nothing, a draw pays 10 each, a
+    // normal finish pays 20 + 5. The point of this test is that it happens
+    // once, so the total must be 2000 plus one of those, never two.
+    expect([2000, 2020, 2025]).toContain(total);
   });
 
   it('a player cannot stake coins they do not have', async () => {

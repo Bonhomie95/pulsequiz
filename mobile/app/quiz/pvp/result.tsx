@@ -88,12 +88,12 @@ export default function PvPResultScreen() {
       }
     };
     const onAccepted = () => {
+      // Nothing to do but wait: once both sides have agreed the server builds
+      // the match and sends MATCH_FOUND, which navigates us into it. Sending
+      // ourselves back to the matchmaking queue here is what used to make a
+      // rematch depend on two clients finding each other again.
       clearRematchTimer();
-      // Both join queue with rematchWith targeting each other
-      usePvPStore.getState().reset();
-      router.replace(
-        `/quiz/pvp/search?category=${encodeURIComponent(category ?? 'General Knowledge')}&wager=${wager}&rematchWith=${opponent?.userId}` as any,
-      );
+      setRematchState('waiting');
     };
     const onDeclined = ({ reason }: { reason?: string } = {}) => {
       clearRematchTimer();
@@ -106,14 +106,23 @@ export default function PvPResultScreen() {
       );
     };
 
+    // Navigating into the match lived only on the search screen, so a rematch
+    // built while both players sat here arrived with nobody to act on it.
+    const onMatchFound = () => {
+      clearRematchTimer();
+      router.replace('/quiz/pvp/vs');
+    };
+
     socket.on(SOCKET_EVENTS.REMATCH_REQUEST, onRequest);
     socket.on(SOCKET_EVENTS.REMATCH_ACCEPTED, onAccepted);
     socket.on(SOCKET_EVENTS.REMATCH_DECLINED, onDeclined);
+    socket.on(SOCKET_EVENTS.MATCH_FOUND, onMatchFound);
 
     return () => {
       socket.off(SOCKET_EVENTS.REMATCH_REQUEST, onRequest);
       socket.off(SOCKET_EVENTS.REMATCH_ACCEPTED, onAccepted);
       socket.off(SOCKET_EVENTS.REMATCH_DECLINED, onDeclined);
+      socket.off(SOCKET_EVENTS.MATCH_FOUND, onMatchFound);
     };
   }, [opponent?.userId, category, wager]);
 
@@ -162,16 +171,13 @@ export default function PvPResultScreen() {
   const acceptRematch = () => {
     if (!opponent?.userId || !category) return;
     clearRematchTimer();
+    setRematchState('waiting');
     socket.emit(SOCKET_EVENTS.REMATCH_ACCEPTED, {
       opponentId: opponent.userId,
       category,
       wager: wager ?? 0,
     });
-    // Also join the queue ourselves
-    usePvPStore.getState().reset();
-    router.replace(
-      `/quiz/pvp/search?category=${encodeURIComponent(category ?? 'General Knowledge')}&wager=${wager}&rematchWith=${opponent?.userId}` as any,
-    );
+    // The server pairs us and sends MATCH_FOUND; no queue round trip.
   };
 
   const declineRematch = () => {

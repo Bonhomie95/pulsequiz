@@ -458,3 +458,39 @@ async function matchWithBot(io: Server, entry: MatchQueueEntry) {
     if (!queue.includes(entry)) queue.push(entry); // put them back
   }
 }
+
+
+/**
+ * Put two players who both asked for a rematch straight into a new match.
+ *
+ * The old path sent each client back to the matchmaking queue tagged with the
+ * other's id and hoped the sweeper paired them. That needed their category and
+ * wager to agree exactly and both to arrive before either timed out — and when
+ * it missed, the players just saw the search spin and fail. Pairing them here
+ * removes the race: both are already known, and so is the match they want to
+ * replay.
+ */
+export async function createRematch(
+  io: Server,
+  a: { userId: string; socketId: string; rating: number },
+  b: { userId: string; socketId: string; rating: number },
+  category: string,
+  wager: number,
+): Promise<boolean> {
+  // Neither should be left sitting in the queue from an earlier attempt.
+  removeFromQueueByUser(a.userId);
+  removeFromQueueByUser(b.userId);
+
+  const now = Date.now();
+  try {
+    await createAndBroadcastMatch(
+      io,
+      { userId: a.userId, socketId: a.socketId, category, wager, rating: a.rating, joinedAt: now, rematchWith: b.userId },
+      { userId: b.userId, socketId: b.socketId, category, wager, rating: b.rating, joinedAt: now, rematchWith: a.userId },
+    );
+    return true;
+  } catch (err) {
+    logger.error('Rematch creation failed', err, { a: a.userId, b: b.userId });
+    return false;
+  }
+}
