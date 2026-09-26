@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  AppState,
   FlatList,
   RefreshControl,
   ScrollView,
@@ -162,6 +163,7 @@ function ReadyCarousel({
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const screenFocused = useIsFocused();
   const router = useRouter();
   const { user } = useAuthStore();
   const { mode, setMode } = useThemeStore();
@@ -323,7 +325,7 @@ export default function HomeScreen() {
    * Only while focused and foregrounded, so a backgrounded app is silent.
    */
   useEffect(() => {
-    if (!isFocused) return;
+    if (!screenFocused) return;
 
     let alive = true;
     const refreshPlayers = async () => {
@@ -348,7 +350,7 @@ export default function HomeScreen() {
       clearInterval(iv);
       sub.remove();
     };
-  }, [isFocused, loadHome]);
+  }, [screenFocused, loadHome]);
 
   useEffect(() => {
     (async () => {
