@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Animated, AppState } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
+import { AnswerOptions } from '@/src/components/AnswerOptions';
 import { getSocket } from '@/src/socket/socket';
 import { SOCKET_EVENTS } from '../../../src/socket/events';
 import { usePvPStore } from '@/src/store/usePvPStore';
@@ -34,6 +35,8 @@ export default function PvPPlayScreen() {
     opponent,
     lastAnswer,
     clearLastAnswer,
+    category,
+    wager,
   } = usePvPStore();
 
   /**
@@ -212,8 +215,23 @@ export default function PvPPlayScreen() {
   // listeners) rather than a local socket handler — a local handler + a bare
   // socket.off(EVENT) would tear down the shared listeners too.
   useEffect(() => {
-    if (status === 'finished') router.replace('/quiz/pvp/result' as const);
-  }, [status, router]);
+    if (status !== 'finished') return;
+    // Carry the match details in the route.
+    //
+    // The result screen needs them to offer a rematch, and reading them from
+    // the store there was fragile: several listeners reset it, and an ERROR
+    // arriving on that screen was enough to leave the rematch button with no
+    // opponent to name. Params cannot be reset out from under it.
+    router.replace({
+      pathname: '/quiz/pvp/result',
+      params: {
+        opponentId: opponent?.userId ?? '',
+        opponentName: opponent?.username ?? '',
+        matchCategory: category ?? '',
+        matchWager: String(wager ?? 0),
+      },
+    } as never);
+  }, [status, router, opponent?.userId, opponent?.username, category, wager]);
 
   // Watchdog: if the socket stays down (or the match never delivers questions)
   // for a while, offer an escape hatch instead of a permanent "Waiting…".
@@ -380,45 +398,16 @@ export default function PvPPlayScreen() {
           </View>
         )}
 
-        {question.options.map((opt, i) => {
-          // Same language as Ranked: the right answer goes green, and a wrong
-          // pick goes red. Until the server rules, only the tap is shown.
-          const isCorrect = revealed?.correctIndex === i;
-          const isWrongPick = !!revealed && picked === i && !isCorrect;
-
-          const background = isCorrect
-            ? theme.colors.success
-            : isWrongPick
-              ? theme.colors.danger
-              : theme.colors.surface;
-          const textColor = isCorrect || isWrongPick ? '#fff' : theme.colors.text;
-
-          return (
-            <TouchableOpacity
-              key={i}
-              accessibilityRole="button"
-              accessibilityLabel={`Answer ${i + 1}: ${opt}`}
-              accessibilityState={{ disabled: !!revealed, selected: picked === i }}
-              onPress={() => {
-                if (revealed || picked !== null) return;
-                setPicked(i);
-                answer(i);
-              }}
-              style={{
-                padding: 16,
-                marginTop: 12,
-                borderRadius: 16,
-                backgroundColor: background,
-                borderWidth: 1,
-                borderColor:
-                  isCorrect || isWrongPick ? background : theme.colors.border,
-                opacity: picked !== null && picked !== i && !revealed ? 0.6 : 1,
-              }}
-              hitSlop={8}>
-              <Text style={{ color: textColor }}>{opt}</Text>
-            </TouchableOpacity>
-          );
-        })}
+        <AnswerOptions
+          options={question.options}
+          picked={picked}
+          correctIndex={revealed ? revealed.correctIndex : null}
+          locked={!!revealed}
+          onPick={(i) => {
+            setPicked(i);
+            answer(i);
+          }}
+        />
       </View>
 
       {/* WAITING ON OPPONENT */}

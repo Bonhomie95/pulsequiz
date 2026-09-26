@@ -10,7 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Swords, Home, RotateCcw, X, Check, Clock } from 'lucide-react-native';
 
@@ -32,7 +32,45 @@ export default function PvPResultScreen() {
   const slideUp = useRef(new Animated.Value(60)).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
 
-  const { winnerUserId, me, opponent, category, wager } = usePvPStore();
+  const store = usePvPStore();
+  const { winnerUserId, me } = store;
+
+  /**
+   * Hold on to who we played and what we played.
+   *
+   * The store is shared session state and several listeners reset it — an
+   * ERROR arriving while this screen is open is enough. When that happened the
+   * rematch button had no opponent to name and told the player the match was
+   * no longer available, which was true of the store and nothing else. These
+   * latch the first non-null value and survive any later reset.
+   */
+  // Read from the route first. The store is shared session state that several
+  // listeners reset — an ERROR arriving on this screen was enough to leave the
+  // rematch button with no opponent to name, and it told the player the match
+  // was no longer available, which was true of the store and nothing else.
+  const params = useLocalSearchParams<{
+    opponentId?: string;
+    opponentName?: string;
+    matchCategory?: string;
+    matchWager?: string;
+  }>();
+
+  // The store still supplies avatar and level for display; the route supplies
+  // the identity the rematch needs, which is the part that must not vanish.
+  const opponent =
+    store.opponent ??
+    (params.opponentId
+      ? {
+          userId: params.opponentId,
+          username: params.opponentName ?? 'Opponent',
+          avatar: '',
+          level: 1,
+        }
+      : null);
+
+  const rematchOpponentId = params.opponentId || store.opponent?.userId || '';
+  const category = params.matchCategory || store.category;
+  const wager = Number(params.matchWager ?? store.wager ?? 0);
   const myUserId = useAuthStore.getState().user?.id;
   const isWinner = winnerUserId === myUserId;
   const isDraw = !winnerUserId;
@@ -81,7 +119,7 @@ export default function PvPResultScreen() {
   // Rematch socket listeners
   useEffect(() => {
     const onRequest = ({ fromUserId }: { fromUserId: string }) => {
-      if (fromUserId === opponent?.userId) {
+      if (fromUserId === rematchOpponentId) {
         setRematchState('incoming');
         startRematchCountdown();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -152,7 +190,7 @@ export default function PvPResultScreen() {
     // Returning silently here made the button look dead. It can only happen
     // if the match details were lost (a reload, or the store reset underneath
     // us), and the player deserves to know why nothing happened.
-    if (!opponent?.userId || !category) {
+    if (!rematchOpponentId || !category) {
       Alert.alert(
         "Can't request a rematch",
         'This match is no longer available. Start a new game instead.',
@@ -161,7 +199,7 @@ export default function PvPResultScreen() {
     }
     setRematchState('waiting');
     socket.emit(SOCKET_EVENTS.REMATCH_REQUEST, {
-      opponentId: opponent.userId,
+      opponentId: rematchOpponentId,
       category,
       wager: wager ?? 0,
     });
@@ -169,11 +207,11 @@ export default function PvPResultScreen() {
   };
 
   const acceptRematch = () => {
-    if (!opponent?.userId || !category) return;
+    if (!rematchOpponentId || !category) return;
     clearRematchTimer();
     setRematchState('waiting');
     socket.emit(SOCKET_EVENTS.REMATCH_ACCEPTED, {
-      opponentId: opponent.userId,
+      opponentId: rematchOpponentId,
       category,
       wager: wager ?? 0,
     });
@@ -185,7 +223,7 @@ export default function PvPResultScreen() {
     clearRematchTimer();
     setRematchState('idle');
     socket.emit(SOCKET_EVENTS.REMATCH_DECLINED, {
-      opponentId: opponent.userId,
+      opponentId: rematchOpponentId,
     });
   };
 
@@ -195,8 +233,11 @@ export default function PvPResultScreen() {
   };
 
   const playAgain = () => {
+    // Back to the friends list, not the mode picker: you just finished a 1v1,
+    // so the next thing you want is another opponent, not to re-choose the
+    // kind of game.
     usePvPStore.getState().reset();
-    router.replace('/quiz/mode');
+    router.replace('/friends');
   };
 
   const winCoins = isWinner ? 50 : 20;

@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api, errorMessage } from '@/src/api/api';
+import { AnswerOptions } from '@/src/components/AnswerOptions';
 import { UserAvatar } from '@/src/components/UserAvatar';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { rewardedAdsAvailable } from '@/src/ads/admob';
@@ -956,64 +957,15 @@ export default function QuizPlay() {
         </Animated.View>
 
         {/* OPTIONS */}
-        <View style={{ marginTop: 18, gap: 14 }}>
-          {q.options.map((opt, i) => {
-            const isDisabled = disabledOptions.includes(i);
-
-            const hasResult = selected !== null || overlay?.type === 'timeout';
-            const isCorrect =
-              correctIndex !== null ? i === correctIndex : false;
-            const isSelected = selected !== null ? i === selected : false;
-
-            let bg = theme.colors.surface;
-            let border = theme.colors.border;
-            let txt = theme.colors.text;
-
-            if (hasResult) {
-              if (isCorrect) {
-                bg = theme.colors.success;
-                border = theme.colors.success;
-                txt = '#fff';
-              } else if (isSelected && !isCorrect) {
-                bg = theme.colors.danger;
-                border = theme.colors.danger;
-                txt = '#fff';
-              } else {
-                bg = theme.colors.surface;
-                border = theme.colors.border;
-                txt = theme.colors.text;
-              }
-            }
-
-            return (
-              <Pressable
-                key={i}
-                accessibilityRole="button"
-                accessibilityLabel={`Answer ${i + 1}: ${opt}`}
-                accessibilityState={{
-                  disabled: locked || isDisabled || selected !== null,
-                  selected: isSelected,
-                }}
-                onPress={() => {
-                  if (locked || isDisabled || selected !== null) return;
-                  submitAnswer(i);
-                }}
-                style={({ pressed }) => [
-                  styles.optionCard,
-                  {
-                    backgroundColor: bg,
-                    borderColor: border,
-                    opacity: isDisabled ? 0.35 : locked ? 0.65 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                  },
-                ]}
-            hitSlop={8}>
-                <Text style={{ color: txt, fontWeight: '700', fontSize: 15 }}>
-                  {opt}
-                </Text>
-              </Pressable>
-            );
-          })}
+        <View style={{ marginTop: 18 }}>
+          <AnswerOptions
+            options={q.options}
+            picked={selected}
+            correctIndex={correctIndex}
+            disabledIndexes={disabledOptions}
+            locked={locked}
+            onPick={submitAnswer}
+          />
         </View>
 
         {/* EXPLANATION (replaces the footer while shown) */}
