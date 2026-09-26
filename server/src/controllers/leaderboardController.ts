@@ -5,6 +5,8 @@ import LeaderboardSnapshot, {
 import PrizePool from '../models/PrizePool';
 import { TOP_N, buildLeaderboard, getUserStanding } from '../services/leaderboardService';
 import User from '../models/User';
+import Friend from '../models/Friend';
+import Progress from '../models/Progress';
 import { currentPeriodLabel } from '../utils/dateRanges';
 import { AuthRequest } from '../middlewares/auth';
 
@@ -175,5 +177,80 @@ export async function getMyRank(req: AuthRequest, res: Response) {
     monthly,
     all,
     weeklyPaidRanks: weeklyPool?.paidRanks ?? null,
+  });
+}
+
+
+/**
+ * GET /leaderboard/friends
+ *
+ * You and your friends, ranked among yourselves.
+ *
+ * The app used to build this by filtering the global all-time top 100 down to
+ * friends, which silently dropped anyone outside it — so a friend on 17 points
+ * was simply missing. Padding the global board with house accounts made that
+ * total: the top 100 is now almost entirely house accounts, so no real friend
+ * could ever survive the filter.
+ *
+ * Ranking the group directly has no cut-off. Friend lists are small, so this
+ * is a handful of indexed reads.
+ */
+export async function getFriendsLeaderboard(req: AuthRequest, res: Response) {
+  const userId = req.userId!;
+
+  const links = await Friend.find({
+    status: 'accepted',
+    $or: [{ requesterId: userId }, { recipientId: userId }],
+  })
+    .select('requesterId recipientId')
+    .lean();
+
+  const ids = links.map((f) =>
+    f.requesterId.toString() === userId ? f.recipientId : f.requesterId,
+  );
+  // Always include the caller, so the board is never empty and you can always
+  // see where you sit.
+  const everyone = [...ids.map(String), userId];
+
+  const [users, progress] = await Promise.all([
+    User.find({ _id: { $in: everyone }, deletedAt: null, isBanned: { $ne: true } })
+      .select('username avatar')
+      .lean(),
+    Progress.find({ userId: { $in: everyone } })
+      .select('userId points')
+      .lean(),
+  ]);
+
+  const pointsById = new Map(progress.map((p) => [String(p.userId), p.points ?? 0]));
+
+  const data = users
+    .map((u) => ({
+      userId: u._id.toString(),
+      username: u.username ?? 'Player',
+      avatar: u.avatar ?? '',
+      points: pointsById.get(u._id.toString()) ?? 0,
+      rank: 0,
+    }))
+    .sort((a, b) => b.points - a.points)
+    .map((e, i) => ({ ...e, rank: i + 1 }));
+
+  const mine = data.find((e) => e.userId === userId) ?? null;
+
+  return res.json({
+    type: 'friends',
+    generatedAt: new Date(),
+    data,
+    me: mine
+      ? {
+          rank: mine.rank,
+          points: mine.points,
+          inTopList: true,
+          pointsToBoard: 0,
+          pointsToPaidTier: null,
+          outsideBoard: false,
+        }
+      : null,
+    prizeInfo: null,
+    cached: false,
   });
 }

@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/src/theme/useTheme';
-import { Target, Swords, ChevronLeft, BookOpen, Users } from 'lucide-react-native';
+import { Target, Swords, ChevronLeft, BookOpen } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 
 type Option = {
@@ -38,13 +38,10 @@ const OPTIONS: Option[] = [
     Icon: Swords,
     featured: true,
   },
-  {
-    mode: 'duel',
-    title: 'Challenge a Friend',
-    sub: 'Play 10 questions, send the code, compare scores',
-    reward: '🤝 No need to be online at the same time',
-    Icon: Users,
-  },
+  // "Challenge a Friend" (async duel) was here. Playing a friend who is not
+  // online is not the experience we want — friends play live, through 1v1.
+  // The duel screens and shared /d/<code> links still work for anyone
+  // holding a link; they are just no longer offered as a mode.
 ];
 
 export default function QuizModeScreen() {

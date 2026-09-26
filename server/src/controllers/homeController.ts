@@ -56,22 +56,28 @@ export async function getHomeSummary(req: AuthRequest, res: Response) {
 
   const paidRanks = weeklyPool?.paidRanks ?? null;
 
-  const myWeeklyRank = rankIn(weeklySnapshot, userId);
+  // Always read the caller's own weekly standing live.
+  //
+  // This used to come from the snapshot alone, which the cron rebuilds once a
+  // minute — so finishing a quiz and landing back on the home screen showed
+  // the rank and points from before the run, while the leaderboard screen
+  // (which folds in the live figures) showed the new ones. Two screens
+  // disagreeing reads as the run not having counted.
+  //
+  // One index-backed read plus the snapshot already loaded here; no
+  // period-wide scan.
+  const standing = await getUserStanding(userId, 'weekly', paidRanks);
 
-  // The number that motivates a player who isn't on the board yet. Only worth
-  // computing when they aren't already ranked — and it costs one index-backed
-  // read plus the snapshot we've already loaded, not a period-wide scan.
-  let standing: Awaited<ReturnType<typeof getUserStanding>> | null = null;
-  if (myWeeklyRank === null) {
-    standing = await getUserStanding(userId, 'weekly', paidRanks);
-  }
+  // Prefer the snapshot's position when it has them — it accounts for everyone
+  // else on the board — and fall back to the live standing otherwise.
+  const myWeeklyRank = rankIn(weeklySnapshot, userId) ?? standing.rank;
 
   const pointsToPaidTier =
     myWeeklyRank !== null && paidRanks
       ? myWeeklyRank <= paidRanks
         ? 0
         : null
-      : (standing?.pointsToPaidTier ?? null);
+      : (standing.pointsToPaidTier ?? null);
 
   return res.json({
     coins: wallet?.coins ?? 0,
@@ -88,8 +94,8 @@ export async function getHomeSummary(req: AuthRequest, res: Response) {
     weeklyPaidRanks: paidRanks,
     // How many points from the prize tier, or 0 when already inside it.
     pointsToPaidTier,
-    weeklyPoints: standing?.points ?? null,
-    pointsToBoard: standing?.pointsToBoard ?? null,
+    weeklyPoints: standing.points,
+    pointsToBoard: standing.pointsToBoard,
 
     // The client renders the reward the server will actually pay, rather than
     // a hardcoded number that can drift out of sync with the settings.

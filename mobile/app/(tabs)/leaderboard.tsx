@@ -293,17 +293,13 @@ export default function LeaderboardScreen() {
         let standing = null;
 
         if (tab === 'friends') {
-          const [friendsRes, lbRes] = await Promise.all([
-            api.get('/friends'),
-            api.get('/leaderboard/all'),
-          ]);
-          const friendIds = new Set(
-            (friendsRes.data?.friends ?? []).map((f: any) => f._id?.toString()),
-          );
-          const allData: Entry[] = lbRes.data?.data ?? [];
-          list = allData.filter(
-            (e) => e.userId === userId || friendIds.has(e.userId),
-          );
+          // Ranked server-side among you and your friends. This used to filter
+          // the global all-time top 100 down to friends, which dropped anyone
+          // outside it — and once the global board filled with house accounts,
+          // that meant every real friend.
+          const res = await api.get('/leaderboard/friends');
+          list = res.data?.data ?? [];
+          standing = res.data?.me ?? null;
         } else {
           const res = await api.get(`/leaderboard/${tab}`);
           list = res.data?.data ?? [];
