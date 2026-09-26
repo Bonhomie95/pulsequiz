@@ -65,7 +65,19 @@ type PvPState = {
     resumedAtIndex?: number,
     deadlineAt?: string | number | null,
   ) => void;
-  updateProgress: (payload: { userId: string; currentIndex: number }) => void;
+  updateProgress: (payload: {
+    userId: string;
+    currentIndex: number;
+    correct?: boolean;
+    correctIndex?: number;
+  }) => void;
+  /**
+   * The verdict on the question this player just answered, so the options can
+   * go green/red the way they do in Ranked. Keyed by the question it belongs
+   * to, because the server advances currentIndex in the same message.
+   */
+  lastAnswer: { questionIndex: number; correct: boolean; correctIndex: number } | null;
+  clearLastAnswer: () => void;
   setWaiting: () => void;
   finishMatch: (winnerUserId: string) => void;
   setError: (message: string | null) => void;
@@ -87,6 +99,7 @@ export const usePvPStore = create<PvPState>((set, get) => ({
   questions: [],
   currentIndex: 0,
   winnerUserId: null,
+  lastAnswer: null,
   opponentIndex: 0,
   opponentFurthest: 0,
 
@@ -118,10 +131,22 @@ export const usePvPStore = create<PvPState>((set, get) => ({
       currentIndex: Math.min(Math.max(resumedAtIndex, 0), Math.max(questions.length - 1, 0)),
     }),
 
-  updateProgress: ({ userId, currentIndex }) => {
+  updateProgress: ({ userId, currentIndex, correct, correctIndex }) => {
     const state = get();
     if (state.me?.userId === userId) {
-      set({ currentIndex });
+      set({
+        currentIndex,
+        ...(typeof correctIndex === 'number'
+          ? {
+              lastAnswer: {
+                // The question just answered, not the one being served next.
+                questionIndex: state.currentIndex,
+                correct: !!correct,
+                correctIndex,
+              },
+            }
+          : {}),
+      });
     } else {
       set({
         opponentIndex: currentIndex,
@@ -129,6 +154,8 @@ export const usePvPStore = create<PvPState>((set, get) => ({
       });
     }
   },
+
+  clearLastAnswer: () => set({ lastAnswer: null }),
 
   setWaiting: () => set({ status: 'waiting' }),
 
@@ -154,5 +181,6 @@ export const usePvPStore = create<PvPState>((set, get) => ({
       questions: [],
       currentIndex: 0,
       winnerUserId: null,
+      lastAnswer: null,
     }),
 }));

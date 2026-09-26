@@ -65,6 +65,14 @@ export function registerPvPSocketListeners() {
       myUserId,
       wager: payload.wager,
     });
+
+    // Ask for the questions.
+    //
+    // MATCH_FOUND carries the pairing, not the question set — that comes back
+    // from MATCH_START. The only other place we emit it is on socket connect,
+    // so a match found over an already-connected socket (the normal case)
+    // left the play screen with an empty question list and nothing to render.
+    socket.emit(SOCKET_EVENTS.MATCH_START, { matchId: payload.matchId });
   });
 
   socket.on(SOCKET_EVENTS.MATCH_START, (payload: MatchStartPayload) => {

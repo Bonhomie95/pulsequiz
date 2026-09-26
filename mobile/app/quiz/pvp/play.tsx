@@ -32,9 +32,42 @@ export default function PvPPlayScreen() {
     deadlineAt,
     me,
     opponent,
+    lastAnswer,
+    clearLastAnswer,
   } = usePvPStore();
 
-  const question = questions[currentIndex];
+  /**
+   * Which question is on screen.
+   *
+   * The server advances `currentIndex` the instant it accepts an answer, so
+   * rendering it directly meant the right/wrong colours never appeared —
+   * the next question was already up. This holds the answered question for a
+   * beat, exactly as Ranked does.
+   *
+   * The pause comes out of the player's own clock, equally for both of them,
+   * so the race stays fair.
+   */
+  const REVEAL_MS = 700;
+  const [shownIndex, setShownIndex] = useState(currentIndex);
+  const [picked, setPicked] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!lastAnswer || lastAnswer.questionIndex !== shownIndex) {
+      // No verdict pending for what is on screen: follow the server.
+      if (currentIndex !== shownIndex && !lastAnswer) setShownIndex(currentIndex);
+      return;
+    }
+    const t = setTimeout(() => {
+      setShownIndex(currentIndex);
+      setPicked(null);
+      clearLastAnswer();
+    }, REVEAL_MS);
+    return () => clearTimeout(t);
+  }, [lastAnswer, shownIndex, currentIndex, clearLastAnswer]);
+
+  const revealed = lastAnswer && lastAnswer.questionIndex === shownIndex ? lastAnswer : null;
+
+  const question = questions[shownIndex];
 
   /* ---------------- ANIMATIONS ---------------- */
   const myBar = useRef(new Animated.Value(0)).current;
@@ -309,24 +342,45 @@ export default function PvPPlayScreen() {
           </View>
         )}
 
-        {question.options.map((opt, i) => (
-          <TouchableOpacity
-            key={i}
-            accessibilityRole="button"
-            accessibilityLabel={`Answer ${i + 1}: ${opt}`}
-            onPress={() => answer(i)}
-            style={{
-              padding: 16,
-              marginTop: 12,
-              borderRadius: 16,
-              backgroundColor: theme.colors.surface,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-            }}
-            hitSlop={8}>
-            <Text style={{ color: theme.colors.text }}>{opt}</Text>
-          </TouchableOpacity>
-        ))}
+        {question.options.map((opt, i) => {
+          // Same language as Ranked: the right answer goes green, and a wrong
+          // pick goes red. Until the server rules, only the tap is shown.
+          const isCorrect = revealed?.correctIndex === i;
+          const isWrongPick = !!revealed && picked === i && !isCorrect;
+
+          const background = isCorrect
+            ? theme.colors.success
+            : isWrongPick
+              ? theme.colors.danger
+              : theme.colors.surface;
+          const textColor = isCorrect || isWrongPick ? '#fff' : theme.colors.text;
+
+          return (
+            <TouchableOpacity
+              key={i}
+              accessibilityRole="button"
+              accessibilityLabel={`Answer ${i + 1}: ${opt}`}
+              accessibilityState={{ disabled: !!revealed, selected: picked === i }}
+              onPress={() => {
+                if (revealed || picked !== null) return;
+                setPicked(i);
+                answer(i);
+              }}
+              style={{
+                padding: 16,
+                marginTop: 12,
+                borderRadius: 16,
+                backgroundColor: background,
+                borderWidth: 1,
+                borderColor:
+                  isCorrect || isWrongPick ? background : theme.colors.border,
+                opacity: picked !== null && picked !== i && !revealed ? 0.6 : 1,
+              }}
+              hitSlop={8}>
+              <Text style={{ color: textColor }}>{opt}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* WAITING ON OPPONENT */}
