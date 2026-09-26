@@ -207,7 +207,11 @@ export async function processPeriodPayouts(
   }
 
   // 3. Rank the period that ended, not the one in progress.
-  const leaderboard = await buildLeaderboard(type, target);
+  //
+  // Players only. The visible board is padded with house accounts so it does
+  // not look deserted; letting one of those hold a paying rank would take a
+  // real player's prize.
+  const leaderboard = await buildLeaderboard(type, target, { excludeSynthetic: true });
   const topEntries = leaderboard.slice(0, pool.paidRanks);
 
   const minPayout = Number(await getSetting(SETTINGS_KEYS.MIN_PAYOUT_USD, 5));
@@ -562,7 +566,11 @@ export async function sendWeeklyAddressWarnings() {
     (await PrizePool.findOne({ type: 'weekly' }).sort({ createdAt: -1 }).lean());
   if (!pool) return;
 
-  const leaderboard = await buildLeaderboard('weekly', periodContaining('weekly'));
+  // Players only, matching how the prize itself is ranked — nudging a house
+  // account to add a wallet address would be absurd.
+  const leaderboard = await buildLeaderboard('weekly', periodContaining('weekly'), {
+    excludeSynthetic: true,
+  });
   const topN = leaderboard.slice(0, pool.paidRanks);
 
   await Promise.allSettled(

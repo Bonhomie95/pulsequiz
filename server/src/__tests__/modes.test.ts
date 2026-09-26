@@ -169,6 +169,51 @@ describe('daily quiz', () => {
     expect(view.top[0].isMe).toBe(true);
   });
 
+  it('pays coins for finishing, whatever the score', async () => {
+    // Turning up has to be worth something: finishing the daily and seeing the
+    // balance unchanged reads as the run not having counted.
+    const u = await makeUser();
+    const before = await getBalance(u.id);
+
+    const start = (
+      await u.auth(request(app).post('/api/quiz/start').send({ mode: 'daily', date: today })).expect(200)
+    ).body;
+    const result = await playAll(u.auth, start, [0, 1, 2, 3]);
+
+    expect(result.correct).toBeLessThan(result.total);
+    expect(result.dailyCoins).toBe(10);
+    expect(await getBalance(u.id)).toBe(before + 10);
+  });
+
+  it('pays more for a clean sweep', async () => {
+    const u = await makeUser();
+    const before = await getBalance(u.id);
+
+    const start = (
+      await u.auth(request(app).post('/api/quiz/start').send({ mode: 'daily', date: today })).expect(200)
+    ).body;
+    const result = await playAll(u.auth, start);
+
+    expect(result.correct).toBe(result.total);
+    expect(result.dailyCoins).toBe(50);
+    expect(await getBalance(u.id)).toBe(before + 50);
+  });
+
+  it('pays once, however many times finish is replayed', async () => {
+    const u = await makeUser();
+    const before = await getBalance(u.id);
+
+    const start = (
+      await u.auth(request(app).post('/api/quiz/start').send({ mode: 'daily', date: today })).expect(200)
+    ).body;
+    await playAll(u.auth, start, [0]);
+    const balance = await getBalance(u.id);
+    expect(balance).toBe(before + 10);
+
+    await u.auth(request(app).post('/api/quiz/finish').send({ sessionId: start.sessionId }));
+    expect(await getBalance(u.id)).toBe(balance);
+  });
+
   it('rejects a date no timezone is on yet', async () => {
     const u = await makeUser();
     const future = utcDateKey(new Date(Date.now() + 3 * 24 * 3600 * 1000));

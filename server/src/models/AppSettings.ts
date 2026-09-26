@@ -31,6 +31,15 @@ export const SETTINGS_KEYS = {
   MIN_SESSIONS_FOR_PAYOUT: 'min_sessions_for_payout',   // min total sessions
   PRIZES_ENABLED: 'prizes_enabled',                     // real-money prizes on/off
   PRIZE_COUNTRIES: 'prize_countries',                   // ISO codes, blank = all
+  DAILY_QUIZ_COINS: 'daily_quiz_coins',                 // coins for finishing the daily
+  DAILY_QUIZ_PERFECT_COINS: 'daily_quiz_perfect_coins', // coins for a clean sweep
+  // House accounts that pad the boards. See services/syntheticPlayers.ts.
+  SYNTHETIC_ENABLED: 'synthetic_enabled',               // padding on/off
+  SYNTHETIC_POOL_SIZE: 'synthetic_pool_size',           // how many house accounts exist
+  SYNTHETIC_DAILY_MIN: 'synthetic_daily_min',           // fewest daily entries to seed
+  SYNTHETIC_DAILY_MAX: 'synthetic_daily_max',           // most daily entries to seed
+  SYNTHETIC_LADDER_SIZE: 'synthetic_ladder_size',       // how many appear on weekly/monthly/all
+  SYNTHETIC_POINTS_CEILING: 'synthetic_points_ceiling', // highest points a house account may hold
 } as const;
 
 /**
@@ -73,6 +82,14 @@ export function clearSettingsCache() {
 
 export async function initDefaultSettings() {
   const defaults: Record<string, number | string | boolean> = {
+    [SETTINGS_KEYS.DAILY_QUIZ_COINS]: 10,
+    [SETTINGS_KEYS.DAILY_QUIZ_PERFECT_COINS]: 50,
+    [SETTINGS_KEYS.SYNTHETIC_ENABLED]: true,
+    [SETTINGS_KEYS.SYNTHETIC_POOL_SIZE]: 500,
+    [SETTINGS_KEYS.SYNTHETIC_DAILY_MIN]: 200,
+    [SETTINGS_KEYS.SYNTHETIC_DAILY_MAX]: 400,
+    [SETTINGS_KEYS.SYNTHETIC_LADDER_SIZE]: 120,
+    [SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING]: 140,
     [SETTINGS_KEYS.REFERRAL_COIN_REFERRER]: 50,
     [SETTINGS_KEYS.REFERRAL_COIN_NEW_USER]: 50,
     [SETTINGS_KEYS.DAILY_AD_REWARD_COINS]: 10,

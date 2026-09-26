@@ -4,6 +4,7 @@ import QuizSession from '../models/QuizSession';
 import Progress from '../models/Progress';
 import User from '../models/User';
 import LeaderboardSnapshot from '../models/LeaderboardSnapshot';
+import { SyntheticScore } from '../models/SyntheticScore';
 import { periodContaining, type Period } from '../utils/dateRanges';
 import { logger } from '../utils/logger';
 
@@ -26,10 +27,25 @@ export interface LeaderboardEntry {
  * explicitly from the payout cron, which must rank the period that just ended
  * rather than the one currently in progress.
  */
+export interface BuildLeaderboardOptions {
+  /**
+   * Leave the house accounts out and do not touch the stored snapshot.
+   *
+   * Prize ranking passes this. Padding the board is a display choice; letting
+   * a house account hold a paying rank would take a real player's prize, so
+   * the payout run ranks players only. The snapshot is skipped because it is
+   * what everyone else is looking at — overwriting it here would blank the
+   * padding for every viewer.
+   */
+  excludeSynthetic?: boolean;
+}
+
 export async function buildLeaderboard(
   type: LeaderboardType,
   period?: Period,
+  options: BuildLeaderboardOptions = {},
 ): Promise<LeaderboardEntry[]> {
+  const { excludeSynthetic = false } = options;
   let rows: { userId: string; points: number }[];
   let snapshotLabel: string | null = null;
 
@@ -63,23 +79,36 @@ export async function buildLeaderboard(
     _id: { $in: userIds },
     isBanned: { $ne: true },
     deletedAt: null,
+    ...(excludeSynthetic ? { isSynthetic: { $ne: true } } : {}),
   })
     .select('username avatar')
     .lean();
   const userMap = new Map(users.map((u) => [u._id.toString(), u]));
 
-  const data: LeaderboardEntry[] = rows
+  let data: LeaderboardEntry[] = rows
     .filter((r) => userMap.has(r.userId))
-    .map((r, index) => {
+    .map((r) => {
       const u = userMap.get(r.userId)!;
       return {
         userId: r.userId,
         username: u.username ?? 'Anonymous',
         avatar: u.avatar ?? '',
         points: r.points,
-        rank: index + 1,
+        rank: 0,
       };
     });
+
+  if (!excludeSynthetic) {
+    data = data.concat(await syntheticEntries(type, snapshotLabel));
+  }
+
+  data.sort((a, b) => b.points - a.points);
+  data = data.slice(0, TOP_N);
+  data.forEach((e, index) => {
+    e.rank = index + 1;
+  });
+
+  if (excludeSynthetic) return data;
 
   try {
     await LeaderboardSnapshot.updateOne(
@@ -98,6 +127,49 @@ export async function buildLeaderboard(
   }
 
   return data;
+}
+
+/**
+ * House-account rows for one board, as leaderboard entries.
+ *
+ * Their standings live in their own collection rather than as fabricated quiz
+ * sessions, so nothing that measures real activity ever counts them. A row
+ * whose account has since been deleted is dropped.
+ */
+async function syntheticEntries(
+  type: LeaderboardType,
+  snapshotLabel: string | null,
+): Promise<LeaderboardEntry[]> {
+  const periodLabel = type === 'all' ? 'all' : snapshotLabel;
+  if (!periodLabel) return [];
+
+  const scores = await SyntheticScore.find({ type, periodLabel })
+    .sort({ points: -1 })
+    .limit(TOP_N)
+    .lean();
+  if (!scores.length) return [];
+
+  const users = await User.find({
+    _id: { $in: scores.map((s) => s.userId) },
+    isBanned: { $ne: true },
+    deletedAt: null,
+  })
+    .select('username avatar')
+    .lean();
+  const byId = new Map(users.map((u) => [String(u._id), u]));
+
+  return scores
+    .filter((s) => byId.has(String(s.userId)))
+    .map((s) => {
+      const u = byId.get(String(s.userId))!;
+      return {
+        userId: String(s.userId),
+        username: u.username ?? 'Player',
+        avatar: u.avatar ?? '',
+        points: s.points,
+        rank: 0,
+      };
+    });
 }
 
 /**

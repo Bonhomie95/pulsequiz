@@ -49,12 +49,14 @@ export default function QuizResult() {
     leagueXp,
     dailyDate,
     duelCode,
+    dailyCoins,
   } = useLocalSearchParams<{
       mode?: string;
       results?: string;
       leagueXp?: string;
       dailyDate?: string;
       duelCode?: string;
+      dailyCoins?: string;
       correct: string;
       total: string;
       points: string;
@@ -177,6 +179,14 @@ export default function QuizResult() {
         <Text style={{ color: theme.colors.muted, marginTop: 6 }}>
           {correctNum} / {totalNum} correct • {accuracyNum}% accuracy
         </Text>
+
+        {/* The daily pays for turning up, so say so — finishing and seeing
+            nothing change reads as the run not having counted. */}
+        {Number(dailyCoins) > 0 && (
+          <Text style={{ color: theme.colors.text, marginTop: 8, fontWeight: '800' }}>
+            +{Number(dailyCoins)} coins{correctNum === totalNum ? ' — perfect round! 🏅' : ''}
+          </Text>
+        )}
 
         {/* Answer grid */}
         {results.length > 0 && (

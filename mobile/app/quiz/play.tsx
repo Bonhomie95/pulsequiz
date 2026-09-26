@@ -456,6 +456,11 @@ export default function QuizPlay() {
     // the exact moment their run ended would lose the whole result.
     try {
       const data = await pending;
+      // The daily pays coins on finish; without this the header still shows
+      // the pre-quiz balance until something else refetches it.
+      if (typeof data?.dailyCoins === 'number' && data.dailyCoins > 0) {
+        useCoinStore.getState().addCoins(data.dailyCoins);
+      }
       router.replace({ pathname: '/quiz/result', params: resultParams(data) });
       return;
     } catch (e) {
@@ -538,9 +543,14 @@ export default function QuizPlay() {
       }
 
       // Unranked: the server paused the next clock for the reveal. Show the
-      // explanation for that pause; relaxed players may skip ahead.
+      // explanation for that pause.
+      //
+      // Sudden death returned above, so only relaxed, daily and duel reach
+      // here — every one of them can move on early. Daily used to sit on
+      // "Next question in a moment…" with no way out, which reads as a frozen
+      // screen once you have finished reading.
       if (explanation || !data.correct) {
-        setReveal({ verdict, explanation, action: mode === 'relaxed' ? 'next' : null });
+        setReveal({ verdict, explanation, action: 'next' });
       }
       const wait = nextDeadlineRef.current
         ? Math.max(700, nextDeadlineRef.current - TIME_PER_QUESTION * 1000 - serverNow())

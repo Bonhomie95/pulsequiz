@@ -36,6 +36,12 @@ export interface IUser {
   adRewardWindowDate?: string | null;
   lastSeenAt?: Date | null;
   isBanned: boolean;
+  /**
+   * A house account that pads out the leaderboards so early players are not
+   * staring at an empty board. Never eligible for a prize: payouts rank real
+   * players only. See services/syntheticPlayers.ts.
+   */
+  isSynthetic: boolean;
   hasCompletedFirstQuiz: boolean;
   moderationStrikes: number;
 
@@ -120,6 +126,7 @@ const UserSchema = new Schema<IUser>(
     adRewardWindowDate: { type: String, default: null },
     lastSeenAt: { type: Date, default: null },
     isBanned: { type: Boolean, default: false },
+    isSynthetic: { type: Boolean, default: false },
     hasCompletedFirstQuiz: { type: Boolean, default: false },
     moderationStrikes: { type: Number, default: 0 },
     tokenVersion: { type: Number, default: 0 },
@@ -138,6 +145,8 @@ const UserSchema = new Schema<IUser>(
 UserSchema.index({ provider: 1, providerId: 1 }, { unique: true });
 UserSchema.index({ email: 1 });
 UserSchema.index({ lastSeenAt: -1 });
+// Payout ranking and the synthetic seeder both filter on this.
+UserSchema.index({ isSynthetic: 1 });
 UserSchema.index(
   { deletedIdentityHash: 1 },
   { partialFilterExpression: { deletedIdentityHash: { $type: 'string' } } },

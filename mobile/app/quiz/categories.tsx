@@ -60,7 +60,14 @@ export default function QuizCategories() {
     >
       {/* Back Home */}
       <TouchableOpacity
-        onPress={() => router.replace('/quiz/mode')}
+        onPress={() => {
+          // Go back to whatever opened this screen. Hardcoding /quiz/mode sent
+          // the duel flow ("Challenge a Friend" → pick a category) to the mode
+          // picker, which the player never came from. The replace() fallback
+          // covers a cold deep link, where there is no history to pop.
+          if (router.canGoBack()) router.back();
+          else router.replace('/quiz/mode');
+        }}
         style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
       
             accessibilityRole="button"

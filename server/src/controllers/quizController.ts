@@ -368,8 +368,13 @@ export async function finish(req: AuthRequest, res: Response) {
   const results = session.questions.map((q: any) => byQuestion.get(String(q.questionId)) ?? false);
   const shared = { correct, total, results, timeLeftMs: session.timeLeftMs ?? 0 };
 
+  let dailyCoins = 0;
   if (mode === 'daily' && session.dailyDate) {
-    await recordDailyResult(req.userId, session.dailyDate, shared);
+    ({ coinsAwarded: dailyCoins } = await recordDailyResult(
+      req.userId,
+      session.dailyDate,
+      shared,
+    ));
   }
   if (mode === 'duel' && session.duelCode) {
     await recordDuelResult(req.userId, session.duelCode, shared);
@@ -443,6 +448,7 @@ export async function finish(req: AuthRequest, res: Response) {
     leagueXp: result.leagueXp,
     dailyDate: session.dailyDate ?? undefined,
     duelCode: session.duelCode ?? undefined,
+    dailyCoins: dailyCoins || undefined,
     assisted: assistedCorrect,
     points: result.pointsAdded,
     actualPoints: result.actualPoints,

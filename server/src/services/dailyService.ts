@@ -7,6 +7,8 @@
  * board. Unranked on the prize leaderboard — a shared answer key would make it
  * trivially cheatable — but it earns league XP.
  */
+import { SETTINGS_KEYS, getSetting } from '../models/AppSettings';
+import { creditCoins } from './coinService';
 import { DailyAttempt, DailyQuiz } from '../models/DailyQuiz';
 import User from '../models/User';
 import { sampleQuestionSet } from './quizService';
@@ -75,11 +77,33 @@ export async function recordDailyResult(
   userId: string,
   date: string,
   r: { correct: number; total: number; results: boolean[]; timeLeftMs: number },
-) {
-  await DailyAttempt.updateOne(
+): Promise<{ coinsAwarded: number }> {
+  // `finishedAt: null` in the filter is what makes the coin award safe to run
+  // once and only once: a replayed finish matches nothing, so modifiedCount is
+  // 0 and nothing is credited.
+  const res = await DailyAttempt.updateOne(
     { userId, date, finishedAt: null },
     { $set: { ...r, finishedAt: new Date() } },
   );
+
+  if (res.modifiedCount !== 1) return { coinsAwarded: 0 };
+
+  // Turning up is worth something. Finishing the daily and being handed
+  // nothing reads as the run not having counted, whatever the score.
+  const perfect = r.total > 0 && r.correct === r.total;
+  const coins = Number(
+    perfect
+      ? await getSetting(SETTINGS_KEYS.DAILY_QUIZ_PERFECT_COINS, 50)
+      : await getSetting(SETTINGS_KEYS.DAILY_QUIZ_COINS, 10),
+  );
+
+  if (coins > 0) {
+    await creditCoins(userId, coins, 'daily_quiz_reward', {
+      note: `daily ${date} ${r.correct}/${r.total}${perfect ? ' perfect' : ''}`,
+    });
+  }
+
+  return { coinsAwarded: coins };
 }
 
 export async function getDailyView(userId: string, date: string) {

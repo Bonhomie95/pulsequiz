@@ -20,6 +20,8 @@ import {
   sendLeaderboardReminder,
   sendNewChallengesNotification,
 } from '../services/notificationService';
+import { seedSyntheticDaily, seedSyntheticLadder } from '../services/syntheticPlayers';
+import { utcDateKey } from '../services/dailyService';
 import { previousPeriod } from '../utils/dateRanges';
 import { withJobLock } from '../utils/jobLock';
 import { logger } from '../utils/logger';
@@ -136,6 +138,30 @@ export function startLeaderboardCron(io?: Server) {
     job('leaderboard-refresh', 2 * MINUTE, async () => {
       const result = await rebuildLeaderboardSnapshots();
       return result.rebuilt ? { rebuilt: true } : undefined;
+    }),
+    { timezone: TIMEZONE },
+  );
+
+  // Populate the boards with house accounts.
+  //
+  // Hourly rather than once at midnight because "today" depends on the
+  // player's own date: someone ahead of UTC reaches a new Daily before the
+  // UTC day turns over, and an empty board is exactly what this exists to
+  // prevent. Both seeders are keyed by period and no-op once seeded, so the
+  // extra ticks cost a count query.
+  cron.schedule(
+    '7 * * * *',
+    job('synthetic-boards', 10 * MINUTE, async () => {
+      const today = utcDateKey();
+      const tomorrow = utcDateKey(new Date(Date.now() + 86_400_000));
+
+      const daily = await seedSyntheticDaily(today);
+      // Seed tomorrow too, so players east of UTC never open a bare board.
+      const ahead = await seedSyntheticDaily(tomorrow);
+      const ladder = await seedSyntheticLadder();
+
+      const seeded = daily.seeded + ahead.seeded + ladder.seeded;
+      return seeded ? { daily: daily.seeded, ahead: ahead.seeded, ladder: ladder.seeded } : undefined;
     }),
     { timezone: TIMEZONE },
   );
