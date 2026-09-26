@@ -12,6 +12,7 @@ import { initDefaultSettings, SETTINGS_KEYS, setSetting, clearSettingsCache } fr
 import { buildLeaderboard } from '../services/leaderboardService';
 import {
   ensureSyntheticPool,
+  growSyntheticLadder,
   purgeSyntheticPlayers,
   seedSyntheticDaily,
   seedSyntheticLadder,
@@ -186,6 +187,59 @@ describe('the weekly / monthly / all-time boards', () => {
     const after = await SyntheticScore.find({ type: 'weekly' }).sort({ userId: 1 }).lean();
 
     expect(after.map((r) => r.points)).toEqual(before.map((r) => r.points));
+  });
+});
+
+describe('daily growth', () => {
+  beforeEach(async () => {
+    await setSetting(SETTINGS_KEYS.SYNTHETIC_LADDER_SIZE, 20);
+    await setSetting(SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING, 100);
+    await setSetting(SETTINGS_KEYS.SYNTHETIC_DAILY_GROWTH, 25);
+    clearSettingsCache();
+    await ensureSyntheticPool(25);
+    await seedSyntheticLadder();
+  });
+
+  it('raises standings so the board stays a contest', async () => {
+    const before = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+    const res = await growSyntheticLadder();
+    expect(res.grown).toBeGreaterThan(0);
+
+    const after = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+    for (let i = 0; i < before.length; i++) {
+      expect(after[i].points).toBeGreaterThan(before[i].points);
+    }
+  });
+
+  it('grows once a day however often it runs', async () => {
+    await growSyntheticLadder();
+    const after = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+
+    await growSyntheticLadder();
+    await growSyntheticLadder();
+    const later = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+
+    expect(later.map((r) => r.points)).toEqual(after.map((r) => r.points));
+  });
+
+  it('grows again the next day', async () => {
+    await growSyntheticLadder();
+    const day1 = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+
+    const tomorrow = new Date(Date.now() + 86_400_000);
+    const res = await growSyntheticLadder(tomorrow);
+    expect(res.grown).toBeGreaterThan(0);
+
+    const day2 = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+    for (let i = 0; i < day1.length; i++) {
+      expect(day2[i].points).toBeGreaterThan(day1[i].points);
+    }
+  });
+
+  it('does nothing when the padding is switched off', async () => {
+    await setSetting(SETTINGS_KEYS.SYNTHETIC_ENABLED, false);
+    clearSettingsCache();
+    expect(await growSyntheticLadder()).toEqual({ grown: 0, skipped: 'disabled' });
   });
 });
 

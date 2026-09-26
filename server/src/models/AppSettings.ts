@@ -40,6 +40,7 @@ export const SETTINGS_KEYS = {
   SYNTHETIC_DAILY_MAX: 'synthetic_daily_max',           // most daily entries to seed
   SYNTHETIC_LADDER_SIZE: 'synthetic_ladder_size',       // how many appear on weekly/monthly/all
   SYNTHETIC_POINTS_CEILING: 'synthetic_points_ceiling', // highest points a house account may hold
+  SYNTHETIC_DAILY_GROWTH: 'synthetic_daily_growth',     // points a house account gains per day
 } as const;
 
 /**
@@ -90,6 +91,7 @@ export async function initDefaultSettings() {
     [SETTINGS_KEYS.SYNTHETIC_DAILY_MAX]: 400,
     [SETTINGS_KEYS.SYNTHETIC_LADDER_SIZE]: 120,
     [SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING]: 140,
+    [SETTINGS_KEYS.SYNTHETIC_DAILY_GROWTH]: 25,
     [SETTINGS_KEYS.REFERRAL_COIN_REFERRER]: 50,
     [SETTINGS_KEYS.REFERRAL_COIN_NEW_USER]: 50,
     [SETTINGS_KEYS.DAILY_AD_REWARD_COINS]: 10,

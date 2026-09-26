@@ -15,6 +15,8 @@ export interface ISyntheticScore {
   /** e.g. "2026-W39", "2026-09", or "all" for the all-time board. */
   periodLabel: string;
   points: number;
+  /** "YYYY-MM-DD" of the last daily growth, so it happens once per day. */
+  lastGrownOn?: string | null;
 }
 
 const SyntheticScoreSchema = new Schema<ISyntheticScore>(
@@ -23,6 +25,7 @@ const SyntheticScoreSchema = new Schema<ISyntheticScore>(
     type: { type: String, enum: ['weekly', 'monthly', 'all'], required: true },
     periodLabel: { type: String, required: true },
     points: { type: Number, required: true, min: 0 },
+    lastGrownOn: { type: String, default: null },
   },
   { timestamps: true },
 );

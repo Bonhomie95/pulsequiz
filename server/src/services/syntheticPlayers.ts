@@ -82,6 +82,9 @@ export async function ensureSyntheticPool(size?: number): Promise<number> {
         username,
         avatar: pick(AVATARS),
         isSynthetic: true,
+        // Fixed for the life of the account: the same person is near the top
+        // of every board, or near the bottom of every board.
+        syntheticStrength: skewedUnit(),
         hasCompletedFirstQuiz: true,
         publicProfile: false,
       });
@@ -193,8 +196,21 @@ export async function seedSyntheticLadder(
 
   const ladderSize = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_LADDER_SIZE, 120));
   const ceiling = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING, 140));
-  const ids = await syntheticIds();
-  if (!ids.length) return { seeded: 0 };
+
+  // One cohort, shared by every board.
+  //
+  // These used to be drawn separately per period, which read as four
+  // unrelated populations: the all-time leader was absent from monthly, the
+  // monthly leader absent from weekly. Real players accumulate, so whoever
+  // tops all-time is usually active this month and this week too. Ranking by
+  // the account's fixed strength gives that, and the per-period scale keeps
+  // the magnitudes plausible.
+  const cohort = await User.find({ isSynthetic: true })
+    .select('_id syntheticStrength')
+    .sort({ syntheticStrength: -1 })
+    .limit(ladderSize)
+    .lean();
+  if (!cohort.length) return { seeded: 0 };
 
   const periods: { type: 'weekly' | 'monthly' | 'all'; label: string; scale: number }[] = [
     { type: 'weekly', label: currentPeriodLabel('weekly', at), scale: 1 },
@@ -205,26 +221,27 @@ export async function seedSyntheticLadder(
   let seeded = 0;
 
   for (const period of periods) {
-    // `ladderSize` caps how many house accounts appear on a board, not how
-    // many each run adds. Without this the board grew every tick until the
-    // whole pool was on it.
-    const already = await SyntheticScore.find({ type: period.type, periodLabel: period.label })
-      .select('userId')
-      .lean();
-    const onBoard = new Set(already.map((r) => String(r.userId)));
-    const shortfall = Math.min(ids.length, ladderSize) - onBoard.size;
-    if (shortfall <= 0) continue;
+    const ops = cohort.map((u) => {
+      const strength = Number(u.syntheticStrength) || 0.1;
+      // ±12% jitter so the three boards are not the identical order — a real
+      // player has better and worse weeks — while staying recognisably the
+      // same person.
+      const jitter = 0.88 + Math.random() * 0.24;
+      const points = Math.max(1, Math.round(strength * jitter * ceiling * period.scale));
 
-    // A different slice per period, so the same handles do not head every board.
-    const chosen = shuffled(ids.filter((id) => !onBoard.has(String(id)))).slice(0, shortfall);
-    const ops = chosen.map((userId) => {
-      const points = Math.max(1, Math.round(skewedUnit() * ceiling * period.scale));
       return {
         updateOne: {
-          filter: { userId, type: period.type, periodLabel: period.label },
+          filter: { userId: u._id, type: period.type, periodLabel: period.label },
           // Only on insert: re-running must not reshuffle a board players are
           // already looking at.
-          update: { $setOnInsert: { userId, type: period.type, periodLabel: period.label, points } },
+          update: {
+            $setOnInsert: {
+              userId: u._id,
+              type: period.type,
+              periodLabel: period.label,
+              points,
+            },
+          },
           upsert: true,
         },
       };
@@ -260,4 +277,55 @@ export async function purgeSyntheticPlayers(): Promise<{ users: number }> {
 
   logger.info('Purged synthetic players', { users: res.deletedCount });
   return { users: res.deletedCount ?? 0 };
+}
+
+/**
+ * Nudge every house account's standing up a little, once a day.
+ *
+ * Without this their scores are frozen at whatever the board was seeded with,
+ * so a real player passes them once and the board stops being a contest. A
+ * daily drift keeps a target ahead of an active player without ever running
+ * away from them: the growth is randomised per account, so the order reshuffles
+ * the way a real board does, and the weekly board resets every week anyway.
+ *
+ * Idempotent by date — running it ten times in a day grows nothing ten times.
+ */
+export async function growSyntheticLadder(
+  at: Date = new Date(),
+): Promise<{ grown: number; skipped?: string }> {
+  if (!(await syntheticsEnabled())) return { grown: 0, skipped: 'disabled' };
+
+  const today = at.toISOString().slice(0, 10);
+  const growth = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_DAILY_GROWTH, 25));
+  if (growth <= 0) return { grown: 0, skipped: 'growth_disabled' };
+
+  // Same shape as the seed: a month accumulates faster than a week, all-time
+  // faster still.
+  const scales: Record<string, number> = { weekly: 1, monthly: 3.5, all: 8 };
+
+  const due = await SyntheticScore.find({
+    $or: [{ lastGrownOn: null }, { lastGrownOn: { $ne: today } }],
+  })
+    .select('_id type')
+    .lean();
+
+  if (!due.length) return { grown: 0 };
+
+  const ops = due.map((row) => ({
+    updateOne: {
+      filter: { _id: row._id },
+      update: {
+        // Randomised per account and per day, so the board reorders instead of
+        // every entry marching up in lockstep.
+        $inc: { points: Math.max(1, Math.round(Math.random() * growth * (scales[row.type] ?? 1))) },
+        $set: { lastGrownOn: today },
+      },
+    },
+  }));
+
+  const res = await SyntheticScore.bulkWrite(ops, { ordered: false });
+  const grown = res.modifiedCount ?? 0;
+
+  logger.info('Grew synthetic ladder', { grown, today });
+  return { grown };
 }

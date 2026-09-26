@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Image,
   View,
   Text,
@@ -94,9 +95,15 @@ export default function PvPResultScreen() {
         `/quiz/pvp/search?category=${encodeURIComponent(category ?? 'General Knowledge')}&wager=${wager}&rematchWith=${opponent?.userId}` as any,
       );
     };
-    const onDeclined = () => {
+    const onDeclined = ({ reason }: { reason?: string } = {}) => {
       clearRematchTimer();
       setRematchState('idle');
+      Alert.alert(
+        reason === 'offline' ? 'Opponent has left' : 'Rematch declined',
+        reason === 'offline'
+          ? `${opponent?.username ?? 'They'} is no longer online.`
+          : `${opponent?.username ?? 'They'} declined the rematch.`,
+      );
     };
 
     socket.on(SOCKET_EVENTS.REMATCH_REQUEST, onRequest);
@@ -133,7 +140,16 @@ export default function PvPResultScreen() {
   };
 
   const requestRematch = () => {
-    if (!opponent?.userId || !category) return;
+    // Returning silently here made the button look dead. It can only happen
+    // if the match details were lost (a reload, or the store reset underneath
+    // us), and the player deserves to know why nothing happened.
+    if (!opponent?.userId || !category) {
+      Alert.alert(
+        "Can't request a rematch",
+        'This match is no longer available. Start a new game instead.',
+      );
+      return;
+    }
     setRematchState('waiting');
     socket.emit(SOCKET_EVENTS.REMATCH_REQUEST, {
       opponentId: opponent.userId,

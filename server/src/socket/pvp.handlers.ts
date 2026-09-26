@@ -267,7 +267,20 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
   const relay = (event: string) =>
     on(event, ({ opponentId, category, wager }: any) => {
       const opponentSocketId = userSocketMap.get(opponentId);
-      if (!opponentSocketId) return;
+
+      if (!opponentSocketId) {
+        // The opponent has closed the app or dropped off. Dropping this
+        // silently left the requester staring at a spinner until a 30s
+        // timeout — the rematch button looked broken. Tell them instead.
+        if (event === SOCKET_EVENTS.REMATCH_REQUEST) {
+          socket.emit(SOCKET_EVENTS.REMATCH_DECLINED, {
+            fromUserId: opponentId,
+            reason: 'offline',
+          });
+        }
+        return;
+      }
+
       io.to(opponentSocketId).emit(event, { fromUserId: userId, category, wager });
     });
 

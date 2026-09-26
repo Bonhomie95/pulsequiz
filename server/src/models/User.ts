@@ -42,6 +42,13 @@ export interface IUser {
    * players only. See services/syntheticPlayers.ts.
    */
   isSynthetic: boolean;
+  /**
+   * How active this house account is, 0..1. Fixed at creation and used for
+   * every board, so one account's daily, weekly, monthly and all-time
+   * standings agree with each other instead of looking like four unrelated
+   * people. See services/syntheticPlayers.ts.
+   */
+  syntheticStrength?: number;
   hasCompletedFirstQuiz: boolean;
   moderationStrikes: number;
 
@@ -127,6 +134,7 @@ const UserSchema = new Schema<IUser>(
     lastSeenAt: { type: Date, default: null },
     isBanned: { type: Boolean, default: false },
     isSynthetic: { type: Boolean, default: false },
+    syntheticStrength: { type: Number, default: 0 },
     hasCompletedFirstQuiz: { type: Boolean, default: false },
     moderationStrikes: { type: Number, default: 0 },
     tokenVersion: { type: Number, default: 0 },

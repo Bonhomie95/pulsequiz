@@ -20,7 +20,11 @@ import {
   sendLeaderboardReminder,
   sendNewChallengesNotification,
 } from '../services/notificationService';
-import { seedSyntheticDaily, seedSyntheticLadder } from '../services/syntheticPlayers';
+import {
+  growSyntheticLadder,
+  seedSyntheticDaily,
+  seedSyntheticLadder,
+} from '../services/syntheticPlayers';
 import { utcDateKey } from '../services/dailyService';
 import { previousPeriod } from '../utils/dateRanges';
 import { withJobLock } from '../utils/jobLock';
@@ -159,9 +163,19 @@ export function startLeaderboardCron(io?: Server) {
       // Seed tomorrow too, so players east of UTC never open a bare board.
       const ahead = await seedSyntheticDaily(tomorrow);
       const ladder = await seedSyntheticLadder();
+      // Standings drift up once a day, so an active player always has
+      // something just ahead of them rather than a frozen board.
+      const grown = await growSyntheticLadder();
 
-      const seeded = daily.seeded + ahead.seeded + ladder.seeded;
-      return seeded ? { daily: daily.seeded, ahead: ahead.seeded, ladder: ladder.seeded } : undefined;
+      const changed = daily.seeded + ahead.seeded + ladder.seeded + grown.grown;
+      return changed
+        ? {
+            daily: daily.seeded,
+            ahead: ahead.seeded,
+            ladder: ladder.seeded,
+            grown: grown.grown,
+          }
+        : undefined;
     }),
     { timezone: TIMEZONE },
   );

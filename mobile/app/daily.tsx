@@ -46,9 +46,18 @@ type DailyView = {
 /** 15s per question is the clock the server runs; unused time inverts to speed. */
 const SECONDS_PER_QUESTION = 15;
 
-/** "1:48" — how long the run actually took. */
-function timeTaken(total: number, timeLeftMs: number) {
-  const secs = Math.max(0, Math.round(total * SECONDS_PER_QUESTION - timeLeftMs / 1000));
+/**
+ * "1:48" — how long the run actually took.
+ *
+ * Both inputs are defended: a server that predates `timeLeftMs` on the board
+ * sends undefined, and `total * 15 - undefined` is NaN, which rendered as
+ * "NaN:NaN" on every row.
+ */
+function timeTaken(total: number, timeLeftMs: number | undefined | null) {
+  const totalSecs = Number(total) * SECONDS_PER_QUESTION;
+  const leftSecs = Number(timeLeftMs ?? 0) / 1000;
+  if (!Number.isFinite(totalSecs) || !Number.isFinite(leftSecs)) return '—';
+  const secs = Math.max(0, Math.round(totalSecs - leftSecs));
   return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
 }
 
