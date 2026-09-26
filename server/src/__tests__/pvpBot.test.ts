@@ -45,6 +45,7 @@ async function matchWithBot(botId: mongoose.Types.ObjectId) {
     state: 'ACTIVE',
     wager: 0,
     startedAt: now,
+    matchmakingExpiresAt: new Date(now.getTime() + 120_000),
     questionSet: questions.map((q, i) => ({
       questionId: q._id,
       difficulty: 'easy',
@@ -101,7 +102,7 @@ describe('picking an opponent', () => {
 });
 
 describe('playing the match out', () => {
-  jest.setTimeout(60_000);
+  jest.setTimeout(40_000);
 
   it('answers every question and never touches the human side', async () => {
     await ensureSyntheticPool(5);
@@ -109,10 +110,10 @@ describe('playing the match out', () => {
     const botId = bot!._id as mongoose.Types.ObjectId;
     const match = await matchWithBot(botId);
 
-    startBotPlay(fakeIo(), match._id.toString(), String(botId));
+    startBotPlay(fakeIo(), match._id.toString(), String(botId), { thinkingMs: () => 5 });
 
     // Wait for it to work through all ten.
-    const deadline = Date.now() + 45_000;
+    const deadline = Date.now() + 15_000;
     let done = false;
     while (Date.now() < deadline && !done) {
       await new Promise((r) => setTimeout(r, 500));
@@ -142,8 +143,8 @@ describe('playing the match out', () => {
     const botId = bot!._id as mongoose.Types.ObjectId;
     const match = await matchWithBot(botId);
 
-    startBotPlay(fakeIo(), match._id.toString(), String(botId));
-    const deadline = Date.now() + 45_000;
+    startBotPlay(fakeIo(), match._id.toString(), String(botId), { thinkingMs: () => 5 });
+    const deadline = Date.now() + 15_000;
     let done = false;
     while (Date.now() < deadline && !done) {
       await new Promise((r) => setTimeout(r, 500));

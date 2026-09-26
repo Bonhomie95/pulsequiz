@@ -125,7 +125,17 @@ async function applyBotAnswer(
  * Only the opponent's *progress* is broadcast, never what it answered — the
  * same information a human opponent leaks.
  */
-export function startBotPlay(io: Server, matchId: string, botUserId: string) {
+export function startBotPlay(
+  io: Server,
+  matchId: string,
+  botUserId: string,
+  /**
+   * Overrides the pacing. Real matches use human timings; tests would
+   * otherwise take the ~100 seconds a real opponent takes.
+   */
+  opts: { thinkingMs?: (strength: number) => number } = {},
+) {
+  const pace = opts.thinkingMs ?? thinkingTime;
   stopBot(matchId);
 
   const room = `pvp:${matchId}`;
@@ -153,7 +163,7 @@ export function startBotPlay(io: Server, matchId: string, botUserId: string) {
       });
 
       if (!res.ended) {
-        botTimers.set(matchId, setTimeout(step, thinkingTime(strength)));
+        botTimers.set(matchId, setTimeout(step, pace(strength)));
         return;
       }
 
@@ -192,7 +202,7 @@ export function startBotPlay(io: Server, matchId: string, botUserId: string) {
 
   // The first answer waits like any other, so the match does not open with the
   // opponent already a question ahead.
-  botTimers.set(matchId, setTimeout(step, thinkingTime(0.5)));
+  botTimers.set(matchId, setTimeout(step, pace(0.5)));
 }
 
 /** The house account in this match, if there is one. */
