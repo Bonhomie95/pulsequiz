@@ -11,6 +11,7 @@ import { safeHandler } from './safeHandler';
 import { settleMatch, computeWinner } from '../services/pvpService';
 import { isTooFast } from '../services/antiCheatService';
 import { logger } from '../utils/logger';
+import { botPlayerIn, startBotPlay, stopBot } from './pvpBot';
 import { TIME_PER_QUESTION, ANSWER_GRACE_MS } from '../config/quizTiming';
 
 /* ---------------------------------- */
@@ -408,6 +409,11 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
     for (const p of started.players as any[]) {
       liveByUser.set(p.userId.toString(), { matchId });
     }
+
+    // If one side is a house account, start playing for it. Nothing else
+    // will: it has no client to answer with.
+    const botUserId = await botPlayerIn(started as any);
+    if (botUserId) startBotPlay(io, matchId, botUserId);
   });
 
   /* ---------- KEEPALIVE ---------- */
@@ -600,6 +606,7 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
               reason: 'normal',
             } as const);
 
+      stopBot(matchId);
       await settleMatch(io, matchId, outcome);
       releaseMatch(matchId, match.players as any[]);
     },

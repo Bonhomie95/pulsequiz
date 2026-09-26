@@ -12,8 +12,18 @@ import { getSetting, SETTINGS_KEYS } from '../models/AppSettings';
 import { sendPvpChallenge } from '../services/notificationService';
 import { getRating } from '../services/ratingService';
 import { logger } from '../utils/logger';
+import { pickBotOpponent } from './pvpBot';
 
 const QUEUE_TIMEOUT_MS = 60_000;
+
+/**
+ * How long to look for a real opponent before offering a house account.
+ *
+ * Long enough that two people searching at once still find each other, short
+ * enough that a lone player is not left staring at a spinner. Searching and
+ * being told nobody is here is how an app teaches you it is empty.
+ */
+const BOT_MATCH_AFTER_MS = 17_000;
 
 export type MatchQueueEntry = {
   socketId: string;
@@ -67,6 +77,18 @@ function startSweeper() {
       for (const entry of [...queue]) {
         if (!queue.includes(entry)) continue; // already matched this tick
         attemptMatch(ioSingleton, entry);
+      }
+    }
+
+    // Nobody real turned up in time — pair them with a house account.
+    if (ioSingleton) {
+      for (const entry of [...queue]) {
+        if (!queue.includes(entry)) continue;
+        if (now - entry.joinedAt < BOT_MATCH_AFTER_MS) continue;
+        // A rematch is a request for one specific person; never substitute.
+        if (entry.rematchWith) continue;
+
+        void matchWithBot(ioSingleton, entry);
       }
     }
 
@@ -357,4 +379,82 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
   socket.on('disconnect', () => {
     removeFromQueueBySocket(socket.id);
   });
+}
+
+
+/**
+ * Pair a waiting player with a house account.
+ *
+ * The match is created ready on the bot's side, because a house account has no
+ * client to announce itself — without that the ready-grace timer would forfeit
+ * it before the first question. Never wagered: the bot has no coins to stake,
+ * and a stake against the house would be indefensible.
+ */
+async function matchWithBot(io: Server, entry: MatchQueueEntry) {
+  const idx = queue.indexOf(entry);
+  if (idx === -1) return;
+  queue.splice(idx, 1); // claim before any await, so the sweeper cannot double-match
+
+  try {
+    const bot = await pickBotOpponent();
+    if (!bot) {
+      queue.push(entry); // no house accounts — keep waiting for a human
+      return;
+    }
+
+    const [snapA, snapB] = await Promise.all([
+      snapshotPlayer(entry.userId),
+      snapshotPlayer(bot.userId),
+    ]);
+
+    const match = await PvPMatch.create({
+      category: entry.category,
+      mode: 'single',
+      state: 'MATCHED',
+      wager: 0,
+      players: [
+        { ...snapA, ready: false, connected: false },
+        { ...snapB, ready: true, connected: true },
+      ],
+      questionSet: [],
+      matchmakingExpiresAt: new Date(Date.now() + 120_000),
+    });
+
+    const matchId = match._id.toString();
+
+    io.to(entry.socketId).emit(SOCKET_EVENTS.MATCH_FOUND, {
+      matchId,
+      category: entry.category,
+      wager: 0,
+      isRematch: false,
+      players: [
+        {
+          userId: entry.userId,
+          username: snapA.usernameSnapshot,
+          avatar: snapA.avatarSnapshot,
+          level: snapA.levelSnapshot,
+          allTimeRank: snapA.allTimeRankSnapshot,
+          rating: entry.rating,
+        },
+        {
+          userId: bot.userId,
+          username: snapB.usernameSnapshot,
+          avatar: snapB.avatarSnapshot,
+          level: snapB.levelSnapshot,
+          allTimeRank: snapB.allTimeRankSnapshot,
+          rating: 1000,
+        },
+      ],
+      opponentUserId: bot.userId,
+    });
+
+    logger.info('PvP match created against a house account', {
+      matchId,
+      category: entry.category,
+      waitedMs: Date.now() - entry.joinedAt,
+    });
+  } catch (err) {
+    logger.error('Bot matchmaking failed', err, { userId: entry.userId });
+    if (!queue.includes(entry)) queue.push(entry); // put them back
+  }
 }
