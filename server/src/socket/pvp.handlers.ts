@@ -357,6 +357,25 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
 
     clearDisconnectTimer(userId);
 
+    // Mark this player ready with a targeted atomic write, NOT by saving the
+    // whole document.
+    //
+    // Both clients emit MATCH_START the moment the match is found, so the two
+    // saves raced and Mongoose's version check rejected whichever landed
+    // second. That player's readiness was silently lost, `allReady` never
+    // became true, the question set was never dealt — and the screen stayed
+    // blank until the ready-grace timer forfeited the match.
+    await PvPMatch.updateOne(
+      { _id: matchId, 'players.userId': new Types.ObjectId(userId) },
+      {
+        $set: {
+          'players.$.connected': true,
+          'players.$.lastSeenAt': new Date(),
+          'players.$.ready': true,
+        },
+      },
+    );
+
     player.connected = true;
     player.lastSeenAt = new Date();
     player.ready = true;
@@ -394,11 +413,14 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
       return;
     }
 
-    await match.save();
+    // Re-read: our own write above is already persisted, and this is the only
+    // way to see the opponent's, which may have landed while we were working.
+    const fresh = await PvPMatch.findById(matchId).select('players').lean();
+    const freshPlayers = (fresh?.players ?? match.players) as any[];
 
-    const allReady = (match.players as any[]).every((p) => !!p.ready);
+    const allReady = freshPlayers.every((p) => !!p.ready);
     if (!allReady) {
-      const missing = (match.players as any[]).find((p) => !p.ready)!;
+      const missing = freshPlayers.find((p) => !p.ready)!;
       io.to(room).emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
       startReadyGrace(io, matchId, missing.userId.toString());
       return;
