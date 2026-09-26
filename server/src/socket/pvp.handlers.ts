@@ -444,101 +444,124 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
         return;
       }
 
-      const match = await PvPMatch.findById(matchId);
-      if (!match || match.settledAt || match.state === 'FINISHED') return;
-
+      /**
+       * Apply one answer, retrying a lost version check.
+       *
+       * Both players are subdocuments of the same match, so two answers in
+       * flight at once make one `save()` fail — which says nothing about the
+       * player who sent it.
+       */
       const room = `pvp:${matchId}`;
 
-      const player = (match.players as any[]).find(
-        (p) => p.userId.toString() === userId,
-      );
-      if (!player) return;
-      socket.join(room);
+      let applied:
+        | { match: any; player: any; qq: any; isCorrect: boolean; expired: boolean }
+        | null = null;
 
-      clearDisconnectTimer(userId);
+      for (let attempt = 0; attempt < 6 && !applied; attempt++) {
+        const match = await PvPMatch.findById(matchId);
+        if (!match || match.settledAt || match.state === 'FINISHED') return;
 
-      // Already ended this run — ignore late duplicates.
-      if (player.completed || typeof player.failedAtIndex === 'number') return;
-
-      const qRef = (match.questionSet as any[])[player.currentIndex];
-      if (!qRef || qRef.questionId.toString() !== questionId) {
-        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Invalid question' });
-        return;
-      }
-
-      const now = new Date();
-      const servedAt: Date = player.questionServedAt ?? match.startedAt ?? now;
-
-      // ── Server-authoritative timing ────────────────────────────────────────
-      // The client countdown is cosmetic. A late answer is a timeout regardless
-      // of what the client claims, and an impossibly fast one is rejected.
-      const deadline: Date | null = player.questionDeadlineAt ?? null;
-      const expired = deadline ? now.getTime() > deadline.getTime() : false;
-
-      if (!expired && selected !== null && isTooFast(now, servedAt)) {
-        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Answer submitted too quickly' });
-        return;
-      }
-
-      const qq = await QuizQuestion.findById(questionId).select('answer').lean();
-      if (!qq) return;
-
-      const isCorrect = !expired && selected !== null && selected === qq.answer;
-
-      // Elapsed time is measured entirely from server timestamps, and clamped
-      // so a stalled client can't bank an arbitrarily small (or huge) number.
-      const elapsedMs = Math.min(
-        Math.max(now.getTime() - servedAt.getTime(), 0),
-        TIME_PER_QUESTION * 1000 + ANSWER_GRACE_MS,
-      );
-
-      player.answers.push({
-        questionId: qq._id,
-        selected: expired ? null : selected,
-        isCorrect,
-        answeredAt: now,
-      });
-      player.answeredMs = (player.answeredMs ?? 0) + elapsedMs;
-
-      if (!player.startedAt) player.startedAt = servedAt;
-
-      // A wrong answer no longer ends the run.
-      //
-      // PvP used to be sudden death: one slip and you were out, watching the
-      // other player finish alone. Both players now answer the same ten
-      // questions whatever happens, and the result is decided on score with
-      // time as the tie-break — which is what computeWinner already did.
-      //
-      // `failedAtIndex` is deliberately left unset. The "has this player
-      // ended" checks still read it so that matches already in flight when
-      // this shipped continue to settle.
-      player.currentIndex += 1;
-      player.furthestIndex = Math.max(player.furthestIndex, player.currentIndex);
-
-      if (player.currentIndex >= (match.questionSet as any[]).length) {
-        player.completed = true;
-        player.endedAt = now;
-        player.questionDeadlineAt = null;
-      } else {
-        // Serve the next question with a fresh server-side deadline.
-        player.questionServedAt = now;
-        player.questionDeadlineAt = new Date(
-          now.getTime() + TIME_PER_QUESTION * 1000 + ANSWER_GRACE_MS,
+        const player = (match.players as any[]).find(
+          (p) => p.userId.toString() === userId,
         );
+        if (!player) return;
+        socket.join(room);
+
+        clearDisconnectTimer(userId);
+
+        // Already ended this run — ignore late duplicates.
+        if (player.completed || typeof player.failedAtIndex === 'number') return;
+
+        const qRef = (match.questionSet as any[])[player.currentIndex];
+        if (!qRef || qRef.questionId.toString() !== questionId) {
+          socket.emit(SOCKET_EVENTS.ERROR, { message: 'Invalid question' });
+          return;
+        }
+
+        const now = new Date();
+        const servedAt: Date = player.questionServedAt ?? match.startedAt ?? now;
+
+        // ── Server-authoritative timing ────────────────────────────────────────
+        // The client countdown is cosmetic. A late answer is a timeout regardless
+        // of what the client claims, and an impossibly fast one is rejected.
+        const deadline: Date | null = player.questionDeadlineAt ?? null;
+        const expired = deadline ? now.getTime() > deadline.getTime() : false;
+
+        if (!expired && selected !== null && isTooFast(now, servedAt)) {
+          socket.emit(SOCKET_EVENTS.ERROR, { message: 'Answer submitted too quickly' });
+          return;
+        }
+
+        const qq = await QuizQuestion.findById(questionId).select('answer').lean();
+        if (!qq) return;
+
+        const isCorrect = !expired && selected !== null && selected === qq.answer;
+
+        // Elapsed time is measured entirely from server timestamps, and clamped
+        // so a stalled client can't bank an arbitrarily small (or huge) number.
+        const elapsedMs = Math.min(
+          Math.max(now.getTime() - servedAt.getTime(), 0),
+          TIME_PER_QUESTION * 1000 + ANSWER_GRACE_MS,
+        );
+
+        player.answers.push({
+          questionId: qq._id,
+          selected: expired ? null : selected,
+          isCorrect,
+          answeredAt: now,
+        });
+        player.answeredMs = (player.answeredMs ?? 0) + elapsedMs;
+
+        if (!player.startedAt) player.startedAt = servedAt;
+
+        // A wrong answer no longer ends the run.
+        //
+        // PvP used to be sudden death: one slip and you were out, watching the
+        // other player finish alone. Both players now answer the same ten
+        // questions whatever happens, and the result is decided on score with
+        // time as the tie-break — which is what computeWinner already did.
+        //
+        // `failedAtIndex` is deliberately left unset. The "has this player
+        // ended" checks still read it so that matches already in flight when
+        // this shipped continue to settle.
+        player.currentIndex += 1;
+        player.furthestIndex = Math.max(player.furthestIndex, player.currentIndex);
+
+        if (player.currentIndex >= (match.questionSet as any[]).length) {
+          player.completed = true;
+          player.endedAt = now;
+          player.questionDeadlineAt = null;
+        } else {
+          // Serve the next question with a fresh server-side deadline.
+          player.questionServedAt = now;
+          player.questionDeadlineAt = new Date(
+            now.getTime() + TIME_PER_QUESTION * 1000 + ANSWER_GRACE_MS,
+          );
+        }
+
+        if (player.endedAt && player.startedAt) {
+          player.totalTimeMs = player.endedAt.getTime() - player.startedAt.getTime();
+        }
+
+        try {
+          await match.save();
+          applied = { match, player, qq, isCorrect, expired };
+        } catch (err: any) {
+          // Optimistic-concurrency loss. This is NOT a duplicate submit: both
+          // players live in the same match document, so whoever saves second
+          // loses the version check. Swallowing it dropped the opponent's
+          // answer on the floor — their tap did nothing and the question never
+          // advanced, which reads as "you can't answer because they answered
+          // first". Re-read and re-apply instead; a real duplicate is caught
+          // by the questionId check on the retry.
+          if (err?.name === 'VersionError') continue;
+          throw err;
+        }
       }
 
-      if (player.endedAt && player.startedAt) {
-        player.totalTimeMs = player.endedAt.getTime() - player.startedAt.getTime();
-      }
+      if (!applied) return;
+      const { match, player, qq, isCorrect, expired } = applied;
 
-      try {
-        await match.save();
-      } catch (err: any) {
-        // Optimistic-concurrency loss: another answer for this player won the
-        // race. Dropping it is correct — it was a duplicate submit.
-        if (err?.name === 'VersionError') return;
-        throw err;
-      }
 
       socket.emit(SOCKET_EVENTS.PLAYER_UPDATE, {
         userId,
