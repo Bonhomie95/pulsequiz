@@ -1,6 +1,11 @@
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'jest-expo',
+  // SDK 57 stopped hoisting Expo's own packages to the top level, so
+  // expo-modules-core (and friends) only exist under expo/node_modules.
+  // jest-expo's preset requires them by bare name, which Node resolution
+  // cannot reach from inside node_modules/jest-expo.
+  moduleDirectories: ['node_modules', 'node_modules/expo/node_modules'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },

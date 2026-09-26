@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from 'expo-router';
-import { useIsFocused } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from 'expo-router';
 
 import { api, errorMessage } from '@/src/api/api';
 import { useAuthStore, usePrizesAvailable } from '@/src/store/useAuthStore';

@@ -307,14 +307,15 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "15.1"
+            "deploymentTarget": "16.4"
           },
           "android": {
             "minSdkVersion": 24
           }
         }
       ],
-      "./plugins/withPodDeploymentTarget"
+      "./plugins/withPodDeploymentTarget",
+      "./plugins/withIosSceneLifecycle"
     ],
     "experiments": {
       "typedRoutes": true,

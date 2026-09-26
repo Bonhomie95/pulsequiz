@@ -8,6 +8,9 @@ import * as NavigationBar from 'expo-navigation-bar';
  * navigation bar to hide on iOS — and calling them anyway logs a warning per
  * call. Six screens call this on focus, so unguarded it floods the log.
  *
+ * SDK 57 removed `setBehaviorAsync`; it had already been a no-op for a release
+ * before that, with the swipe-to-reveal behaviour left to Android itself.
+ *
  * Callers fire these without awaiting, so a rejection here would surface as an
  * unhandled promise rejection rather than anything actionable. Cosmetic chrome
  * is not worth a crash report: swallow and carry on.
@@ -18,7 +21,6 @@ export async function enterImmersiveMode() {
   if (!supported) return;
   try {
     await NavigationBar.setVisibilityAsync('hidden');
-    await NavigationBar.setBehaviorAsync('overlay-swipe');
   } catch {
     // Best-effort only.
   }
