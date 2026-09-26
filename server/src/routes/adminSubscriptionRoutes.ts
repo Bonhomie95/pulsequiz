@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { AuthRequest } from '../middlewares/auth';
-import { requireAdmin } from '../middlewares/requireAdmin';
+import { requireAdmin, requireSuperAdmin } from '../middlewares/requireAdmin';
+import { auditAdmin } from '../utils/adminAudit';
 import Subscription from '../models/Subscription';
 
 const router = Router();
@@ -9,10 +10,10 @@ const router = Router();
 router.get('/', requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Number(req.query.limit) || 30;
-    const status = req.query.status as string | undefined;
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
-    const filter: Record<string, any> = {};
+    const filter: Record<string, unknown> = {};
     if (status) filter.status = status;
 
     const [subs, total] = await Promise.all([
@@ -44,12 +45,22 @@ router.get('/', requireAdmin, async (req: AuthRequest, res: Response) => {
 router.patch(
   '/:id/cancel',
   requireAdmin,
+  // Removes premium from a paying user — SUPER_ADMIN only, and audited. Note
+  // this does not stop store billing; the user cancels that in their store.
+  requireSuperAdmin,
   async (req: AuthRequest, res: Response) => {
     try {
       const sub = await Subscription.findById(req.params.id);
       if (!sub) return res.status(404).json({ message: 'Not found' });
+      const before = sub.status;
       sub.status = 'cancelled';
       await sub.save();
+      await auditAdmin(req, 'subscription.cancel', {
+        targetType: 'subscription',
+        targetId: String(req.params.id),
+        before: { status: before },
+        after: { status: 'cancelled' },
+      });
       return res.json({ message: 'Cancelled' });
     } catch (e) {
       return res.status(500).json({ message: 'Server error' });

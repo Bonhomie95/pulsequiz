@@ -23,6 +23,8 @@ ENV NODE_ENV=production
 COPY --from=build --chown=app:app /app/node_modules ./node_modules
 COPY --from=build --chown=app:app /app/dist ./dist
 COPY --from=build --chown=app:app /app/package.json ./package.json
+# Public legal pages (/terms, /privacy, /rules, /support, /delete-account).
+COPY --chown=app:app public ./public
 # Question seed data is read at runtime by `npm run seed`.
 COPY --chown=app:app src/seed ./dist/seed
 

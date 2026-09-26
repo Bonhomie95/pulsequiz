@@ -8,6 +8,7 @@ import {
   getPeriodOptions,
   triggerPayout,
   exportPayoutsCSV,
+  resolvePayout,
 } from '../controllers/adminPayoutController';
 
 const router = Router();
@@ -21,6 +22,7 @@ router.get('/export',          requireSuperAdmin, exportPayoutsCSV);
 
 // Everything below moves real money.
 router.post('/:id/retry',      requireSuperAdmin, retryPayout);
+router.post('/:id/resolve',    requireSuperAdmin, resolvePayout);
 router.post('/prize-pools',    requireSuperAdmin, setPrizePool);
 router.post('/trigger',        requireSuperAdmin, triggerPayout);
 

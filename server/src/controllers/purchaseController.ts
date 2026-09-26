@@ -24,8 +24,8 @@ import { logActivity } from '../utils/activityLogger';
  *
  * Runs in a transaction where the deployment supports one. Transactions need a
  * replica set; on a standalone mongod (local development) we fall back to
- * sequential writes ordered so the worst case is a credited wallet with the
- * purchase still marked pending, which the retry path resolves idempotently.
+ * sequential writes: the purchase is claimed first (so parallel verifies can't
+ * double-credit), and the claim is undone if the wallet write fails.
  */
 async function creditCoinsAtomic(params: {
   userId: string;
@@ -33,34 +33,19 @@ async function creditCoinsAtomic(params: {
   coins: number;
   store: 'apple' | 'google';
   uniqueKey: string;
-}): Promise<number> {
+}): Promise<number | null> {
   const { userId, purchaseId, coins, store, uniqueKey } = params;
 
-  const apply = async (session?: mongoose.ClientSession) => {
+  /** Returns the new balance, or null if another request already credited it. */
+  const apply = async (session?: mongoose.ClientSession): Promise<number | null> => {
     const opts = session ? { session } : {};
 
-    const wallet = await CoinWallet.findOneAndUpdate(
-      { userId },
-      { $inc: { coins } },
-      { upsert: true, returnDocument: 'after', ...opts },
-    );
-    const balance = wallet?.coins ?? coins;
-
-    await CoinTransaction.create(
-      [
-        {
-          userId,
-          delta: coins,
-          balanceAfter: balance,
-          reason: 'iap_purchase',
-          meta: `${store}:${uniqueKey}`,
-        },
-      ],
-      session ? { session } : {},
-    );
-
-    await Purchase.updateOne(
-      { _id: purchaseId },
+    // Claim FIRST, conditionally. The caller's "already credited?" check reads
+    // a copy taken before the store round-trip, so N parallel verify calls for
+    // one transaction all passed it and each $inc'd the wallet. Only the
+    // request that flips the state may credit.
+    const claimed = await Purchase.findOneAndUpdate(
+      { _id: purchaseId, state: { $ne: 'CREDITED' } },
       {
         $set: {
           state: 'CREDITED',
@@ -68,10 +53,43 @@ async function creditCoinsAtomic(params: {
           creditedCoins: coins,
         },
       },
-      opts,
+      { returnDocument: 'after', ...opts },
     );
+    if (!claimed) return null;
 
-    return balance;
+    let credited = false;
+    try {
+      const wallet = await CoinWallet.findOneAndUpdate(
+        { userId },
+        { $inc: { coins } },
+        { upsert: true, returnDocument: 'after', ...opts },
+      );
+      credited = true;
+      const balance = wallet?.coins ?? coins;
+
+      await CoinTransaction.create(
+        [
+          {
+            userId,
+            delta: coins,
+            balanceAfter: balance,
+            reason: 'iap_purchase',
+            meta: `${store}:${uniqueKey}`,
+          },
+        ],
+        session ? { session } : {},
+      );
+
+      return balance;
+    } catch (err) {
+      // Without a transaction, undo the claim if the wallet was never
+      // credited, so a retry can credit it instead of answering "Already
+      // credited" forever. (Inside a transaction the abort does this.)
+      if (!session && !credited) {
+        await Purchase.updateOne({ _id: purchaseId }, { $set: { state: 'PENDING' } }).catch(() => {});
+      }
+      throw err;
+    }
   };
 
   // Decide from the topology rather than by pattern-matching an error string:
@@ -86,7 +104,7 @@ async function creditCoinsAtomic(params: {
   let session: mongoose.ClientSession | null = null;
   try {
     session = await mongoose.startSession();
-    let balance = 0;
+    let balance: number | null = null;
     await session.withTransaction(async () => {
       balance = await apply(session!);
     });
@@ -143,13 +161,14 @@ export async function verifyApple(req: AuthRequest, res: Response) {
   };
   const userId = req.userId!;
 
-  if (!sku || !transactionId) {
+  if (!sku || typeof transactionId !== 'string' || !transactionId || transactionId.length > 200) {
     return res
       .status(400)
       .json({ message: 'sku and transactionId are required' });
   }
 
-  const pack = COIN_PACKS[sku];
+  // hasOwn: `COIN_PACKS['constructor']` is truthy and created junk rows.
+  const pack = typeof sku === 'string' && Object.hasOwn(COIN_PACKS, sku) ? COIN_PACKS[sku] : undefined;
   if (!pack) {
     return res.status(400).json({ message: `Unknown SKU: ${sku}` });
   }
@@ -197,8 +216,11 @@ export async function verifyApple(req: AuthRequest, res: Response) {
   purchase.verifiedAt = new Date();
 
   if (!apple.valid || apple.productId !== sku) {
-    purchase.state = 'REJECTED';
-    await purchase.save();
+    // Conditional: never downgrade a purchase a concurrent request credited.
+    await Purchase.updateOne(
+      { _id: purchase._id, state: { $ne: 'CREDITED' } },
+      { $set: { state: 'REJECTED', raw: purchase.raw, verifiedAt: purchase.verifiedAt } },
+    );
     logger.warn('Apple IAP purchase rejected', {
       transactionId,
       sku,
@@ -221,6 +243,16 @@ export async function verifyApple(req: AuthRequest, res: Response) {
     uniqueKey,
   });
 
+  if (coins === null) {
+    // A concurrent request for the same transaction won the claim.
+    return res.json({
+      ok: true,
+      coinsAdded: 0,
+      coins: await currentBalance(userId),
+      message: 'Already credited',
+    });
+  }
+
   await logActivity(userId, 'PURCHASE', {
     store: 'apple',
     sku,
@@ -240,13 +272,14 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
   };
   const userId = req.userId!;
 
-  if (!sku || !purchaseToken) {
+  if (!sku || typeof purchaseToken !== 'string' || !purchaseToken || purchaseToken.length > 1000) {
     return res
       .status(400)
       .json({ message: 'sku and purchaseToken are required' });
   }
 
-  const pack = COIN_PACKS[sku];
+  // hasOwn: `COIN_PACKS['constructor']` is truthy and created junk rows.
+  const pack = typeof sku === 'string' && Object.hasOwn(COIN_PACKS, sku) ? COIN_PACKS[sku] : undefined;
   if (!pack) {
     return res.status(400).json({ message: `Unknown SKU: ${sku}` });
   }
@@ -299,8 +332,11 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
   purchase.verifiedAt = new Date();
 
   if (!google.valid) {
-    purchase.state = 'REJECTED';
-    await purchase.save();
+    // Conditional: never downgrade a purchase a concurrent request credited.
+    await Purchase.updateOne(
+      { _id: purchase._id, state: { $ne: 'CREDITED' } },
+      { $set: { state: 'REJECTED', raw: purchase.raw, verifiedAt: purchase.verifiedAt } },
+    );
     // purchaseToken is in the logger's redaction set — pass it by name so it
     // is masked, rather than hand-truncating it into the message.
     logger.warn('Google IAP purchase rejected', {
@@ -323,6 +359,16 @@ export async function verifyGoogle(req: AuthRequest, res: Response) {
     store: 'google',
     uniqueKey,
   });
+
+  if (coins === null) {
+    // A concurrent request for the same transaction won the claim.
+    return res.json({
+      ok: true,
+      coinsAdded: 0,
+      coins: await currentBalance(userId),
+      message: 'Already credited',
+    });
+  }
 
   await logActivity(userId, 'PURCHASE', {
     store: 'google',

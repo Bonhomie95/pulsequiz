@@ -6,9 +6,9 @@
  * shipped categories hold 20 questions each, which a player exhausts in two
  * sessions.
  *
- * This validates a whole batch, reports every problem with a row number, and
- * only then writes — so a bad row in the middle can't leave a half-imported
- * category behind.
+ * This validates a whole batch and reports every problem with a row number.
+ * Valid rows are imported and invalid ones skipped, so operators should run a
+ * `dryRun` first (the admin panel always does) and fix the file if needed.
  */
 import QuizQuestion, { fingerprintQuestion } from '../models/QuizQuestion';
 import { logger } from '../utils/logger';
@@ -22,6 +22,7 @@ export interface RawQuestion {
   /** Either the 0-based index, or the answer text itself. */
   answer?: unknown;
   difficulty?: unknown;
+  explanation?: unknown;
 }
 
 export interface PreparedQuestion {
@@ -30,6 +31,7 @@ export interface PreparedQuestion {
   options: string[];
   answer: number;
   difficulty: Difficulty;
+  explanation: string | null;
   fingerprint: string;
 }
 
@@ -54,6 +56,7 @@ const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard'];
  * Parse a CSV batch.
  *
  * Expected header: category,difficulty,question,option1,option2,option3,option4,answer
+ * plus an optional `explanation` column.
  * `answer` may be a 1-based option number or the answer text.
  */
 export function parseQuestionCsv(csv: string): RawQuestion[] {
@@ -67,6 +70,7 @@ export function parseQuestionCsv(csv: string): RawQuestion[] {
   const cDifficulty = idx('difficulty');
   const cQuestion = idx('question');
   const cAnswer = idx('answer');
+  const cExplanation = idx('explanation');
   const optionCols = ['option1', 'option2', 'option3', 'option4'].map(idx);
 
   return rows.slice(1).map((cells) => ({
@@ -75,6 +79,7 @@ export function parseQuestionCsv(csv: string): RawQuestion[] {
     question: cQuestion >= 0 ? cells[cQuestion] : undefined,
     options: optionCols.map((c) => (c >= 0 ? cells[c] : undefined)),
     answer: cAnswer >= 0 ? cells[cAnswer] : undefined,
+    explanation: cExplanation >= 0 ? cells[cExplanation] : undefined,
   }));
 }
 
@@ -164,17 +169,16 @@ export function prepareQuestion(
     if (!text) return fail('Missing answer');
 
     const asNumber = Number(text);
-    if (Number.isInteger(asNumber)) {
-      // A bare number in a CSV is ambiguous. Treat 1–4 as a 1-based option
-      // number, which is what a human filling in a spreadsheet means, unless
-      // that number is itself one of the options.
-      const matchesOption = options.findIndex((o) => o === text);
-      answer =
-        matchesOption >= 0 && (asNumber < 1 || asNumber > 4)
-          ? matchesOption
-          : asNumber >= 1 && asNumber <= 4
-            ? asNumber - 1
-            : asNumber;
+    // The answer text itself always wins: with options 3,4,5,6 an answer of
+    // "4" means the option "4", not "the 4th option". Previously the 1-based
+    // reading won and silently stored "6" as correct.
+    const matchesOption = options.findIndex((o) => o.toLowerCase() === text.toLowerCase());
+    if (matchesOption >= 0) {
+      answer = matchesOption;
+    } else if (Number.isInteger(asNumber)) {
+      // Otherwise a bare 1–4 is a 1-based option number, which is what a human
+      // filling in a spreadsheet means.
+      answer = asNumber >= 1 && asNumber <= 4 ? asNumber - 1 : asNumber;
     } else {
       answer = options.findIndex((o) => o.toLowerCase() === text.toLowerCase());
       if (answer < 0) return fail(`Answer "${text}" is not one of the options`);
@@ -185,10 +189,16 @@ export function prepareQuestion(
     return fail(`Answer index ${answer} is out of range (expected 0–3)`);
   }
 
-  const rawDifficulty = String(raw.difficulty ?? 'medium').trim().toLowerCase();
-  const difficulty = DIFFICULTIES.includes(rawDifficulty as Difficulty)
-    ? (rawDifficulty as Difficulty)
-    : 'medium';
+  const rawDifficulty = String(raw.difficulty ?? '').trim().toLowerCase() || 'medium';
+  if (!DIFFICULTIES.includes(rawDifficulty as Difficulty)) {
+    return fail(`Difficulty "${rawDifficulty}" must be easy, medium or hard`);
+  }
+  const difficulty = rawDifficulty as Difficulty;
+
+  const explanation = String(raw.explanation ?? '').trim() || null;
+  if (explanation && explanation.length > 400) {
+    return fail('Explanation is longer than 400 characters');
+  }
 
   return {
     ok: true,
@@ -198,6 +208,7 @@ export function prepareQuestion(
       options,
       answer,
       difficulty,
+      explanation,
       fingerprint: fingerprintQuestion(question),
     },
   };
@@ -211,7 +222,7 @@ export function prepareQuestion(
  */
 export async function importQuestions(
   rows: RawQuestion[],
-  options: { defaultCategory?: string; dryRun?: boolean } = {},
+  options: { defaultCategory?: string; dryRun?: boolean; firstRowNumber?: number } = {},
 ): Promise<ImportReport> {
   const report: ImportReport = {
     received: rows.length,
@@ -226,7 +237,8 @@ export async function importQuestions(
   const seen = new Set<string>();
 
   rows.forEach((raw, i) => {
-    const result = prepareQuestion(raw, i + 1, options.defaultCategory);
+    // CSV callers pass 2 so row numbers match the spreadsheet (header is row 1).
+    const result = prepareQuestion(raw, i + (options.firstRowNumber ?? 1), options.defaultCategory);
     if (!result.ok) {
       report.errors.push(result.error);
       return;
@@ -289,6 +301,6 @@ export async function importQuestions(
 
 /** A ready-to-fill template, so nobody has to guess the column names. */
 export const CSV_TEMPLATE =
-  'category,difficulty,question,option1,option2,option3,option4,answer\n' +
-  'geography,easy,"What is the capital of France?",Paris,London,Berlin,Madrid,Paris\n' +
-  'math,medium,"What is 12 × 12?","124","144","132","154",144\n';
+  'category,difficulty,question,option1,option2,option3,option4,answer,explanation\n' +
+  'geography,easy,"What is the capital of France?",Paris,London,Berlin,Madrid,Paris,"Paris is both the capital and the largest city of France."\n' +
+  'math,medium,"What is 12 × 12?","124","144","132","154",144,\n';

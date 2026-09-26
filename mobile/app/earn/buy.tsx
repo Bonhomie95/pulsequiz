@@ -16,21 +16,11 @@ import type { Purchase, PurchaseError } from 'react-native-iap';
 import { ChevronLeft, ShoppingBag } from 'lucide-react-native';
 
 import { useTheme } from '@/src/theme/useTheme';
-import { COIN_PRODUCTS } from '@/src/iap/products';
-import { api, errorMessage } from '@/src/api/api';
-import { useCoinStore } from '@/src/store/useCoinStore';
+import { COIN_PRODUCTS, ALL_SKUS as COIN_SKUS } from '@/src/iap/products';
+import { errorMessage } from '@/src/api/api';
+import { verifyAndFinish, reconcilePendingPurchases } from '@/src/iap/verify';
 import { useRouter } from 'expo-router';
 import { logger } from '@/src/utils/logger';
-
-// Prefer the server's authoritative total (`coins`) so the local balance can't
-// drift; fall back to adding the delta only if an older server omits it.
-function syncCoins(data: { coins?: number; coinsAdded?: number }) {
-  if (typeof data?.coins === 'number') {
-    useCoinStore.getState().setCoins(data.coins);
-  } else if (typeof data?.coinsAdded === 'number') {
-    useCoinStore.getState().addCoins(data.coinsAdded);
-  }
-}
 
 export default function BuyCoinsScreen() {
   // Purchases already handled this session, so a re-fired listener doesn't
@@ -40,6 +30,7 @@ export default function BuyCoinsScreen() {
   const router = useRouter();
   const [loadingSku, setLoadingSku] = useState<string | null>(null);
   const [storePrices, setStorePrices] = useState<Record<string, string>>({});
+  const [storeError, setStoreError] = useState(false);
 
   // ── Init & fetch product metadata ─────────────────────────────────────────
   useEffect(() => {
@@ -58,6 +49,7 @@ export default function BuyCoinsScreen() {
         setStorePrices(prices);
       } catch (e) {
         logger.warn('Coin IAP init failed', { error: String(e) });
+        if (mounted) setStoreError(true);
       }
     })();
 
@@ -74,38 +66,17 @@ export default function BuyCoinsScreen() {
         // The listener can fire more than once for the same purchase (relaunch,
         // a retried finishTransaction). The server is idempotent, but without
         // this the user gets a stack of duplicate success alerts.
+        // Subscriptions are handled by the Premium screen.
+        if (!COIN_SKUS.includes(purchase.productId)) return;
         const key = purchase.transactionId ?? purchase.purchaseToken ?? '';
         if (!key || handledPurchases.current.has(key)) return;
         handledPurchases.current.add(key);
 
         try {
-          const isIos = Platform.OS === 'ios';
+          const result = await verifyAndFinish(purchase);
+          if (result?.kind !== 'coins') return; // a subscription — not ours
 
-          if (isIos && !purchase.transactionId) {
-            throw new Error('Missing transaction ID');
-          }
-          if (!isIos && !purchase.purchaseToken) {
-            throw new Error('Invalid Android purchase');
-          }
-
-          const res = isIos
-            ? await api.post('/purchase/apple/verify', {
-                sku: purchase.productId,
-                transactionId: purchase.transactionId,
-              })
-            : await api.post('/purchase/google/verify', {
-                sku: purchase.productId,
-                purchaseToken: purchase.purchaseToken,
-                packageName: (purchase as IAP.PurchaseAndroid).packageNameAndroid,
-              });
-
-          // Only consume the transaction once the server has banked it —
-          // otherwise a failed verification would destroy the receipt and the
-          // player would have paid for nothing.
-          await IAP.finishTransaction({ purchase, isConsumable: true });
-          syncCoins(res.data);
-
-          const added = res.data?.coinsAdded ?? 0;
+          const added = result.coinsAdded;
           Alert.alert(
             '🎉 Success',
             added > 0
@@ -127,8 +98,8 @@ export default function BuyCoinsScreen() {
 
           // A 4xx is the store or the server rejecting the receipt — that
           // will not fix itself. Anything else (offline, 5xx) is retried
-          // automatically the next time the app opens, because we have not
-          // consumed the transaction.
+          // automatically the next time the app opens (reconcilePendingPurchases),
+          // because we have not consumed the transaction.
           const terminal = typeof status === 'number' && status >= 400 && status < 500;
 
           Alert.alert(
@@ -182,20 +153,29 @@ export default function BuyCoinsScreen() {
     });
   };
 
-  const restorePurchases = async () => {
+  // Coins are consumable, so there is nothing to "restore" — but a payment
+  // that never reached our server (app killed, offline) can be completed.
+  const [checkingPending, setCheckingPending] = useState(false);
+  const checkPending = async () => {
+    if (checkingPending) return;
+    setCheckingPending(true);
     try {
-      const res = await api.post('/purchase/apple/restore');
-      useCoinStore.getState().setCoins(res.data.coins);
-      Alert.alert('Restored', 'Your purchases were restored.');
-    } catch {
-      Alert.alert('Restore failed', 'Could not restore purchases.');
+      const n = await reconcilePendingPurchases();
+      Alert.alert(
+        n > 0 ? 'Purchases completed' : 'All up to date',
+        n > 0
+          ? 'Your pending purchase has been credited to your wallet.'
+          : 'There are no unfinished purchases on this store account.',
+      );
+    } finally {
+      setCheckingPending(false);
     }
   };
 
-  const getPrice = (sku: string) =>
-    storePrices[sku] ||
-    COIN_PRODUCTS.find((p) => p.sku === sku)?.priceLabel ||
-    '';
+  // Store price only. Selling at a hardcoded USD label would show the wrong
+  // price to most of the world.
+  const getPrice = (sku: string) => storePrices[sku] ?? null;
+  const pricesLoaded = Object.keys(storePrices).length > 0;
 
   // ── UI ────────────────────────────────────────────────────────────────────
   return (
@@ -234,11 +214,17 @@ export default function BuyCoinsScreen() {
           </Text>
         </View>
 
+        {!pricesLoaded && (
+          <Text style={[styles.note, { color: theme.colors.muted, marginBottom: 12 }]}>
+            {storeError ? 'The store is unavailable right now. Please try again later.' : 'Loading prices…'}
+          </Text>
+        )}
+
         {COIN_PRODUCTS.map((p) => (
           <TouchableOpacity
             key={p.sku}
             onPress={() => buy(p.sku)}
-            disabled={!!loadingSku}
+            disabled={!!loadingSku || !getPrice(p.sku)}
             style={[
               styles.card,
               {
@@ -251,7 +237,8 @@ export default function BuyCoinsScreen() {
             ]}
           
             accessibilityRole="button"
-            accessibilityLabel="BEST VALUE 🔥"
+            accessibilityLabel={`Buy ${p.coins.toLocaleString()} coins${getPrice(p.sku) ? ` for ${getPrice(p.sku)}` : ''}`}
+            accessibilityState={{ disabled: !!loadingSku || !getPrice(p.sku), busy: loadingSku === p.sku }}
             hitSlop={8}>
             {p.popular && (
               <View style={styles.popularBadge}>
@@ -290,7 +277,7 @@ export default function BuyCoinsScreen() {
                   fontSize: 16,
                 }}
               >
-                {getPrice(p.sku)}
+                {getPrice(p.sku) ?? '—'}
               </Text>
               {loadingSku === p.sku && (
                 <ActivityIndicator
@@ -302,14 +289,17 @@ export default function BuyCoinsScreen() {
           </TouchableOpacity>
         ))}
 
-        {Platform.OS === 'ios' && (
-          <TouchableOpacity
-            onPress={restorePurchases}
-            style={{ marginTop: 8, padding: 16 }}
-          
-            accessibilityRole="button"
-            accessibilityLabel="Restore Purchases"
-            hitSlop={8}>
+        <TouchableOpacity
+          onPress={checkPending}
+          disabled={checkingPending}
+          style={{ marginTop: 8, padding: 16 }}
+          accessibilityRole="button"
+          accessibilityLabel="Complete pending purchases"
+          accessibilityState={{ disabled: checkingPending, busy: checkingPending }}
+          hitSlop={8}>
+          {checkingPending ? (
+            <ActivityIndicator color={theme.colors.primary} />
+          ) : (
             <Text
               style={{
                 color: theme.colors.primary,
@@ -317,14 +307,16 @@ export default function BuyCoinsScreen() {
                 fontWeight: '600',
               }}
             >
-              Restore Purchases
+              {"Paid but didn't receive coins? Tap to complete"}
             </Text>
-          </TouchableOpacity>
-        )}
+          )}
+        </TouchableOpacity>
 
         <Text style={[styles.note, { color: theme.colors.muted }]}>
-          Purchases are processed securely via the App Store / Play Store. Coins
-          are non-refundable.
+          Payments are processed by the {Platform.OS === 'ios' ? 'App Store' : 'Google Play Store'}.
+          Coins are a virtual item with no cash value, are not prize money, and
+          cannot be exchanged for USDT/USDC. Refund requests are handled by the{' '}
+          {Platform.OS === 'ios' ? 'App Store' : 'Google Play Store'}.
         </Text>
       </ScrollView>
     </SafeAreaView>

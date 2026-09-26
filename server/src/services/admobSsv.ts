@@ -134,6 +134,18 @@ function verifyWithPem(
     if (age > MAX_CALLBACK_AGE_MS) return { valid: false, reason: 'stale_callback' };
   }
 
+  // Any AdMob publisher can point their SSV callback here, and Google signs it.
+  // When the allow-list is configured, only our own rewarded units count.
+  const allowedUnits = (process.env.ADMOB_REWARDED_AD_UNIT_IDS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    // SSV reports the numeric unit id: "ca-app-pub-X/1234567890" → "1234567890".
+    .map((u) => u.split('/').pop()!);
+  if (allowedUnits.length && !allowedUnits.includes(String(params.ad_unit ?? ''))) {
+    return { valid: false, reason: 'unknown_ad_unit' };
+  }
+
   const rewardAmount = Number(params.reward_amount);
 
   return {

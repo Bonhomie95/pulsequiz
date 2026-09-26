@@ -8,19 +8,34 @@ import {
 } from '../api/api';
 import { logger } from '../utils/logger';
 
-export type UsdtType = 'TRC20' | 'ERC20' | 'BEP20';
+export type UsdtType = 'TRC20' | 'ERC20' | 'BEP20' | 'POLYGON' | 'SOL';
+export type PayoutCurrency = 'USDT' | 'USDC';
+
+/** Must match PAYOUT_NETWORKS in server/src/utils/validateWallet.ts. */
+export const PAYOUT_NETWORKS: Record<PayoutCurrency, readonly UsdtType[]> = {
+  USDT: ['TRC20', 'ERC20', 'BEP20'],
+  USDC: ['ERC20', 'POLYGON', 'SOL'],
+};
 
 export type User = {
   id: string;
   email: string;
   username?: string | null;
   avatar?: string | null;
+  payoutCurrency?: PayoutCurrency;
   usdtType?: UsdtType;
   usdtAddress?: string;
   withdrawalEnabled?: boolean;
   publicProfile?: boolean;
   provider?: string;
+  country?: string | null;
+  /** Server decides per country whether cash prizes are offered. */
+  prizesAvailable?: boolean;
 };
+
+/** Cash prizes are shown unless the server says they're off for this player. */
+export const usePrizesAvailable = () =>
+  useAuthStore((s) => s.user?.prizesAvailable !== false);
 
 type AuthState = {
   user: User | null;
@@ -105,7 +120,9 @@ setTokenRefresher(async () => {
 
     await storage.setSession(token, nextRefresh);
     setAuthToken(token);
-    if (user) useAuthStore.getState().setUser(user);
+    // Merge: the refresh response carries only the public fields, and
+    // replacing the user dropped wallet settings until the next launch.
+    if (user) useAuthStore.getState().updateUser(user);
 
     return token as string;
   } catch (err) {

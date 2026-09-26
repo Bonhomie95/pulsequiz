@@ -5,13 +5,22 @@ import { getLevelFromPoints } from '../utils/level';
 import { isDailyCapExceeded } from './antiCheatService';
 import { getSetting, SETTINGS_KEYS } from '../models/AppSettings';
 import { Types } from 'mongoose';
+import type { QuizMode } from '../models/ActiveQuizSession';
+import { addLeagueXp } from './leagueService';
+import { logger } from '../utils/logger';
 
 export async function applyQuizResult(params: {
   userId: string;
   sessionId: Types.ObjectId;
   category: string;
+  /** Only classic runs are ranked; every mode earns league XP. */
+  mode?: QuizMode;
   correct: number;
   total: number;
+  /** Correct answers helped by a coin-bought hint or time extension. They
+   *  count for stats but earn no ranking points: ranking decides real-money
+   *  prizes, and coins can be bought — purchases must not buy prize chances. */
+  assistedCorrect?: number;
   /** Per-answer detail, preserved so a disputed score can be investigated. */
   answers?: {
     questionId: Types.ObjectId;
@@ -21,17 +30,25 @@ export async function applyQuizResult(params: {
   }[];
 }) {
   const { userId, sessionId, category, correct, total, answers = [] } = params;
+  const mode = params.mode ?? 'classic';
+  const ranked = mode === 'classic';
+  const assisted = Math.min(Math.max(0, params.assistedCorrect ?? 0), correct);
 
   /* ---------------- SCORE ---------------- */
-  const basePoints = correct;
-  const bonus = correct === total ? 10 : 0;
+  const basePoints = correct - assisted;
+  const bonus = ranked && correct === total && assisted === 0 ? 10 : 0;
   const totalPoints = basePoints + bonus;
 
   /* ---------------- DAILY CAP CHECK ---------------- */
-  const sessionCap = await getSetting(SETTINGS_KEYS.DAILY_SESSION_CAP, 20);
-  const capExceeded = await isDailyCapExceeded(userId, Number(sessionCap));
+  const sessionCap = Number(await getSetting(SETTINGS_KEYS.DAILY_SESSION_CAP, 20));
+  // Ranked runs share the ranked cap; unranked runs get a looser one of their
+  // own, so practice can't farm league XP without limit.
+  const capExceeded = ranked
+    ? await isDailyCapExceeded(userId, sessionCap)
+    : await isDailyCapExceeded(userId, sessionCap * 2, false);
   // If cap exceeded, store session with 0 leaderboard points (still records history)
-  const leaderboardPoints = capExceeded ? 0 : totalPoints;
+  const leaderboardPoints = capExceeded || !ranked ? 0 : totalPoints;
+  const leagueXp = capExceeded ? 0 : totalPoints;
 
   /* ---------------- SESSION HISTORY ---------------- */
   // Written FIRST, and idempotently: the unique (userId, sessionId) index means
@@ -47,6 +64,7 @@ export async function applyQuizResult(params: {
         userId,
         sessionId,
         category,
+        mode,
         score: basePoints,
         bonus,
         totalPoints: leaderboardPoints, // 0 if daily cap exceeded
@@ -91,6 +109,12 @@ export async function applyQuizResult(params: {
 
   const leveledUp = newLevel > prevLevel;
 
+  if (isFirstApply && leagueXp > 0) {
+    await addLeagueXp(userId, leagueXp).catch((err) =>
+      logger.error('League XP update failed', err, { userId }),
+    );
+  }
+
   const accuracy =
     progress.totalAnswers > 0
       ? Math.round((progress.correctAnswers / progress.totalAnswers) * 100)
@@ -99,6 +123,7 @@ export async function applyQuizResult(params: {
   /* ---------------- RETURN ---------------- */
   return {
     pointsAdded: leaderboardPoints,
+    leagueXp: isFirstApply ? leagueXp : 0,
     actualPoints: totalPoints,
     capExceeded,
     bonus,

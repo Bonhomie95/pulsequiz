@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Types } from 'mongoose';
 
 export interface IQuizQuestion {
   category: string;
@@ -6,6 +6,8 @@ export interface IQuizQuestion {
   options: string[];
   answer: number; // index of correct option
   difficulty: 'easy' | 'medium' | 'hard';
+  /** One or two sentences shown after the answer is revealed. Optional. */
+  explanation?: string | null;
 
   /** Normalised question text, used to detect near-duplicates on import. */
   fingerprint: string;
@@ -16,6 +18,8 @@ export interface IQuizQuestion {
 
   /** Player reports of a wrong or unclear question. */
   reportCount: number;
+  /** Who reported it — one report per player counts toward auto-disable. */
+  reportedBy: Types.ObjectId[];
   /** Hidden from selection pending review. */
   disabled: boolean;
 }
@@ -51,10 +55,12 @@ const QuizQuestionSchema = new Schema<IQuizQuestion>(
       enum: ['easy', 'medium', 'hard'],
       default: 'medium',
     },
+    explanation: { type: String, default: null, maxlength: 400 },
     fingerprint: { type: String, required: true },
     timesServed: { type: Number, default: 0 },
     timesCorrect: { type: Number, default: 0 },
     reportCount: { type: Number, default: 0 },
+    reportedBy: { type: [Schema.Types.ObjectId], default: [], select: false },
     disabled: { type: Boolean, default: false },
   },
   { timestamps: true }

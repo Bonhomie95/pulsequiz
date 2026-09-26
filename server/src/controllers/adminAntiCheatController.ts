@@ -7,6 +7,7 @@ import User from '../models/User';
 import { auditAdmin } from '../utils/adminAudit';
 import type { AdminRequest } from '../middlewares/requireAdmin';
 import { logger } from '../utils/logger';
+import { kickUser } from '../socket/kick';
 
 export async function getFlaggedAccounts(req: Request, res: Response) {
   const { resolved } = req.query;
@@ -89,6 +90,7 @@ export async function resolveFlag(req: Request, res: Response) {
         $inc: { tokenVersion: 1 },
       },
     );
+    kickUser(flag.userId.toString());
     logger.warn('Account banned from anti-cheat review', {
       userId: flag.userId.toString(),
       adminEmail,

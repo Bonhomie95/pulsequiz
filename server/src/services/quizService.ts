@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import QuizQuestion from '../models/QuizQuestion';
 import UserQuestion from '../models/UserQuestion';
-import ActiveQuizSession from '../models/ActiveQuizSession';
+import ActiveQuizSession, { type QuizMode } from '../models/ActiveQuizSession';
 import { TIME_PER_QUESTION } from '../config/quizTiming';
 
 type Diff = 'easy' | 'medium' | 'hard';
@@ -102,28 +102,81 @@ async function fetchUnseen(
   return qs;
 }
 
+/* ---------------- FIXED SETS (daily, duel) ---------------- */
+
+export type QuestionRef = { questionId: Types.ObjectId; difficulty: Diff };
+
+/**
+ * A fresh 4 easy / 4 medium / 2 hard set, ignoring what anyone has seen —
+ * for puzzles several players share. `category` omitted = all categories.
+ */
+export async function sampleQuestionSet(category?: string): Promise<QuestionRef[]> {
+  const base: Record<string, unknown> = { disabled: { $ne: true } };
+  if (category) base.category = category;
+
+  const picked: QuestionRef[] = [];
+  for (const diff of ['easy', 'medium', 'hard'] as Diff[]) {
+    const qs = await QuizQuestion.aggregate([
+      { $match: { ...base, difficulty: diff } },
+      { $sample: { size: DIFF_TARGET[diff] } },
+      { $project: { _id: 1 } },
+    ]);
+    qs.forEach((q) => picked.push({ questionId: q._id, difficulty: diff }));
+  }
+
+  if (picked.length < TOTAL_Q) {
+    const extras = await QuizQuestion.aggregate([
+      { $match: { ...base, _id: { $nin: picked.map((p) => p.questionId) } } },
+      { $sample: { size: TOTAL_Q - picked.length } },
+      { $project: { _id: 1, difficulty: 1 } },
+    ]);
+    extras.forEach((q) => picked.push({ questionId: q._id, difficulty: q.difficulty }));
+  }
+
+  return picked;
+}
+
 /* ---------------- MAIN ---------------- */
 
 export async function startQuizSession({
   userId,
   category,
   tournamentId,
+  mode = 'classic',
+  fixed,
+  dailyDate,
+  duelCode,
 }: {
   userId: string;
   category: string;
   tournamentId?: string;
+  mode?: QuizMode;
+  /** Serve exactly these questions, in this order (daily, duel). */
+  fixed?: QuestionRef[];
+  dailyDate?: string;
+  duelCode?: string;
 }) {
   const picked: { q: any; difficulty: Diff }[] = [];
 
+  if (fixed) {
+    const docs = await QuizQuestion.find({ _id: { $in: fixed.map((f) => f.questionId) } }).lean();
+    const byId = new Map(docs.map((d) => [String(d._id), d]));
+    fixed.forEach((f) => {
+      const q = byId.get(String(f.questionId));
+      if (q) picked.push({ q, difficulty: f.difficulty });
+    });
+    if (!picked.length) throw new Error('Questions for this quiz are no longer available.');
+  }
+
   /* 1️⃣ Pull up to the target count per difficulty — gracefully handle small pools */
-  for (const diff of ['easy', 'medium', 'hard'] as Diff[]) {
+  if (!fixed) for (const diff of ['easy', 'medium', 'hard'] as Diff[]) {
     const need = DIFF_TARGET[diff];
     const qs = await fetchUnseen(userId, category, diff, need);
     qs.forEach((q) => picked.push({ q, difficulty: diff }));
   }
 
   /* 2️⃣ If we got fewer than TOTAL_Q, top up from any difficulty (unseen first) */
-  if (picked.length < TOTAL_Q) {
+  if (!fixed && picked.length < TOTAL_Q) {
     const pickedIds = new Set(picked.map((p) => p.q._id.toString()));
     const seenAll = await UserQuestion.find({ userId, category })
       .select('questionId')
@@ -154,7 +207,7 @@ export async function startQuizSession({
   }
 
   /* 3️⃣ Still not enough? Recycle from ALL category questions */
-  if (picked.length < TOTAL_Q) {
+  if (!fixed && picked.length < TOTAL_Q) {
     const pickedIds = new Set(picked.map((p) => p.q._id.toString()));
     const fallback = await QuizQuestion.aggregate([
       {
@@ -179,9 +232,11 @@ export async function startQuizSession({
     );
   }
 
-  /* 5️⃣ Order: Easy → Medium → Hard (shuffle within each block) */
+  /* 5️⃣ Order: Easy → Medium → Hard (shuffle within each block).
+         A fixed set keeps its order, so everyone sharing it compares like for like. */
   const ordered: { q: any; difficulty: Diff }[] = [];
-  for (const diff of ['easy', 'medium', 'hard'] as Diff[]) {
+  if (fixed) ordered.push(...picked);
+  else for (const diff of ['easy', 'medium', 'hard'] as Diff[]) {
     const block = picked.filter((p) => p.difficulty === diff);
     ordered.push(...shuffle(block));
   }
@@ -205,7 +260,10 @@ export async function startQuizSession({
   /* 7️⃣ Create active session — use actual question count, not fixed TOTAL_Q */
   const actualTotal = ordered.length;
   const now = Date.now();
-  const expiresAt = new Date(now + actualTotal * TIME_PER_QUESTION * 1000 + 30_000);
+  // Generous: this is a TTL, and a document deleted mid-run loses the result.
+  // Per question it covers the clock, a bought time extension (+10s) and the
+  // unranked reveal pause (≤6s).
+  const expiresAt = new Date(now + actualTotal * (TIME_PER_QUESTION + 16) * 1000 + 120_000);
 
   const session = await ActiveQuizSession.create({
     userId,
@@ -224,11 +282,16 @@ export async function startQuizSession({
     currentQuestionId: ordered[0].q._id,
     questionDeadlineAt: new Date(now + TIME_PER_QUESTION * 1000),
     ...(tournamentId ? { tournamentId } : {}),
+    mode,
+    dailyDate: dailyDate ?? null,
+    duelCode: duelCode ?? null,
   });
 
   /* 8️⃣ Return payload (order preserved) */
   return {
     sessionId: session._id.toString(),
+    mode,
+    category,
     timePerQuestion: TIME_PER_QUESTION,
     totalQuestions: actualTotal,
     expiresAt,

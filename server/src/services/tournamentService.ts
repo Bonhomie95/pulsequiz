@@ -167,3 +167,36 @@ function defaultDistribution(pool: number, winners: number) {
     coins: Math.floor((w / totalWeight) * pool),
   }));
 }
+
+/**
+ * Cancel a tournament and refund every entry fee.
+ *
+ * Claimed with the same `settledAt` guard as finalise, so a cancel can't race
+ * a payout and nobody is refunded twice.
+ */
+export async function cancelTournament(
+  tournamentId: string,
+): Promise<{ cancelled: boolean; refunded: number; reason?: string }> {
+  const claimed = await Tournament.findOneAndUpdate(
+    { _id: tournamentId, settledAt: null, status: { $in: ['upcoming', 'active'] } },
+    { $set: { status: 'cancelled', settledAt: new Date() } },
+    { returnDocument: 'after' },
+  ).lean();
+  if (!claimed) return { cancelled: false, refunded: 0, reason: 'not_cancellable' };
+
+  const fee = claimed.entryFeeCoins ?? 0;
+  let refunded = 0;
+  if (fee > 0) {
+    for (const p of claimed.participants) {
+      try {
+        await creditCoins(p.userId.toString(), fee, 'tournament_entry', {
+          note: `refund_cancelled:${tournamentId}`,
+        });
+        refunded += 1;
+      } catch (err) {
+        logger.error('Tournament refund failed', err, { tournamentId, userId: p.userId.toString() });
+      }
+    }
+  }
+  return { cancelled: true, refunded };
+}

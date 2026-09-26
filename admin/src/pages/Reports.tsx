@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
+import { errMsg } from '../utils/errMsg';
 import { Flag, RefreshCw, CheckCircle, Eye, AlertTriangle } from 'lucide-react';
 
 type Report = {
@@ -69,8 +70,8 @@ export default function Reports() {
       await adminApi.patch(`/admin/reports/${id}`, { status: action, banUser });
       fetchReports();
       if (viewReport?._id === id) setViewReport(null);
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error');
+    } catch (e) {
+      alert(errMsg(e, 'Error'));
     } finally {
       setResolving(null);
     }

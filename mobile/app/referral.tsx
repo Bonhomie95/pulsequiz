@@ -14,6 +14,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LINKS } from '@/src/constants/links';
 import { ChevronLeft, Share2, Gift, Users, Copy } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
@@ -65,7 +66,9 @@ export default function ReferralScreen() {
   const shareCode = async () => {
     try {
       await Share.share({
-        message: `Join PulseQuiz and earn coins! Use my referral code: ${myCode}\nDownload now and start winning USDT prizes! 🎮💰`,
+        // No prize promises here: the person receiving this may live where
+        // cash prizes aren't offered.
+        message: `Join me on PulseQuiz! Use my code ${myCode} for bonus coins.\nDaily quiz, weekly leagues and 1v1 battles 🎮\n${LINKS.WEBSITE}`,
         title: 'Join PulseQuiz',
       });
     } catch { /* cancelled */ }

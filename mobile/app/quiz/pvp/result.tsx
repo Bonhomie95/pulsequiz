@@ -79,35 +79,34 @@ export default function PvPResultScreen() {
 
   // Rematch socket listeners
   useEffect(() => {
-    socket.on(
-      SOCKET_EVENTS.REMATCH_REQUEST,
-      ({ fromUserId }: { fromUserId: string }) => {
-        if (fromUserId === opponent?.userId) {
-          setRematchState('incoming');
-          startRematchCountdown();
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        }
-      },
-    );
-
-    socket.on(SOCKET_EVENTS.REMATCH_ACCEPTED, () => {
+    const onRequest = ({ fromUserId }: { fromUserId: string }) => {
+      if (fromUserId === opponent?.userId) {
+        setRematchState('incoming');
+        startRematchCountdown();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
+    };
+    const onAccepted = () => {
       clearRematchTimer();
       // Both join queue with rematchWith targeting each other
       usePvPStore.getState().reset();
       router.replace(
         `/quiz/pvp/search?category=${encodeURIComponent(category ?? 'General Knowledge')}&wager=${wager}&rematchWith=${opponent?.userId}` as any,
       );
-    });
-
-    socket.on(SOCKET_EVENTS.REMATCH_DECLINED, () => {
+    };
+    const onDeclined = () => {
       clearRematchTimer();
       setRematchState('idle');
-    });
+    };
+
+    socket.on(SOCKET_EVENTS.REMATCH_REQUEST, onRequest);
+    socket.on(SOCKET_EVENTS.REMATCH_ACCEPTED, onAccepted);
+    socket.on(SOCKET_EVENTS.REMATCH_DECLINED, onDeclined);
 
     return () => {
-      socket.off(SOCKET_EVENTS.REMATCH_REQUEST);
-      socket.off(SOCKET_EVENTS.REMATCH_ACCEPTED);
-      socket.off(SOCKET_EVENTS.REMATCH_DECLINED);
+      socket.off(SOCKET_EVENTS.REMATCH_REQUEST, onRequest);
+      socket.off(SOCKET_EVENTS.REMATCH_ACCEPTED, onAccepted);
+      socket.off(SOCKET_EVENTS.REMATCH_DECLINED, onDeclined);
     };
   }, [opponent?.userId, category, wager]);
 

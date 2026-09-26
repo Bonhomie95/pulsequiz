@@ -81,8 +81,9 @@ export default function Leaderboard() {
     setLoading(true);
     try {
       const res = await adminApi.get(`/admin/leaderboard/${boardType}`);
-      const raw: any[] = res.data.data ?? [];
-      const normalised: LeaderboardEntry[] = raw.map((e: any, i: number) => ({
+      type RawEntry = { rank?: number; userId?: string; username?: string; avatar?: string; points?: number; score?: number };
+      const raw: RawEntry[] = res.data.data ?? [];
+      const normalised: LeaderboardEntry[] = raw.map((e, i) => ({
         rank: e.rank ?? i + 1,
         userId: e.userId ?? '',
         username: e.username ?? 'Unknown',

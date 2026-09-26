@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { adminApi } from '../api/client';
+import { useAdminRole } from '../auth/useAdminRole';
+import { errMsg } from '../utils/errMsg';
 import {
   Search,
   RefreshCw,
@@ -32,6 +34,9 @@ type User = {
   lastSeenAt?: string;
   createdAt: string;
   usdtAddress?: string;
+  usdtType?: string;
+  payoutCurrency?: 'USDT' | 'USDC';
+  usdtAddressChangedAt?: string | null;
   withdrawalEnabled: boolean;
   premiumExpiresAt?: string;
 };
@@ -173,6 +178,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default function Users() {
+  const { canEditUsers } = useAdminRole();
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -266,9 +272,9 @@ export default function Users() {
       const res = await adminApi.get(`/admin/users/${user._id}`);
       if (detailRequestRef.current !== user._id) return;
       setDetail(res.data);
-    } catch (e: any) {
+    } catch (e) {
       if (detailRequestRef.current !== user._id) return;
-      setDetailError(e?.response?.data?.message ?? 'Could not load details');
+      setDetailError(errMsg(e, 'Could not load details'));
     } finally {
       if (detailRequestRef.current === user._id) setDetailLoading(false);
     }
@@ -283,8 +289,8 @@ export default function Users() {
     try {
       await adminApi.patch(`/admin/users/${user._id}/ban`);
       fetchUsers();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error');
+    } catch (e) {
+      alert(errMsg(e, 'Error'));
     } finally {
       setBanning(null);
     }
@@ -316,8 +322,8 @@ export default function Users() {
 
       setEditUser(null);
       fetchUsers();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error saving');
+    } catch (e) {
+      alert(errMsg(e, 'Error saving'));
     } finally {
       setSaving(false);
     }
@@ -330,8 +336,8 @@ export default function Users() {
       await adminApi.delete(`/admin/users/${deleteUser._id}`);
       setDeleteUser(null);
       fetchUsers();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error deleting');
+    } catch (e) {
+      alert(errMsg(e, 'Error deleting'));
     } finally {
       setSaving(false);
     }
@@ -493,13 +499,13 @@ export default function Users() {
                       >
                         <Eye size={14} />
                       </button>
-                      <button
+                      {canEditUsers && <button
                         onClick={() => openEdit(u)}
                         title="Edit user"
                         className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition"
                       >
                         <Edit3 size={14} />
-                      </button>
+                      </button>}
                       <button
                         onClick={() => toggleBan(u)}
                         disabled={banning === u._id}
@@ -512,13 +518,13 @@ export default function Users() {
                           <Ban size={14} />
                         )}
                       </button>
-                      <button
+                      {canEditUsers && <button
                         onClick={() => setDeleteUser(u)}
                         title="Delete account"
                         className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition"
                       >
                         <Trash2 size={14} />
-                      </button>
+                      </button>}
                     </div>
                   </td>
                 </tr>
@@ -606,7 +612,7 @@ export default function Users() {
             }
           />
           {viewUser.usdtAddress && (
-            <Row label="USDT Address" value={viewUser.usdtAddress} />
+            <Row label="Payout Address" value={viewUser.usdtAddress} />
           )}
           <Row
             label="Joined"
@@ -724,10 +730,19 @@ export default function Users() {
                   </span>
                 }
               />
+              <SectionHeading>Prize Wallet</SectionHeading>
+              <Row
+                label="Currency / Network"
+                value={detail.user.usdtAddress ? `${detail.user.payoutCurrency ?? 'USDT'} · ${detail.user.usdtType ?? '—'}` : 'Not set'}
+              />
+              {detail.user.usdtAddress && <Row label="Address" value={<span className="font-mono text-xs break-all">{detail.user.usdtAddress}</span>} />}
+              {detail.user.usdtAddressChangedAt && (
+                <Row label="Address changed" value={new Date(detail.user.usdtAddressChangedAt).toLocaleString()} />
+              )}
               {!!detail.user.pendingPrizeUSDT && (
                 <Row
                   label="Pending Prize"
-                  value={`$${detail.user.pendingPrizeUSDT.toFixed(2)} USDT`}
+                  value={`$${detail.user.pendingPrizeUSDT.toFixed(2)} (${detail.user.payoutCurrency ?? 'USDT'})`}
                 />
               )}
 

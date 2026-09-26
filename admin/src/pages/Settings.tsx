@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
+import { errMsg } from '../utils/errMsg';
+import { useAdminRole } from '../auth/useAdminRole';
 import {
   Save,
   RefreshCw,
@@ -9,6 +11,8 @@ import {
   Bell,
   Gift,
 } from 'lucide-react';
+
+type SettingValue = string | number | boolean;
 
 type Setting = {
   key: string;
@@ -20,7 +24,7 @@ const SETTING_META: Record<
   {
     label: string;
     description: string;
-    type: 'number' | 'boolean';
+    type: 'number' | 'boolean' | 'text';
     group: string;
     min?: number;
     max?: number;
@@ -80,9 +84,9 @@ const SETTING_META: Record<
     max: 100,
   },
   min_payout_usd: {
-    label: 'Minimum Payout (USDT)',
+    label: 'Minimum Payout (USD)',
     description:
-      'Minimum USDT required before a payout is sent (amounts below accumulate)',
+      'Minimum amount (USD, paid in USDT/USDC) required before a payout is sent (amounts below accumulate)',
     type: 'number',
     group: 'Payouts',
     min: 1,
@@ -90,10 +94,24 @@ const SETTING_META: Record<
   min_account_age_days: {
     label: 'Min Account Age for Payout (days)',
     description:
-      'Account must be at least this many days old to receive a USDT payout',
+      'Account must be at least this many days old to receive a prize payout',
     type: 'number',
     group: 'Payouts',
     min: 0,
+  },
+  prizes_enabled: {
+    label: 'Cash Prizes Enabled',
+    description:
+      'Master switch for USDT/USDC leaderboard prizes. Off hides prizes in the app and stops payouts',
+    type: 'boolean',
+    group: 'Payouts',
+  },
+  prize_countries: {
+    label: 'Prize Countries',
+    description:
+      'Two-letter country codes where cash prizes are offered, e.g. "US, GB, CA". Blank = every country the app is published in. Set this to the list your lawyer approves',
+    type: 'text',
+    group: 'Payouts',
   },
   min_sessions_for_payout: {
     label: 'Min Quiz Sessions for Payout',
@@ -126,8 +144,9 @@ function groupSettings(settings: Setting[]) {
 }
 
 export default function Settings() {
+  const { canEditSettings } = useAdminRole();
   const [settings, setSettings] = useState<Setting[]>([]);
-  const [edits, setEdits] = useState<Record<string, any>>({});
+  const [edits, setEdits] = useState<Record<string, SettingValue>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -138,8 +157,8 @@ export default function Settings() {
       const res = await adminApi.get('/admin/settings');
       setSettings(res.data.settings ?? []);
       setEdits({});
-    } catch (e: any) {
-        alert(e?.response?.data?.message ?? 'Error fetching settings');
+    } catch (e) {
+        alert(errMsg(e, 'Error fetching settings'));
     } finally {
       setLoading(false);
     }
@@ -149,11 +168,11 @@ export default function Settings() {
     fetchSettings();
   }, []);
 
-  const setEdit = (key: string, value: any) => {
+  const setEdit = (key: string, value: SettingValue) => {
     setEdits((e) => ({ ...e, [key]: value }));
   };
 
-  const getVal = (key: string): any => {
+  const getVal = (key: string): SettingValue => {
     if (edits[key] !== undefined) return edits[key];
     return settings.find((s) => s.key === key)?.value ?? 0;
   };
@@ -168,8 +187,8 @@ export default function Settings() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
       fetchSettings();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error saving settings');
+    } catch (e) {
+      alert(errMsg(e, 'Error saving settings'));
     } finally {
       setSaving(false);
     }
@@ -258,18 +277,34 @@ export default function Settings() {
                         {meta.type === 'boolean' ? (
                           <button
                             onClick={() => setEdit(s.key, !currentVal)}
-                            className={`relative w-12 h-6 rounded-full transition-colors ${currentVal ? 'bg-indigo-600' : 'bg-gray-700'}`}
+                            disabled={!canEditSettings}
+                            role="switch"
+                            aria-checked={!!currentVal}
+                            aria-label={meta.label}
+                            className={`disabled:opacity-50 relative w-12 h-6 rounded-full transition-colors ${currentVal ? 'bg-indigo-600' : 'bg-gray-700'}`}
                           >
                             <span
                               className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${currentVal ? 'left-7' : 'left-1'}`}
                             />
                           </button>
+                        ) : meta.type === 'text' ? (
+                          <input
+                            type="text"
+                            value={String(currentVal ?? '')}
+                            disabled={!canEditSettings}
+                            aria-label={meta.label}
+                            placeholder="All countries"
+                            onChange={(e) => setEdit(s.key, e.target.value.toUpperCase())}
+                            className="w-48 bg-gray-800 border border-gray-700 focus:border-indigo-500 rounded-lg px-3 py-1.5 text-sm text-white outline-none transition"
+                          />
                         ) : (
                           <input
                             type="number"
                             min={meta.min ?? 0}
                             max={meta.max}
-                            value={currentVal}
+                            value={Number(currentVal)}
+                            disabled={!canEditSettings}
+                            aria-label={meta.label}
                             onChange={(e) =>
                               setEdit(s.key, Number(e.target.value))
                             }

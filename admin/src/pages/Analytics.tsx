@@ -60,16 +60,16 @@ function Sparkline({
   valueKey,
   color = 'bg-indigo-500',
 }: {
-  data: any[];
+  data: ({ date: string } & Record<string, number | string>)[];
   valueKey: string;
   color?: string;
 }) {
   if (!data.length) return <div className="text-gray-600 text-xs">No data</div>;
-  const max = Math.max(...data.map((d) => d[valueKey]), 1);
+  const max = Math.max(...data.map((d) => Number(d[valueKey]) || 0), 1);
   return (
     <div className="flex items-end gap-0.5 h-16 w-full">
       {data.slice(-30).map((d, i) => {
-        const h = Math.max(4, Math.round((d[valueKey] / max) * 64));
+        const h = Math.max(4, Math.round(((Number(d[valueKey]) || 0) / max) * 64));
         return (
           <div key={i} className="flex-1 group relative">
             <div

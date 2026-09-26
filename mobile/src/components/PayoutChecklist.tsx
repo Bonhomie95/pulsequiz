@@ -47,7 +47,7 @@ export function PayoutChecklist({ eligibility }: { eligibility: Eligibility | nu
             Ready to receive prizes
           </Text>
           <Text style={[styles.body, { color: theme.colors.muted }]}>
-            If you finish in a paying rank, your USDT is sent automatically.
+            If you finish in a paying rank, your prize is sent automatically in the coin you chose.
           </Text>
         </View>
       </View>

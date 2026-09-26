@@ -26,14 +26,22 @@ const TOTP_CODE_PROVIDER = process.env.NOWPAYMENTS_2FA_CODE || '';
 /** Explicit opt-in for local development. Never set this in production. */
 const MOCK_MODE = process.env.PAYOUT_MOCK === '1';
 
-// Currency mapping: TRC20 → usdttrc20, BEP20 → usdtbsc, ERC20 → usdterc20
-function getCurrency(usdtType: string): string {
-  const map: Record<string, string> = {
-    TRC20: 'usdttrc20',
-    BEP20: 'usdtbsc',
-    ERC20: 'usdterc20',
-  };
-  return map[usdtType] ?? 'usdttrc20';
+// NOWPayments tickers per (stablecoin, network). Must stay in sync with
+// PAYOUT_NETWORKS in utils/validateWallet.ts.
+const TICKERS: Record<string, string> = {
+  'USDT:TRC20': 'usdttrc20',
+  'USDT:BEP20': 'usdtbsc',
+  'USDT:ERC20': 'usdterc20',
+  'USDC:ERC20': 'usdc',
+  'USDC:POLYGON': 'usdcmatic',
+  'USDC:SOL': 'usdcsol',
+};
+
+/** Throws on an unsupported pair rather than silently sending the wrong coin. */
+export function getCurrency(currency: string, network: string): string {
+  const ticker = TICKERS[`${currency}:${network}`];
+  if (!ticker) throw new Error(`Unsupported payout pair ${currency}/${network}`);
+  return ticker;
 }
 
 export interface PayoutResult {
@@ -85,7 +93,14 @@ async function getBearerToken(): Promise<string> {
  */
 export async function findExistingPayout(
   reference: string,
-): Promise<{ found: boolean; paymentId?: string; status?: string; txHash?: string }> {
+): Promise<{
+  found: boolean;
+  /** Lookup failed — we do NOT know whether the reference exists. */
+  unknown?: boolean;
+  paymentId?: string;
+  status?: string;
+  txHash?: string;
+}> {
   if (MOCK_MODE || !API_KEY) return { found: false };
 
   try {
@@ -113,9 +128,8 @@ export async function findExistingPayout(
       reference,
       error: err?.message,
     });
-    // Unknown is not the same as absent — the caller treats this as a reason
-    // to hold rather than retry.
-    return { found: false };
+    // Unknown is not the same as absent — the caller must hold, not send.
+    return { found: false, unknown: true };
   }
 }
 
@@ -124,6 +138,8 @@ export async function findExistingPayout(
 export async function sendUSDT(params: {
   address: string;
   usdtType: string;
+  /** Stablecoin to send. Defaults to USDT for rows created before USDC existed. */
+  currency?: 'USDT' | 'USDC';
   amount: number;
   description: string;
   /** Stable per-payout reference; the provider echoes it back so a retry can
@@ -152,6 +168,11 @@ export async function sendUSDT(params: {
 
   // Never send twice for the same reference.
   const existing = await findExistingPayout(params.reference);
+  if (existing.unknown) {
+    // Previously treated as "not found" and sent anyway — a double payment
+    // whenever the lookup hiccupped after an earlier attempt had gone through.
+    return { success: false, error: 'reconcile_unavailable' };
+  }
   if (existing.found) {
     logger.warn('Payout reference already exists at provider — not resending', {
       reference: params.reference,
@@ -165,9 +186,15 @@ export async function sendUSDT(params: {
     };
   }
 
+  let currency: string;
+  try {
+    currency = getCurrency(params.currency ?? 'USDT', params.usdtType);
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+
   try {
     const token = await getBearerToken();
-    const currency = getCurrency(params.usdtType);
 
     const response = await axios.post(
       `${BASE_URL}/payout`,

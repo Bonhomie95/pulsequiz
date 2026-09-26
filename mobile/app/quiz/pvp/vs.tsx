@@ -67,7 +67,9 @@ export default function PvPVsScreen() {
 
   /* ---------------- MATCH START ---------------- */
   useEffect(() => {
-    socket.on(SOCKET_EVENTS.MATCH_START, ({ questions }) => {
+    let countdownTimer: ReturnType<typeof setInterval> | null = null;
+    const onMatchStart = ({ questions }: { questions: any[] }) => {
+      if (countdownTimer) return; // a reconnect replay mustn't start a second countdown
       soundManager.play('match_found');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -99,10 +101,15 @@ export default function PvPVsScreen() {
           }, 500);
         }
       }, 800);
-    });
+      countdownTimer = interval;
+    };
+    socket.on(SOCKET_EVENTS.MATCH_START, onMatchStart);
 
     return () => {
-      socket.off(SOCKET_EVENTS.MATCH_START);
+      // By reference — a bare off() would remove the global MATCH_START
+      // listener that reconnect/resume in pvp/play relies on.
+      socket.off(SOCKET_EVENTS.MATCH_START, onMatchStart);
+      if (countdownTimer) clearInterval(countdownTimer);
     };
   }, []);
 

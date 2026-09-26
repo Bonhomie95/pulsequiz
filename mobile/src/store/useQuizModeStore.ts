@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
-type QuizMode = 'normal' | 'pvp';
+/** normal = ranked sudden death; relaxed = practice; duel = create a friend challenge. */
+export type QuizMode = 'normal' | 'relaxed' | 'pvp' | 'duel';
 
 type State = {
   mode: QuizMode | null;

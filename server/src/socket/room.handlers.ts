@@ -36,6 +36,10 @@ const joinAttempts = new Map<string, { count: number; resetAt: number }>();
 
 function tooManyAttempts(userId: string): boolean {
   const now = Date.now();
+  // Entries outlive disconnects now, so prune expired ones occasionally.
+  if (joinAttempts.size > 10_000) {
+    for (const [k, v] of joinAttempts) if (now > v.resetAt) joinAttempts.delete(k);
+  }
   const record = joinAttempts.get(userId);
 
   if (!record || now > record.resetAt) {
@@ -115,14 +119,23 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       return;
     }
 
+    // Claim the room atomically. A read-then-save let two guests joining at
+    // once both pass, creating two matches and staking the host twice.
+    const claimedRoom = await Room.findOneAndUpdate(
+      { _id: room._id, status: 'waiting', guestId: null },
+      { $set: { status: 'active', guestId: new Types.ObjectId(userId) } },
+      { returnDocument: 'after' },
+    );
+    if (!claimedRoom) {
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Room not found or already started' });
+      return;
+    }
+    room.status = 'active';
+    room.guestId = claimedRoom.guestId;
+
     socket.join(`room:${roomCode}`);
     existing.guestSocketId = socket.id;
     userRoom.set(userId, roomCode);
-
-    // Mark room as active
-    room.guestId = new Types.ObjectId(userId) as any;
-    room.status = 'active';
-    await room.save();
 
     // Build player snapshots
     const [snapHost, snapGuest] = await Promise.all([
@@ -205,8 +218,26 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     releaseRoom(roomCode, [room.hostId.toString(), userId]);
   }));
 
+  // Host backed out of the create screen. The socket is app-wide and stays
+  // connected, so without this the room stayed open: a guest could join, stake
+  // the host's wager, and win by default when the host never showed.
+  socket.on(SOCKET_EVENTS.ROOM_LEAVE, safeHandler(socket, SOCKET_EVENTS.ROOM_LEAVE, async ({ code }: { code?: string }) => {
+    const roomCode = String(code ?? '').toUpperCase().trim();
+    if (!/^[A-Z0-9]{4,10}$/.test(roomCode)) return;
+    const res = await Room.updateOne(
+      { code: roomCode, hostId: new Types.ObjectId(userId), status: 'waiting' },
+      { $set: { status: 'cancelled' } },
+    );
+    if (res.modifiedCount) {
+      io.to(`room:${roomCode}`).emit(SOCKET_EVENTS.ROOM_CANCELLED, { reason: 'host_left' });
+      releaseRoom(roomCode, [userId]);
+      roomSockets.delete(roomCode);
+    }
+  }));
+
   socket.on('disconnect', () => {
-    joinAttempts.delete(userId);
+    // joinAttempts is deliberately kept: clearing it here let a client reset
+    // its brute-force budget just by reconnecting. It expires on its own.
 
     const code = userRoom.get(userId);
     if (!code) return;

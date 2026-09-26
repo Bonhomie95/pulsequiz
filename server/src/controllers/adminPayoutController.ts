@@ -2,10 +2,12 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import Payout from '../models/Payout';
 import PrizePool from '../models/PrizePool';
-import AccumulatedPrize from '../models/AccumulatedPrize';
-import User from '../models/User';
-import { processPeriodPayouts, checkPayoutEligibility } from '../services/payoutService';
-import { sendUSDT } from '../services/nowpaymentsService';
+import {
+  processPeriodPayouts,
+  retryPayout as retryPayoutService,
+  resolveParkedPayout,
+  PARKED_RETRIES,
+} from '../services/payoutService';
 import { previousPeriod, periodContaining } from '../utils/dateRanges';
 import { auditAdmin } from '../utils/adminAudit';
 import type { AdminRequest } from '../middlewares/requireAdmin';
@@ -36,64 +38,55 @@ export async function getAllPayouts(req: Request, res: Response) {
 }
 
 export async function retryPayout(req: Request, res: Response) {
-  const { id } = req.params;
-  const payout = await Payout.findById(id);
+  const id = String(req.params.id);
+  const payout = await Payout.findById(id).lean();
   if (!payout) return res.status(404).json({ message: 'Not found' });
   if (payout.status !== 'failed') {
     return res.status(400).json({ message: 'Can only retry failed payouts' });
   }
-
-  const eligibility = await checkPayoutEligibility(payout.userId.toString());
-  if (!eligibility.eligible) {
-    return res.status(400).json({
-      message: `User is not currently eligible: ${eligibility.reason}`,
+  if (payout.retries >= PARKED_RETRIES) {
+    return res.status(409).json({
+      message:
+        'Outcome of the last attempt is unknown. Check NOWPayments for this reference before doing anything else.',
     });
   }
 
-  const user = await User.findById(payout.userId).lean();
-  if (!user?.usdtAddress) return res.status(400).json({ message: 'User has no USDT address' });
-
-  // Reuse the original reference so the provider lookup inside sendUSDT can
-  // detect a transfer that already went through.
-  const reference =
-    payout.idempotencyKey ?? `${payout.period}:${payout.periodLabel}:${payout.userId}`;
-
-  const result = await sendUSDT({
-    address: user.usdtAddress,
-    usdtType: user.usdtType ?? 'TRC20',
-    amount: payout.amount,
+  // Same claim-and-reserve path as the cron, so a double click or an
+  // overlapping cron run can't send twice.
+  const outcome = await retryPayoutService(id, {
+    maxRetries: PARKED_RETRIES,
     description: `Manual retry: ${payout.periodLabel}`,
-    reference,
   });
-
-  await Payout.updateOne(
-    { _id: id },
-    {
-      $set: {
-        status: result.success ? 'sent' : 'failed',
-        ...(result.txHash ? { txHash: result.txHash } : {}),
-        ...(result.paymentId ? { nowpaymentsPaymentId: result.paymentId } : {}),
-        ...(result.success ? { sentAt: new Date() } : { failReason: result.error }),
-        retries: payout.retries + 1,
-        lastAttemptAt: new Date(),
-      },
-    },
-  );
-
-  if (result.success) {
-    await AccumulatedPrize.updateOne(
-      { userId: payout.userId },
-      { $inc: { pendingUSDT: -payout.amount }, $set: { lastUpdated: new Date() } },
-    );
-  }
 
   await auditAdmin(req, 'payout.retry', {
     targetType: 'payout',
     targetId: id,
-    after: { success: result.success, amount: payout.amount, error: result.error },
+    after: { outcome: outcome.status, amount: payout.amount },
   });
 
-  return res.json({ success: result.success, error: result.error });
+  if (outcome.status === 'not_retryable') {
+    return res.status(409).json({ message: 'Payout is already being processed' });
+  }
+  return res.json({
+    success: outcome.status === 'sent',
+    status: outcome.status,
+    error: 'error' in outcome ? outcome.error : 'reason' in outcome ? outcome.reason : undefined,
+  });
+}
+
+/** POST /admin/payouts/:id/resolve  { outcome: 'sent' | 'not_sent', txHash? } */
+export async function resolvePayout(req: Request, res: Response) {
+  const parsed = z
+    .object({ outcome: z.enum(['sent', 'not_sent']), txHash: z.string().trim().max(200).optional() })
+    .safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: 'outcome must be sent or not_sent' });
+
+  const id = String(req.params.id);
+  const ok = await resolveParkedPayout(id, parsed.data.outcome, parsed.data.txHash);
+  if (!ok) return res.status(409).json({ message: 'Only a payout awaiting reconciliation can be resolved' });
+
+  await auditAdmin(req, 'payout.resolve', { targetType: 'payout', targetId: id, after: parsed.data });
+  return res.json({ ok: true });
 }
 
 export async function setPrizePool(req: Request, res: Response) {
@@ -207,11 +200,13 @@ export async function exportPayoutsCSV(req: Request, res: Response) {
     return `"${s.replace(/"/g, '""')}"`;
   };
 
-  const header = 'username,email,amount_usdt,rank,period,period_label,status,tx_hash,created_at\n';
+  const header = 'username,email,amount_usd,currency,network,rank,period,period_label,status,tx_hash,created_at\n';
   const rows = payouts.map((p: any) => [
     p.userId?.username ?? '',
     p.userId?.email ?? '',
     p.amount,
+    p.currency ?? 'USDT',
+    p.usdtType ?? '',
     p.rank,
     p.period,
     p.periodLabel,

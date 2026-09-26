@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import express, { Router, Request, Response } from 'express';
 import { requireAdmin, requireSuperAdmin } from '../middlewares/requireAdmin';
 import QuizQuestion from '../models/QuizQuestion';
 import { escapeRegex } from '../utils/escapeRegex';
@@ -6,6 +6,7 @@ import { auditAdmin } from '../utils/adminAudit';
 import {
   importQuestions,
   parseQuestionCsv,
+  prepareQuestion,
   CSV_TEMPLATE,
   type RawQuestion,
 } from '../services/questionImportService';
@@ -17,13 +18,21 @@ router.use(requireAdmin);
 router.get('/', async (req: Request, res: Response) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(100, Number(req.query.limit) || 20);
-  const { category, difficulty, search, flagged } = req.query as Record<string, string>;
+  // String() so a `?category[$ne]=x` query can't smuggle an operator in.
+  const q = req.query as Record<string, unknown>;
+  const category = typeof q.category === 'string' ? q.category : '';
+  const difficulty = typeof q.difficulty === 'string' ? q.difficulty : '';
+  const search = typeof q.search === 'string' ? q.search.slice(0, 100) : '';
+  const flagged = q.flagged;
+  const status = q.status; // 'active' | 'disabled'
 
-  const filter: any = {};
+  const filter: Record<string, unknown> = {};
   if (category) filter.category = category;
   if (difficulty) filter.difficulty = difficulty;
   if (search) filter.question = { $regex: escapeRegex(search), $options: 'i' };
   if (flagged === '1') filter.reportCount = { $gt: 0 };
+  if (status === 'disabled') filter.disabled = true;
+  if (status === 'active') filter.disabled = { $ne: true };
 
   const [questions, total, categories] = await Promise.all([
     QuizQuestion.find(filter)
@@ -101,11 +110,14 @@ router.get('/template.csv', (_req: Request, res: Response) => {
  *
  * Always run with dryRun first — the report names every bad row.
  */
-router.post('/import', requireSuperAdmin, async (req: Request, res: Response) => {
-  const { csv, questions, defaultCategory, dryRun } = req.body ?? {};
+router.post('/import', express.json({ limit: '5mb' }), async (req: Request, res: Response) => {
+  const { csv, questions, dryRun } = req.body ?? {};
+  const defaultCategory =
+    typeof req.body?.defaultCategory === 'string' ? req.body.defaultCategory : undefined;
 
   let rows: RawQuestion[];
-  if (typeof csv === 'string' && csv.trim()) {
+  const fromCsv = typeof csv === 'string' && csv.trim().length > 0;
+  if (fromCsv) {
     rows = parseQuestionCsv(csv);
   } else if (Array.isArray(questions)) {
     rows = questions;
@@ -123,6 +135,7 @@ router.post('/import', requireSuperAdmin, async (req: Request, res: Response) =>
   const report = await importQuestions(rows, {
     defaultCategory,
     dryRun: dryRun === true,
+    firstRowNumber: fromCsv ? 2 : 1,
   });
 
   if (!dryRun) {
@@ -140,21 +153,14 @@ router.post('/import', requireSuperAdmin, async (req: Request, res: Response) =>
   res.json(report);
 });
 
-// POST /admin/questions — create one
+// POST /admin/questions — create one. Same validation as bulk import.
 router.post('/', async (req: Request, res: Response) => {
-  const { category, question, options, answer, difficulty } = req.body;
-  if (!category || !question || !Array.isArray(options) || options.length !== 4 || answer == null) {
-    return res.status(400).json({ message: 'category, question, options[4], and answer required' });
-  }
+  const { category, question, options, answer, difficulty, explanation } = req.body ?? {};
+  const prepared = prepareQuestion({ category, question, options, answer, difficulty, explanation }, 1);
+  if (!prepared.ok) return res.status(400).json({ message: prepared.error.message });
 
   try {
-    const q = await QuizQuestion.create({
-      category: String(category).trim().toLowerCase(),
-      question,
-      options,
-      answer: Number(answer),
-      difficulty: difficulty ?? 'medium',
-    });
+    const q = await QuizQuestion.create(prepared.value);
     await auditAdmin(req, 'questions.create', { targetType: 'question', targetId: q._id.toString() });
     res.status(201).json({ question: q });
   } catch (err: any) {
@@ -165,26 +171,51 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// PATCH /admin/questions/:id — update
+// PATCH /admin/questions/:id — update (any subset of fields, validated as a whole)
 router.patch('/:id', async (req: Request, res: Response) => {
-  const { category, question, options, answer, difficulty, disabled } = req.body;
-  const before = await QuizQuestion.findById(req.params.id).lean();
-  if (!before) return res.status(404).json({ message: 'Question not found' });
-
-  // Use a document save so the fingerprint hook runs on a text change.
   const doc = await QuizQuestion.findById(req.params.id);
   if (!doc) return res.status(404).json({ message: 'Question not found' });
+  const before = { question: doc.question, answer: doc.answer, disabled: doc.disabled };
 
-  if (category) doc.category = String(category).trim().toLowerCase();
-  if (question) doc.question = question;
-  if (options) doc.options = options;
-  if (answer != null) doc.answer = Number(answer);
-  if (difficulty) doc.difficulty = difficulty;
-  if (disabled !== undefined) doc.disabled = !!disabled;
+  const body = req.body ?? {};
+  const contentChanged = ['category', 'question', 'options', 'answer', 'difficulty'].some(
+    (k) => body[k] !== undefined,
+  );
 
-  // An edited question has presumably been fixed — clear the report count so
-  // it stops showing in the flagged queue.
-  if (question || options || answer != null) doc.reportCount = 0;
+  if (contentChanged) {
+    const prepared = prepareQuestion(
+      {
+        category: body.category ?? doc.category,
+        question: body.question ?? doc.question,
+        options: body.options ?? doc.options,
+        answer: body.answer ?? doc.answer,
+        difficulty: body.difficulty ?? doc.difficulty,
+        explanation: body.explanation !== undefined ? body.explanation : doc.explanation,
+      },
+      1,
+    );
+    if (!prepared.ok) return res.status(400).json({ message: prepared.error.message });
+    const v = prepared.value;
+    doc.category = v.category;
+    doc.question = v.question;
+    doc.options = v.options;
+    doc.answer = v.answer;
+    doc.difficulty = v.difficulty;
+    doc.explanation = v.explanation;
+    // An edited question has presumably been fixed — clear the reports so it
+    // leaves the flagged queue and players can report it afresh.
+    doc.reportCount = 0;
+    doc.reportedBy = [];
+  }
+  if (body.explanation !== undefined && !contentChanged) {
+    // Adding an explanation doesn't fix a reported question, so reports stay.
+    const e = String(body.explanation ?? '').trim() || null;
+    if (e && e.length > 400) {
+      return res.status(400).json({ message: 'Explanation is longer than 400 characters' });
+    }
+    doc.explanation = e;
+  }
+  if (body.disabled !== undefined) doc.disabled = body.disabled === true;
 
   try {
     await doc.save();
@@ -198,7 +229,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
   await auditAdmin(req, 'questions.update', {
     targetType: 'question',
     targetId: req.params.id,
-    before: { question: before.question, answer: before.answer, disabled: before.disabled },
+    before,
     after: { question: doc.question, answer: doc.answer, disabled: doc.disabled },
   });
 
@@ -207,12 +238,12 @@ router.patch('/:id', async (req: Request, res: Response) => {
 
 // DELETE /admin/questions/:id
 router.delete('/:id', requireSuperAdmin, async (req: Request, res: Response) => {
-  const before = await QuizQuestion.findById(req.params.id).lean();
-  await QuizQuestion.findByIdAndDelete(req.params.id);
+  const before = await QuizQuestion.findByIdAndDelete(req.params.id).lean();
+  if (!before) return res.status(404).json({ message: 'Question not found' });
   await auditAdmin(req, 'questions.delete', {
     targetType: 'question',
     targetId: req.params.id,
-    before: before ? { question: before.question, category: before.category } : null,
+    before: { question: before.question, category: before.category },
   });
   res.json({ ok: true });
 });

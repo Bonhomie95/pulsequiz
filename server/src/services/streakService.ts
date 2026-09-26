@@ -43,17 +43,43 @@ export interface CheckInResult {
   nextMilestone?: { at: number; bonus: number } | null;
 }
 
+/** A genuine traveller changes zone rarely; a farmer changes it every call. */
+const TZ_CHANGE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
 export async function checkInStreak(
   userId: string,
   timezoneName?: string | null,
 ): Promise<CheckInResult> {
-  const tz = resolveTz(timezoneName);
+  const streak = await Streak.findOne({ userId });
+  if (!streak) throw new Error('Streak missing');
+
+  // The zone is pinned on the streak. The client's value is only adopted the
+  // first time, or once a week — otherwise hopping one hour per call made the
+  // previous check-in look like "yesterday" ~24 times a day.
+  const requested = resolveTz(timezoneName);
+  let tz = streak.timezone ? resolveTz(streak.timezone) : requested;
+  if (!streak.timezone) {
+    // Starting the cooldown on the first pin too — otherwise the very next call
+    // could hop zones once for free.
+    await Streak.updateOne(
+      { _id: streak._id, timezone: null },
+      { $set: { timezone: requested, timezoneChangedAt: new Date() } },
+    );
+  } else if (
+    requested !== streak.timezone &&
+    timezoneName &&
+    (!streak.timezoneChangedAt || Date.now() - streak.timezoneChangedAt.getTime() > TZ_CHANGE_COOLDOWN_MS)
+  ) {
+    await Streak.updateOne(
+      { _id: streak._id },
+      { $set: { timezone: requested, timezoneChangedAt: new Date() } },
+    );
+    tz = requested;
+  }
+
   const now = dayjs().tz(tz);
   const today = now.startOf('day');
   const yesterday = today.subtract(1, 'day');
-
-  const streak = await Streak.findOne({ userId });
-  if (!streak) throw new Error('Streak missing');
 
   const lastLocal = streak.lastCheckIn ? dayjs(streak.lastCheckIn).tz(tz) : null;
 

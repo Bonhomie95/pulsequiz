@@ -22,6 +22,7 @@ import User from '../models/User';
 import { SOCKET_EVENTS } from '../socket/events';
 import { awardWagerToWinner, refundWager } from './coinService';
 import { isDailyCapExceeded } from './antiCheatService';
+import { addLeagueXp } from './leagueService';
 import { applyMatchRating } from './ratingService';
 import { getSetting, SETTINGS_KEYS } from '../models/AppSettings';
 import { logger } from '../utils/logger';
@@ -83,6 +84,9 @@ async function awardPoints(match: any) {
       // otherwise a re-settle would inflate points without a matching session.
       if (inserted.upsertedCount > 0 && leaderboardPoints > 0) {
         await Progress.updateOne({ userId: uid }, { $inc: { points: leaderboardPoints } });
+        await addLeagueXp(uid, leaderboardPoints).catch((err) =>
+          logger.error('League XP update failed', err, { userId: uid }),
+        );
       }
     }),
   );
@@ -242,13 +246,23 @@ export function computeWinner(
  * players' coins locked. This runs on an interval and settles anything that
  * has clearly been abandoned.
  */
+const DEADLINE_GRACE_MS = 60 * 1000;
+
 export async function sweepStaleMatches(io: Server, staleAfterMs = 10 * 60 * 1000) {
   const cutoff = new Date(Date.now() - staleAfterMs);
+
+  // A player blowing through their question deadline is also abandonment —
+  // MATCH_PING keeps `updatedAt` fresh, so without this a player could sit on
+  // a question forever and then collect when the finished opponent dropped.
+  const deadlineCutoff = new Date(Date.now() - DEADLINE_GRACE_MS);
 
   const stale = await PvPMatch.find({
     settledAt: null,
     state: { $in: ['MATCHED', 'ACTIVE', 'WAITING_ON_OPPONENT'] },
-    updatedAt: { $lt: cutoff },
+    $or: [
+      { updatedAt: { $lt: cutoff } },
+      { 'players.questionDeadlineAt': { $lt: deadlineCutoff } },
+    ],
   })
     .limit(100)
     .lean();
@@ -256,6 +270,28 @@ export async function sweepStaleMatches(io: Server, staleAfterMs = 10 * 60 * 100
   for (const match of stale) {
     const matchId = match._id.toString();
     const players = match.players as any[];
+
+    const ended = (p: any) => p?.completed || typeof p?.failedAtIndex === 'number';
+    const timedOut = (p: any) =>
+      !ended(p) && p?.questionDeadlineAt && new Date(p.questionDeadlineAt) < deadlineCutoff;
+
+    if (players.some(timedOut) && players.every((p) => ended(p) || timedOut(p))) {
+      // Everyone is either done or out of time: score what was actually answered.
+      const r = computeWinner(match);
+      const outcome: SettleOutcome =
+        'draw' in r
+          ? { kind: 'draw' }
+          : { kind: 'winner', winnerUserId: r.winner.userId.toString(), reason: 'abandoned' };
+      try {
+        await settleMatch(io, matchId, outcome);
+        logger.warn('Settled match past question deadline', { matchId, outcome: outcome.kind });
+      } catch (err) {
+        logger.error('Failed to settle timed-out match', err, { matchId });
+      }
+      continue;
+    }
+    // Deadline match but someone is still legitimately mid-question.
+    if (new Date(match.updatedAt) >= cutoff) continue;
 
     // Whoever answered more is credited the win; if neither played, cancel and
     // refund rather than handing one player a pot they didn't earn.

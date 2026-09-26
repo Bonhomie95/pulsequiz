@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api/client';
+import { useAdminRole } from '../auth/useAdminRole';
+import { errMsg } from '../utils/errMsg';
 import { Crown, RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 
 type Subscription = {
@@ -30,6 +32,7 @@ const SKU_LABELS: Record<string, string> = {
 };
 
 export default function Subscriptions() {
+  const { isSuperAdmin } = useAdminRole();
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [stats, setStats] = useState<Stats>({ active: 0, grace: 0, expired: 0, revenue: 0 });
   const [page, setPage] = useState(1);
@@ -60,8 +63,8 @@ export default function Subscriptions() {
     try {
       await adminApi.patch(`/admin/subscriptions/${id}/cancel`);
       fetchSubs();
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error cancelling');
+    } catch (e) {
+      alert(errMsg(e, 'Error cancelling'));
     }
   };
 
@@ -148,7 +151,7 @@ export default function Subscriptions() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {(s.status === 'active' || s.status === 'grace') && (
+                    {isSuperAdmin && (s.status === 'active' || s.status === 'grace') && (
                       <button
                         onClick={() => cancelSub(s._id, s.userId?.username ?? 'user')}
                         className="px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-md text-xs font-bold transition"

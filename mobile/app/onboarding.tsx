@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Animated, Dimensions, FlatList,
   NativeScrollEvent, NativeSyntheticEvent, StyleSheet,
@@ -9,45 +9,52 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/theme/useTheme';
 import { useOnboardingStore } from '@/src/store/useOnboardingStore';
+import { usePrizesAvailable } from '@/src/store/useAuthStore';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-const SLIDES = [
+const ALL_SLIDES = [
   {
-    key: 'play',
+    key: 'welcome',
     emoji: '🧠',
-    gradient: ['#5B7CFF', '#2EF2B3'],
-    title: 'Quiz & Earn',
-    subtitle: 'Answer questions across 11+ categories.\nEvery correct answer earns you points.',
-    detail: 'Solo mode, PvP battles, or challenge friends in private rooms — you choose.',
+    gradient: ['#5B7CFF', '#7C3AED'],
+    title: 'Quiz & Learn',
+    subtitle: 'Answer questions across 11 categories.\nRanked, Practice, 1v1 — you choose.',
+    detail: 'Practice shows why each answer is right, so every run teaches you something.',
+    prizeOnly: false,
   },
   {
-    key: 'leaderboard',
-    emoji: '🏆',
-    gradient: ['#FFB800', '#FF6B35'],
-    title: 'Climb the Ranks',
-    subtitle: 'Weekly and monthly leaderboards reset every period.\nTop players earn real USDT prizes.',
-    detail: 'The more you play, the higher you climb. Stay consistent to win big.',
-  },
-  {
-    key: 'usdt',
-    emoji: '💰',
-    gradient: ['#2EF2B3', '#5B7CFF'],
-    title: 'Real USDT Prizes',
-    subtitle: 'Top-ranked players receive weekly payouts\ndirectly to their USDT wallet.',
-    detail: 'Set up your TRC20, ERC20, or BEP20 wallet in Settings to unlock withdrawals.',
-  },
-  {
-    key: 'payout',
+    key: 'daily',
     emoji: '📅',
+    gradient: ['#2EF2B3', '#5B7CFF'],
+    title: 'Daily Quiz & Challenges',
+    subtitle: 'The same 10 questions for everyone, every day.\nShare your score grid.',
+    detail: 'Or challenge a friend: you both get the same questions and play whenever you like.',
+    prizeOnly: false,
+  },
+  {
+    key: 'leagues',
+    emoji: '🥇',
+    gradient: ['#FFB800', '#FF6B35'],
+    title: 'Weekly Leagues',
+    subtitle: 'Race about 30 players at your level each week.\nFinish on top to move up a league.',
+    detail: 'Bronze to Legend. Every correct answer in any mode earns league XP; the top 3 win coins.',
+    prizeOnly: false,
+  },
+  {
+    key: 'prizes',
+    emoji: '💰',
     gradient: ['#7C3AED', '#5B7CFF'],
-    title: 'Weekly Payouts',
-    subtitle: 'Prize pools are distributed every Sunday.\nThe more players, the bigger the prize pool.',
-    detail: 'Referral bonuses and watch-ad rewards boost your coin balance. Every coin counts!',
+    title: 'USDT or USDC Prizes',
+    subtitle: 'Top Ranked players on the weekly and monthly\nleaderboards are paid in USDT or USDC.',
+    detail: 'Skill only — hints and extra time earn no leaderboard points. No purchase necessary. 18+.',
+    prizeOnly: true,
   },
 ];
 
 export default function OnboardingScreen() {
+  const prizes = usePrizesAvailable();
+  const slides = useMemo(() => ALL_SLIDES.filter((sl) => prizes || !sl.prizeOnly), [prizes]);
   const theme = useTheme();
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
@@ -62,7 +69,7 @@ export default function OnboardingScreen() {
   const scrollX = useRef(new Animated.Value(0)).current;
 
   const setIndex = (idx: number) => {
-    const clamped = Math.max(0, Math.min(SLIDES.length - 1, idx));
+    const clamped = Math.max(0, Math.min(slides.length - 1, idx));
     if (clamped !== indexRef.current) {
       indexRef.current = clamped;
       setCurrentIndex(clamped);
@@ -91,7 +98,7 @@ export default function OnboardingScreen() {
 
   const next = () => {
     const idx = indexRef.current;
-    if (idx < SLIDES.length - 1) {
+    if (idx < slides.length - 1) {
       flatListRef.current?.scrollToIndex({ index: idx + 1, animated: true });
       setIndex(idx + 1);
     } else {
@@ -104,7 +111,7 @@ export default function OnboardingScreen() {
       {/* Slides */}
       <Animated.FlatList
         ref={flatListRef}
-        data={SLIDES}
+        data={slides}
         keyExtractor={(s) => s.key}
         horizontal
         pagingEnabled
@@ -140,7 +147,7 @@ export default function OnboardingScreen() {
       <View style={styles.footer}>
         {/* Dot indicators */}
         <View style={styles.dots}>
-          {SLIDES.map((_, i) => {
+          {slides.map((_, i) => {
             const inputRange = [(i - 1) * SCREEN_W, i * SCREEN_W, (i + 1) * SCREEN_W];
             const width = scrollX.interpolate({ inputRange, outputRange: [8, 24, 8], extrapolate: 'clamp' });
             const opacity = scrollX.interpolate({ inputRange, outputRange: [0.4, 1, 0.4], extrapolate: 'clamp' });
@@ -159,7 +166,7 @@ export default function OnboardingScreen() {
           style={styles.nextBtnWrap}
           accessibilityRole="button"
           accessibilityLabel={
-            currentIndex < SLIDES.length - 1 ? 'Next slide' : 'Start playing'
+            currentIndex < slides.length - 1 ? 'Next slide' : 'Start playing'
           }
           hitSlop={8}
         >
@@ -169,13 +176,13 @@ export default function OnboardingScreen() {
             style={styles.nextBtn}
           >
             <Text style={styles.nextBtnText}>
-              {currentIndex < SLIDES.length - 1 ? 'Next →' : '🚀 Let\'s Play!'}
+              {currentIndex < slides.length - 1 ? 'Next →' : '🚀 Let\'s Play!'}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
 
         {/* Skip */}
-        {currentIndex < SLIDES.length - 1 && (
+        {currentIndex < slides.length - 1 && (
           <TouchableOpacity onPress={finish} style={{ paddingVertical: 12 }}
             accessibilityRole="button"
             accessibilityLabel="Skip for now"

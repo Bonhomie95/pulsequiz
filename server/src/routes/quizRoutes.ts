@@ -8,9 +8,13 @@ import {
   state,
   hint,
   extendTime,
+  guest,
 } from '../controllers/quizController';
 
 const router = Router();
+
+// Try-before-sign-up taster (no auth, per-IP limit)
+router.get('/guest', quizStartLimiter, guest);
 
 // 25 sessions/hour per user
 router.post('/start', requireAuth, quizStartLimiter, start);
