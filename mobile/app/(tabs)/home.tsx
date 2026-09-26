@@ -27,6 +27,7 @@ import { AdBanner } from '@/src/ads/adBanner';
 import { api, errorMessage } from '@/src/api/api';
 import { HomeSkeleton } from '@/src/components/HomeSkeleton';
 import { CheckInModal } from '@/src/components/CheckInModal';
+import { FriendRequestPrompt } from '@/src/components/FriendRequestPrompt';
 import { RulesSheet } from '@/src/components/RulesSheet';
 import { UserAvatar } from '@/src/components/UserAvatar';
 import { useAuthStore } from '@/src/store/useAuthStore';
@@ -393,6 +394,9 @@ export default function HomeScreen() {
       {/* ── How the game works ── */}
       <RulesSheet visible={rulesOpen} onClose={() => setRulesOpen(false)} />
 
+      {/* ── Someone wants to be friends ── */}
+      <FriendRequestPrompt />
+
       {/* ── Daily Check-In Modal ── */}
       <CheckInModal
         visible={checkInModal.visible}
@@ -737,18 +741,15 @@ export default function HomeScreen() {
               color: '#F59E0B',
               route: '/(tabs)/leaderboard',
             },
-            {
-              icon: '🤝',
-              label: 'Challenge a Friend',
-              sub: 'Same questions, any time',
-              color: '#10B981',
-              route: '/duel',
-            },
+            // "Challenge a Friend" used to sit here. Friends already covers
+            // it, and a fourth tile pushed the row onto two lines. The duel
+            // screens are untouched — /duel and shared /d/<code> links still
+            // work, they are just not advertised twice.
           ].map((a) => (
             <TouchableOpacity
               key={a.label}
               accessibilityRole="button"
-              accessibilityLabel={a.label}
+              accessibilityLabel={`${a.label}. ${a.sub}`}
               onPress={() => router.push(a.route as any)}
               style={[
                 styles.actionCard,
@@ -759,13 +760,15 @@ export default function HomeScreen() {
               <View
                 style={[styles.actionIcon, { backgroundColor: a.color + '22' }]}
               >
-                <Text style={{ fontSize: 22 }}>{a.icon}</Text>
+                <Text style={{ fontSize: 20 }}>{a.icon}</Text>
               </View>
-              <Text style={[styles.actionLabel, { color: theme.colors.text }]}>
+              <Text
+                style={[styles.actionLabel, { color: theme.colors.text }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
                 {a.label}
-              </Text>
-              <Text style={[styles.actionSub, { color: theme.colors.muted }]}>
-                {a.sub}
               </Text>
             </TouchableOpacity>
           ))}
@@ -908,12 +911,15 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   section: { fontSize: 15, fontWeight: '700', marginBottom: 12 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
+  // Three tiles, one row. `flex: 1` shares the width rather than a fixed
+  // percentage, so it holds up on narrow phones without wrapping.
+  grid: { flexDirection: 'row', gap: 10, marginBottom: 24 },
   actionCard: {
-    width: '47%',
+    flex: 1,
     borderRadius: 18,
-    padding: 16,
-    alignItems: 'flex-start',
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    alignItems: 'center',
     gap: 8,
   },
   actionIcon: {
@@ -923,8 +929,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  actionLabel: { fontSize: 14, fontWeight: '700' },
-  actionSub: { fontSize: 12 },
+  actionLabel: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
   lastQuiz: {
     flexDirection: 'row',
     alignItems: 'center',
