@@ -489,25 +489,29 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
 
       if (!player.startedAt) player.startedAt = servedAt;
 
-      if (!isCorrect) {
-        player.failedAtIndex = player.currentIndex;
+      // A wrong answer no longer ends the run.
+      //
+      // PvP used to be sudden death: one slip and you were out, watching the
+      // other player finish alone. Both players now answer the same ten
+      // questions whatever happens, and the result is decided on score with
+      // time as the tie-break — which is what computeWinner already did.
+      //
+      // `failedAtIndex` is deliberately left unset. The "has this player
+      // ended" checks still read it so that matches already in flight when
+      // this shipped continue to settle.
+      player.currentIndex += 1;
+      player.furthestIndex = Math.max(player.furthestIndex, player.currentIndex);
+
+      if (player.currentIndex >= (match.questionSet as any[]).length) {
+        player.completed = true;
         player.endedAt = now;
         player.questionDeadlineAt = null;
       } else {
-        player.currentIndex += 1;
-        player.furthestIndex = Math.max(player.furthestIndex, player.currentIndex);
-
-        if (player.currentIndex >= (match.questionSet as any[]).length) {
-          player.completed = true;
-          player.endedAt = now;
-          player.questionDeadlineAt = null;
-        } else {
-          // Serve the next question with a fresh server-side deadline.
-          player.questionServedAt = now;
-          player.questionDeadlineAt = new Date(
-            now.getTime() + TIME_PER_QUESTION * 1000 + ANSWER_GRACE_MS,
-          );
-        }
+        // Serve the next question with a fresh server-side deadline.
+        player.questionServedAt = now;
+        player.questionDeadlineAt = new Date(
+          now.getTime() + TIME_PER_QUESTION * 1000 + ANSWER_GRACE_MS,
+        );
       }
 
       if (player.endedAt && player.startedAt) {

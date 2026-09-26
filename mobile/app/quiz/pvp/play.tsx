@@ -329,7 +329,7 @@ export default function PvPPlayScreen() {
         ))}
       </View>
 
-      {/* OPPONENT FAILED */}
+      {/* WAITING ON OPPONENT */}
       {status === 'waiting' && (
         <View
           style={{
@@ -343,7 +343,9 @@ export default function PvPPlayScreen() {
           }}
         >
           <Text style={{ color: theme.colors.text }}>
-            Opponent has failed — finishing…
+            {/* Both players now answer all ten, so this only ever means they
+                have not finished yet — never that they are out. */}
+            You&apos;re done — waiting for your opponent to finish…
           </Text>
         </View>
       )}
