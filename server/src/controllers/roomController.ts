@@ -47,11 +47,11 @@ export async function createRoom(req: AuthRequest, res: Response) {
   const { category, wager } = parsed.data;
 
   const maxWager = Number(await getSetting(SETTINGS_KEYS.MAX_PVP_WAGER, 500));
-  if (wager > maxWager) return res.status(400).json({ message: `Max wager is ${maxWager} coins` });
+  if (wager > maxWager) return res.status(400).json({ message: `Max wager is ${maxWager} PulseCoins` });
 
   if (wager > 0) {
     const balance = await getBalance(req.userId);
-    if (balance < wager) return res.status(400).json({ message: 'Insufficient coins' });
+    if (balance < wager) return res.status(400).json({ message: 'Insufficient PulseCoins' });
   }
 
   // Invalidate existing open rooms by this host
@@ -99,7 +99,7 @@ export async function joinRoom(req: AuthRequest, res: Response) {
 
   if (room.wager > 0) {
     const balance = await getBalance(req.userId);
-    if (balance < room.wager) return res.status(400).json({ message: 'Insufficient coins to match wager' });
+    if (balance < room.wager) return res.status(400).json({ message: 'Insufficient PulseCoins to match wager' });
   }
 
   // Don't save guestId here — socket handler does it when both are connected

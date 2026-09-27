@@ -8,6 +8,8 @@ import { SOCKET_EVENTS } from '@/src/socket/events';
 import { UserAvatar } from '@/src/components/UserAvatar';
 import { useTheme } from '@/src/theme/useTheme';
 import { soundManager } from '@/src/audio/SoundManager';
+import { ChallengeSheet } from '@/src/components/ChallengeSheet';
+import { COIN_NAME } from '@/src/constants/currency';
 
 /**
  * "X wants to play you" — wherever you are in the app.
@@ -28,6 +30,8 @@ type Incoming = {
   category?: string;
   wager?: number;
   expiresInMs?: number;
+  /** They changed your terms and sent it back. */
+  isCounter?: boolean;
 };
 
 const cap = (v?: string) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : '');
@@ -36,6 +40,8 @@ export function ChallengePrompt() {
   const theme = useTheme();
   const router = useRouter();
   const [invite, setInvite] = useState<Incoming | null>(null);
+  /** The terms sheet, open while countering. */
+  const [countering, setCountering] = useState<Incoming | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -51,9 +57,15 @@ export function ChallengePrompt() {
     };
 
     // The challenger pulled out, it ran out of time, or they went offline.
-    const onCancelled = () => setInvite(null);
+    const onCancelled = () => {
+      setInvite(null);
+      setCountering(null);
+    };
     // We accepted and the match exists — the VS screen takes it from here.
-    const onMatchFound = () => setInvite(null);
+    const onMatchFound = () => {
+      setInvite(null);
+      setCountering(null);
+    };
 
     socket.on(SOCKET_EVENTS.CHALLENGE_INCOMING, onIncoming);
     socket.on(SOCKET_EVENTS.CHALLENGE_CANCELLED, onCancelled);
@@ -86,6 +98,27 @@ export function ChallengePrompt() {
     };
   }, [invite]);
 
+  if (countering) {
+    return (
+      <ChallengeSheet
+        visible
+        mode="counter"
+        opponentName={countering.fromUsername}
+        initialCategory={countering.category}
+        initialWager={countering.wager}
+        onCancel={() => setCountering(null)}
+        onConfirm={(category, wager) => {
+          getSocket().emit(SOCKET_EVENTS.CHALLENGE_COUNTER, {
+            challengeId: countering.challengeId,
+            category,
+            wager,
+          });
+          setCountering(null);
+        }}
+      />
+    );
+  }
+
   if (!invite) return null;
 
   const respond = (accept: boolean) => {
@@ -114,11 +147,13 @@ export function ChallengePrompt() {
           <UserAvatar avatar={invite.fromAvatar ?? ''} size={64} />
 
           <Text style={[styles.title, { color: theme.colors.text }]}>
-            {invite.fromUsername} wants to play
+            {invite.isCounter
+              ? `${invite.fromUsername} changed the terms`
+              : `${invite.fromUsername} wants to play`}
           </Text>
           <Text style={[styles.body, { color: theme.colors.muted }]}>
             {cap(invite.category) || '1v1'}
-            {invite.wager ? ` · ${invite.wager} coins staked` : ' · friendly'}
+            {invite.wager ? ` · ${invite.wager} ${COIN_NAME.plural} staked` : ' · friendly'}
           </Text>
           <Text style={[styles.body, { color: theme.colors.muted }]}>
             Expires in {secondsLeft}s
@@ -131,6 +166,22 @@ export function ChallengePrompt() {
             style={[styles.accept, { backgroundColor: theme.colors.primary }]}
           >
             <Text style={styles.acceptLabel}>Accept</Text>
+          </TouchableOpacity>
+
+          {/* Disagreeing about the stake should not mean saying no. */}
+          <TouchableOpacity
+            onPress={() => {
+              setCountering(invite);
+              setInvite(null);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Change the terms and send it back"
+            style={[styles.change, { borderColor: theme.colors.border }]}
+            hitSlop={8}
+          >
+            <Text style={{ color: theme.colors.text, fontWeight: '800' }}>
+              Change terms
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -173,5 +224,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   acceptLabel: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  change: {
+    marginTop: 10,
+    width: '100%',
+    paddingVertical: 13,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
   decline: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 16 },
 });

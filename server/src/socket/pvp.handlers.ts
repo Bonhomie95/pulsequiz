@@ -55,6 +55,8 @@ const pendingChallenges = new Map<
 >();
 /** Long enough to notice a push, short enough not to arrive out of nowhere. */
 const CHALLENGE_TTL_MS = 90_000;
+/** Matches the ready-to-play window the home carousel is built from. */
+const READY_WINDOW_MS = 30 * 60 * 1000;
 /**
  * Below this, no human has read the question — reflex alone is around 200ms
  * and these are four-option multiple choice.
@@ -319,16 +321,45 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
     if (typeof opponentId !== 'string' || !Types.ObjectId.isValid(opponentId)) return;
     if (opponentId === userId) return;
 
-    // Friends only, and only if they have not blocked you.
-    const link = await Friend.findOne({
-      status: 'accepted',
-      $or: [
-        { requesterId: userId, recipientId: opponentId },
-        { requesterId: opponentId, recipientId: userId },
-      ],
-    }).lean();
-    if (!link) {
-      socket.emit(SOCKET_EVENTS.ERROR, { message: 'You can only challenge a friend.' });
+    // Who may be challenged: a friend, or someone currently listed as ready to
+    // play — meaning they have the setting on AND have been active in the last
+    // half hour, which is exactly what puts them in that carousel.
+    //
+    // Not simply "has publicProfile", which defaults to true: that would make
+    // every account in the app challengeable by anyone who can find it, and
+    // each challenge rings a push notification. Bounded to people who are
+    // online and advertising, it is a feature; unbounded it is a spam channel.
+    const [link, target] = await Promise.all([
+      Friend.findOne({
+        status: 'accepted',
+        $or: [
+          { requesterId: userId, recipientId: opponentId },
+          { requesterId: opponentId, recipientId: userId },
+        ],
+      }).lean(),
+      User.findById(opponentId).select('publicProfile isBanned deletedAt lastSeenAt').lean(),
+    ]);
+    if (!target || target.deletedAt || target.isBanned) return;
+
+    const readyNow =
+      !!target.publicProfile &&
+      !!target.lastSeenAt &&
+      Date.now() - new Date(target.lastSeenAt).getTime() < READY_WINDOW_MS;
+
+    if (!link && !readyNow) {
+      socket.emit(SOCKET_EVENTS.ERROR, {
+        message: 'You can only challenge a friend, or someone who is ready to play.',
+      });
+      return;
+    }
+
+    // One live challenge per pair. Without this the button is a doorbell you
+    // can lean on, and every press is a push notification on their phone.
+    const pairInFlight = [...pendingChallenges.values()].some(
+      (c) => c.fromUserId === userId && c.toUserId === opponentId,
+    );
+    if (pairInFlight) {
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'You already have a challenge waiting.' });
       return;
     }
 
@@ -402,6 +433,66 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Could not start that match.' });
       io.to(challengerSocket).emit(SOCKET_EVENTS.ERROR, { message: 'Could not start that match.' });
     }
+  });
+
+  /**
+   * Counter-offer: "yes, but not for that stake".
+   *
+   * Without this the only answers are accept or decline, so disagreeing about
+   * the wager or the category means declining and starting again from the
+   * other side — and the person who declined looks like they said no. A
+   * counter is the same invite pointed the other way: the original challenger
+   * now gets to accept it.
+   */
+  on(SOCKET_EVENTS.CHALLENGE_COUNTER, async ({ challengeId, category, wager }: any) => {
+    const invite = typeof challengeId === 'string' ? pendingChallenges.get(challengeId) : undefined;
+    if (!invite || invite.toUserId !== userId) {
+      socket.emit(SOCKET_EVENTS.CHALLENGE_CANCELLED, { reason: 'expired' });
+      return;
+    }
+    pendingChallenges.delete(challengeId);
+
+    const theirSocket = userSocketMap.get(invite.fromUserId);
+    if (!theirSocket) {
+      socket.emit(SOCKET_EVENTS.CHALLENGE_CANCELLED, { reason: 'offline' });
+      return;
+    }
+
+    const me = await User.findById(userId).select('username avatar').lean();
+    const nextId = new Types.ObjectId().toHexString();
+    const cat = String(category ?? invite.category).trim().toLowerCase();
+    const stake = Math.max(0, Number(wager ?? invite.wager) || 0);
+
+    pendingChallenges.set(nextId, {
+      fromUserId: userId,
+      toUserId: invite.fromUserId,
+      category: cat,
+      wager: stake,
+      expiresAt: Date.now() + CHALLENGE_TTL_MS,
+    });
+    setTimeout(() => pendingChallenges.delete(nextId), CHALLENGE_TTL_MS).unref?.();
+
+    io.to(theirSocket).emit(SOCKET_EVENTS.CHALLENGE_INCOMING, {
+      challengeId: nextId,
+      fromUserId: userId,
+      fromUsername: me?.username ?? 'A friend',
+      fromAvatar: me?.avatar ?? '',
+      category: cat,
+      wager: stake,
+      expiresInMs: CHALLENGE_TTL_MS,
+      // So the original challenger sees "they want to change it to…" rather
+      // than a challenge arriving out of nowhere.
+      isCounter: true,
+    });
+
+    socket.emit(SOCKET_EVENTS.CHALLENGE_SENT, {
+      challengeId: nextId,
+      opponentId: invite.fromUserId,
+      opponentUsername: '',
+      online: true,
+      isCounter: true,
+      expiresInMs: CHALLENGE_TTL_MS,
+    });
   });
 
   on(SOCKET_EVENTS.CHALLENGE_DECLINE, async ({ challengeId }: any) => {

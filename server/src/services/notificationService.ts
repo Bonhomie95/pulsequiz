@@ -150,7 +150,7 @@ export async function sendNewChallengesNotification(userIds: string[]) {
   const messages: ExpoPushMessage[] = (tokens as any[]).map((t) => ({
     to: t.token,
     title: '🎯 New Challenges Available!',
-    body: 'Your daily challenges are waiting. Complete them to earn coins!',
+    body: 'Your daily challenges are waiting. Complete them to earn PulseCoins!',
     data: { type: 'new_challenges' },
     priority: 'normal',
     sound: 'default',

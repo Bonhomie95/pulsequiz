@@ -37,6 +37,7 @@ import { SOCKET_EVENTS } from '@/src/socket/events';
 import { useTheme } from '@/src/theme/useTheme';
 import { Toast } from '@/src/components/Toast';
 import { UserAvatar } from '@/src/components/UserAvatar';
+import { ChallengeSheet } from '@/src/components/ChallengeSheet';
 
 type Friend = {
   _id: string;
@@ -444,6 +445,10 @@ export default function FriendsScreen() {
     type: 'success' as 'success' | 'error',
   });
   const [previewUser, setPreviewUser] = useState<SearchUser | null>(null);
+  /** Who we are about to challenge, while the terms sheet is open. */
+  const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(
+    null,
+  );
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -614,11 +619,6 @@ export default function FriendsScreen() {
     );
   };
 
-  const inviteToRoom = (userId: string, name?: string | null) =>
-    router.push({
-      pathname: '/room/create',
-      params: { invite: userId, inviteName: name ?? '' },
-    } as any);
 
   /**
    * Challenge a friend directly. No room, no code.
@@ -628,15 +628,21 @@ export default function FriendsScreen() {
    * are both signed into. The code still exists for inviting someone you
    * cannot reach here; it has no place in this path.
    */
-  const challengeUser = (u: SearchUser | Friend) => {
-    const socket = getSocket();
+  /** Opens the terms sheet; the challenge goes out when they confirm. */
+  const challengeUser = (u: SearchUser | Friend) =>
+    setChallengeTarget({ id: u._id, name: u.username ?? 'them' });
+
+  const sendChallenge = (category: string, wager: number) => {
+    const target = challengeTarget;
+    if (!target) return;
+    setChallengeTarget(null);
     connectSocket();
-    socket.emit(SOCKET_EVENTS.CHALLENGE_SEND, {
-      opponentId: u._id,
-      category: 'general knowledge',
-      wager: 0,
+    getSocket().emit(SOCKET_EVENTS.CHALLENGE_SEND, {
+      opponentId: target.id,
+      category,
+      wager,
     });
-    showToast(`Challenge sent to ${u.username ?? 'them'}`);
+    showToast(`Request sent to ${target.name}`);
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -646,6 +652,13 @@ export default function FriendsScreen() {
       edges={['top']}
       style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
+      <ChallengeSheet
+        visible={!!challengeTarget}
+        opponentName={challengeTarget?.name ?? ''}
+        mode="send"
+        onCancel={() => setChallengeTarget(null)}
+        onConfirm={sendChallenge}
+      />
       <Toast
         {...toast}
         onHide={() => setToast((t) => ({ ...t, visible: false }))}
@@ -749,7 +762,7 @@ export default function FriendsScreen() {
               ⚡ Quick Play
             </Text>
             <Text style={[styles.roomSub, { color: theme.colors.muted }]}>
-              No friend request needed — share a room code
+              For someone you can reach outside the app — share a code
             </Text>
             <View style={styles.roomBtns}>
               <TouchableOpacity
@@ -861,7 +874,7 @@ export default function FriendsScreen() {
                     <StatusBadges user={f} theme={theme} />
                   </View>
                   <TouchableOpacity
-                    onPress={() => inviteToRoom(f._id, f.username)}
+                    onPress={() => challengeUser(f)}
                     style={[
                       styles.challengeBtn,
                       {

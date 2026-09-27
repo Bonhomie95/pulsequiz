@@ -70,7 +70,7 @@ function savingsBadge(prices: Record<string, StorePrice>, plan: PlanMeta): strin
 const PERKS = [
   { icon: '🚫', text: 'No banner ads' },
   { icon: '🚫', text: 'No interstitial ads' },
-  { icon: '✅', text: 'Rewarded ads still available for bonus coins' },
+  { icon: '✅', text: 'Rewarded ads still available for bonus PulseCoins' },
   { icon: '💙', text: 'Support indie development' },
 ];
 

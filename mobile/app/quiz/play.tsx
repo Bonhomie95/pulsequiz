@@ -260,7 +260,7 @@ export default function QuizPlay() {
       // 🧠 ONLY go to ads if backend explicitly says so
       if (res.data?.requiresAd) {
         if (!rewardedAdsAvailable) {
-          Alert.alert('Not enough coins', 'You need 20 coins for extra time.');
+          Alert.alert('Not enough PulseCoins', 'You need 20 PulseCoins for extra time.');
           return;
         }
         stopTimer(); // pause time
@@ -745,9 +745,9 @@ export default function QuizPlay() {
 
       if (typeof disabledIndex !== 'number') {
         // 🔥 NOT ENOUGH COINS → GO TO EARN ADS
-        if (res?.data?.message === 'Not enough coins') {
+        if (res?.data?.message === 'Not enough PulseCoins') {
           if (!rewardedAdsAvailable) {
-            Alert.alert('Not enough coins', `You need ${hintCost} coins for a hint.`);
+            Alert.alert('Not enough PulseCoins', `You need ${hintCost} PulseCoins for a hint.`);
             return;
           }
           stopTimer(); // pause quiz
@@ -1042,7 +1042,7 @@ export default function QuizPlay() {
               ]}
             
             accessibilityRole="button"
-            accessibilityLabel={`Hint, ${hintCost} coins. A hinted answer earns no leaderboard points.`}
+            accessibilityLabel={`Hint, ${hintCost} PulseCoins. A hinted answer earns no leaderboard points.`}
             hitSlop={8}>
               <Text
                 style={{
@@ -1059,7 +1059,7 @@ export default function QuizPlay() {
                   fontSize: 12,
                 }}
               >
-                {hintsUsed < 3 ? `${hintCost} coins` : 'Max'}
+                {hintsUsed < 3 ? `${hintCost} PulseCoins` : 'Max'}
               </Text>
             </TouchableOpacity>
 

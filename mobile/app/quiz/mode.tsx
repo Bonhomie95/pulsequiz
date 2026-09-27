@@ -34,7 +34,7 @@ const OPTIONS: Option[] = [
     mode: 'pvp',
     title: '1v1 Live',
     sub: 'Real opponent • Same questions • Speed matters',
-    reward: '⚔️ Win points, coins and rating',
+    reward: '⚔️ Win points, PulseCoins and rating',
     Icon: Swords,
     featured: true,
   },

@@ -216,7 +216,7 @@ export function startLeaderboardCron(io?: Server) {
     job('ledger-reconciliation', 30 * MINUTE, async () => {
       const report = await reconcileCoinLedger();
       if (report.drifted > 0) {
-        logger.error('Coin ledger drift detected', undefined, {
+        logger.error('PulseCoin ledger drift detected', undefined, {
           drifted: report.drifted,
           checked: report.checked,
           sample: report.samples.slice(0, 10),

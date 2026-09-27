@@ -164,7 +164,7 @@ export default function EarnAdsScreen() {
     if (loadingAd) return 'Loading ad…';
     if (capReached) return "That's all for today";
     if (cooldown > 0) return `Next ad in ${formatCooldown(cooldown)}`;
-    return `Watch ad  ·  +${config?.coinsPerAd ?? 0} coins`;
+    return `Watch ad  ·  +${config?.coinsPerAd ?? 0} PulseCoins`;
   };
 
   return (
@@ -234,7 +234,7 @@ export default function EarnAdsScreen() {
                   { backgroundColor: theme.colors.coin + '22', borderColor: theme.colors.coin + '55' },
                 ]}
                 accessible
-                accessibilityLabel={`${config?.coinsPerAd} coins per ad`}
+                accessibilityLabel={`${config?.coinsPerAd} PulseCoins per ad`}
               >
                 <Text style={{ fontSize: 22 }}>🪙</Text>
                 <Text style={[styles.rewardText, { color: theme.colors.coin }]}>
@@ -316,7 +316,7 @@ export default function EarnAdsScreen() {
             <Text style={[styles.note, { color: theme.colors.muted }]}>
               {capReached
                 ? 'Your daily ads reset at midnight UTC.'
-                : '💡 Coins power hints, extra time, wagers and tournament entries.'}
+                : '💡 PulseCoins power hints, extra time, wagers and tournament entries.'}
             </Text>
           </>
         )}

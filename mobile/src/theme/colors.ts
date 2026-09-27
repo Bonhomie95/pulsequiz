@@ -1,7 +1,7 @@
 /**
  * Palette.
  *
- * Light-theme `secondary` and `coin` used to fail WCAG AA badly as text
+ * Light-theme `secondary` and `PulseCoin` used to fail WCAG AA badly as text
  * (#2EF2B3 on white is ~1.6:1, #EAB308 ~2.1:1, against a 4.5:1 requirement).
  * They are darkened here so the same token can safely carry text on either
  * ground; `*Fill` keeps the bright original for decorative surfaces where

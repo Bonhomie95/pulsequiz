@@ -9,11 +9,11 @@
  * looks up the pack here by SKU.
  */
 export const COIN_PACKS = {
-  pq_coins_500: { usd: 0.99, coins: 500, label: '500 Coins' },
-  pq_coins_1500: { usd: 1.99, coins: 1500, label: '1,500 Coins' },
-  pq_coins_5000: { usd: 4.99, coins: 5000, label: '5,000 Coins' },
-  pq_coins_12000: { usd: 7.99, coins: 12000, label: '12,000 Coins' },
-  pq_coins_20000: { usd: 9.99, coins: 20000, label: '20,000 Coins' },
+  pq_coins_500: { usd: 0.99, coins: 500, label: '500 PulseCoins' },
+  pq_coins_1500: { usd: 1.99, coins: 1500, label: '1,500 PulseCoins' },
+  pq_coins_5000: { usd: 4.99, coins: 5000, label: '5,000 PulseCoins' },
+  pq_coins_12000: { usd: 7.99, coins: 12000, label: '12,000 PulseCoins' },
+  pq_coins_20000: { usd: 9.99, coins: 20000, label: '20,000 PulseCoins' },
 } as const;
 
 export type CoinSku = keyof typeof COIN_PACKS;

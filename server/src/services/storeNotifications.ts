@@ -165,7 +165,7 @@ export async function revokePurchase(purchase: any, reason: string) {
     });
   }
 
-  logger.warn('Purchase refunded — coins clawed back', {
+  logger.warn('Purchase refunded — PulseCoins clawed back', {
     purchaseId: purchase._id.toString(),
     coins,
     reason,
@@ -208,7 +208,7 @@ async function restoreRefundedPurchase(purchase: any) {
     reason: 'iap_purchase',
     meta: `refund_reversed:${claimed.uniqueKey}`,
   });
-  logger.warn('Apple refund reversed — coins restored', { purchaseId: claimed._id.toString(), coins });
+  logger.warn('Apple refund reversed — PulseCoins restored', { purchaseId: claimed._id.toString(), coins });
 }
 
 export async function handleAppleNotification(payload: any) {

@@ -298,7 +298,7 @@ export default function ProfileScreen() {
             },
             {
               icon: <Text style={{ fontSize: 18 }}>🪙</Text>,
-              label: 'Coins',
+              label: 'PulseCoins',
               value: coins.toLocaleString(),
             },
           ].map((s, i) => (
@@ -328,7 +328,7 @@ export default function ProfileScreen() {
             {
               icon: '🎁',
               label: 'Referrals',
-              sub: 'Earn 100 coins per friend',
+              sub: 'Earn 100 PulseCoins per friend',
               route: '/referral',
             },
             {
@@ -346,7 +346,7 @@ export default function ProfileScreen() {
             {
               icon: '💰',
               label: prizes ? 'Wallet & Payouts' : 'Wallet',
-              sub: prizes ? 'Coins, prizes and payout history' : 'Coins and purchases',
+              sub: prizes ? 'PulseCoins, prizes and payout history' : 'PulseCoins and purchases',
               route: '/wallet',
             },
             {

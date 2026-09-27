@@ -669,7 +669,7 @@ export default function PvPPlayScreen() {
           </TouchableOpacity>
 
           <Text style={{ color: theme.colors.muted, fontSize: 12, fontWeight: '700' }}>
-            {wager > 0 ? `${wager} coins staked` : 'Friendly match'}
+            {wager > 0 ? `${wager} PulseCoins staked` : 'Friendly match'}
           </Text>
         </View>
       </View>

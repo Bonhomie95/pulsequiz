@@ -40,7 +40,7 @@ export async function getHomeSummary(req: AuthRequest, res: Response) {
     weeklyPool,
     adConfig,
   ] = await Promise.all([
-    CoinWallet.findOne({ userId }).select('coins').lean(),
+    CoinWallet.findOne({ userId }).select('PulseCoins').lean(),
     Streak.findOne({ userId }).lean(),
     Progress.findOne({ userId }).select('points level totalQuizzes').lean(),
     QuizSession.findOne({ userId })

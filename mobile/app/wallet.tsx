@@ -145,7 +145,7 @@ export default function WalletScreen() {
       }
     } catch (e: any) {
       if (e.response?.status === 429) {
-        Alert.alert('Daily limit reached', errorMessage(e, 'Come back tomorrow for more free coins!'));
+        Alert.alert('Daily limit reached', errorMessage(e, 'Come back tomorrow for more free PulseCoins!'));
       } else {
         Alert.alert('Error', 'Could not load ad. Try again later.');
       }

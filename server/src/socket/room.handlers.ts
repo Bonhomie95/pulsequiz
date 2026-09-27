@@ -167,7 +167,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
         const whoIsShort =
           lockResult.error === 'player_a_insufficient' ? 'The host' : 'You';
         socket.emit(SOCKET_EVENTS.ERROR, {
-          message: `${whoIsShort} ${whoIsShort === 'You' ? "don't" : "doesn't"} have the ${room.wager} coins for this wager.`,
+          message: `${whoIsShort} ${whoIsShort === 'You' ? "don't" : "doesn't"} have the ${room.wager} PulseCoins for this wager.`,
         });
         io.to(existing.hostSocketId).emit(SOCKET_EVENTS.ERROR, {
           message: 'A player tried to join but the wager could not be staked.',

@@ -28,6 +28,8 @@ export const SOCKET_EVENTS = {
   CHALLENGE_SEND: 'challenge:send',
   CHALLENGE_INCOMING: 'challenge:incoming',
   CHALLENGE_ACCEPT: 'challenge:accept',
+  /** Counter-offer: same opponent, different stake or category. */
+  CHALLENGE_COUNTER: 'challenge:counter',
   CHALLENGE_DECLINE: 'challenge:decline',
   /** Declined, expired, or they were never reachable. */
   CHALLENGE_CANCELLED: 'challenge:cancelled',

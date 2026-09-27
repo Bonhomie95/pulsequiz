@@ -23,7 +23,7 @@ const JOIN_ERRORS: Record<string, { status: number; message: string }> = {
   closed:             { status: 400, message: 'Tournament is not open for joining' },
   already_joined:     { status: 400, message: "You've already joined this tournament" },
   full:               { status: 400, message: 'Tournament is full' },
-  insufficient_coins: { status: 400, message: 'Not enough coins for the entry fee' },
+  insufficient_coins: { status: 400, message: 'Not enough PulseCoins for the entry fee' },
 };
 
 export async function joinTournament(req: AuthRequest, res: Response) {

@@ -79,14 +79,14 @@ export default function TournamentDetailScreen() {
   const join = async () => {
     if (!tournament) return;
     if (tournament.entryFeeCoins > coins) {
-      Alert.alert('Insufficient Coins', `You need ${tournament.entryFeeCoins} coins to join. You have ${coins}.`);
+      Alert.alert('Insufficient PulseCoins', `You need ${tournament.entryFeeCoins} PulseCoins to join. You have ${coins}.`);
       return;
     }
 
     Alert.alert(
       'Join Tournament',
       tournament.entryFeeCoins > 0
-        ? `Entry fee: ${tournament.entryFeeCoins} coins. Are you sure?`
+        ? `Entry fee: ${tournament.entryFeeCoins} PulseCoins. Are you sure?`
         : 'Join this tournament? It\'s free!',
       [
         { text: 'Cancel', style: 'cancel' },
@@ -317,7 +317,7 @@ export default function TournamentDetailScreen() {
                     {tournament.participants.length >= tournament.maxParticipants
                       ? 'Tournament Full'
                       : tournament.entryFeeCoins > 0
-                      ? `Join for ${tournament.entryFeeCoins} coins`
+                      ? `Join for ${tournament.entryFeeCoins} PulseCoins`
                       : 'Join Free'}
                   </Text>
                 </>

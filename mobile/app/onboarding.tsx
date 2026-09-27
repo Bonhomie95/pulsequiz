@@ -38,7 +38,7 @@ const ALL_SLIDES = [
     gradient: ['#FFB800', '#FF6B35'],
     title: 'Weekly Leagues',
     subtitle: 'Race about 30 players at your level each week.\nFinish on top to move up a league.',
-    detail: 'Bronze to Legend. Every correct answer in any mode earns league XP; the top 3 win coins.',
+    detail: 'Bronze to Legend. Every correct answer in any mode earns league XP; the top 3 win PulseCoins.',
     prizeOnly: false,
   },
   {

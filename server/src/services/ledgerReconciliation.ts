@@ -55,7 +55,7 @@ export async function reconcileCoinLedger(
     }
   }
 
-  logger.info('Coin ledger reconciliation complete', {
+  logger.info('PulseCoin ledger reconciliation complete', {
     checked: report.checked,
     drifted: report.drifted,
   });

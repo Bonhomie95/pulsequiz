@@ -305,7 +305,7 @@ export async function adjustCoins(req: Request, res: Response) {
     after: { coins: balance, delta, reason },
   });
 
-  logger.warn('Admin adjusted coin balance', { userId: id, delta, reason, balance });
+  logger.warn('Admin adjusted PulseCoin balance', { userId: id, delta, reason, balance });
 
   res.json({ ok: true, coins: balance, delta });
 }

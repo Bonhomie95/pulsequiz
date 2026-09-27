@@ -28,6 +28,10 @@ import { api, errorMessage } from '@/src/api/api';
 import { HomeSkeleton } from '@/src/components/HomeSkeleton';
 import { CheckInModal } from '@/src/components/CheckInModal';
 import { FriendRequestPrompt } from '@/src/components/FriendRequestPrompt';
+import { ChallengeSheet } from '@/src/components/ChallengeSheet';
+import { getSocket } from '@/src/socket/socket';
+import { connectSocket } from '@/src/socket/connect';
+import { SOCKET_EVENTS } from '@/src/socket/events';
 import { RulesSheet } from '@/src/components/RulesSheet';
 import { UserAvatar } from '@/src/components/UserAvatar';
 import { useAuthStore } from '@/src/store/useAuthStore';
@@ -379,14 +383,31 @@ export default function HomeScreen() {
         ? 'Good afternoon'
         : 'Good evening';
 
-  // A direct challenge is a private room the player shares a code for.
-  // Random matchmaking can't target one person, so the old path here showed
-  // "Challenging X…" and then matched a stranger.
-  const handleCarouselChallenge = (player: ReadyPlayer) => {
-    router.push({
-      pathname: '/room/create',
-      params: { invite: player._id, inviteName: player.username },
-    } as any);
+  /**
+   * Challenge someone from the ready-to-play row.
+   *
+   * This used to open the create-a-room screen and hand you a code, which is
+   * unusable against someone you have only just seen in a list — there is no
+   * way to read it to them. The challenge goes straight to them now; being on
+   * this list is their opt-in to receiving one.
+   */
+  const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(
+    null,
+  );
+
+  const handleCarouselChallenge = (player: ReadyPlayer) =>
+    setChallengeTarget({ id: player._id, name: player.username ?? 'them' });
+
+  const sendChallenge = (category: string, wager: number) => {
+    const target = challengeTarget;
+    if (!target) return;
+    setChallengeTarget(null);
+    connectSocket();
+    getSocket().emit(SOCKET_EVENTS.CHALLENGE_SEND, {
+      opponentId: target.id,
+      category,
+      wager,
+    });
   };
 
   return (
@@ -396,6 +417,13 @@ export default function HomeScreen() {
 
       {/* ── Someone wants to be friends ── */}
       <FriendRequestPrompt />
+      <ChallengeSheet
+        visible={!!challengeTarget}
+        opponentName={challengeTarget?.name ?? ''}
+        mode="send"
+        onCancel={() => setChallengeTarget(null)}
+        onConfirm={sendChallenge}
+      />
 
       {/* ── Daily Check-In Modal ── */}
       <CheckInModal
@@ -723,7 +751,7 @@ export default function HomeScreen() {
             {
               icon: '🎯',
               label: 'Challenges',
-              sub: 'Earn coins daily',
+              sub: 'Earn PulseCoins daily',
               color: '#7C3AED',
               route: '/challenges',
             },

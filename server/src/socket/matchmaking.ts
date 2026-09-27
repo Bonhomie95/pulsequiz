@@ -252,10 +252,10 @@ async function createAndBroadcastMatch(
       const otherId = shortId === entry ? opponent : entry;
 
       io.to(shortId.socketId).emit(SOCKET_EVENTS.ERROR, {
-        message: `You need ${wager} coins to play this wager.`,
+        message: `You need ${wager} PulseCoins to play this wager.`,
       });
       io.to(otherId.socketId).emit(SOCKET_EVENTS.ERROR, {
-        message: 'Match cancelled — your opponent had insufficient coins.',
+        message: 'Match cancelled — your opponent had insufficient PulseCoins.',
       });
       return;
     }
@@ -360,10 +360,10 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
         // cancelling it — the old flow told the player "match cancelled" when
         // the real problem was their own balance.
         if (safeWager > 0) {
-          const wallet = await CoinWallet.findOne({ userId }).select('coins').lean();
+          const wallet = await CoinWallet.findOne({ userId }).select('PulseCoins').lean();
           if ((wallet?.coins ?? 0) < safeWager) {
             socket.emit(SOCKET_EVENTS.ERROR, {
-              message: `You need ${safeWager} coins to stake this wager. You have ${wallet?.coins ?? 0}.`,
+              message: `You need ${safeWager} PulseCoins to stake this wager. You have ${wallet?.coins ?? 0}.`,
             });
             return;
           }

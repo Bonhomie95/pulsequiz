@@ -16,7 +16,7 @@ const REQUIRED_ENV = ['MONGO_URI', 'JWT_SECRET', 'ADMIN_JWT_SECRET'] as const;
 const REQUIRED_IN_PROD = [
   ['FRONTEND_ORIGIN', 'CORS would reflect any origin with credentials'],
   ['SENTRY_DSN', 'server errors would go unreported'],
-  ['ADMOB_SSV_ENABLED', 'rewarded-ad coins would be credited without ad verification'],
+  ['ADMOB_SSV_ENABLED', 'rewarded-ad PulseCoins would be credited without ad verification'],
   ['METRICS_TOKEN', '/metrics would be public'],
 ] as const;
 

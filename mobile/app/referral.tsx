@@ -68,7 +68,7 @@ export default function ReferralScreen() {
       await Share.share({
         // No prize promises here: the person receiving this may live where
         // cash prizes aren't offered.
-        message: `Join me on PulseQuiz! Use my code ${myCode} for bonus coins.\nDaily quiz, weekly leagues and 1v1 battles 🎮\n${LINKS.WEBSITE}`,
+        message: `Join me on PulseQuiz! Use my code ${myCode} for bonus PulseCoins.\nDaily quiz, weekly leagues and 1v1 battles 🎮\n${LINKS.WEBSITE}`,
         title: 'Join PulseQuiz',
       });
     } catch { /* cancelled */ }
@@ -216,7 +216,7 @@ export default function ReferralScreen() {
           {[
             { step: '1', text: 'Share your referral code with a friend' },
             { step: '2', text: 'Friend signs up and enters your code' },
-            { step: '3', text: 'When they complete their first quiz, you earn 100 coins!' },
+            { step: '3', text: 'When they complete their first quiz, you earn 100 PulseCoins!' },
           ].map((item) => (
             <View key={item.step} style={styles.howRow}>
               <View style={[styles.stepBadge, { backgroundColor: theme.colors.primary }]}>

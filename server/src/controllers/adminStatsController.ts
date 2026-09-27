@@ -15,7 +15,7 @@ export async function getTotalUsers(_: Request, res: Response) {
 /* ---------------- COINS CIRCULATING ---------------- */
 export async function getTotalCoins(_: Request, res: Response) {
   const result = await CoinWallet.aggregate([
-    { $group: { _id: null, total: { $sum: '$coins' } } },
+    { $group: { _id: null, total: { $sum: '$PulseCoins' } } },
   ]);
 
   res.json({ total: result[0]?.total || 0 });

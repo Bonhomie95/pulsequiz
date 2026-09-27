@@ -39,7 +39,7 @@ const RULES: { section: string; items: Rule[] }[] = [
       },
       {
         title: 'Weekly leagues',
-        body: 'Every correct answer, in any mode, earns league XP. Each week you race about 30 players at your level: the top of the group moves up a league, the bottom moves down, and the top 3 win coins.',
+        body: 'Every correct answer, in any mode, earns league XP. Each week you race about 30 players at your level: the top of the group moves up a league, the bottom moves down, and the top 3 win PulseCoins.',
       },
     ],
   },
@@ -56,7 +56,7 @@ const RULES: { section: string; items: Rule[] }[] = [
       },
       {
         title: 'Hints cost more each time',
-        body: 'Up to 3 hints per quiz, one per question. Each removes a wrong option. They cost 10, then 20, then 50 coins.',
+        body: 'Up to 3 hints per quiz, one per question. Each removes a wrong option. They cost 10, then 20, then 50 PulseCoins.',
       },
       {
         title: 'Help never buys ranking points',
@@ -102,24 +102,24 @@ const RULES: { section: string; items: Rule[] }[] = [
       },
       {
         title: 'Changing your wallet pauses payouts',
-        body: 'For 72 hours after any change to your address, network or coin, so that if someone else ever got into your account you have time to notice and act. Crypto sent to an address or network you entered incorrectly cannot be recovered.',
+        body: 'For 72 hours after any change to your address, network or payout coin, so that if someone else ever got into your account you have time to notice and act. Crypto sent to an address or network you entered incorrectly cannot be recovered.',
       },
     ],
   },
   {
-    section: 'Coins',
+    section: 'PulseCoins',
     items: [
       {
-        title: 'Coins are not prize money',
-        body: 'Coins buy hints, extra time, wagers and tournament entries. They have no cash value, cannot be withdrawn, and cannot be exchanged for USDT or USDC. Prizes come only from your leaderboard rank.',
+        title: 'PulseCoins are not prize money',
+        body: 'PulseCoins buy hints, extra time, wagers and tournament entries. They have no cash value, cannot be withdrawn, and cannot be exchanged for USDT or USDC. Prizes come only from your leaderboard rank.',
       },
       {
         title: 'No purchase necessary',
-        body: 'Playing, ranking and winning prizes never require buying anything. Purchased coins cannot earn leaderboard points.',
+        body: 'Playing, ranking and winning prizes never require buying anything. Purchased PulseCoins cannot earn leaderboard points.',
       },
       {
         title: 'Wagers stake both players',
-        body: 'Both players put up the same amount of coins, and the winner takes the pot. If a match is drawn, or ends because someone disconnected before playing, both stakes are returned. Wagers are coins only — never real money.',
+        body: 'Both players put up the same amount of PulseCoins, and the winner takes the pot. If a match is drawn, or ends because someone disconnected before playing, both stakes are returned. Wagers are PulseCoins only — never real money.',
       },
     ],
   },

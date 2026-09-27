@@ -127,7 +127,7 @@ export async function anonymiseUser(userId: string): Promise<DeletionSummary> {
     activity,
     // Named explicitly so the user can be told what is kept and why.
     retainedForAccounting: [
-      'coin transaction ledger',
+      'PulseCoin transaction ledger',
       'store purchase records',
       'prize payout records',
     ],

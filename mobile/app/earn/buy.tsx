@@ -48,7 +48,7 @@ export default function BuyCoinsScreen() {
         }
         setStorePrices(prices);
       } catch (e) {
-        logger.warn('Coin IAP init failed', { error: String(e) });
+        logger.warn('PulseCoin IAP init failed', { error: String(e) });
         if (mounted) setStoreError(true);
       }
     })();
@@ -80,18 +80,18 @@ export default function BuyCoinsScreen() {
           Alert.alert(
             '🎉 Success',
             added > 0
-              ? `${added.toLocaleString()} coins added to your account!`
+              ? `${added.toLocaleString()} PulseCoins added to your account!`
               : // The server replays an already-credited purchase with
                 // coinsAdded: 0. Saying "0 coins added" to someone who just
                 // paid reads as a failure.
-                'This purchase was already credited — your coins are in your wallet.',
+                'This purchase was already credited — your PulseCoins are in your wallet.',
           );
           router.back();
         } catch (e: any) {
           handledPurchases.current.delete(key); // allow a genuine retry
 
           const status = e?.response?.status;
-          logger.error('Coin purchase verification failed', e, {
+          logger.error('PulseCoin purchase verification failed', e, {
             sku: purchase.productId,
             status,
           });
@@ -107,7 +107,7 @@ export default function BuyCoinsScreen() {
             terminal
               ? errorMessage(
                   e,
-                  'Your payment was not accepted. You have not been charged for coins. Contact support if you were.',
+                  'Your payment was not accepted. You have not been charged for PulseCoins. Contact support if you were.',
                 )
               : "We couldn't reach PulseQuiz to confirm your purchase. It is safe — your coins will be added automatically next time you open the app.",
           );
@@ -237,7 +237,7 @@ export default function BuyCoinsScreen() {
             ]}
           
             accessibilityRole="button"
-            accessibilityLabel={`Buy ${p.coins.toLocaleString()} coins${getPrice(p.sku) ? ` for ${getPrice(p.sku)}` : ''}`}
+            accessibilityLabel={`Buy ${p.coins.toLocaleString()} PulseCoins${getPrice(p.sku) ? ` for ${getPrice(p.sku)}` : ''}`}
             accessibilityState={{ disabled: !!loadingSku || !getPrice(p.sku), busy: loadingSku === p.sku }}
             hitSlop={8}>
             {p.popular && (

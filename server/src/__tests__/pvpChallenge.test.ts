@@ -128,9 +128,13 @@ it('reaches a friend and starts a real match when they accept', async () => {
   }
 });
 
-it('refuses to challenge someone who is not a friend', async () => {
+it('refuses a stranger who is not advertising themselves as ready', async () => {
+  // The rule is friends, or someone currently listed as ready to play.
+  // Everyone else is off limits: each challenge rings a push notification,
+  // so an open channel would be a spam channel.
   const a = await makePlayer('chala');
   const b = await makePlayer('chalb');
+  await User.updateOne({ _id: b.id }, { publicProfile: false });
 
   const sa = await connect(a.token);
   const sb = await connect(b.token);
@@ -168,6 +172,64 @@ it('tells the challenger when the invite is declined', async () => {
     sb.emit(SOCKET_EVENTS.CHALLENGE_DECLINE, { challengeId: invite.challengeId });
 
     expect((await cancelled).reason).toBe('declined');
+  } finally {
+    sa.close();
+    sb.close();
+  }
+});
+
+it('lets you challenge someone who is ready to play, friend or not', async () => {
+  // Being on the ready-to-play list is an opt-in to being challenged by
+  // someone you have not met — which is exactly the case the room code
+  // cannot serve, since there is no way to read a code to a stranger.
+  const a = await makePlayer('chala');
+  const b = await makePlayer('chalb');
+  await User.updateOne({ _id: b.id }, { publicProfile: true });
+
+  const sa = await connect(a.token);
+  const sb = await connect(b.token);
+
+  try {
+    const incoming = once<any>(sb, SOCKET_EVENTS.CHALLENGE_INCOMING);
+    sa.emit(SOCKET_EVENTS.CHALLENGE_SEND, { opponentId: b.id, category: 'math', wager: 0 });
+    expect((await incoming).fromUsername).toBe('chala');
+  } finally {
+    sa.close();
+    sb.close();
+  }
+});
+
+it('carries a counter-offer back to the original challenger', async () => {
+  const a = await makePlayer('chala');
+  const b = await makePlayer('chalb');
+  await Friend.create({ requesterId: a.id, recipientId: b.id, status: 'accepted' });
+
+  const sa = await connect(a.token);
+  const sb = await connect(b.token);
+
+  try {
+    const first = once<any>(sb, SOCKET_EVENTS.CHALLENGE_INCOMING);
+    sa.emit(SOCKET_EVENTS.CHALLENGE_SEND, { opponentId: b.id, category: 'math', wager: 0 });
+    const invite = await first;
+
+    // "Yes, but for 50." Declining and starting again from the other side
+    // would make the person who wants to play look like they said no.
+    const countered = once<any>(sa, SOCKET_EVENTS.CHALLENGE_INCOMING);
+    sb.emit(SOCKET_EVENTS.CHALLENGE_COUNTER, {
+      challengeId: invite.challengeId,
+      category: 'math',
+      wager: 50,
+    });
+
+    const back = await countered;
+    expect(back.isCounter).toBe(true);
+    expect(back.wager).toBe(50);
+    expect(back.fromUsername).toBe('chalb');
+
+    // And the original challenger can accept it into a real match.
+    const foundA = once<any>(sa, SOCKET_EVENTS.MATCH_FOUND);
+    sa.emit(SOCKET_EVENTS.CHALLENGE_ACCEPT, { challengeId: back.challengeId });
+    expect((await foundA).matchId).toBeTruthy();
   } finally {
     sa.close();
     sb.close();

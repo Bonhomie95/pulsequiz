@@ -208,7 +208,7 @@ describe('hints', () => {
     });
 
     expect(result.disabledIndex).toBeNull();
-    expect(result.message).toBe('Not enough coins');
+    expect(result.message).toBe('Not enough PulseCoins');
     // And the hint slot was released, not consumed.
     const session2 = await ActiveQuizSession.findById(session.sessionId).lean();
     expect(session2?.hintsUsed).toBe(0);

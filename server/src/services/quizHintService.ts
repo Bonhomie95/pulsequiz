@@ -109,7 +109,7 @@ export async function useHintService(params: {
     return {
       disabledIndex: null,
       coins: debit.balance,
-      message: 'Not enough coins',
+      message: 'Not enough PulseCoins',
     };
   }
 

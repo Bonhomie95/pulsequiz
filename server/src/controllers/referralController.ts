@@ -144,7 +144,7 @@ export async function applyReferralCode(req: AuthRequest, res: Response) {
     ok: true,
     coinsGranted,
     referrerUsername: referrer.username,
-    message: `You got ${coinsGranted} coins! ${referrer.username} earns ${reward} when you finish your first quiz.`,
+    message: `You got ${coinsGranted} PulseCoins! ${referrer.username} earns ${reward} when you finish your first quiz.`,
   });
 }
 

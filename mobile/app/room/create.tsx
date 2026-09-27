@@ -53,8 +53,8 @@ export default function CreateRoomScreen() {
   const createRoom = async () => {
     if (wager > coins) {
       Alert.alert(
-        'Insufficient Coins',
-        `You need ${wager} coins to set this wager. You have ${coins}.`,
+        'Insufficient PulseCoins',
+        `You need ${wager} PulseCoins to set this wager. You have ${coins}.`,
       );
       return;
     }
@@ -310,7 +310,7 @@ export default function CreateRoomScreen() {
               <Text style={[styles.infoRow, { color: theme.colors.text }]}>
                 Wager:{' '}
                 <Text style={{ color: theme.colors.coin }}>
-                  {wager === 0 ? 'Free' : `${wager} coins each`}
+                  {wager === 0 ? 'Free' : `${wager} PulseCoins each`}
                 </Text>
               </Text>
             </View>
