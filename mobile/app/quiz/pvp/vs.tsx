@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, Animated, Easing, AppState } from 'react-native';
+import {
+  View,
+  Text,
+  Animated,
+  Easing,
+  AppState,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -161,7 +168,8 @@ export default function PvPVsScreen() {
   }, []);
 
   // Never `return null` here: an empty render is a white screen with no way
-  // out, which is how a missing pairing used to look to the player.
+  // out, which is how a missing pairing used to look to the player. It should
+  // also look like the rest of the app while it waits, not like a stall.
   if (!me || !opponent) {
     return (
       <SafeAreaView
@@ -170,9 +178,54 @@ export default function PvPVsScreen() {
           backgroundColor: theme.colors.background,
           alignItems: 'center',
           justifyContent: 'center',
+          padding: 24,
         }}
       >
-        <Text style={{ color: theme.colors.muted }}>Getting the match ready…</Text>
+        <Animated.View
+          style={{
+            transform: [{ scale: vsPulse }],
+            width: 108,
+            height: 108,
+            borderRadius: 54,
+            backgroundColor: theme.colors.primary + '1A',
+            borderWidth: 2,
+            borderColor: theme.colors.primary + '55',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 34, fontWeight: '900', color: theme.colors.primary }}>
+            VS
+          </Text>
+        </Animated.View>
+
+        <Text
+          style={{
+            marginTop: 24,
+            fontSize: 20,
+            fontWeight: '900',
+            color: theme.colors.text,
+            letterSpacing: -0.3,
+          }}
+        >
+          Setting up your match
+        </Text>
+        <Text
+          style={{
+            marginTop: 6,
+            fontSize: 14,
+            color: theme.colors.muted,
+            textAlign: 'center',
+            lineHeight: 20,
+          }}
+        >
+          Dealing the same ten questions to both of you.
+        </Text>
+
+        <ActivityIndicator
+          color={theme.colors.primary}
+          style={{ marginTop: 22 }}
+        />
       </SafeAreaView>
     );
   }

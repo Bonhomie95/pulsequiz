@@ -115,6 +115,19 @@ export const usePvPStore = create<PvPState>((set, get) => ({
       wager,
       me,
       opponent,
+
+      // A new match means a new question set. These used to survive from the
+      // previous match, so a rematch opened on the questions just played and
+      // answering them sent the old question ids against the new match id —
+      // "Invalid question" on every tap.
+      questions: [],
+      currentIndex: 0,
+      lastAnswer: null,
+      opponentIndex: 0,
+      opponentFurthest: 0,
+      winnerUserId: null,
+      deadlineAt: null,
+      error: null,
     });
   },
 

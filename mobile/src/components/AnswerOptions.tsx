@@ -72,7 +72,11 @@ export function AnswerOptions({
                 backgroundColor: background,
                 borderColor: border,
                 opacity: isDisabled ? 0.35 : locked && !revealed ? 0.65 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
+                transform: [{ scale: pressed ? 0.97 : 1 }],
+                shadowColor: isCorrect || isWrongPick ? background : '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: isCorrect || isWrongPick ? 0.35 : 0.06,
+                shadowRadius: 10,
               },
             ]}
             hitSlop={8}
@@ -87,10 +91,21 @@ export function AnswerOptions({
 
 const styles = StyleSheet.create({
   list: { gap: 12 },
+  // Ranked's original option card. Extracting this component flattened it to a
+  // plain left-aligned box, which quietly downgraded the screen it came from
+  // as well as the one it was shared with.
   option: {
-    padding: 16,
-    borderRadius: 16,
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  label: { fontWeight: '700', fontSize: 15 },
+  label: {
+    fontWeight: '800',
+    fontSize: 16,
+    textAlign: 'center',
+    letterSpacing: -0.2,
+  },
 });

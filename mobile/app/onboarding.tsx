@@ -19,7 +19,7 @@ const ALL_SLIDES = [
     emoji: '🧠',
     gradient: ['#5B7CFF', '#7C3AED'],
     title: 'Quiz & Learn',
-    subtitle: 'Answer questions across 11 categories.\nRanked, Practice, 1v1 — you choose.',
+    subtitle: 'Answer questions across 8 categories.\nRanked, Practice, 1v1 — you choose.',
     detail: 'Practice shows why each answer is right, so every run teaches you something.',
     prizeOnly: false,
   },

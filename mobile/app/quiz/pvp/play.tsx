@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, AppState, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
@@ -351,21 +352,61 @@ export default function PvPPlayScreen() {
   };
 
   /* ---------------- UI ---------------- */
+  // Laid out to match Ranked: same top bar, same meta row, same centred
+  // question card, same option cards. The mode used to have a bare ring and
+  // left-aligned text, which is why it read as an unfinished version of the
+  // screen next door.
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* TOP — one versus strip instead of two stacked name-and-bar blocks.
-          Those took a third of the screen and read as a loading bar rather
-          than a race. Both tracks sit on one row here, so who is ahead is a
-          glance, and the question gets the space back. */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View style={styles.container}>
+        {/* TOP BAR */}
+        <View style={styles.topBar}>
+          <View style={styles.topLeft}>
+            <View
+              style={[
+                styles.categoryPill,
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              ]}
+            >
+              <Text style={{ color: theme.colors.text, fontWeight: '800' }}>
+                {category ? cap(category) : '1v1'}
+              </Text>
+            </View>
+            {question.difficulty ? (
+              <View
+                style={[styles.diffPill, { backgroundColor: difficultyColor(question.difficulty, theme) }]}
+              >
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>
+                  {question.difficulty.toUpperCase()}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={styles.topRight}>
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <CountdownRing
+                progress={ringProgress}
+                color={secondsLeft <= WARNING_TIME ? theme.colors.danger : theme.colors.primary}
+                bg={theme.colors.border}
+              />
+              <Text style={[styles.ringText, { color: theme.colors.text }]}>
+                {shownIndex + 1}/{TOTAL_Q}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* THE RACE — one strip, not two stacked blocks. Who is ahead should be
+            a glance, and the question should get the rest of the screen. */}
+        <View style={styles.raceRow}>
           <View style={{ flex: 1 }}>
             <View style={styles.racerRow}>
               <Text numberOfLines={1} style={[styles.racerName, { color: theme.colors.text }]}>
                 {me?.username ?? 'You'}
               </Text>
               <Text style={[styles.racerCount, { color: theme.colors.primary }]}>
-                {Math.min(currentIndex, TOTAL_Q)}/{TOTAL_Q}
+                {Math.min(currentIndex, TOTAL_Q)}
               </Text>
             </View>
             <View style={[styles.track, { backgroundColor: theme.colors.border }]}>
@@ -374,10 +415,7 @@ export default function PvPPlayScreen() {
                   height: '100%',
                   borderRadius: 999,
                   backgroundColor: theme.colors.primary,
-                  width: myBar.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0%', '100%'],
-                  }),
+                  width: myBar.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
                 }}
               />
             </View>
@@ -387,11 +425,14 @@ export default function PvPPlayScreen() {
 
           <View style={{ flex: 1 }}>
             <View style={styles.racerRow}>
-              <Text numberOfLines={1} style={[styles.racerName, { color: theme.colors.muted }]}>
+              <Text
+                numberOfLines={1}
+                style={[styles.racerName, { color: theme.colors.muted, textAlign: 'right' }]}
+              >
                 {opponent?.username ?? 'Opponent'}
               </Text>
               <Text style={[styles.racerCount, { color: theme.colors.muted }]}>
-                {Math.min(opponentFurthest, TOTAL_Q)}/{TOTAL_Q}
+                {Math.min(opponentFurthest, TOTAL_Q)}
               </Text>
             </View>
             <View style={[styles.track, { backgroundColor: theme.colors.border }]}>
@@ -400,58 +441,51 @@ export default function PvPPlayScreen() {
                   height: '100%',
                   borderRadius: 999,
                   backgroundColor: theme.colors.muted,
-                  width: oppBar.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0%', '100%'],
-                  }),
+                  width: oppBar.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
                 }}
               />
             </View>
           </View>
         </View>
-      </View>
 
-      {/* QUESTION */}
-      <View style={{ padding: 20, flex: 1 }}>
-        <CountdownRing
-          progress={ringProgress}
-          color={secondsLeft <= WARNING_TIME ? '#ef4444' : theme.colors.primary}
-          bg={theme.colors.border}
-        />
-
-        {/* Meta row, matching Ranked: the mode used to show nothing but a ring
-            and the bare question text, which is why it felt flat next to it. */}
+        {/* META ROW */}
         <View style={styles.metaRow}>
-          <View
-            style={[
-              styles.pill,
-              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-            ]}
-          >
-            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 12 }}>
-              {category ? cap(category) : '1v1'}
-            </Text>
-          </View>
-          {question.difficulty ? (
-            <View style={[styles.pill, { backgroundColor: difficultyColor(question.difficulty, theme) }]}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>
-                {question.difficulty.toUpperCase()}
-              </Text>
-            </View>
-          ) : null}
-          <View style={{ flex: 1 }} />
-          <Text style={{ color: theme.colors.muted, fontWeight: '700', fontSize: 12 }}>
+          <Text style={{ color: theme.colors.muted, fontWeight: '700' }}>
             Question {shownIndex + 1} of {TOTAL_Q}
           </Text>
+          <View
+            style={[
+              styles.timerPill,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: secondsLeft <= WARNING_TIME ? theme.colors.danger : theme.colors.border,
+              },
+            ]}
+          >
+            <Text
+              style={{
+                color: secondsLeft <= WARNING_TIME ? theme.colors.danger : theme.colors.primary,
+                fontWeight: '900',
+                fontSize: 14,
+              }}
+            >
+              {secondsLeft}s
+            </Text>
+          </View>
         </View>
 
+        {/* QUESTION CARD */}
         <View
           style={[
             styles.questionCard,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+              shadowColor: theme.colors.primary,
+            },
           ]}
         >
-          <Text style={{ fontSize: 18, fontWeight: '800', color: theme.colors.text }}>
+          <Text style={[styles.questionText, { color: theme.colors.text }]}>
             {question.question}
           </Text>
           <View style={{ alignItems: 'flex-end', marginTop: 4 }}>
@@ -461,7 +495,7 @@ export default function PvPPlayScreen() {
 
         {/* A rejected answer is a per-action problem — say so in place rather
             than ejecting the player from a match they have coins staked on. */}
-        {error && (
+        {error ? (
           <View
             style={{
               marginTop: 12,
@@ -476,42 +510,58 @@ export default function PvPPlayScreen() {
               {error}
             </Text>
           </View>
-        )}
+        ) : null}
 
-        <AnswerOptions
-          options={question.options}
-          picked={picked}
-          correctIndex={revealed ? revealed.correctIndex : null}
-          disabledIndexes={hiddenOptions}
-          locked={!!revealed}
-          onPick={(i) => {
-            setPicked(i);
-            answer(i);
-          }}
-        />
+        {/* OPTIONS */}
+        <View style={{ marginTop: 18 }}>
+          <AnswerOptions
+            options={question.options}
+            picked={picked}
+            correctIndex={revealed ? revealed.correctIndex : null}
+            disabledIndexes={hiddenOptions}
+            locked={!!revealed}
+            onPick={(i) => {
+              setPicked(i);
+              answer(i);
+            }}
+          />
+        </View>
 
-        <TouchableOpacity
-          disabled={hintSpent || !!revealed || picked !== null}
-          onPress={() => {
-            if (hintSpent || !matchId) return;
-            socket.emit(SOCKET_EVENTS.HINT, { matchId });
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={hintSpent ? '50/50 already used' : 'Use your 50/50'}
-          hitSlop={8}
-          style={[
-            styles.hintBtn,
-            {
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surface,
-              opacity: hintSpent || !!revealed || picked !== null ? 0.45 : 1,
-            },
-          ]}
-        >
-          <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 13 }}>
-            {hintSpent ? '50/50 used' : '50/50 · removes one wrong answer'}
+        {/* FOOTER — the 50/50 */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            disabled={hintSpent || !!revealed || picked !== null}
+            onPress={() => {
+              if (hintSpent || !matchId) return;
+              socket.emit(SOCKET_EVENTS.HINT, { matchId });
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={hintSpent ? '50/50 already used' : 'Use your 50/50'}
+            hitSlop={8}
+            style={[
+              styles.hintBtn,
+              {
+                borderColor: hintSpent ? theme.colors.border : theme.colors.primary,
+                backgroundColor: hintSpent ? theme.colors.surface : theme.colors.primary,
+                opacity: hintSpent || !!revealed || picked !== null ? 0.5 : 1,
+              },
+            ]}
+          >
+            <Text
+              style={{
+                color: hintSpent ? theme.colors.muted : '#fff',
+                fontWeight: '800',
+                fontSize: 13,
+              }}
+            >
+              {hintSpent ? '50/50 used' : '50/50 · free'}
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={{ color: theme.colors.muted, fontSize: 12, fontWeight: '700' }}>
+            {wager > 0 ? `${wager} coins staked` : 'Friendly match'}
           </Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
       {/* WAITING ON OPPONENT */}
@@ -561,7 +611,7 @@ export default function PvPPlayScreen() {
         onReconnect={tryReconnect}
         onLeave={leaveMatch}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -663,20 +713,62 @@ function difficultyColor(d: string, theme: ReturnType<typeof useTheme>) {
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: 18, paddingTop: 12, paddingBottom: 14 },
+
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  topLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+
+  categoryPill: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1 },
+  diffPill: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999 },
+  ringText: { position: 'absolute', fontWeight: '900', fontSize: 12 },
+
+  raceRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 },
   racerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 },
   racerName: { flex: 1, fontWeight: '800', fontSize: 12 },
   racerCount: { fontWeight: '900', fontSize: 12 },
   track: { height: 6, borderRadius: 999, overflow: 'hidden' },
   vs: { fontWeight: '900', fontSize: 12, letterSpacing: 1 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 },
-  pill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, borderWidth: 1 },
-  questionCard: { marginTop: 12, padding: 16, borderRadius: 18, borderWidth: 1 },
-  hintBtn: {
+
+  metaRow: {
     marginTop: 14,
-    alignSelf: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timerPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
+    minWidth: 70,
+    alignItems: 'center',
   },
+
+  questionCard: {
+    marginTop: 16,
+    padding: 22,
+    borderRadius: 24,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  questionText: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    lineHeight: 30,
+    letterSpacing: -0.2,
+  },
+
+  footer: {
+    marginTop: 'auto',
+    paddingTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  hintBtn: { borderRadius: 16, paddingHorizontal: 16, paddingVertical: 11, borderWidth: 1 },
 });
