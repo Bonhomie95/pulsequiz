@@ -20,18 +20,16 @@ import { SOCKET_EVENTS } from '@/src/socket/events';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { usePvPStore } from '@/src/store/usePvPStore';
 
+// Kept in step with the eight in app/quiz/categories.tsx.
 const CATEGORIES = [
-  'Biology',
-  'Chemistry',
-  'Geography',
-  'History',
-  'Math',
-  'Physics',
-  'Pop Culture',
-  'Sports',
-  'Technology',
-  'Food & Cooking',
   'General Knowledge',
+  'Science',
+  'History',
+  'Geography',
+  'Math',
+  'Technology',
+  'Sports',
+  'Pop Culture',
 ];
 const WAGER_OPTIONS = [0, 10, 25, 50, 100, 200, 500];
 

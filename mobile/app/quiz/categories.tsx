@@ -15,18 +15,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { useQuizModeStore } from '@/src/store/useQuizModeStore';
 
+/**
+ * Eight to start with, not eleven.
+ *
+ * Physics, Chemistry and Biology were three thin science categories that
+ * overlap in players' heads anyway; they are one Science category now, which
+ * also makes it the deepest pool in the bank. Food & Cooking folded into
+ * General Knowledge. Nothing was thrown away — the seed files are still split
+ * per subject, so this is a presentation choice we can undo.
+ */
 export const CATEGORIES = [
   { id: 'General Knowledge', label: 'General Knowledge', icon: '🧠' },
+  { id: 'Science', label: 'Science', icon: '🔬' },
   { id: 'History', label: 'History', icon: '📜' },
-  { id: 'Math', label: 'Maths', icon: '➗' },
-  { id: 'Physics', label: 'Physics', icon: '⚛️' },
-  { id: 'Biology', label: 'Biology', icon: '🧬' },
-  { id: 'Chemistry', label: 'Chemistry', icon: '🧪' },
   { id: 'Geography', label: 'Geography', icon: '🌍' },
-  { id: 'Pop Culture', label: 'Pop Culture', icon: '🎬' },
-  { id: 'Sports', label: 'Sports', icon: '⚽' },
+  { id: 'Math', label: 'Maths', icon: '➗' },
   { id: 'Technology', label: 'Technology', icon: '💻' },
-  { id: 'Food & Cooking', label: 'Food & Cooking', icon: '🍳' },
+  { id: 'Sports', label: 'Sports', icon: '⚽' },
+  { id: 'Pop Culture', label: 'Pop Culture', icon: '🎬' },
 ];
 
 export default function QuizCategories() {

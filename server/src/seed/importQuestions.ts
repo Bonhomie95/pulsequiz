@@ -8,6 +8,26 @@ dotenv.config();
 
 const VALID_DIFF = ['easy', 'medium', 'hard'] as const;
 
+/**
+ * The seed files stay split by subject; the app shows eight categories.
+ *
+ * Three thin science categories that players do not really tell apart became
+ * one, and Food & Cooking folded into General Knowledge. Mapping on import
+ * rather than rewriting the files keeps the split — and so keeps the decision
+ * reversible.
+ */
+export const CATEGORY_MERGES: Record<string, string> = {
+  physics: 'science',
+  chemistry: 'science',
+  biology: 'science',
+  'food & cooking': 'general knowledge',
+};
+
+export function mergedCategory(category: string): string {
+  return CATEGORY_MERGES[category] ?? category;
+}
+
+
 /** `npm run seed -- --wipe` replaces the bank instead of adding to it. */
 const WIPE = process.argv.slice(2).includes('--wipe');
 
@@ -40,7 +60,7 @@ async function run() {
 
       const category =
         typeof q.category === 'string'
-          ? q.category.trim().toLowerCase()
+          ? mergedCategory(q.category.trim().toLowerCase())
           : undefined;
 
       const rawDifficulty =
