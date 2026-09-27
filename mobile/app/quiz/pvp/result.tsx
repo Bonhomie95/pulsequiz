@@ -146,8 +146,22 @@ export default function PvPResultScreen() {
 
     // Navigating into the match lived only on the search screen, so a rematch
     // built while both players sat here arrived with nobody to act on it.
-    const onMatchFound = () => {
+    const onMatchFound = (payload: any) => {
       clearRematchTimer();
+      // Set the pairing from the payload rather than trusting that the
+      // app-wide listener already did. The search screen has always done this;
+      // here it was left to the shared listener, so anything that cleared the
+      // store between MATCH_FOUND and the VS screen mounting left that screen
+      // with no players to draw and no match to start.
+      const myId = useAuthStore.getState().user?.id;
+      if (myId && payload?.matchId) {
+        usePvPStore.getState().setMatched({
+          matchId: payload.matchId,
+          players: payload.players ?? [],
+          myUserId: myId,
+          wager: payload.wager ?? 0,
+        });
+      }
       router.replace('/quiz/pvp/vs');
     };
 

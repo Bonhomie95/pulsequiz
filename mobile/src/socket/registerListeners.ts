@@ -105,7 +105,15 @@ export function registerPvPSocketListeners() {
     logger.warn('PvP error', e?.message, (e as { event?: string })?.event);
 
     const status = usePvPStore.getState().status;
-    const inMatch = status === 'playing' || status === 'waiting';
+    // 'matched' and 'starting' count too. Between MATCH_FOUND and the first
+    // question the player is in a match they cannot see yet, and resetting
+    // there threw away the pairing the VS screen draws from — which is how a
+    // rematch ended up sitting on "getting the match ready" forever.
+    const inMatch =
+      status === 'playing' ||
+      status === 'waiting' ||
+      status === 'matched' ||
+      status === 'starting';
 
     // Tearing the store down mid-match would eject the player from a game they
     // are still in — and with coins staked. A rejected answer ("too fast",

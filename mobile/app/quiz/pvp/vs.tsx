@@ -59,17 +59,41 @@ export default function PvPVsScreen() {
     ).start();
   }, []);
 
+  // Keep asking until the question set is in the store.
+  //
+  // One emit on mount was enough only when nothing went wrong: the request can
+  // race a reconnect, and on a rematch the app-wide listener has usually
+  // already asked and had the reply before this screen mounted. Re-asking is
+  // cheap and idempotent — the server just re-sends the set.
   useEffect(() => {
-    socket.emit(SOCKET_EVENTS.MATCH_START, {
-      matchId: usePvPStore.getState().matchId,
-    });
+    const ask = () => {
+      const matchId = usePvPStore.getState().matchId;
+      if (matchId) socket.emit(SOCKET_EVENTS.MATCH_START, { matchId });
+    };
+    ask();
+    const t = setInterval(() => {
+      if (usePvPStore.getState().questions.length > 0) return;
+      ask();
+    }, 1_500);
+    return () => clearInterval(t);
   }, []);
 
   /* ---------------- MATCH START ---------------- */
+  // Driven by the store, not by catching the MATCH_START event.
+  //
+  // The app-wide listener also handles MATCH_START and writes the questions to
+  // the store, and on a rematch it had already asked for them — so the reply
+  // routinely landed before this screen mounted and its own listener heard
+  // nothing. The countdown then never ran and the match never opened. Reading
+  // what is already in the store cannot lose that race.
+  const questions = usePvPStore((s) => s.questions);
+
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
-    let countdownTimer: ReturnType<typeof setInterval> | null = null;
-    const onMatchStart = ({ questions }: { questions: any[] }) => {
-      if (countdownTimer) return; // a reconnect replay mustn't start a second countdown
+    const begin = (questions: any[]) => {
+      if (!questions?.length) return;
+      if (countdownRef.current) return; // a replay mustn't restart the count
       soundManager.play('match_found');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -101,16 +125,23 @@ export default function PvPVsScreen() {
           }, 500);
         }
       }, 800);
-      countdownTimer = interval;
+      countdownRef.current = interval;
     };
+
+    // Whichever comes first: what is already there, or what arrives next.
+    begin(questions);
+    const onMatchStart = ({ questions: qs }: { questions: any[] }) => begin(qs);
     socket.on(SOCKET_EVENTS.MATCH_START, onMatchStart);
 
     return () => {
       // By reference — a bare off() would remove the global MATCH_START
       // listener that reconnect/resume in pvp/play relies on.
       socket.off(SOCKET_EVENTS.MATCH_START, onMatchStart);
-      if (countdownTimer) clearInterval(countdownTimer);
     };
+  }, [questions]);
+
+  useEffect(() => () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
   }, []);
 
   useEffect(() => {
