@@ -68,17 +68,31 @@ function once<T = any>(
   });
 }
 
+/**
+ * The shared setup clears collections between tests, so the bank has to be
+ * laid down per test rather than once — the second test in this file used to
+ * run against an empty one and fail with "No questions seeded".
+ */
+async function seedBank() {
+  await QuizQuestion.insertMany(
+    Array.from({ length: 40 }, (_, i) => ({
+      category: 'math',
+      difficulty: (['easy', 'easy', 'medium', 'medium', 'hard'] as const)[i % 5],
+      question: `live pvp q${i}?`,
+      options: ['a', 'b', 'c', 'd'],
+      answer: i % 4,
+    })),
+  );
+}
+
+beforeEach(async () => {
+  await initDefaultSettings();
+  await seedBank();
+});
+
 beforeAll(async () => {
   await initDefaultSettings();
 
-  const docs = Array.from({ length: 40 }, (_, i) => ({
-    category: 'math',
-    difficulty: (['easy', 'easy', 'medium', 'medium', 'hard'] as const)[i % 5],
-    question: `live pvp q${i}?`,
-    options: ['a', 'b', 'c', 'd'],
-    answer: i % 4,
-  }));
-  await QuizQuestion.insertMany(docs);
 
   const { createSocketServer } = await import('../socket');
   server = http.createServer();
@@ -111,14 +125,19 @@ it('deals the question set to both players and lets each answer all ten', async 
   // "You're done, waiting for your opponent" must not reach anyone who is
   // still playing. This used to be broadcast to the room on every accepted
   // answer, so both players carried that banner from question one.
+  //
+  // Only `reason: 'finished'` counts. The same event also means "you are
+  // ready and they have not opened the match yet", which legitimately reaches
+  // whoever readies first during the handshake — and which, unqualified, made
+  // this assertion fail whenever the two MATCH_STARTs were far enough apart.
   const earlyWaits: string[] = [];
   let finished = false;
-  sa.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, () => {
-    if (!finished) earlyWaits.push('A');
-  });
-  sb.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, () => {
-    if (!finished) earlyWaits.push('B');
-  });
+  const watchWaits = (s: ClientSocket, who: string) =>
+    s.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, (p: { reason?: string }) => {
+      if (!finished && p?.reason === 'finished') earlyWaits.push(who);
+    });
+  watchWaits(sa, 'A');
+  watchWaits(sb, 'B');
 
   try {
     const foundA = once<any>(sa, SOCKET_EVENTS.MATCH_FOUND);
@@ -194,4 +213,44 @@ afterEach(async () => {
 
 afterAll(async () => {
   if (mongoose.connection.readyState === 1) await PvPMatch.deleteMany({});
+});
+
+it('tells only the ready player that it is waiting on the other to open the match', async () => {
+  // The readiness wait and the finished wait are the same event. This pins
+  // the ordering that made them indistinguishable: one player opens the match
+  // well before the other, which is ordinary on a slow phone and was enough
+  // to fail a run under parallel load.
+  const a = await makePlayer('livea');
+  const b = await makePlayer('liveb');
+  const sa = await connect(a.token);
+  const sb = await connect(b.token);
+
+  try {
+    const foundA = once<any>(sa, SOCKET_EVENTS.MATCH_FOUND);
+    sa.emit(SOCKET_EVENTS.JOIN_QUEUE, { category: 'math', wager: 0 });
+    sb.emit(SOCKET_EVENTS.JOIN_QUEUE, { category: 'math', wager: 0 });
+    const fa = await foundA;
+
+    const aWaits: any[] = [];
+    const bWaits: any[] = [];
+    sa.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, (p: any) => aWaits.push(p));
+    sb.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, (p: any) => bWaits.push(p));
+
+    // A opens it; B has not yet.
+    sa.emit(SOCKET_EVENTS.MATCH_START, { matchId: fa.matchId });
+    await new Promise((r) => setTimeout(r, 600));
+
+    expect(aWaits.map((p) => p.reason)).toEqual(['ready']);
+    // And nothing reaches the player we are actually waiting on.
+    expect(bWaits).toEqual([]);
+
+    // Once they open it, the questions arrive and no further waiting is sent.
+    const startA = once<any>(sa, SOCKET_EVENTS.MATCH_START);
+    sb.emit(SOCKET_EVENTS.MATCH_START, { matchId: fa.matchId });
+    expect((await startA).questions.length).toBeGreaterThan(0);
+    expect(aWaits.filter((p) => p.reason === 'finished')).toEqual([]);
+  } finally {
+    sa.close();
+    sb.close();
+  }
 });

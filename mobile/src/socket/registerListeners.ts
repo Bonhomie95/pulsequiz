@@ -92,7 +92,12 @@ export function registerPvPSocketListeners() {
     }
   });
 
-  socket.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, () => {
+  socket.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, (p?: { reason?: string }) => {
+    // Two meanings share this event. 'ready' is the handshake — they have not
+    // opened the match yet — and clears on its own a moment later; moving the
+    // store to 'waiting' for that would describe a match that has not begun
+    // as one this player has finished.
+    if (p?.reason === 'ready') return;
     usePvPStore.getState().setWaiting();
   });
 

@@ -111,6 +111,10 @@ export type ScorelineEntry = {
   timeMs: number;
 };
 
+/** Why the match is waiting: the opponent has not opened it, or has not
+ *  finished answering. */
+export type WaitingPayload = { reason?: 'ready' | 'finished' };
+
 export type MatchFinishedPayload = {
   winnerUserId: string;
   scoreline?: ScorelineEntry[];

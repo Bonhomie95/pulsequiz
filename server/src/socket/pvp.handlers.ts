@@ -745,7 +745,12 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
       const missing = freshPlayers.find((p) => !p.ready)!;
       // The player who is ready is the one waiting — not the one we are
       // still waiting on.
-      socket.emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
+      //
+      // `reason` matters: this is "they have not opened the match yet", which
+      // happens during the handshake and clears on its own. It is not the
+      // other thing this event means. Unqualified, the two were
+      // indistinguishable to the client and to any test.
+      socket.emit(SOCKET_EVENTS.WAITING_ON_OPPONENT, { reason: 'ready' });
       startReadyGrace(io, matchId, missing.userId.toString());
       return;
     }
@@ -1017,7 +1022,9 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
         // both players were told "you're done, waiting for your opponent" from
         // question one onward, and nothing ever took it back.
         if (player.completed || typeof player.failedAtIndex === 'number') {
-          socket.emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
+          // The other meaning: this player has answered all ten and the match
+          // is waiting on the opponent to finish theirs.
+          socket.emit(SOCKET_EVENTS.WAITING_ON_OPPONENT, { reason: 'finished' });
         }
         return;
       }
