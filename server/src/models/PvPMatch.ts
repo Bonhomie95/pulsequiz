@@ -41,6 +41,9 @@ const PlayerSchema = new Schema(
     avatarSnapshot: { type: String, required: true },
     levelSnapshot: { type: Number, required: true },
     allTimeRankSnapshot: { type: Number, default: 0 },
+    /** All-time points at the moment of pairing — shown on the versus screen
+     *  so the two players are introduced by something real. */
+    pointsSnapshot: { type: Number, default: 0 },
 
     // rank movement animation support (optional but recommended)
     rankBefore: { type: Number, default: null },

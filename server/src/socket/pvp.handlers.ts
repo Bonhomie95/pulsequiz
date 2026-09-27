@@ -62,6 +62,22 @@ function clearReadyTimer(matchId: string) {
   readyTimers.delete(matchId);
 }
 
+/**
+ * Drop every pending forfeit and readiness timer.
+ *
+ * These are in-process `setTimeout` handles that reach for Mongo when they
+ * fire. On shutdown that meant a forfeit settling against a closing
+ * connection — noisy in production, and in CI it fired after the test run had
+ * torn Mongo down, which Jest reports as logging after teardown and exits
+ * non-zero on despite every test passing.
+ */
+export function stopPvpTimers() {
+  for (const t of readyTimers.values()) clearTimeout(t);
+  readyTimers.clear();
+  for (const t of disconnectTimers.values()) clearTimeout(t);
+  disconnectTimers.clear();
+}
+
 function clearDisconnectTimer(userId: string) {
   const t = disconnectTimers.get(userId);
   if (t) clearTimeout(t);

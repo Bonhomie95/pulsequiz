@@ -2,7 +2,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 
 import { verifySocketAuth } from './verifySocketAuth';
-import { registerPvpHandlers } from './pvp.handlers';
+import { registerPvpHandlers, stopPvpTimers } from './pvp.handlers';
 import { registerMatchmakingHandlers, setIoInstance, stopMatchmaking } from './matchmaking';
 import { registerRoomHandlers } from './room.handlers';
 import { safeHandler } from './safeHandler';
@@ -68,7 +68,10 @@ export function createSocketServer(server: http.Server) {
 
   // Release the matchmaking interval when the server shuts down, so a graceful
   // stop isn't held open by a timer.
-  io.on('close', () => stopMatchmaking());
+  io.on('close', () => {
+    stopMatchmaking();
+    stopPvpTimers();
+  });
 
   return io;
 }

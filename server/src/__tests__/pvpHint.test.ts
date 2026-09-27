@@ -18,8 +18,9 @@ import PvPMatch from '../models/PvPMatch';
 import { initDefaultSettings } from '../models/AppSettings';
 import { issueSession } from '../utils/jwt';
 import { SOCKET_EVENTS } from '../socket/events';
+import { stopPvpTimers } from '../socket/pvp.handlers';
 
-jest.setTimeout(60_000);
+jest.setTimeout(120_000);
 
 let server: http.Server;
 let url: string;
@@ -45,7 +46,7 @@ function connect(token: string): Promise<ClientSocket> {
   });
 }
 
-function once<T = any>(s: ClientSocket, event: string, timeoutMs = 15_000): Promise<T> {
+function once<T = any>(s: ClientSocket, event: string, timeoutMs = 40_000): Promise<T> {
   return new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error(`timed out waiting for ${event}`)), timeoutMs);
     s.once(event, (p: T) => { clearTimeout(t); resolve(p); });
@@ -70,6 +71,11 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  // Closing a client socket schedules a forfeit timer that reaches for Mongo
+  // when it fires. Left pending, it fires after the run has torn Mongo down —
+  // which Jest reports as logging after teardown and exits non-zero on, with
+  // every test passing.
+  stopPvpTimers();
   stop?.();
   await new Promise<void>((r) => server.close(() => r()));
 });

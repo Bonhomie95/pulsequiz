@@ -19,6 +19,9 @@ import PvPMatch from '../models/PvPMatch';
 import User from '../models/User';
 import Progress from '../models/Progress';
 import { lockWager } from '../services/coinService';
+// One snapshot for every kind of match: a second copy here was still
+// introducing both players as rank #0.
+import { snapshotPlayer } from './matchmaking';
 
 // roomCode → Set of socketIds in the room
 const roomSockets = new Map<string, { hostSocketId: string; guestSocketId?: string }>();
@@ -56,20 +59,6 @@ function releaseRoom(roomCode: string, userIds: string[]) {
   for (const uid of userIds) {
     if (userRoom.get(uid) === roomCode) userRoom.delete(uid);
   }
-}
-
-async function snapshotPlayer(userId: string) {
-  const [user, progress] = await Promise.all([
-    User.findById(userId).lean(),
-    Progress.findOne({ userId }).lean(),
-  ]);
-  return {
-    userId: new Types.ObjectId(userId),
-    usernameSnapshot: user?.username ?? 'Player',
-    avatarSnapshot: user?.avatar ?? 'avatar0',
-    levelSnapshot: progress?.level ?? 1,
-    allTimeRankSnapshot: 0,
-  };
 }
 
 export function registerRoomHandlers(io: Server, socket: Socket) {
@@ -196,14 +185,16 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       username: snapHost.usernameSnapshot,
       avatar: snapHost.avatarSnapshot,
       level: snapHost.levelSnapshot,
-      allTimeRank: 0,
+      allTimeRank: snapHost.allTimeRankSnapshot,
+      points: snapHost.pointsSnapshot ?? 0,
     };
     const playerB = {
       userId,
       username: snapGuest.usernameSnapshot,
       avatar: snapGuest.avatarSnapshot,
       level: snapGuest.levelSnapshot,
-      allTimeRank: 0,
+      allTimeRank: snapGuest.allTimeRankSnapshot,
+      points: snapGuest.pointsSnapshot ?? 0,
     };
 
     // Notify both players

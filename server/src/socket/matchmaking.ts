@@ -170,18 +170,46 @@ function findOpponent(entry: MatchQueueEntry): MatchQueueEntry | null {
   })[0];
 }
 
-async function snapshotPlayer(userId: string) {
+export async function snapshotPlayer(userId: string) {
   const [user, progress] = await Promise.all([
     User.findById(userId).select('username avatar').lean(),
-    Progress.findOne({ userId }).select('level').lean(),
+    Progress.findOne({ userId }).select('level points').lean(),
   ]);
+
+  const points = progress?.points ?? 0;
+
+  // The real all-time rank, not a placeholder.
+  //
+  // This was hardcoded to 0, so the versus screen introduced every player as
+  // "#0" — the one number there that was supposed to say who you are up
+  // against. Counting who is ahead of you is a single indexed count on
+  // Progress.points, which is the same ordering the all-time board uses.
+  // House accounts are left out, exactly as they are left out of the board.
+  const ahead = await Progress.countDocuments({
+    points: { $gt: points },
+    userId: { $nin: await syntheticUserIds() },
+  });
+
   return {
     userId: new Types.ObjectId(userId),
     usernameSnapshot: user?.username ?? 'Player',
     avatarSnapshot: user?.avatar ?? 'avatar0',
     levelSnapshot: progress?.level ?? 1,
-    allTimeRankSnapshot: 0,
+    pointsSnapshot: points,
+    allTimeRankSnapshot: points > 0 ? ahead + 1 : 0,
   };
+}
+
+/** Ids of house accounts, cached briefly — the pool changes once a day. */
+let syntheticIdCache: { at: number; ids: Types.ObjectId[] } | null = null;
+async function syntheticUserIds(): Promise<Types.ObjectId[]> {
+  if (syntheticIdCache && Date.now() - syntheticIdCache.at < 60_000) {
+    return syntheticIdCache.ids;
+  }
+  const rows = await User.find({ isSynthetic: true }).select('_id').lean();
+  const ids = rows.map((r) => r._id as Types.ObjectId);
+  syntheticIdCache = { at: Date.now(), ids };
+  return ids;
 }
 
 async function createAndBroadcastMatch(
@@ -239,6 +267,7 @@ async function createAndBroadcastMatch(
     avatar: snapA.avatarSnapshot,
     level: snapA.levelSnapshot,
     allTimeRank: snapA.allTimeRankSnapshot,
+    points: snapA.pointsSnapshot ?? 0,
   };
   const playerB = {
     userId: opponent.userId,
@@ -246,6 +275,7 @@ async function createAndBroadcastMatch(
     avatar: snapB.avatarSnapshot,
     level: snapB.levelSnapshot,
     allTimeRank: snapB.allTimeRankSnapshot,
+    points: snapB.pointsSnapshot ?? 0,
   };
 
   const payload = {
@@ -434,6 +464,7 @@ async function matchWithBot(io: Server, entry: MatchQueueEntry) {
           avatar: snapA.avatarSnapshot,
           level: snapA.levelSnapshot,
           allTimeRank: snapA.allTimeRankSnapshot,
+          points: snapA.pointsSnapshot ?? 0,
           rating: entry.rating,
         },
         {
@@ -442,6 +473,7 @@ async function matchWithBot(io: Server, entry: MatchQueueEntry) {
           avatar: snapB.avatarSnapshot,
           level: snapB.levelSnapshot,
           allTimeRank: snapB.allTimeRankSnapshot,
+          points: snapB.pointsSnapshot ?? 0,
           rating: 1000,
         },
       ],
