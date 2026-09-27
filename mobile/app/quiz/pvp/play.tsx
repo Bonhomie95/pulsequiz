@@ -151,9 +151,24 @@ export default function PvPPlayScreen() {
    * and then, twelve seconds later, a connection-problem overlay in the middle
    * of a match that was fine.
    */
-  const iAmDone = questions.length > 0 && currentIndex >= questions.length;
-
   const revealed = lastAnswer && lastAnswer.questionIndex === shownIndex ? lastAnswer : null;
+
+  /**
+   * This player has answered all ten *and* seen the verdict on the last one.
+   *
+   * Distinct from "there is no question to draw": both leave `questions[i]`
+   * undefined, but one is a finished run waiting on the opponent and the other
+   * is a stall. Conflating them showed a bare "Waiting…" after the last answer
+   * and then, twelve seconds later, a connection-problem overlay in a match
+   * that was fine.
+   *
+   * `revealed` is part of it because the server advances the index the moment
+   * it accepts an answer. Without that clause the screen swapped to "You're
+   * done" the instant the last answer landed, so whoever finished first never
+   * found out whether their final question was right — the one answer where
+   * it matters most.
+   */
+  const iAmDone = questions.length > 0 && currentIndex >= questions.length && !revealed;
   const hiddenOptions = hint && hint.questionIndex === shownIndex ? [hint.disabledIndex] : [];
 
   const question = questions[shownIndex];
