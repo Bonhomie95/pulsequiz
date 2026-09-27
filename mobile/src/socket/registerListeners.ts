@@ -100,7 +100,9 @@ export function registerPvPSocketListeners() {
   });
 
   socket.on(SOCKET_EVENTS.ERROR, (e: SocketErrorPayload) => {
-    logger.warn('PvP error', e?.message);
+    // The server names the handler that failed; without it every socket
+    // failure reads as the same anonymous 'Something went wrong'.
+    logger.warn('PvP error', e?.message, (e as { event?: string })?.event);
 
     const status = usePvPStore.getState().status;
     const inMatch = status === 'playing' || status === 'waiting';
