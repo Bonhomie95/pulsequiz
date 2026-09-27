@@ -24,9 +24,10 @@ import {
   growSyntheticLadder,
   seedSyntheticDaily,
   seedSyntheticLadder,
+  trickleSyntheticActivity,
 } from '../services/syntheticPlayers';
 import { utcDateKey } from '../services/dailyService';
-import { previousPeriod } from '../utils/dateRanges';
+import { previousPeriod, PAYOUT_TZ } from '../utils/dateRanges';
 import { withJobLock } from '../utils/jobLock';
 import { logger } from '../utils/logger';
 
@@ -93,7 +94,9 @@ const MINUTE = 60_000;
 // ─── Cron registration ───────────────────────────────────────────────────────
 
 export function startLeaderboardCron(io?: Server) {
-  const TIMEZONE = 'UTC';
+  // The same wall clock the period ranges use. A cron in one zone and ranges
+  // in another is how a payout job ends up ranking the wrong week.
+  const TIMEZONE = PAYOUT_TZ;
 
   // Weekly leaderboard + payout — Monday 00:05 UTC, settling the week that
   // JUST ENDED. Passing the period explicitly is the whole fix: deriving it
@@ -153,6 +156,23 @@ export function startLeaderboardCron(io?: Server) {
   // UTC day turns over, and an empty board is exactly what this exists to
   // prevent. Both seeders are keyed by period and no-op once seeded, so the
   // extra ticks cost a count query.
+  // New faces and creeping scores, every 30–45 minutes.
+  //
+  // The seeders above fill a board once a day, which looks full the first time
+  // you open it and frozen every time after. This checks every ten minutes and
+  // acts when its own randomised interval is up, so arrivals land at irregular
+  // times the way real ones do.
+  cron.schedule(
+    '*/10 * * * *',
+    job('synthetic-trickle', 5 * MINUTE, async () => {
+      const t = await trickleSyntheticActivity();
+      return t.daily + t.bumped + t.added > 0
+        ? { daily: t.daily, bumped: t.bumped, added: t.added }
+        : undefined;
+    }),
+    { timezone: TIMEZONE },
+  );
+
   cron.schedule(
     '7 * * * *',
     job('synthetic-boards', 10 * MINUTE, async () => {

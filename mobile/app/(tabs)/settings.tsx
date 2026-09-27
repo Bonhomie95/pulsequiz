@@ -103,7 +103,7 @@ export default function SettingsScreen() {
   } = useAudioStore();
 
   const [currency, setCurrency] = useState<PayoutCurrency>(
-    user?.payoutCurrency ?? 'USDT',
+    user?.payoutCurrency ?? 'USDC',
   );
   const [usdtType, setUsdtType] = useState<UsdtType | undefined>(user?.usdtType);
   const [address, setAddress] = useState(user?.usdtAddress ?? '');
@@ -329,7 +329,12 @@ export default function SettingsScreen() {
               Receive prizes in
             </Text>
             <View style={[styles.segment, { backgroundColor: theme.colors.border }]}>
-              {(['USDT', 'USDC'] as const).map((c) => (
+              {/* Only currencies we can actually pay on right now. USDT has no
+                  enabled network at launch, and offering a choice that cannot
+                  be paid out is worse than not offering it. */}
+              {(['USDT', 'USDC'] as const)
+                .filter((c) => PAYOUT_NETWORKS[c].length > 0)
+                .map((c) => (
                 <TouchableOpacity
                   key={c}
                   onPress={() => pickCurrency(c)}

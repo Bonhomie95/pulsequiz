@@ -11,10 +11,18 @@ import { logger } from '../utils/logger';
 export type UsdtType = 'TRC20' | 'ERC20' | 'BEP20' | 'POLYGON' | 'SOL';
 export type PayoutCurrency = 'USDT' | 'USDC';
 
-/** Must match PAYOUT_NETWORKS in server/src/utils/validateWallet.ts. */
+/**
+ * Must match PAYOUT_NETWORKS in server/src/utils/validateWallet.ts.
+ *
+ * Solana only at launch — every extra network is another float to keep topped
+ * up. The rest are commented out, not removed; the address validators and the
+ * tickers for them are all still there.
+ */
 export const PAYOUT_NETWORKS: Record<PayoutCurrency, readonly UsdtType[]> = {
-  USDT: ['TRC20', 'ERC20', 'BEP20'],
-  USDC: ['ERC20', 'POLYGON', 'SOL'],
+  // USDT: ['TRC20', 'ERC20', 'BEP20'],
+  USDT: [],
+  USDC: ['SOL'],
+  // USDC: ['ERC20', 'POLYGON', 'SOL'],
 };
 
 export type User = {

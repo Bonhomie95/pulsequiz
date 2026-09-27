@@ -7,7 +7,7 @@ import { TOP_N, buildLeaderboard, getUserStanding } from '../services/leaderboar
 import User from '../models/User';
 import Friend from '../models/Friend';
 import Progress from '../models/Progress';
-import { currentPeriodLabel } from '../utils/dateRanges';
+import { currentPeriodLabel, periodContaining } from '../utils/dateRanges';
 import { AuthRequest } from '../middlewares/auth';
 
 const ALLOWED_TYPES = ['weekly', 'monthly', 'all'] as const;
@@ -145,6 +145,14 @@ export async function getLeaderboard(req: AuthRequest, res: Response) {
     type,
     generatedAt: snapshot?.generatedAt ?? new Date(),
     periodLabel: snapshot?.periodLabel ?? null,
+    // When this board actually closes, from the same function the payout cron
+    // uses. The app was counting down to its own idea of Sunday on the
+    // device's clock, which disagreed with the server by hours — and on the
+    // closing day itself showed a whole week left.
+    periodEndsAt:
+      type === 'weekly' || type === 'monthly'
+        ? periodContaining(type, new Date()).end.toISOString()
+        : null,
     data,
     me,
     prizeInfo,

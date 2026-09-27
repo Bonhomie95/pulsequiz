@@ -8,7 +8,13 @@ import User from '../models/User';
 import Progress from '../models/Progress';
 import { DailyAttempt } from '../models/DailyQuiz';
 import { SyntheticScore } from '../models/SyntheticScore';
-import { initDefaultSettings, SETTINGS_KEYS, setSetting, clearSettingsCache } from '../models/AppSettings';
+import {
+  initDefaultSettings,
+  SETTINGS_KEYS,
+  setSetting,
+  getSetting,
+  clearSettingsCache,
+} from '../models/AppSettings';
 import { buildLeaderboard } from '../services/leaderboardService';
 import {
   ensureSyntheticPool,
@@ -16,6 +22,7 @@ import {
   purgeSyntheticPlayers,
   seedSyntheticDaily,
   seedSyntheticLadder,
+  trickleSyntheticActivity,
 } from '../services/syntheticPlayers';
 import { generateNicknames } from '../services/nicknames';
 import { currentPeriodLabel } from '../utils/dateRanges';
@@ -258,5 +265,48 @@ describe('purging', () => {
     clearSettingsCache();
     const res = await seedSyntheticDaily('2026-09-30');
     expect(res.skipped).toBe('disabled');
+  });
+});
+
+describe('arrivals between the daily seeds', () => {
+  it('adds a few Daily entries, and only when its interval is up', async () => {
+    await ensureSyntheticPool(40);
+    const date = new Date().toISOString().slice(0, 10);
+
+    const first = await trickleSyntheticActivity();
+    expect(first.skipped).toBeUndefined();
+    expect(first.daily).toBeGreaterThanOrEqual(2);
+    expect(first.daily).toBeLessThanOrEqual(5);
+
+    const afterFirst = await DailyAttempt.countDocuments({ date });
+
+    // Straight away again: the next one is booked 30–45 minutes out, so this
+    // must do nothing rather than dumping another batch on the board.
+    const second = await trickleSyntheticActivity();
+    expect(second.skipped).toBe('not_due');
+    expect(await DailyAttempt.countDocuments({ date })).toBe(afterFirst);
+
+    // Once that interval has passed, more arrive.
+    const later = new Date(Date.now() + 46 * 60_000);
+    const third = await trickleSyntheticActivity(later);
+    expect(third.skipped).toBeUndefined();
+    expect(third.daily).toBeGreaterThan(0);
+  });
+
+  it('nudges standings up without ever passing the ceiling', async () => {
+    await ensureSyntheticPool(40);
+    await seedSyntheticLadder();
+
+    const ceiling = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING, 140));
+    const before = await SyntheticScore.find({ type: 'weekly' }).select('points').lean();
+    const beforeTotal = before.reduce((a, r) => a + (r.points ?? 0), 0);
+
+    await trickleSyntheticActivity();
+
+    const after = await SyntheticScore.find({ type: 'weekly' }).select('points').lean();
+    expect(after.reduce((a, r) => a + (r.points ?? 0), 0)).toBeGreaterThan(beforeTotal);
+
+    // The whole point of these accounts is being overtakeable.
+    for (const row of after) expect(row.points).toBeLessThanOrEqual(ceiling);
   });
 });

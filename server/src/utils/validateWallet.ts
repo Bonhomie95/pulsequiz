@@ -6,9 +6,20 @@ export type PayoutNetwork = 'TRC20' | 'ERC20' | 'BEP20' | 'POLYGON' | 'SOL';
  * in nowpaymentsService.getCurrency — USDC on Tron was discontinued by Circle,
  * and NOWPayments has no USDC-on-BSC ticker.
  */
+/**
+ * What a player can be paid on.
+ *
+ * Solana only at launch. Every extra network is another float to keep topped
+ * up and another set of fees to cover, which at this size spreads a small
+ * prize budget too thin. The others are commented out rather than deleted —
+ * the tickers, validators and tests for them all still work, so turning one
+ * back on is uncommenting a line.
+ */
 export const PAYOUT_NETWORKS: Record<PayoutCurrency, readonly PayoutNetwork[]> = {
-  USDT: ['TRC20', 'ERC20', 'BEP20'],
-  USDC: ['ERC20', 'POLYGON', 'SOL'],
+  // USDT: ['TRC20', 'ERC20', 'BEP20'],
+  USDT: [],
+  USDC: ['SOL'],
+  // USDC: ['ERC20', 'POLYGON', 'SOL'],
 };
 
 export const ALL_NETWORKS: readonly PayoutNetwork[] = ['TRC20', 'ERC20', 'BEP20', 'POLYGON', 'SOL'];

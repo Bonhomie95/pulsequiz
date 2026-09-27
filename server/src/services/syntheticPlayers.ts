@@ -121,6 +121,38 @@ function shuffled<T>(arr: T[]): T[] {
  * the tiebreak the real board uses, so it has to vary too or every tie would
  * resolve in id order.
  */
+
+/**
+ * One plausible Daily result for a house account.
+ *
+ * Bell-ish: two draws averaged, so 5-7 correct is common and 10/10 is rare —
+ * the shape a real Daily produces. `timeLeftMs` is the tiebreak the real board
+ * uses, so it has to vary or every tie would resolve in id order.
+ */
+function dailyAttemptFor(userId: Types.ObjectId, date: string, totalQuestions: number) {
+  const spread = (Math.random() + Math.random()) / 2;
+  const correct = Math.max(0, Math.min(totalQuestions, Math.round(spread * totalQuestions)));
+
+  const results: boolean[] = [];
+  for (let i = 0; i < totalQuestions; i++) results.push(i < correct);
+  // Which ones they got right should not be the first N every time.
+  for (let i = results.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [results[i], results[j]] = [results[j], results[i]];
+  }
+
+  return {
+    userId,
+    date,
+    correct,
+    total: totalQuestions,
+    results,
+    // Up to 15s unused per question, weighted low — few people are fast.
+    timeLeftMs: Math.round(skewedUnit() * correct * 15_000),
+    finishedAt: new Date(),
+  };
+}
+
 export async function seedSyntheticDaily(
   date: string,
   totalQuestions = 10,
@@ -140,30 +172,7 @@ export async function seedSyntheticDaily(
   const ids = shuffled(await syntheticIds());
   const wanted = Math.min(ids.length, randInt(Math.min(min, max), Math.max(min, max)));
 
-  const docs = ids.slice(0, wanted).map((userId) => {
-    // Bell-ish: two draws averaged, so 5-7 correct is common and 10/10 is rare.
-    const spread = (Math.random() + Math.random()) / 2;
-    const correct = Math.max(0, Math.min(totalQuestions, Math.round(spread * totalQuestions)));
-
-    const results: boolean[] = [];
-    for (let i = 0; i < totalQuestions; i++) results.push(i < correct);
-    // Which ones they got right should not be the first N every time.
-    for (let i = results.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [results[i], results[j]] = [results[j], results[i]];
-    }
-
-    return {
-      userId,
-      date,
-      correct,
-      total: totalQuestions,
-      results,
-      // Up to 15s unused per question, weighted low — few people are fast.
-      timeLeftMs: Math.round(skewedUnit() * correct * 15_000),
-      finishedAt: new Date(),
-    };
-  });
+  const docs = ids.slice(0, wanted).map((userId) => dailyAttemptFor(userId, date, totalQuestions));
 
   if (!docs.length) return { seeded: 0 };
 
@@ -331,4 +340,151 @@ export async function growSyntheticLadder(
 
   logger.info('Grew synthetic ladder', { grown, today });
   return { grown };
+}
+
+/* ───────────────────── Arrivals between the daily seeds ────────────────── */
+
+/**
+ * A trickle of new faces, every 30–45 minutes.
+ *
+ * Seeding once a day makes a board that is full the moment you first look and
+ * then frozen for twenty-four hours — which reads as a dump of fake rows the
+ * second time you check. Real boards gain people all day and the scores on
+ * them creep up, so this adds a handful of Daily results and nudges the
+ * weekly/monthly/all-time standings on a loose interval.
+ *
+ * The interval is randomised rather than clockwork for the same reason, and
+ * the next run is booked *before* the work so a slow tick cannot double-fire.
+ */
+const TRICKLE_MIN_MS = 30 * 60_000;
+const TRICKLE_MAX_MS = 45 * 60_000;
+
+/** New Daily entries: 2–5 house accounts that have not played today. */
+async function trickleDaily(date: string, totalQuestions = 10): Promise<number> {
+  const ids = await syntheticIds();
+  if (!ids.length) return 0;
+
+  const played = await DailyAttempt.find({ date, userId: { $in: ids } })
+    .select('userId')
+    .lean();
+  const playedSet = new Set(played.map((p) => String(p.userId)));
+
+  const fresh = shuffled(ids.filter((id) => !playedSet.has(String(id))));
+  if (!fresh.length) return 0;
+
+  const wanted = Math.min(fresh.length, randInt(2, 5));
+  const docs = fresh.slice(0, wanted).map((id) => dailyAttemptFor(id, date, totalQuestions));
+
+  try {
+    await DailyAttempt.insertMany(docs, { ordered: false });
+  } catch (err: any) {
+    if (err?.code !== 11000 && !err?.writeErrors) throw err;
+  }
+  return docs.length;
+}
+
+/**
+ * Nudge the standing boards: a few points onto some existing entries, plus a
+ * couple of new arrivals.
+ *
+ * The bump is small and only lands on a slice of the board, so the order
+ * reshuffles the way a real one does instead of everyone marching up together.
+ * The ceiling still applies — these are a target to overtake, not a wall.
+ */
+async function trickleLadder(at: Date): Promise<{ bumped: number; added: number }> {
+  const ceiling = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING, 140));
+  const ladderSize = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_LADDER_SIZE, 120));
+
+  const periods: { type: 'weekly' | 'monthly' | 'all'; label: string; scale: number }[] = [
+    { type: 'weekly', label: currentPeriodLabel('weekly', at), scale: 1 },
+    { type: 'monthly', label: currentPeriodLabel('monthly', at), scale: 3.5 },
+    { type: 'all', label: 'all', scale: 8 },
+  ];
+
+  let bumped = 0;
+  let added = 0;
+
+  for (const period of periods) {
+    const cap = Math.round(ceiling * period.scale);
+
+    const rows = await SyntheticScore.find({ type: period.type, periodLabel: period.label })
+      .select('_id points')
+      .lean();
+
+    // A slice of the board, not all of it.
+    const slice = shuffled(rows).slice(0, Math.max(1, Math.round(rows.length * 0.25)));
+    const ops = slice
+      .map((r) => {
+        const gain = randInt(2, Math.max(3, Math.round(12 * period.scale)));
+        const next = Math.min(cap, (r.points ?? 0) + gain);
+        if (next === r.points) return null;
+        return { updateOne: { filter: { _id: r._id }, update: { $set: { points: next } } } };
+      })
+      .filter(Boolean) as any[];
+
+    if (ops.length) {
+      const res = await SyntheticScore.bulkWrite(ops, { ordered: false });
+      bumped += res.modifiedCount ?? 0;
+    }
+
+    // Room on the board? Bring one or two more in, entering low the way a new
+    // player would rather than landing near the top.
+    if (rows.length < ladderSize) {
+      const present = new Set(rows.map((r) => String((r as any).userId)));
+      const onBoard = await SyntheticScore.find({ type: period.type, periodLabel: period.label })
+        .select('userId')
+        .lean();
+      for (const r of onBoard) present.add(String(r.userId));
+
+      const candidates = shuffled((await syntheticIds()).filter((id) => !present.has(String(id))));
+      const wanted = Math.min(candidates.length, ladderSize - rows.length, randInt(1, 2));
+
+      const inserts = candidates.slice(0, wanted).map((userId) => ({
+        updateOne: {
+          filter: { userId, type: period.type, periodLabel: period.label },
+          update: {
+            $setOnInsert: {
+              userId,
+              type: period.type,
+              periodLabel: period.label,
+              // Entering, not arriving at the top: the low end of the range.
+              points: Math.max(1, Math.round(skewedUnit() * 0.35 * cap)),
+            },
+          },
+          upsert: true,
+        },
+      }));
+
+      if (inserts.length) {
+        const res = await SyntheticScore.bulkWrite(inserts, { ordered: false });
+        added += res.upsertedCount ?? 0;
+      }
+    }
+  }
+
+  return { bumped, added };
+}
+
+export async function trickleSyntheticActivity(
+  at: Date = new Date(),
+): Promise<{ daily: number; bumped: number; added: number; skipped?: string }> {
+  const none = { daily: 0, bumped: 0, added: 0 };
+  if (!(await syntheticsEnabled())) return { ...none, skipped: 'disabled' };
+
+  const dueAt = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_NEXT_TRICKLE, 0));
+  if (at.getTime() < dueAt) return { ...none, skipped: 'not_due' };
+
+  // Book the next one first: a slow run must not let the next tick fire too.
+  await setSetting(
+    SETTINGS_KEYS.SYNTHETIC_NEXT_TRICKLE,
+    at.getTime() + randInt(TRICKLE_MIN_MS, TRICKLE_MAX_MS),
+  );
+
+  await ensureSyntheticPool();
+
+  const daily = await trickleDaily(at.toISOString().slice(0, 10));
+  const { bumped, added } = await trickleLadder(at);
+
+  logger.info('Synthetic activity trickled', { daily, bumped, added });
+  return { daily, bumped, added };
 }

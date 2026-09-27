@@ -12,6 +12,13 @@ module.exports = {
   // Integration tests share one mongod; running files in parallel against it
   // makes collection resets race.
   maxWorkers: 1,
+  // Recycle the worker when it balloons.
+  //
+  // One worker running all 36 suites accumulates — models, connections, the
+  // documents each suite inserts — and on CI it reached the 4GB heap ceiling
+  // and aborted the run with every test up to that point passing. Restarting
+  // the worker once it crosses this costs a second or two per recycle.
+  workerIdleMemoryLimit: '768MB',
   collectCoverageFrom: [
     'src/services/**/*.ts',
     'src/controllers/**/*.ts',

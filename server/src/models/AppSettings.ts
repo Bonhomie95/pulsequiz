@@ -44,6 +44,7 @@ export const SETTINGS_KEYS = {
   SYNTHETIC_LADDER_SIZE: 'synthetic_ladder_size',       // how many appear on weekly/monthly/all
   SYNTHETIC_POINTS_CEILING: 'synthetic_points_ceiling', // highest points a house account may hold
   SYNTHETIC_DAILY_GROWTH: 'synthetic_daily_growth',     // points a house account gains per day
+  SYNTHETIC_NEXT_TRICKLE: 'synthetic_next_trickle',     // epoch ms of the next arrivals batch
 } as const;
 
 /**

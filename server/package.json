@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "node --max-old-space-size=5120 ./node_modules/.bin/jest",
     "dev": "ts-node-dev --max-old-space-size=4096 --respawn src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",

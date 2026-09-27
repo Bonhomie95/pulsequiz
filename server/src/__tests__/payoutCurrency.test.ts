@@ -17,6 +17,8 @@ let userId: string;
 
 const EVM = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e';
 const SOL = '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV';
+const SOL2 = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM';
+const TRC = 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE';
 
 beforeAll(async () => {
   process.env.FRONTEND_ORIGIN = 'http://localhost:5173';
@@ -40,9 +42,13 @@ const patch = (body: object) =>
   request(app).patch('/api/settings').set('Authorization', `Bearer ${token}`).send(body);
 
 describe('payout currency', () => {
-  it('defaults to USDT when an older client omits the currency', async () => {
-    const res = await patch({ usdtType: 'ERC20', usdtAddress: EVM }).expect(200);
-    expect(res.body.settings.payoutCurrency).toBe('USDT');
+  // Solana is the only payout network enabled at launch. The rest are
+  // commented out in PAYOUT_NETWORKS rather than deleted, so these pin the
+  // launch configuration: a pair that is off must be refused, not silently
+  // accepted and then impossible to pay.
+  it('refuses a network that is not enabled', async () => {
+    await patch({ payoutCurrency: 'USDC', usdtType: 'ERC20', usdtAddress: EVM }).expect(400);
+    await patch({ payoutCurrency: 'USDT', usdtType: 'TRC20', usdtAddress: TRC }).expect(400);
   });
 
   it('saves a USDC wallet on a supported network and restarts the hold', async () => {
@@ -52,10 +58,10 @@ describe('payout currency', () => {
     expect(user?.usdtAddressChangedAt).toBeTruthy();
   });
 
-  it('switching coin on the same address counts as a change', async () => {
-    await patch({ payoutCurrency: 'USDT', usdtType: 'ERC20', usdtAddress: EVM }).expect(200);
+  it('changing the wallet on the enabled network counts as a change', async () => {
+    await patch({ payoutCurrency: 'USDC', usdtType: 'SOL', usdtAddress: SOL }).expect(200);
     await User.updateOne({ _id: userId }, { usdtAddressChangedAt: new Date(0) });
-    await patch({ payoutCurrency: 'USDC', usdtType: 'ERC20', usdtAddress: EVM }).expect(200);
+    await patch({ payoutCurrency: 'USDC', usdtType: 'SOL', usdtAddress: SOL2 }).expect(200);
     const user = await User.findById(userId).lean();
     expect(user?.payoutCurrency).toBe('USDC');
     expect(user?.usdtAddressChangedAt!.getTime()).toBeGreaterThan(0);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo} from 'react';
 import {
   Animated,
   ActivityIndicator,
@@ -34,19 +34,29 @@ type Entry = {
 
 // ── Countdown helpers ──────────────────────────────────────────────────────────
 
+/**
+ * Fallback only — the server sends the real instant as `periodEndsAt`.
+ *
+ * Two things were wrong with computing it here. It used the device's clock and
+ * the device's idea of Sunday, while the server closes the period on a fixed
+ * wall clock (US Central), so the two disagreed by hours and by more than that
+ * for anyone abroad. And `(7 - getDay()) % 7 || 7` is 7 on a Sunday, so on the
+ * very day the week closed the banner showed a full week left.
+ *
+ * Kept so the banner still renders before the first response lands.
+ */
 function getNextPayoutDate(type: 'weekly' | 'monthly'): Date {
   const now = new Date();
 
   if (type === 'weekly') {
-    // Next Sunday 23:59:59
     const d = new Date(now);
-    const daysUntilSunday = (7 - d.getDay()) % 7 || 7;
+    // 0 on a Sunday: the period ends today, not next week.
+    const daysUntilSunday = (7 - d.getDay()) % 7;
     d.setDate(d.getDate() + daysUntilSunday);
     d.setHours(23, 59, 59, 0);
     return d;
   }
 
-  // Monthly: last day of current month at 23:59:59
   return new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 0);
 }
 
@@ -74,14 +84,21 @@ function CountdownBanner({
   type,
   theme,
   prizes,
+  endsAt,
 }: {
   type: 'weekly' | 'monthly';
   theme: any;
   prizes: boolean;
+  /** The server's own close time for this board, ISO. */
+  endsAt?: string | null;
 }) {
-  const [remaining, setRemaining] = useState(
-    () => getNextPayoutDate(type).getTime() - Date.now(),
-  );
+  // The server's instant when we have it; our own guess only until then.
+  const deadline = useMemo(() => {
+    const t = endsAt ? Date.parse(endsAt) : NaN;
+    return Number.isNaN(t) ? getNextPayoutDate(type).getTime() : t;
+  }, [endsAt, type]);
+
+  const [remaining, setRemaining] = useState(() => deadline - Date.now());
   const pulseAnim = useRef(new Animated.Value(1)).current;
   // Tab screens stay mounted when you switch tabs, so gate the per-second
   // ticker and the pulse loop on focus — otherwise they keep running (and
@@ -92,12 +109,12 @@ function CountdownBanner({
   // switches instantly instead of showing the previous tab's value for ~1s.
   useEffect(() => {
     if (!isFocused) return;
-    setRemaining(getNextPayoutDate(type).getTime() - Date.now());
+    setRemaining(deadline - Date.now());
     const id = setInterval(() => {
-      setRemaining(getNextPayoutDate(type).getTime() - Date.now());
+      setRemaining(deadline - Date.now());
     }, 1000);
     return () => clearInterval(id);
-  }, [type, isFocused]);
+  }, [deadline, isFocused]);
 
   // Pulse the colon separators (only while the screen is visible)
   useEffect(() => {
@@ -259,6 +276,8 @@ export default function LeaderboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // When the current board closes, straight from the server.
+  const [periodEndsAt, setPeriodEndsAt] = useState<string | null>(null);
   const [prizeInfo, setPrizeInfo] = useState<{
     paidRanks: number;
     totalAmount: number | null;
@@ -304,6 +323,7 @@ export default function LeaderboardScreen() {
           const res = await api.get(`/leaderboard/${tab}`);
           list = res.data?.data ?? [];
           prizeData = res.data?.prizeInfo ?? null;
+          setPeriodEndsAt(res.data?.periodEndsAt ?? null);
           standing = res.data?.me ?? null;
         }
 
@@ -382,7 +402,7 @@ export default function LeaderboardScreen() {
 
         {/* ── COUNTDOWN BANNER (weekly / monthly only) ── */}
         {(tab === 'weekly' || tab === 'monthly') && (
-          <CountdownBanner type={tab} theme={theme} prizes={prizes} />
+          <CountdownBanner type={tab} theme={theme} prizes={prizes} endsAt={periodEndsAt} />
         )}
 
         {/* PRIZE INFO */}
