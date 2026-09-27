@@ -3,13 +3,24 @@ import { Types } from 'mongoose';
 
 import { AuthRequest } from '../middlewares/auth';
 import Challenge from '../models/Challenge';
-import { claimChallengeReward } from '../services/challengeService';
+import {
+  claimChallengeReward,
+  getDailyLabel,
+  getWeeklyLabel,
+} from '../services/challengeService';
 import { getBalance } from '../services/coinService';
 import { logger } from '../utils/logger';
 
 export async function getMyChallenges(req: AuthRequest, res: Response) {
+  // Only this period's rows.
+  //
+  // Without the period filter every past day's challenges stayed in the list,
+  // so today showed yesterday's two alongside today's two — four dailies, and
+  // the same drift on weeklies. A challenge that was not finished in its own
+  // period is simply over; it does not roll forward.
   const challenges = await Challenge.find({
     userId: req.userId,
+    periodLabel: { $in: [getDailyLabel(), getWeeklyLabel()] },
     // 'claimed' rows are kept out of the active list but still shown as done
     // for the rest of the period, so a player can see what they earned.
     status: { $in: ['active', 'completed', 'claimed'] },

@@ -302,6 +302,10 @@ export function startLeaderboardCron(io?: Server) {
     { timezone: TIMEZONE },
   );
 
+  // Above this many in a single two-minute sweep, something is stranding
+  // matches rather than players simply quitting.
+  const STRANDED_MATCH_ALERT = 10;
+
   // Stale-match sweeper — every 2 minutes.
   //
   // Forfeit timers are in-process `setTimeout` handles, so a deploy mid-match
@@ -313,7 +317,16 @@ export function startLeaderboardCron(io?: Server) {
       job('pvp-sweeper', 3 * MINUTE, async () => {
         const swept = await sweepStaleMatches(io);
         if (swept === 0) return;
-        logger.warn('Swept stale PvP matches', { count: swept });
+        // Sweeping one or two is ordinary: people close the app mid-match.
+        // Logging that as a warning forwarded every tick to the error sink and
+        // paged on routine housekeeping. A large batch is different — that
+        // means matches are being stranded faster than they are played, which
+        // is worth being told about.
+        if (swept >= STRANDED_MATCH_ALERT) {
+          logger.warn('Swept an unusual number of stale PvP matches', { count: swept });
+        } else {
+          logger.info('Swept stale PvP matches', { count: swept });
+        }
         return { swept };
       }),
       { timezone: TIMEZONE },

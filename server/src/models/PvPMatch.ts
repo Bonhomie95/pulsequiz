@@ -132,7 +132,18 @@ const RematchSchema = new Schema(
 
 const PvPMatchSchema = new Schema(
   {
-    category: { type: String, index: true, required: true },
+    // Lowercased on write. The question bank stores categories in lower case
+    // and every lookup matches exactly, but clients send them title-cased
+    // ("Physics"). The queue normalised in one place and the rematch, bot and
+    // room paths did not, so those matches looked up a category that does not
+    // exist and died with "No questions seeded for category". Normalising on
+    // the model means no writer can get it wrong again.
+    category: {
+      type: String,
+      index: true,
+      required: true,
+      set: (v: unknown) => (typeof v === 'string' ? v.trim().toLowerCase() : v),
+    },
 
     mode: {
       type: String,
