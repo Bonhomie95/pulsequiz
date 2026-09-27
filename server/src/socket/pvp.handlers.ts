@@ -273,6 +273,86 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
   const on = (event: string, fn: (...args: any[]) => Promise<void> | void) =>
     socket.on(event, safeHandler(socket, event, fn));
 
+  /* ---------- HINT ---------- */
+
+  /**
+   * One 50/50 per player per match, free.
+   *
+   * Deliberately not purchasable. Both players answer the same ten questions
+   * with coins staked on the result, so a hint you can buy is a win you can
+   * buy — which is exactly why the solo hint service refuses to serve the
+   * shared-question modes. One free use each keeps the help symmetric.
+   *
+   * The correct answer never leaves the server: this returns one wrong option
+   * to grey out, nothing more.
+   */
+  on(SOCKET_EVENTS.HINT, async ({ matchId }: { matchId?: string }) => {
+    if (typeof matchId !== 'string' || !Types.ObjectId.isValid(matchId)) return;
+
+    const match = await PvPMatch.findById(matchId);
+    if (!match || match.settledAt || match.state === 'FINISHED') return;
+
+    const player = (match.players as any[]).find(
+      (p) => p.userId.toString() === userId,
+    );
+    if (!player || player.completed) return;
+
+    const index = player.currentIndex;
+
+    // Already spent. Re-send it rather than staying silent, so a reconnect
+    // gets its greyed-out option back instead of looking like a dead button.
+    if (typeof player.hintUsedAtIndex === 'number') {
+      if (player.hintUsedAtIndex === index) {
+        socket.emit(SOCKET_EVENTS.HINT_RESULT, {
+          questionIndex: index,
+          disabledIndex: player.hintDisabledIndex,
+          remaining: 0,
+        });
+      } else {
+        socket.emit(SOCKET_EVENTS.HINT_RESULT, {
+          questionIndex: index,
+          disabledIndex: null,
+          remaining: 0,
+          message: 'You have already used your 50/50',
+        });
+      }
+      return;
+    }
+
+    const qRef = (match.questionSet as any[])[index];
+    if (!qRef) return;
+
+    const question = await QuizQuestion.findById(qRef.questionId)
+      .select('answer options')
+      .lean();
+    if (!question) return;
+
+    const wrong = (question.options ?? [])
+      .map((_: unknown, i: number) => i)
+      .filter((i: number) => i !== question.answer);
+    if (!wrong.length) return;
+
+    const disabledIndex = wrong[Math.floor(Math.random() * wrong.length)];
+
+    // Positional write: the opponent shares this document and answering at the
+    // same moment would lose a whole-document save to the version check.
+    await PvPMatch.updateOne(
+      { _id: matchId, 'players.userId': new Types.ObjectId(userId) },
+      {
+        $set: {
+          'players.$.hintUsedAtIndex': index,
+          'players.$.hintDisabledIndex': disabledIndex,
+        },
+      },
+    );
+
+    socket.emit(SOCKET_EVENTS.HINT_RESULT, {
+      questionIndex: index,
+      disabledIndex,
+      remaining: 0,
+    });
+  });
+
   /* ---------- REMATCH ---------- */
 
   /**

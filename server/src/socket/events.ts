@@ -18,6 +18,11 @@ export const SOCKET_EVENTS = {
   MATCH_DRAW: 'match:draw',
 
   /* ---------------- GAMEPLAY ---------------- */
+  /** The one 50/50 each player gets per match. */
+  HINT: 'match:hint',
+  HINT_RESULT: 'match:hint_result',
+
+  /* ---------------- GAMEPLAY ---------------- */
   ANSWER: 'match:answer',
 
   /* ---------------- REMATCH ---------------- */

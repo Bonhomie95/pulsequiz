@@ -74,6 +74,11 @@ const PlayerSchema = new Schema(
 
     answers: { type: [AnswerSchema], default: [] },
 
+    // The one 50/50 each player gets per match, and which question it was
+    // spent on so the client can re-apply it after a reconnect.
+    hintUsedAtIndex: { type: Number, default: null },
+    hintDisabledIndex: { type: Number, default: null },
+
     // what this player earned in THIS round (match)
     pointsAwarded: { type: Number, default: 0 },
     coinsAwarded: { type: Number, default: 0 },

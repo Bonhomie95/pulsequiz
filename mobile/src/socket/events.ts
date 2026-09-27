@@ -19,6 +19,9 @@ export const SOCKET_EVENTS = {
   /* -------- GAMEPLAY -------- */
   ANSWER: 'match:answer',
   MATCH_PING: 'match:ping',
+  /** The one 50/50 each player gets per match. */
+  HINT: 'match:hint',
+  HINT_RESULT: 'match:hint_result',
 
   /* -------- REMATCH -------- */
   REMATCH_REQUEST: 'rematch:request',

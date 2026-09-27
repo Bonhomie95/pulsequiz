@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, AppState, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
@@ -106,7 +106,35 @@ export default function PvPPlayScreen() {
     return () => clearInterval(t);
   }, [questions.length, matchId]);
 
+  /**
+   * The one 50/50 each player gets, free.
+   *
+   * Not purchasable: both sides answer the same ten questions with coins on
+   * the result, so a hint you can buy is a win you can buy. One free use each
+   * keeps it symmetric — the same reason the solo hint service refuses the
+   * other shared-question modes.
+   */
+  const [hintSpent, setHintSpent] = useState(false);
+  const [hint, setHint] = useState<{ questionIndex: number; disabledIndex: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const onHint = (p: { questionIndex: number; disabledIndex: number | null }) => {
+      setHintSpent(true);
+      if (typeof p?.disabledIndex === 'number') {
+        setHint({ questionIndex: p.questionIndex, disabledIndex: p.disabledIndex });
+      }
+    };
+    socket.on(SOCKET_EVENTS.HINT_RESULT, onHint);
+    return () => {
+      socket.off(SOCKET_EVENTS.HINT_RESULT, onHint);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const revealed = lastAnswer && lastAnswer.questionIndex === shownIndex ? lastAnswer : null;
+  const hiddenOptions = hint && hint.questionIndex === shownIndex ? [hint.disabledIndex] : [];
 
   const question = questions[shownIndex];
 
@@ -325,35 +353,62 @@ export default function PvPPlayScreen() {
   /* ---------------- UI ---------------- */
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* TOP */}
-      <View style={{ padding: 16 }}>
-        <Text style={{ color: theme.colors.text }}>{me?.username}</Text>
-        <Animated.View
-          style={{
-            height: 6,
-            borderRadius: 6,
-            backgroundColor: theme.colors.primary,
-            width: myBar.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['0%', '100%'],
-            }),
-          }}
-        />
+      {/* TOP — one versus strip instead of two stacked name-and-bar blocks.
+          Those took a third of the screen and read as a loading bar rather
+          than a race. Both tracks sit on one row here, so who is ahead is a
+          glance, and the question gets the space back. */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <View style={styles.racerRow}>
+              <Text numberOfLines={1} style={[styles.racerName, { color: theme.colors.text }]}>
+                {me?.username ?? 'You'}
+              </Text>
+              <Text style={[styles.racerCount, { color: theme.colors.primary }]}>
+                {Math.min(currentIndex, TOTAL_Q)}/{TOTAL_Q}
+              </Text>
+            </View>
+            <View style={[styles.track, { backgroundColor: theme.colors.border }]}>
+              <Animated.View
+                style={{
+                  height: '100%',
+                  borderRadius: 999,
+                  backgroundColor: theme.colors.primary,
+                  width: myBar.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  }),
+                }}
+              />
+            </View>
+          </View>
 
-        <Text style={{ color: theme.colors.muted, marginTop: 8 }}>
-          {opponent?.username}
-        </Text>
-        <Animated.View
-          style={{
-            height: 6,
-            borderRadius: 6,
-            backgroundColor: theme.colors.muted,
-            width: oppBar.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['0%', '100%'],
-            }),
-          }}
-        />
+          <Text style={[styles.vs, { color: theme.colors.muted }]}>VS</Text>
+
+          <View style={{ flex: 1 }}>
+            <View style={styles.racerRow}>
+              <Text numberOfLines={1} style={[styles.racerName, { color: theme.colors.muted }]}>
+                {opponent?.username ?? 'Opponent'}
+              </Text>
+              <Text style={[styles.racerCount, { color: theme.colors.muted }]}>
+                {Math.min(opponentFurthest, TOTAL_Q)}/{TOTAL_Q}
+              </Text>
+            </View>
+            <View style={[styles.track, { backgroundColor: theme.colors.border }]}>
+              <Animated.View
+                style={{
+                  height: '100%',
+                  borderRadius: 999,
+                  backgroundColor: theme.colors.muted,
+                  width: oppBar.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  }),
+                }}
+              />
+            </View>
+          </View>
+        </View>
       </View>
 
       {/* QUESTION */}
@@ -364,19 +419,44 @@ export default function PvPPlayScreen() {
           bg={theme.colors.border}
         />
 
-        <Text
-          style={{
-            marginTop: 16,
-            fontSize: 18,
-            fontWeight: '800',
-            color: theme.colors.text,
-          }}
-        >
-          {question.question}
-        </Text>
+        {/* Meta row, matching Ranked: the mode used to show nothing but a ring
+            and the bare question text, which is why it felt flat next to it. */}
+        <View style={styles.metaRow}>
+          <View
+            style={[
+              styles.pill,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            ]}
+          >
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 12 }}>
+              {category ? cap(category) : '1v1'}
+            </Text>
+          </View>
+          {question.difficulty ? (
+            <View style={[styles.pill, { backgroundColor: difficultyColor(question.difficulty, theme) }]}>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>
+                {question.difficulty.toUpperCase()}
+              </Text>
+            </View>
+          ) : null}
+          <View style={{ flex: 1 }} />
+          <Text style={{ color: theme.colors.muted, fontWeight: '700', fontSize: 12 }}>
+            Question {shownIndex + 1} of {TOTAL_Q}
+          </Text>
+        </View>
 
-        <View style={{ alignItems: 'flex-end' }}>
-          <ReportQuestionButton questionId={question.id} compact />
+        <View
+          style={[
+            styles.questionCard,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+          ]}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '800', color: theme.colors.text }}>
+            {question.question}
+          </Text>
+          <View style={{ alignItems: 'flex-end', marginTop: 4 }}>
+            <ReportQuestionButton questionId={question.id} compact />
+          </View>
         </View>
 
         {/* A rejected answer is a per-action problem — say so in place rather
@@ -402,12 +482,36 @@ export default function PvPPlayScreen() {
           options={question.options}
           picked={picked}
           correctIndex={revealed ? revealed.correctIndex : null}
+          disabledIndexes={hiddenOptions}
           locked={!!revealed}
           onPick={(i) => {
             setPicked(i);
             answer(i);
           }}
         />
+
+        <TouchableOpacity
+          disabled={hintSpent || !!revealed || picked !== null}
+          onPress={() => {
+            if (hintSpent || !matchId) return;
+            socket.emit(SOCKET_EVENTS.HINT, { matchId });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={hintSpent ? '50/50 already used' : 'Use your 50/50'}
+          hitSlop={8}
+          style={[
+            styles.hintBtn,
+            {
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surface,
+              opacity: hintSpent || !!revealed || picked !== null ? 0.45 : 1,
+            },
+          ]}
+        >
+          <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 13 }}>
+            {hintSpent ? '50/50 used' : '50/50 · removes one wrong answer'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* WAITING ON OPPONENT */}
@@ -549,3 +653,30 @@ function RecoveryOverlay({
     </View>
   );
 }
+
+const cap = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
+
+function difficultyColor(d: string, theme: ReturnType<typeof useTheme>) {
+  if (d === 'hard') return theme.colors.danger;
+  if (d === 'medium') return theme.colors.warning ?? '#f59e0b';
+  return theme.colors.success;
+}
+
+const styles = StyleSheet.create({
+  racerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 },
+  racerName: { flex: 1, fontWeight: '800', fontSize: 12 },
+  racerCount: { fontWeight: '900', fontSize: 12 },
+  track: { height: 6, borderRadius: 999, overflow: 'hidden' },
+  vs: { fontWeight: '900', fontSize: 12, letterSpacing: 1 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 },
+  pill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, borderWidth: 1 },
+  questionCard: { marginTop: 12, padding: 16, borderRadius: 18, borderWidth: 1 },
+  hintBtn: {
+    marginTop: 14,
+    alignSelf: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+});
