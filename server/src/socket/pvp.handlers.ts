@@ -65,6 +65,21 @@ const IMPOSSIBLY_FAST_MS = 250;
 
 export const userSocketMap = new Map<string, string>();      // userId -> socketId
 
+/**
+ * Is this player's app open right now?
+ *
+ * The socket knows the instant someone closes the app; `lastSeenAt` only
+ * decays, so presence took the full online window to catch up and the home
+ * screen kept offering a challenge to someone who had already gone.
+ *
+ * ponytail: per-instance. On one web service that is the whole truth; behind
+ * several it would need a shared presence store (Redis), and the lastSeenAt
+ * fallback below keeps it merely stale rather than wrong.
+ */
+export function isUserConnected(userId: string): boolean {
+  return userSocketMap.has(userId);
+}
+
 /** Pair key -> the players who have agreed to a rematch. */
 const rematchIntents = new Map<string, Set<string>>();
 
@@ -542,6 +557,7 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
         socket.emit(SOCKET_EVENTS.HINT_RESULT, {
           questionIndex: index,
           disabledIndex: player.hintDisabledIndex,
+          disabledIndexes: player.hintDisabledIndexes ?? [],
           remaining: 0,
         });
       } else {
@@ -563,12 +579,19 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
       .lean();
     if (!question) return;
 
+    // It is called a 50/50, so it has to leave two: the answer and one
+    // decoy. It was greying out a single option of four.
     const wrong = (question.options ?? [])
       .map((_: unknown, i: number) => i)
       .filter((i: number) => i !== question.answer);
     if (!wrong.length) return;
 
-    const disabledIndex = wrong[Math.floor(Math.random() * wrong.length)];
+    for (let i = wrong.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [wrong[i], wrong[j]] = [wrong[j], wrong[i]];
+    }
+    const disabledIndexes = wrong.slice(0, 2);
+    const disabledIndex = disabledIndexes[0];
 
     // Positional write: the opponent shares this document and answering at the
     // same moment would lose a whole-document save to the version check.
@@ -578,6 +601,7 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
         $set: {
           'players.$.hintUsedAtIndex': index,
           'players.$.hintDisabledIndex': disabledIndex,
+          'players.$.hintDisabledIndexes': disabledIndexes,
         },
       },
     );
@@ -585,6 +609,7 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
     socket.emit(SOCKET_EVENTS.HINT_RESULT, {
       questionIndex: index,
       disabledIndex,
+      disabledIndexes,
       remaining: 0,
     });
   });

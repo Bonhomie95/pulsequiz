@@ -237,9 +237,42 @@ export default function QuizResult() {
             </Text>
           )}
           {capExceeded === 'true' && (
-            <Text style={{ color: theme.colors.muted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
-              Daily leaderboard limit reached — keep playing for fun, points resume tomorrow.
-            </Text>
+            /* Said plainly, not in muted 12px under the score.
+               A run that scores zero after ten correct answers reads as a
+               broken app unless the reason is as loud as the number. */
+            <View
+              style={{
+                marginTop: 12,
+                padding: 12,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: theme.colors.warning ?? '#f59e0b',
+                backgroundColor: (theme.colors.warning ?? '#f59e0b') + '18',
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.warning ?? '#f59e0b',
+                  fontWeight: '900',
+                  fontSize: 13,
+                  textAlign: 'center',
+                }}
+              >
+                Daily ranked limit reached
+              </Text>
+              <Text
+                style={{
+                  color: theme.colors.text,
+                  fontSize: 12,
+                  marginTop: 4,
+                  textAlign: 'center',
+                  lineHeight: 18,
+                }}
+              >
+                This run still counts for your stats and league XP, but not for
+                leaderboard points. They resume tomorrow.
+              </Text>
+            </View>
           )}
         </View>
 

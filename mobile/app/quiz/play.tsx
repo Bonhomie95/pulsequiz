@@ -726,6 +726,7 @@ export default function QuizPlay() {
 
       const {
         disabledIndex,
+        disabledIndexes,
         coins: newCoins,
         hintsUsed: serverHintsUsed,
       } = res.data || {};
@@ -763,9 +764,15 @@ export default function QuizPlay() {
         return;
       }
 
-      setDisabledOptions((prev) =>
-        prev.includes(disabledIndex) ? prev : [...prev, disabledIndex],
-      );
+      // A 50/50 removes two. `disabledIndexes` is the pair; the single index
+      // is the older shape, kept so a client that predates this still works.
+      const removed: number[] = Array.isArray(disabledIndexes)
+        ? disabledIndexes
+        : [disabledIndex];
+      setDisabledOptions((prev) => [
+        ...prev,
+        ...removed.filter((i) => typeof i === 'number' && !prev.includes(i)),
+      ]);
 
       setHintUsedThisQuestion(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

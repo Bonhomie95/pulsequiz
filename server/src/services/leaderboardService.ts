@@ -347,12 +347,25 @@ async function syntheticUserIds(): Promise<Types.ObjectId[]> {
   return ids;
 }
 
-/** 0 means unranked — they have not scored yet. */
+/**
+ * 0 means unranked — they have not scored yet.
+ *
+ * Counted against the same population the board shows, house accounts
+ * included. Excluding them made the profile disagree with the leaderboard it
+ * was opened from: a player with 156 points was told "#1" while the visible
+ * all-time board, full of house accounts on 1,100+, did not list them at all.
+ *
+ * They are excluded from the *paying* ranks, which is a different question
+ * and is handled where prizes are decided.
+ */
 export async function trueAllTimeRank(points: number): Promise<number> {
   if (!points || points <= 0) return 0;
-  const ahead = await Progress.countDocuments({
-    points: { $gt: points },
-    userId: { $nin: await syntheticUserIds() },
-  });
-  return ahead + 1;
+  const [realAhead, syntheticAhead] = await Promise.all([
+    Progress.countDocuments({
+      points: { $gt: points },
+      userId: { $nin: await syntheticUserIds() },
+    }),
+    SyntheticScore.countDocuments({ type: 'all', points: { $gt: points } }),
+  ]);
+  return realAhead + syntheticAhead + 1;
 }

@@ -15,6 +15,10 @@ const RequireAdmin = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The cached profile outlives the cookie, so a timed-out admin arrived here
+  // looking signed in and sat on a dashboard where every request 401'd and
+  // nothing loaded. `refresh` now clears the session when the server will not
+  // confirm it, and this sends them to the login page the moment it does.
   if (!admin) return <Navigate to="/login" replace />;
   return <Outlet />;
 };

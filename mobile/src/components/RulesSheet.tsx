@@ -56,7 +56,7 @@ const RULES: { section: string; items: Rule[] }[] = [
       },
       {
         title: 'Hints cost more each time',
-        body: 'Up to 3 hints per quiz, one per question. Each removes a wrong option. They cost 10, then 20, then 50 PulseCoins.',
+        body: 'Up to 3 hints per quiz, one per question. Each removes two wrong options, leaving the answer and one decoy. They cost 10, then 20, then 50 PulseCoins.',
       },
       {
         title: 'Help never buys ranking points',

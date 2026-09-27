@@ -609,8 +609,18 @@ export async function getPlayerProfile(req: AuthRequest, res: Response) {
   // profile. They stay out of Progress on purpose: that collection feeds the
   // real all-time board and the payout ranking.
   let points = progress?.points ?? 0;
-  let level = progress?.level ?? 1;
+  // Derived, not read. Points are $inc'd from several places — settlements,
+  // challenge rewards, referrals — and only the quiz-finish path recomputes
+  // the stored level, so it drifts: a player on 156 points was still showing
+  // level 1. The curve is cheap, and it is the same one that wrote the field.
+  let level = getLevelFromPoints(points);
   let gamesPlayed = games;
+
+  // Heal the stored level while we are here, so every other screen that
+  // reads it catches up too.
+  if (progress && progress.level !== level) {
+    Progress.updateOne({ userId: targetId }, { $set: { level } }).catch(() => {});
+  }
 
   if ((user as { isSynthetic?: boolean }).isSynthetic) {
     const [allTime, dailies] = await Promise.all([

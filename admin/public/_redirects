@@ -1,0 +1,4 @@
+# Single-page app: every route is served by index.html and resolved by the
+# router in the browser. Without this, Render returns 404 for /login,
+# /users and everything else on a hard refresh or a direct link.
+/*    /index.html   200

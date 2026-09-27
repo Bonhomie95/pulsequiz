@@ -124,16 +124,24 @@ export default function PvPPlayScreen() {
    * other shared-question modes.
    */
   const [hintSpent, setHintSpent] = useState(false);
-  const [hint, setHint] = useState<{ questionIndex: number; disabledIndex: number } | null>(
-    null,
-  );
+  const [hint, setHint] = useState<{
+    questionIndex: number;
+    disabledIndexes: number[];
+  } | null>(null);
 
   useEffect(() => {
-    const onHint = (p: { questionIndex: number; disabledIndex: number | null }) => {
+    const onHint = (p: {
+      questionIndex: number;
+      disabledIndex: number | null;
+      disabledIndexes?: number[];
+    }) => {
       setHintSpent(true);
-      if (typeof p?.disabledIndex === 'number') {
-        setHint({ questionIndex: p.questionIndex, disabledIndex: p.disabledIndex });
-      }
+      const removed = Array.isArray(p?.disabledIndexes) && p.disabledIndexes.length
+        ? p.disabledIndexes
+        : typeof p?.disabledIndex === 'number'
+          ? [p.disabledIndex]
+          : [];
+      if (removed.length) setHint({ questionIndex: p.questionIndex, disabledIndexes: removed });
     };
     socket.on(SOCKET_EVENTS.HINT_RESULT, onHint);
     return () => {
@@ -169,7 +177,7 @@ export default function PvPPlayScreen() {
    * it matters most.
    */
   const iAmDone = questions.length > 0 && currentIndex >= questions.length && !revealed;
-  const hiddenOptions = hint && hint.questionIndex === shownIndex ? [hint.disabledIndex] : [];
+  const hiddenOptions = hint && hint.questionIndex === shownIndex ? hint.disabledIndexes : [];
 
   const question = questions[shownIndex];
 

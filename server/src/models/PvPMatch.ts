@@ -81,6 +81,8 @@ const PlayerSchema = new Schema(
     // spent on so the client can re-apply it after a reconnect.
     hintUsedAtIndex: { type: Number, default: null },
     hintDisabledIndex: { type: Number, default: null },
+    /** Both options the 50/50 removed, so a reconnect restores them. */
+    hintDisabledIndexes: { type: [Number], default: [] },
 
     // what this player earned in THIS round (match)
     pointsAwarded: { type: Number, default: 0 },

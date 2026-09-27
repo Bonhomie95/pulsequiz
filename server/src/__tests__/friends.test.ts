@@ -11,6 +11,7 @@ import User from '../models/User';
 import QuizSession from '../models/QuizSession';
 import PvPMatch from '../models/PvPMatch';
 import { SyntheticScore } from '../models/SyntheticScore';
+import { getLevelFromPoints } from '../utils/level';
 import { ensureSyntheticPool } from '../services/syntheticPlayers';
 import Progress from '../models/Progress';
 import {
@@ -406,6 +407,9 @@ describe('player profile', () => {
   it('reports a real player’s level, points and games', async () => {
     const me = await makeUser('profme');
     const them = await makeUser('profthem');
+    // A stored level that disagrees with the points, which is the state real
+    // accounts drift into: settlements, challenge rewards and referrals all
+    // $inc points, and only the quiz-finish path recomputes the level.
     await Progress.updateOne({ userId: them._id }, { $set: { points: 240, level: 7 } });
 
     const r = res();
@@ -415,7 +419,13 @@ describe('player profile', () => {
     );
 
     expect(r.statusCode).toBe(200);
-    expect(r.body).toMatchObject({ level: 7, points: 240, friendStatus: 'none' });
+    // Derived from the points, not read from the stale field.
+    expect(r.body).toMatchObject({
+      level: getLevelFromPoints(240),
+      points: 240,
+      friendStatus: 'none',
+    });
+    expect(r.body.level).not.toBe(7);
     // Nothing to show against someone you cannot play.
     expect(r.body.headToHead).toBeNull();
   });

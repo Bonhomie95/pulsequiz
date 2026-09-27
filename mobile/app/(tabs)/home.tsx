@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AdBanner } from '@/src/ads/adBanner';
 import { PulseCoin } from '@/src/components/PulseCoin';
+import { COIN_NAME } from '@/src/constants/currency';
 import { api, errorMessage } from '@/src/api/api';
 import { HomeSkeleton } from '@/src/components/HomeSkeleton';
 import { CheckInModal } from '@/src/components/CheckInModal';
@@ -205,6 +206,10 @@ export default function HomeScreen() {
     total: number;
   } | null>(null);
   const [readyPlayers, setReadyPlayers] = useState<ReadyPlayer[]>([]);
+  /** Live tournaments, so one an admin creates is actually reachable. */
+  const [tournaments, setTournaments] = useState<
+    { _id: string; name: string; entryFeeCoins?: number; endsAt?: string }[]
+  >([]);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -222,13 +227,17 @@ export default function HomeScreen() {
       setHomeError(null);
       try {
           const check = await api.post('/streak/check-in');
-          const [res, playersRes, leagueRes, dailyRes] = await Promise.all([
+          const [res, playersRes, leagueRes, dailyRes, tourneyRes] = await Promise.all([
             api.get('/home/summary'),
             api
               .get('/home/ready-players')
               .catch(() => ({ data: { players: [] } })),
             api.get('/leagues/current').catch(() => null),
             api.get(`/daily?date=${todayKey()}`).catch(() => null),
+            // Tournaments had no entry point anywhere in the app — an admin
+            // could create one and no player could reach it. Only a push
+            // notification deep-linked to the screen.
+            api.get('/tournaments').catch(() => null),
           ]);
           const lg: any = leagueRes?.data;
           setLeague(
@@ -272,6 +281,7 @@ export default function HomeScreen() {
               : null,
           );
           setReadyPlayers(playersRes.data.players ?? []);
+          setTournaments(tourneyRes?.data?.tournaments ?? []);
 
           // ── Show check-in modal if this is a new check-in today ──────────
           if (!check.data.alreadyCheckedIn && check.data.coinsAdded > 0) {
@@ -519,6 +529,44 @@ export default function HomeScreen() {
               <ThemeIcon size={18} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
+
+          {tournaments.length > 0 && (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() =>
+                router.push(
+                  tournaments.length === 1
+                    ? (`/tournament/${tournaments[0]._id}` as any)
+                    : ('/tournament' as any),
+                )
+              }
+              accessibilityRole="button"
+              accessibilityLabel={
+                tournaments.length === 1
+                  ? `Tournament: ${tournaments[0].name}. Open it`
+                  : `${tournaments.length} tournaments running. Open the list`
+              }
+              style={[
+                styles.tourneyCard,
+                { borderColor: theme.colors.primary, backgroundColor: theme.colors.primary + '14' },
+              ]}
+            >
+              <Text style={{ fontSize: 22 }}>🏆</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: theme.colors.text, fontWeight: '900', fontSize: 15 }}>
+                  {tournaments.length === 1 ? tournaments[0].name : 'Tournaments'}
+                </Text>
+                <Text style={{ color: theme.colors.muted, fontSize: 12, marginTop: 2 }}>
+                  {tournaments.length === 1
+                    ? tournaments[0].entryFeeCoins
+                      ? `Entry ${tournaments[0].entryFeeCoins} ${COIN_NAME.plural} · tap to join`
+                      : 'Free to enter · tap to join'
+                    : `${tournaments.length} running now`}
+                </Text>
+              </View>
+              <Text style={{ color: theme.colors.primary, fontWeight: '900' }}>›</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* STATS BAR */}
@@ -927,6 +975,15 @@ const styles = StyleSheet.create({
   challengeChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
   challengeChipText: { fontSize: 10, color: '#fff', fontWeight: '800' },
   duoRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  tourneyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginTop: 12,
+  },
   duoCard: { flex: 1, borderRadius: 20, padding: 16, gap: 4 },
   duoTitle: { fontSize: 16, fontWeight: '900' },
   duoSub: { fontSize: 12, fontWeight: '600' },

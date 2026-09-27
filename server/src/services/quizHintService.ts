@@ -65,10 +65,18 @@ export async function useHintService(params: {
     throw new Error('correctIndex missing');
   }
 
-  // Pick ONE wrong option to disable
+  // A real 50/50: take away two of the three wrong options, leaving the
+  // right answer and one decoy. Removing a single option out of four barely
+  // moved the odds — 25% to 33% — for a cost that escalates to 50 coins,
+  // which is not a hint anyone would buy twice.
   const wrongIndexes = [0, 1, 2, 3].filter((i) => i !== correctIndex);
-  const disabledIndex =
-    wrongIndexes[Math.floor(Math.random() * wrongIndexes.length)];
+  for (let i = wrongIndexes.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [wrongIndexes[i], wrongIndexes[j]] = [wrongIndexes[j], wrongIndexes[i]];
+  }
+  const disabledIndexes = wrongIndexes.slice(0, 2);
+  // Kept for older clients, which expect a single index.
+  const disabledIndex = disabledIndexes[0];
 
   const cost = HINT_COSTS[session.hintsUsed] ?? 999;
 
@@ -115,6 +123,7 @@ export async function useHintService(params: {
 
   return {
     disabledIndex,
+    disabledIndexes,
     coins: debit.balance,
     cost,
     hintsUsed: claimed.hintsUsed,

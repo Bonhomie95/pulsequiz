@@ -54,7 +54,13 @@ export const useAdminStore = create<AdminState>((set) => ({
         set({ admin });
       }
     } catch {
-      // The 401 interceptor handles an expired session.
+      // Whatever went wrong, the server would not confirm who we are — an
+      // expired cookie, or a rejected cross-site request whose status the
+      // browser will not show us. Either way this is not a signed-in admin,
+      // and leaving the cached profile in place is what left them staring at
+      // an empty dashboard. Dropping it sends them to the login page.
+      localStorage.removeItem(STORED_ADMIN);
+      set({ admin: null });
     }
   },
 

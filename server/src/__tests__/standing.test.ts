@@ -11,7 +11,9 @@ import QuizSession from '../models/QuizSession';
 import User from '../models/User';
 import Progress from '../models/Progress';
 import LeaderboardSnapshot from '../models/LeaderboardSnapshot';
-import { buildLeaderboard, getUserStanding } from '../services/leaderboardService';
+import { buildLeaderboard, getUserStanding, trueAllTimeRank } from '../services/leaderboardService';
+import { SyntheticScore } from '../models/SyntheticScore';
+import { ensureSyntheticPool } from '../services/syntheticPlayers';
 import { ensureIndexes } from './setup';
 
 const ids: string[] = [];
@@ -213,5 +215,34 @@ describe('rebuildLeaderboardSnapshots', () => {
     await rebuildLeaderboardSnapshots();
 
     expect((await rebuildLeaderboardSnapshots({ force: true })).rebuilt).toBe(true);
+  });
+});
+
+describe('all-time rank on a profile', () => {
+  it('counts the same players the board shows', async () => {
+    // Excluding house accounts made the profile disagree with the board it
+    // was opened from: a real player on 156 points was told "#1" while the
+    // visible all-time board, full of house accounts above them, did not
+    // list them at all.
+    const u = await User.create({
+      email: 'rank@example.com', provider: 'google', providerId: 'rank-1',
+      username: 'ranker', avatar: 'avatar0',
+    });
+    await Progress.create({ userId: u._id, points: 156 });
+
+    await ensureSyntheticPool(3);
+    const ghosts = await User.find({ isSynthetic: true }).limit(3).lean();
+    for (const g of ghosts) {
+      await SyntheticScore.create({
+        userId: g._id, type: 'all', periodLabel: 'all', points: 1120,
+      });
+    }
+
+    // Three house accounts are ahead, so this player is fourth — not first.
+    expect(await trueAllTimeRank(156)).toBe(4);
+  });
+
+  it('is unranked with no points', async () => {
+    expect(await trueAllTimeRank(0)).toBe(0);
   });
 });

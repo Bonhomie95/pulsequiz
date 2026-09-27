@@ -179,6 +179,24 @@ describe('hints', () => {
     expect(await getBalance(userId)).toBe(before - 10);
   });
 
+  it('leaves exactly two options: the answer and one decoy', async () => {
+    // Removing one of four moved the odds from 25% to 33%, for a cost that
+    // escalates to 50 coins — not a hint worth buying. It is a 50/50.
+    const userId = await makeUser();
+    const session = await startQuizSession({ userId, category: CATEGORY });
+
+    const result = await useHintService({
+      userId,
+      sessionId: session.sessionId,
+      questionId: session.questions[0].id,
+    });
+
+    const q = await QuizQuestion.findById(session.questions[0].id).lean();
+    expect(result.disabledIndexes).toHaveLength(2);
+    expect(result.disabledIndexes).not.toContain(q!.answer);
+    expect(new Set(result.disabledIndexes).size).toBe(2);
+  });
+
   it('charges once under concurrent requests for the same question', async () => {
     // The old read-modify-write on the wallet lost one of two concurrent
     // writes, so the second hint was effectively free.

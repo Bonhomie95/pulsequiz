@@ -12,6 +12,7 @@ import PvPMatch from '../models/PvPMatch';
 import { currentPeriodLabel } from '../utils/dateRanges';
 import { getUserStanding } from '../services/leaderboardService';
 import { seedChallengesForUser } from '../services/challengeService';
+import { isUserConnected } from '../socket/pvp.handlers';
 import { getAdRewardConfig } from '../services/adRewardService';
 
 /** Rank within a snapshot, or null when the user isn't in the stored top N. */
@@ -197,7 +198,16 @@ export async function getReadyPlayers(req: AuthRequest, res: Response) {
          * the network — nothing tells us they left, so this is inferred from
          * how long since we last heard from them.
          */
-        status: busy.has(id) ? 'in_game' : now - seen <= ONLINE_WINDOW_MS ? 'online' : 'away',
+        status: busy.has(id)
+          ? 'in_game'
+          : // A live socket is the immediate truth; lastSeenAt is the fallback
+            // for anything this instance did not see. Without the socket
+            // check, closing the app left someone shown as online for the
+            // whole window, and the home screen would not update until it
+            // expired however often it polled.
+            isUserConnected(id) || now - seen <= ONLINE_WINDOW_MS
+            ? 'online'
+            : 'away',
         lastSeenAt: u.lastSeenAt ?? null,
       };
     }),

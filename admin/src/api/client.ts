@@ -17,12 +17,14 @@ export const adminApi = axios.create({
 adminApi.interceptors.response.use(
   (res) => res,
   (error) => {
-    // Cookie expired / invalid → drop local session and bounce to login.
-    if (error.response?.status === 401) {
+    // Cookie expired / invalid → drop the local session. RequireAdmin is
+    // watching that store and renders a redirect to /login, which is a
+    // client-side route change: `window.location.href` asked the static host
+    // for /login, and without a SPA rewrite that is a 404 rather than the
+    // login page. Clearing the store is also what makes this work when the
+    // 401 arrives as an opaque CORS failure with no readable status.
+    if (error.response?.status === 401 || error.response?.status === 419) {
       useAdminStore.getState().clearSession();
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
     }
     return Promise.reject(error);
   },
