@@ -23,6 +23,7 @@ import {
   Wallet2,
 } from 'lucide-react-native';
 import { useTheme } from '@/src/theme/useTheme';
+import { PulseCoin } from '@/src/components/PulseCoin';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
@@ -202,7 +203,7 @@ export default function WalletScreen() {
       >
         {/* COINS CARD */}
         <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          <Coins size={32} color={theme.colors.coin} />
+          <PulseCoin size={34} />
           <Text style={[styles.bigValue, { color: theme.colors.coin }]}>
             {coins}
           </Text>

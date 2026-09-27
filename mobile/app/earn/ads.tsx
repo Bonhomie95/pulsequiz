@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/src/theme/useTheme';
+import { PulseCoin } from '@/src/components/PulseCoin';
 import { showRewardedAd } from '@/src/ads/admob';
 import { useCoinStore } from '@/src/store/useCoinStore';
 import { useRouter } from 'expo-router';
@@ -236,7 +237,7 @@ export default function EarnAdsScreen() {
                 accessible
                 accessibilityLabel={`${config?.coinsPerAd} PulseCoins per ad`}
               >
-                <Text style={{ fontSize: 22 }}>🪙</Text>
+                <PulseCoin size={22} />
                 <Text style={[styles.rewardText, { color: theme.colors.coin }]}>
                   +{config?.coinsPerAd} coins per ad
                 </Text>

@@ -24,6 +24,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AdBanner } from '@/src/ads/adBanner';
+import { PulseCoin } from '@/src/components/PulseCoin';
 import { api, errorMessage } from '@/src/api/api';
 import { HomeSkeleton } from '@/src/components/HomeSkeleton';
 import { CheckInModal } from '@/src/components/CheckInModal';
@@ -527,7 +528,7 @@ export default function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel="Open your wallet"
             hitSlop={8}>
-              <Coins size={18} color={theme.colors.coin} />
+              <PulseCoin size={20} />
               <Text style={[styles.statValue, { color: theme.colors.coin }]}>
                 {coins.toLocaleString()}
               </Text>

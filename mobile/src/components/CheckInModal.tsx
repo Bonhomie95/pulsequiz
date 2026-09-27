@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import { useTheme } from '@/src/theme/useTheme';
+import { PulseCoin } from '@/src/components/PulseCoin';
 
 type Props = {
   visible: boolean;
@@ -149,7 +150,7 @@ export function CheckInModal({ visible, streak, coinsAdded, milestoneBonus, onCl
             styles.rewardBox,
             { backgroundColor: theme.colors.coin + '12', borderColor: theme.colors.coin + '30', transform: [{ scale: coinBounce }] },
           ]}>
-            <Text style={styles.coinEmoji}>🪙</Text>
+            <PulseCoin size={40} />
             <View>
               <Text style={[styles.rewardLabel, { color: theme.colors.muted }]}>PulseCoins Earned</Text>
               <Text style={[styles.rewardAmount, { color: theme.colors.coin }]}>+{coinsAdded}</Text>

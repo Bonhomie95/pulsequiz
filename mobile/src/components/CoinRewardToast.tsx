@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/src/theme/useTheme';
+import { PulseCoin } from '@/src/components/PulseCoin';
 
 type Props = {
   visible: boolean;
@@ -59,7 +60,7 @@ export function CoinRewardToast({ visible, coins, label = 'Reward Earned!', onHi
         {/* Left: glowing coin */}
         <Animated.View style={[styles.coinCircle, { transform: [{ scale: coinScale }] }]}>
           <View style={[styles.coinGlow, { backgroundColor: theme.colors.coin + '33' }]} />
-          <Text style={styles.coinEmoji}>🪙</Text>
+          <PulseCoin size={34} />
         </Animated.View>
 
         {/* Middle: text */}

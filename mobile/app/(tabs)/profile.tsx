@@ -24,6 +24,7 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router';
 
 import { api } from '@/src/api/api';
+import { PulseCoin } from '@/src/components/PulseCoin';
 import { useAuthStore, usePrizesAvailable } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { UserAvatar } from '@/src/components/UserAvatar';
@@ -297,7 +298,7 @@ export default function ProfileScreen() {
               value: stats?.accuracy !== undefined ? `${stats.accuracy}%` : '—',
             },
             {
-              icon: <Text style={{ fontSize: 18 }}>🪙</Text>,
+              icon: <PulseCoin size={18} />,
               label: 'PulseCoins',
               value: coins.toLocaleString(),
             },
