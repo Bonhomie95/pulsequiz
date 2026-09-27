@@ -160,6 +160,7 @@ export default function PvPResultScreen() {
           players: payload.players ?? [],
           myUserId: myId,
           wager: payload.wager ?? 0,
+          category: payload.category ?? null,
         });
       }
       router.replace('/quiz/pvp/vs');

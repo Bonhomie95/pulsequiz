@@ -52,6 +52,9 @@ export type MatchFoundPayload = {
   matchId: string;
   players: PvPPlayer[];
   wager?: number;
+  /** The server sends it on every pairing; a rematch cannot be asked for
+   *  without it. */
+  category?: string | null;
 };
 
 export type MatchStartPayload = {
@@ -90,5 +93,6 @@ export type RoomGuestJoinedPayload = {
   matchId: string;
   players?: PvPPlayer[];
   wager?: number;
+  category?: string | null;
 };
 export type SocketErrorPayload = { message: string };

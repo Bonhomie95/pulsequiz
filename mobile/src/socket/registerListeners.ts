@@ -64,6 +64,7 @@ export function registerPvPSocketListeners() {
       players: payload.players,
       myUserId,
       wager: payload.wager,
+      category: payload.category ?? null,
     });
 
     // Ask for the questions.

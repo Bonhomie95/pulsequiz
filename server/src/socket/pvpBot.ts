@@ -178,7 +178,8 @@ export function startBotPlay(
         (p) => p.completed || typeof p.failedAtIndex === 'number',
       );
       if (!allEnded) {
-        io.to(room).emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
+        // The bot has finished and the human has not, so there is nobody to
+        // tell. Broadcasting here told the human *they* were done.
         return;
       }
 

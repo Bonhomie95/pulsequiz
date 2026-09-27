@@ -507,7 +507,9 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
     const allReady = freshPlayers.every((p) => !!p.ready);
     if (!allReady) {
       const missing = freshPlayers.find((p) => !p.ready)!;
-      io.to(room).emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
+      // The player who is ready is the one waiting — not the one we are
+      // still waiting on.
+      socket.emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
       startReadyGrace(io, matchId, missing.userId.toString());
       return;
     }
@@ -773,7 +775,14 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
       );
 
       if (!allEnded) {
-        io.to(room).emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
+        // Only the player who has actually finished, and only them.
+        //
+        // This fired on every accepted answer and went to the whole room, so
+        // both players were told "you're done, waiting for your opponent" from
+        // question one onward, and nothing ever took it back.
+        if (player.completed || typeof player.failedAtIndex === 'number') {
+          socket.emit(SOCKET_EVENTS.WAITING_ON_OPPONENT);
+        }
         return;
       }
 

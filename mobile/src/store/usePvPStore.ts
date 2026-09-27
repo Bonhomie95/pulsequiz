@@ -59,6 +59,8 @@ type PvPState = {
     players: PlayerSnapshot[];
     myUserId: string;
     wager?: number;
+    /** Every pairing event carries it; a rematch cannot be asked for without it. */
+    category?: string | null;
   }) => void;
   startMatch: (
     questions: Question[],
@@ -105,7 +107,7 @@ export const usePvPStore = create<PvPState>((set, get) => ({
 
   setSearching: (category) => set({ status: 'searching', category }),
 
-  setMatched: ({ matchId, players, myUserId, wager = 0 }) => {
+  setMatched: ({ matchId, players, myUserId, wager = 0, category }) => {
     const me = players.find((p) => p.userId === myUserId) ?? players[0];
     const opponent = players.find((p) => p.userId !== myUserId) ?? players[1];
 
@@ -115,6 +117,10 @@ export const usePvPStore = create<PvPState>((set, get) => ({
       wager,
       me,
       opponent,
+      // Carried from the pairing event. Room matches never set it, so a game
+      // against a friend reached the result screen with no category and the
+      // rematch button refused: it has nothing to ask for a rematch *of*.
+      ...(category ? { category } : {}),
 
       // A new match means a new question set. These used to survive from the
       // previous match, so a rematch opened on the questions just played and

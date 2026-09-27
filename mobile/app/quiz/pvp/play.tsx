@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, AppState, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  AppState,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -134,6 +142,17 @@ export default function PvPPlayScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * This player has answered all ten.
+   *
+   * Distinct from "there is no question to draw": both leave `questions[i]`
+   * undefined, but one is a finished run waiting on the opponent and the other
+   * is a stall. Conflating them showed a bare "Waiting…" after the last answer
+   * and then, twelve seconds later, a connection-problem overlay in the middle
+   * of a match that was fine.
+   */
+  const iAmDone = questions.length > 0 && currentIndex >= questions.length;
+
   const revealed = lastAnswer && lastAnswer.questionIndex === shownIndex ? lastAnswer : null;
   const hiddenOptions = hint && hint.questionIndex === shownIndex ? [hint.disabledIndex] : [];
 
@@ -143,6 +162,21 @@ export default function PvPPlayScreen() {
   const myBar = useRef(new Animated.Value(0)).current;
   const oppBar = useRef(new Animated.Value(0)).current;
   const ringProgress = useRef(new Animated.Value(0)).current;
+  const waitPulse = useRef(new Animated.Value(1)).current;
+
+  // Something alive on the waiting screen, so a finished run does not look
+  // like a frozen one.
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(waitPulse, { toValue: 1.08, duration: 900, useNativeDriver: true }),
+        Animated.timing(waitPulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ---------------- TIMER ---------------- */
   const [secondsLeft, setSecondsLeft] = useState(TIME_PER_QUESTION);
@@ -269,14 +303,14 @@ export default function PvPPlayScreen() {
       setShowRecovery(false);
       return;
     }
-    const stalled = !connected || !question;
+    const stalled = !connected || (!question && !iAmDone);
     if (!stalled) {
       setShowRecovery(false);
       return;
     }
     const t = setTimeout(() => setShowRecovery(true), 12000);
     return () => clearTimeout(t);
-  }, [connected, question, status]);
+  }, [connected, question, status, iAmDone]);
 
   useEffect(() => {
     const matchId = usePvPStore.getState().matchId;
@@ -320,16 +354,77 @@ export default function PvPPlayScreen() {
     router.replace('/(tabs)/home');
   };
 
-  if (!question) {
+  if (iAmDone || !question) {
     return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <View
-          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-        >
-          <Text style={{ color: theme.colors.muted }}>
-            {connected ? 'Waiting…' : 'Reconnecting…'}
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+          <Animated.View
+            style={[
+              styles.waitBadge,
+              {
+                backgroundColor: theme.colors.primary + '1A',
+                borderColor: theme.colors.primary + '55',
+                transform: [{ scale: waitPulse }],
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 34 }}>{iAmDone ? '🏁' : '⏳'}</Text>
+          </Animated.View>
+
+          <Text style={[styles.waitTitle, { color: theme.colors.text }]}>
+            {iAmDone ? "You're done" : connected ? 'Getting your match' : 'Reconnecting'}
           </Text>
+          <Text style={[styles.waitBody, { color: theme.colors.muted }]}>
+            {iAmDone
+              ? `Waiting for ${opponent?.username ?? 'your opponent'} to finish all ten.`
+              : connected
+                ? 'Dealing the same ten questions to both of you.'
+                : 'Your match is safe — we are getting you back to it.'}
+          </Text>
+
+          {iAmDone ? (
+            <View style={{ width: '100%', marginTop: 26 }}>
+              <View style={styles.racerRow}>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.racerName, { color: theme.colors.muted }]}
+                >
+                  {opponent?.username ?? 'Opponent'}
+                </Text>
+                <Text style={[styles.racerCount, { color: theme.colors.muted }]}>
+                  {Math.min(opponentFurthest, TOTAL_Q)}/{TOTAL_Q}
+                </Text>
+              </View>
+              <View style={[styles.track, { backgroundColor: theme.colors.border }]}>
+                <Animated.View
+                  style={{
+                    height: '100%',
+                    borderRadius: 999,
+                    backgroundColor: theme.colors.primary,
+                    width: oppBar.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%'],
+                    }),
+                  }}
+                />
+              </View>
+              <Text
+                style={{
+                  marginTop: 14,
+                  textAlign: 'center',
+                  color: theme.colors.muted,
+                  fontSize: 12,
+                  fontWeight: '700',
+                }}
+              >
+                Highest score wins · fastest finish breaks a tie
+              </Text>
+            </View>
+          ) : (
+            <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 22 }} />
+          )}
         </View>
+
         <RecoveryOverlay
           visible={showRecovery}
           connected={connected}
@@ -337,7 +432,7 @@ export default function PvPPlayScreen() {
           onReconnect={tryReconnect}
           onLeave={leaveMatch}
         />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -564,26 +659,10 @@ export default function PvPPlayScreen() {
         </View>
       </View>
 
-      {/* WAITING ON OPPONENT */}
-      {status === 'waiting' && (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 40,
-            alignSelf: 'center',
-            backgroundColor: theme.colors.surface,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            borderRadius: 20,
-          }}
-        >
-          <Text style={{ color: theme.colors.text }}>
-            {/* Both players now answer all ten, so this only ever means they
-                have not finished yet — never that they are out. */}
-            You&apos;re done — waiting for your opponent to finish…
-          </Text>
-        </View>
-      )}
+      {/* No "waiting" pill here any more. It was driven by a server event
+          that fired on every answer, so it sat over a match still in progress
+          telling both players they had finished. Finishing now has its own
+          screen, reached from this player's own progress. */}
 
       {/* RECONNECTING BANNER */}
       {!connected && !showRecovery && (
@@ -771,4 +850,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   hintBtn: { borderRadius: 16, paddingHorizontal: 16, paddingVertical: 11, borderWidth: 1 },
+
+  waitBadge: {
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  waitTitle: { marginTop: 24, fontSize: 22, fontWeight: '900', letterSpacing: -0.3 },
+  waitBody: {
+    marginTop: 8,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+    paddingHorizontal: 12,
+  },
 });

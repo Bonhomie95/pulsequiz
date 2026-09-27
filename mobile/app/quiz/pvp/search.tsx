@@ -100,6 +100,7 @@ export default function PvPSearchScreen() {
         players: payload.players ?? [],
         myUserId,
         wager: payload.wager ?? 0,
+          category: payload.category ?? null,
       });
       router.replace('/quiz/pvp/vs');
     };

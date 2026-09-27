@@ -102,6 +102,18 @@ it('deals the question set to both players and lets each answer all ten', async 
   sa.on(SOCKET_EVENTS.ERROR, (e: any) => console.log('A error:', e?.message));
   sb.on(SOCKET_EVENTS.ERROR, (e: any) => console.log('B error:', e?.message));
 
+  // "You're done, waiting for your opponent" must not reach anyone who is
+  // still playing. This used to be broadcast to the room on every accepted
+  // answer, so both players carried that banner from question one.
+  const earlyWaits: string[] = [];
+  let finished = false;
+  sa.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, () => {
+    if (!finished) earlyWaits.push('A');
+  });
+  sb.on(SOCKET_EVENTS.WAITING_ON_OPPONENT, () => {
+    if (!finished) earlyWaits.push('B');
+  });
+
   try {
     const foundA = once<any>(sa, SOCKET_EVENTS.MATCH_FOUND);
     const foundB = once<any>(sb, SOCKET_EVENTS.MATCH_FOUND);
@@ -151,7 +163,11 @@ it('deals the question set to both players and lets each answer all ten', async 
       payload(sb);
 
       await Promise.all([updA, updB]);
+
+      // Everything up to the final answer is mid-match for both of them.
+      if (i < total - 1) expect(earlyWaits).toEqual([]);
     }
+    finished = true;
 
     // Every answer landed for both sides — none silently dropped.
     const match = await PvPMatch.findById(matchId).lean();
