@@ -238,7 +238,9 @@ export async function seedSyntheticLadder(
       const jitter = 0.88 + Math.random() * 0.24;
       // The ceiling is a hard cap, not a target: it is what keeps these
       // scores reachable. Jitter must not lift an account over it.
-      const cap = Math.round(ceiling * period.scale);
+      // The same per-account ceiling the drift uses, so nothing is seeded
+      // above the point it is allowed to grow to.
+      const cap = personalCeiling(strength, period.scale, ceiling);
       const points = Math.min(cap, Math.max(1, Math.round(strength * jitter * ceiling * period.scale)));
 
       return {
@@ -318,28 +320,71 @@ export async function growSyntheticLadder(
   const due = await SyntheticScore.find({
     $or: [{ lastGrownOn: null }, { lastGrownOn: { $ne: today } }],
   })
-    .select('_id type')
+    .select('_id type points userId')
     .lean();
 
   if (!due.length) return { grown: 0 };
 
-  const ops = due.map((row) => ({
-    updateOne: {
-      filter: { _id: row._id },
-      update: {
-        // Randomised per account and per day, so the board reorders instead of
-        // every entry marching up in lockstep.
-        $inc: { points: Math.max(1, Math.round(Math.random() * growth * (scales[row.type] ?? 1))) },
-        $set: { lastGrownOn: today },
+  const ceiling = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING, 140));
+  const strengths = await strengthByUser();
+
+  const ops = due.map((row) => {
+    const scale = scales[row.type] ?? 1;
+    const mine = personalCeiling(
+      strengths.get(String((row as any).userId)) ?? 0.1,
+      scale,
+      ceiling,
+    );
+    // Randomised per account and per day, so the board reorders instead of
+    // every entry marching up in lockstep — but clamped to the account's own
+    // ceiling. This used to be a bare $inc, so the daily drift walked a few
+    // accounts straight past the cap the seed and the trickle both respect.
+    const gain = Math.max(1, Math.round(Math.random() * growth * scale));
+    const current = (row as any).points ?? 0;
+    // Clamp upward only. An account seeded above its own ceiling must stall
+    // there, not be marked down — a score going backwards reads as a player
+    // losing points, which never happens.
+    const next = Math.max(current, Math.min(mine, current + gain));
+    return {
+      updateOne: {
+        filter: { _id: row._id },
+        update: { $set: { points: next, lastGrownOn: today } },
       },
-    },
-  }));
+    };
+  });
 
   const res = await SyntheticScore.bulkWrite(ops, { ordered: false });
   const grown = res.modifiedCount ?? 0;
 
   logger.info('Grew synthetic ladder', { grown, today });
   return { grown };
+}
+
+
+/**
+ * Where one account tops out, rather than where all of them do.
+ *
+ * A single global ceiling made every strong account pile up on the same
+ * number: ten of them sat at exactly 140 on the weekly board, an unmoving
+ * plateau at the top, because the drift skips anything already at the cap.
+ * Real boards do not have ten people tied for third.
+ *
+ * Deriving it from the account's own strength spreads the top out and leaves
+ * everyone room to move, while keeping the whole population under the
+ * ceiling — which is the point of the ceiling: a target a real player can
+ * reach and overtake.
+ */
+function personalCeiling(strength: number, scale: number, ceiling: number): number {
+  const s = Math.min(1, Math.max(0, Number(strength) || 0));
+  return Math.max(1, Math.round(ceiling * scale * (0.35 + s * 0.65)));
+}
+
+/** Strength per house account, for the cap above. */
+async function strengthByUser(): Promise<Map<string, number>> {
+  const rows = await User.find({ isSynthetic: true })
+    .select('_id syntheticStrength')
+    .lean();
+  return new Map(rows.map((r) => [String(r._id), Number(r.syntheticStrength) || 0.1]));
 }
 
 /* ───────────────────── Arrivals between the daily seeds ────────────────── */
@@ -403,21 +448,28 @@ async function trickleLadder(at: Date): Promise<{ bumped: number; added: number 
 
   let bumped = 0;
   let added = 0;
+  const strengths = await strengthByUser();
 
   for (const period of periods) {
     const cap = Math.round(ceiling * period.scale);
 
     const rows = await SyntheticScore.find({ type: period.type, periodLabel: period.label })
-      .select('_id points')
+      .select('_id points userId')
       .lean();
 
     // A slice of the board, not all of it.
     const slice = shuffled(rows).slice(0, Math.max(1, Math.round(rows.length * 0.25)));
     const ops = slice
       .map((r) => {
+        const mine = personalCeiling(
+          strengths.get(String((r as any).userId)) ?? 0.1,
+          period.scale,
+          ceiling,
+        );
         const gain = randInt(2, Math.max(3, Math.round(12 * period.scale)));
-        const next = Math.min(cap, (r.points ?? 0) + gain);
-        if (next === r.points) return null;
+        const current = r.points ?? 0;
+        const next = Math.max(current, Math.min(mine, current + gain));
+        if (next === current) return null;
         return { updateOne: { filter: { _id: r._id }, update: { $set: { points: next } } } };
       })
       .filter(Boolean) as any[];
@@ -484,7 +536,101 @@ export async function trickleSyntheticActivity(
 
   const daily = await trickleDaily(at.toISOString().slice(0, 10));
   const { bumped, added } = await trickleLadder(at);
+  // Keep the league groups populated and moving too — they were the one
+  // board house accounts never reached.
+  await seedSyntheticLeague(at);
+  const leagueBumped = await trickleSyntheticLeague(at);
 
-  logger.info('Synthetic activity trickled', { daily, bumped, added });
+  logger.info('Synthetic activity trickled', { daily, bumped, added, leagueBumped });
   return { daily, bumped, added };
+}
+
+/* ───────────────────────────── Leagues ─────────────────────────────────── */
+
+/**
+ * Put house accounts in the weekly league groups.
+ *
+ * Leagues fill through `addLeagueXp`, which only real play triggers — so
+ * house accounts never joined one and a new player found themselves in a
+ * Bronze group of five. A league of five has no ladder to climb and no
+ * podium worth winning.
+ *
+ * It goes through `addLeagueXp` rather than writing memberships directly, so
+ * group sizing, seat allocation and the promotion maths stay in one place.
+ * Their tier is whatever the account holds, which starts at Bronze — so they
+ * fill the bottom first, exactly where a new player lands, and the weekly
+ * settlement promotes the strong ones out over time on the same rules as
+ * everyone else.
+ *
+ * XP is capped per account by strength, so the podium stays winnable: these
+ * are there to make the group a contest, not to occupy the top three.
+ */
+const LEAGUE_TARGET = 26; // a full group is 30; leave room for real players
+const LEAGUE_XP_CEILING = 900;
+
+export async function seedSyntheticLeague(
+  at: Date = new Date(),
+  target = LEAGUE_TARGET,
+): Promise<{ joined: number; skipped?: string }> {
+  if (!(await syntheticsEnabled())) return { joined: 0, skipped: 'disabled' };
+
+  const { addLeagueXp } = await import('./leagueService');
+  const { week } = (await import('./leagueService')).currentWeek(at);
+  const { LeagueMember } = await import('../models/League');
+
+  await ensureSyntheticPool();
+  const ids = await syntheticIds();
+  if (!ids.length) return { joined: 0 };
+
+  const already = await LeagueMember.find({ week, userId: { $in: ids } })
+    .select('userId')
+    .lean();
+  const have = new Set(already.map((m) => String(m.userId)));
+
+  const missing = shuffled(ids.filter((id) => !have.has(String(id))));
+  const wanted = Math.max(0, Math.min(missing.length, target - have.size));
+
+  const strengths = await strengthByUser();
+  let joined = 0;
+  for (const userId of missing.slice(0, wanted)) {
+    const strength = strengths.get(String(userId)) ?? 0.1;
+    // Spread across the week's plausible range, topping out below the
+    // ceiling for all but the strongest.
+    const xp = Math.max(10, Math.round(LEAGUE_XP_CEILING * strength * (0.3 + Math.random() * 0.6)));
+    await addLeagueXp(String(userId), xp);
+    joined += 1;
+  }
+
+  if (joined) logger.info('Seeded synthetic league members', { week, joined });
+  return { joined };
+}
+
+/** A little XP onto some of them, so the group moves between visits. */
+export async function trickleSyntheticLeague(at: Date = new Date()): Promise<number> {
+  if (!(await syntheticsEnabled())) return 0;
+
+  const { addLeagueXp } = await import('./leagueService');
+  const { week } = (await import('./leagueService')).currentWeek(at);
+  const { LeagueMember } = await import('../models/League');
+
+  const ids = await syntheticIds();
+  if (!ids.length) return 0;
+
+  const rows = await LeagueMember.find({ week, userId: { $in: ids } })
+    .select('userId xp')
+    .lean();
+  if (!rows.length) return 0;
+
+  const strengths = await strengthByUser();
+  const slice = shuffled(rows).slice(0, Math.max(1, Math.round(rows.length * 0.3)));
+
+  let bumped = 0;
+  for (const row of slice) {
+    const strength = strengths.get(String(row.userId)) ?? 0.1;
+    const ceiling = Math.round(LEAGUE_XP_CEILING * (0.35 + strength * 0.65));
+    if ((row.xp ?? 0) >= ceiling) continue;
+    await addLeagueXp(String(row.userId), randInt(5, 40));
+    bumped += 1;
+  }
+  return bumped;
 }

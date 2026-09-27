@@ -11,6 +11,7 @@ import { lockWager } from '../services/coinService';
 import { getSetting, SETTINGS_KEYS } from '../models/AppSettings';
 import { sendPvpChallenge } from '../services/notificationService';
 import { getRating } from '../services/ratingService';
+import { trueAllTimeRank } from '../services/leaderboardService';
 import { logger } from '../utils/logger';
 import { pickBotOpponent } from './pvpBot';
 
@@ -178,17 +179,10 @@ export async function snapshotPlayer(userId: string) {
 
   const points = progress?.points ?? 0;
 
-  // The real all-time rank, not a placeholder.
-  //
-  // This was hardcoded to 0, so the versus screen introduced every player as
-  // "#0" — the one number there that was supposed to say who you are up
-  // against. Counting who is ahead of you is a single indexed count on
-  // Progress.points, which is the same ordering the all-time board uses.
-  // House accounts are left out, exactly as they are left out of the board.
-  const ahead = await Progress.countDocuments({
-    points: { $gt: points },
-    userId: { $nin: await syntheticUserIds() },
-  });
+  // The real all-time rank, not a placeholder. Shared with the profile
+  // sheet, so the number a player sees about themselves and the number their
+  // opponent sees are computed once.
+  const allTimeRank = await trueAllTimeRank(points);
 
   return {
     userId: new Types.ObjectId(userId),
@@ -196,20 +190,8 @@ export async function snapshotPlayer(userId: string) {
     avatarSnapshot: user?.avatar ?? 'avatar0',
     levelSnapshot: progress?.level ?? 1,
     pointsSnapshot: points,
-    allTimeRankSnapshot: points > 0 ? ahead + 1 : 0,
+    allTimeRankSnapshot: allTimeRank,
   };
-}
-
-/** Ids of house accounts, cached briefly — the pool changes once a day. */
-let syntheticIdCache: { at: number; ids: Types.ObjectId[] } | null = null;
-async function syntheticUserIds(): Promise<Types.ObjectId[]> {
-  if (syntheticIdCache && Date.now() - syntheticIdCache.at < 60_000) {
-    return syntheticIdCache.ids;
-  }
-  const rows = await User.find({ isSynthetic: true }).select('_id').lean();
-  const ids = rows.map((r) => r._id as Types.ObjectId);
-  syntheticIdCache = { at: Date.now(), ids };
-  return ids;
 }
 
 async function createAndBroadcastMatch(

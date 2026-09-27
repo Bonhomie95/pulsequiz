@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef, useState, useMemo} from 'react';
 import {
-  Alert,
   Animated,
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useIsFocused } from 'expo-router';
 
 import { api, errorMessage } from '@/src/api/api';
+import { PlayerProfileSheet } from '@/src/components/PlayerProfileSheet';
 import { useAuthStore, usePrizesAvailable } from '@/src/store/useAuthStore';
 import { useTheme } from '@/src/theme/useTheme';
 import { enterImmersiveMode } from '@/src/utils/immersive';
@@ -268,34 +267,6 @@ export default function LeaderboardScreen() {
   const theme = useTheme();
   const userId = useAuthStore((s) => s.user?.id);
 
-  /**
-   * Tap anyone on the board to send them a friend request.
-   *
-   * Deliberately not filtered to people likely to say yes. Plenty of real
-   * requests go unanswered, so an unanswered one is not a tell — and a board
-   * you cannot act on is just a list.
-   */
-  const addFriend = useCallback(async (targetId: string, username: string) => {
-    if (!targetId || targetId === userId) return;
-    Alert.alert(
-      'Add friend',
-      `Send ${username} a friend request?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Send',
-          onPress: async () => {
-            try {
-              await api.post('/friends/request', { targetUserId: targetId });
-              Alert.alert('Request sent', `${username} can accept it from their Friends tab.`);
-            } catch (err) {
-              Alert.alert('Could not send', errorMessage(err));
-            }
-          },
-        },
-      ],
-    );
-  }, [userId]);
   const prizes = usePrizesAvailable();
   const listRef = useRef<FlatList<Entry>>(null);
 
@@ -328,6 +299,8 @@ export default function LeaderboardScreen() {
    * one pair at a time.
    */
   const [h2h, setH2h] = useState<H2HRecord[]>([]);
+  /** Whose profile sheet is open, by id. */
+  const [previewUser, setPreviewUser] = useState<string | null>(null);
 
   // When the current board closes, straight from the server.
   const [periodEndsAt, setPeriodEndsAt] = useState<string | null>(null);
@@ -550,6 +523,7 @@ export default function LeaderboardScreen() {
               place={2}
               data={podium[1]}
               anim={podiumAnim}
+              onPress={() => setPreviewUser(podium[1].userId)}
               theme={theme}
             />
           )}
@@ -558,6 +532,7 @@ export default function LeaderboardScreen() {
               place={1}
               data={podium[0]}
               anim={podiumAnim}
+              onPress={() => setPreviewUser(podium[0].userId)}
               crown
               theme={theme}
             />
@@ -567,6 +542,7 @@ export default function LeaderboardScreen() {
               place={3}
               data={podium[2]}
               anim={podiumAnim}
+              onPress={() => setPreviewUser(podium[2].userId)}
               theme={theme}
             />
           )}
@@ -727,6 +703,11 @@ export default function LeaderboardScreen() {
           </View>
         )}
 
+        <PlayerProfileSheet
+          userId={previewUser}
+          onClose={() => setPreviewUser(null)}
+        />
+
         {/* HEAD TO HEAD — one card per friend, not a table. */}
         {!loading && !error && tab === 'friends' && h2h.length > 0 && (
           <FlatList
@@ -855,7 +836,7 @@ export default function LeaderboardScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Rank ${rank}, ${item.username}, ${item.points} points${isMe ? ', this is you' : ', tap to add as a friend'}`}
                 disabled={isMe}
-                onPress={() => addFriend(item.userId, item.username)}
+                onPress={() => setPreviewUser(item.userId)}
                 style={[
                   styles.row,
                   {
@@ -908,12 +889,15 @@ function AnimatedPodiumCard({
   anim,
   crown,
   theme,
+  onPress,
 }: {
   place: 1 | 2 | 3;
   data: Entry;
   anim: Animated.Value;
   crown?: boolean;
   theme: ReturnType<typeof useTheme>;
+  /** The top three were the only rows on the board you could not tap. */
+  onPress?: () => void;
 }) {
   const translateY = anim.interpolate({
     inputRange: [0, 1],
@@ -940,6 +924,14 @@ function AnimatedPodiumCard({
         },
       ]}
     >
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={onPress}
+        disabled={!onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${data.username}, ${data.points} points, rank ${place}`}
+        style={{ alignItems: 'center', gap: 6 }}
+      >
       <Text style={{ fontSize: place === 1 ? 28 : 22 }}>{MEDAL}</Text>
       <AvatarBubble avatar={data.avatar} size={place === 1 ? 46 : 36} />
       <Text
@@ -962,6 +954,7 @@ function AnimatedPodiumCard({
       >
         {data.points}
       </Text>
+      </TouchableOpacity>
     </Animated.View>
   );
 }

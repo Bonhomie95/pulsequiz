@@ -6,8 +6,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,13 +17,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
   Search,
-  UserPlus,
-  UserMinus,
   Swords,
   Check,
   X,
-  Shield,
-  ShieldOff,
   Wifi,
   Gamepad2,
   RadioTower,
@@ -38,6 +32,7 @@ import { useTheme } from '@/src/theme/useTheme';
 import { Toast } from '@/src/components/Toast';
 import { UserAvatar } from '@/src/components/UserAvatar';
 import { ChallengeSheet } from '@/src/components/ChallengeSheet';
+import { PlayerProfileSheet } from '@/src/components/PlayerProfileSheet';
 
 type Friend = {
   _id: string;
@@ -113,320 +108,6 @@ const statusBadge = StyleSheet.create({
   label: { fontSize: 10, fontWeight: '700' },
 });
 
-/* ─── PROFILE PREVIEW MODAL ─── */
-function ProfilePreview({
-  user,
-  onClose,
-  onAdd,
-  onChallenge,
-  onUnfriend,
-  onBlock,
-  theme,
-}: {
-  user: SearchUser | null;
-  onClose: () => void;
-  onAdd: (u: SearchUser) => void;
-  onChallenge: (u: SearchUser) => void;
-  onUnfriend: (u: SearchUser) => void;
-  onBlock: (u: SearchUser) => void;
-  theme: any;
-}) {
-  if (!user) return null;
-  const alreadyFriend = user.friendStatus === 'accepted';
-  const pendingSent = user.friendStatus === 'pending_sent';
-  const isBlocked = user.friendStatus === 'blocked';
-
-  return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        activeOpacity={1}
-        onPress={onClose}
-      
-            accessibilityRole="button"
-            accessibilityLabel="View player"
-            hitSlop={8}>
-        <TouchableOpacity
-          activeOpacity={1}
-          style={[styles.modalSheet, { backgroundColor: theme.colors.surface }]}
-        
-            accessibilityRole="button"
-            accessibilityLabel="View player"
-            hitSlop={8}>
-          <View
-            style={[
-              styles.sheetHandle,
-              { backgroundColor: theme.colors.border },
-            ]}
-          />
-
-          {/* Avatar */}
-          <View style={styles.previewHeader}>
-            <View
-              style={[
-                styles.previewAvatarRing,
-                { borderColor: theme.colors.primary },
-              ]}
-            >
-              <UserAvatar avatar={user.avatar} size={74} />
-            </View>
-            {user.isOnline && (
-              <View
-                style={[
-                  styles.onlineDot,
-                  { backgroundColor: user.isInGame ? '#FF6B00' : '#22C55E' },
-                ]}
-              />
-            )}
-            <Text style={[styles.previewName, { color: theme.colors.text }]}>
-              {user.username}
-            </Text>
-            <StatusBadges user={user} theme={theme} />
-          </View>
-
-          {/* Stats */}
-          <View style={styles.previewStats}>
-            <View style={styles.previewStat}>
-              <Text
-                style={[styles.previewStatVal, { color: theme.colors.primary }]}
-              >
-                {user.level ?? '—'}
-              </Text>
-              <Text
-                style={[styles.previewStatLabel, { color: theme.colors.muted }]}
-              >
-                Level
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.previewStatDivider,
-                { backgroundColor: theme.colors.border },
-              ]}
-            />
-            <View style={styles.previewStat}>
-              <Text style={[styles.previewStatVal, { color: '#FFB800' }]}>
-                {user.allTimeRank ? `#${user.allTimeRank}` : '—'}
-              </Text>
-              <Text
-                style={[styles.previewStatLabel, { color: theme.colors.muted }]}
-              >
-                Rank
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.previewStatDivider,
-                { backgroundColor: theme.colors.border },
-              ]}
-            />
-            <View style={styles.previewStat}>
-              <Text
-                style={[styles.previewStatVal, { color: theme.colors.text }]}
-              >
-                {user.totalSessions ?? '—'}
-              </Text>
-              <Text
-                style={[styles.previewStatLabel, { color: theme.colors.muted }]}
-              >
-                Games
-              </Text>
-            </View>
-          </View>
-
-          {/* Status banners */}
-          {alreadyFriend && (
-            <View
-              style={[
-                styles.statusBanner,
-                {
-                  backgroundColor: theme.colors.success + '22',
-                  borderColor: theme.colors.success,
-                },
-              ]}
-            >
-              <Check size={14} color={theme.colors.success} />
-              <Text
-                style={{
-                  color: theme.colors.success,
-                  fontWeight: '700',
-                  fontSize: 13,
-                }}
-              >
-                Already friends
-              </Text>
-            </View>
-          )}
-          {pendingSent && (
-            <View
-              style={[
-                styles.statusBanner,
-                { backgroundColor: '#FFB80022', borderColor: '#FFB800' },
-              ]}
-            >
-              <Shield size={14} color="#FFB800" />
-              <Text
-                style={{ color: '#FFB800', fontWeight: '700', fontSize: 13 }}
-              >
-                Request sent
-              </Text>
-            </View>
-          )}
-          {isBlocked && (
-            <View
-              style={[
-                styles.statusBanner,
-                { backgroundColor: '#FF5C5C22', borderColor: '#FF5C5C' },
-              ]}
-            >
-              <ShieldOff size={14} color="#FF5C5C" />
-              <Text
-                style={{ color: '#FF5C5C', fontWeight: '700', fontSize: 13 }}
-              >
-                Blocked
-              </Text>
-            </View>
-          )}
-
-          {/* Actions */}
-          <View style={styles.previewActions}>
-            {alreadyFriend ? (
-              <>
-                <TouchableOpacity
-                  onPress={() => {
-                    onChallenge(user);
-                    onClose();
-                  }}
-                  style={[
-                    styles.previewBtn,
-                    { backgroundColor: theme.colors.primary },
-                  ]}
-                
-            accessibilityRole="button"
-            accessibilityLabel="Challenge"
-            hitSlop={8}>
-                  <Swords size={18} color="#fff" />
-                  <Text style={styles.previewBtnText}>Challenge</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    onUnfriend(user);
-                    onClose();
-                  }}
-                  style={[
-                    styles.previewBtn,
-                    {
-                      backgroundColor: '#FF5C5C22',
-                      borderWidth: 1.5,
-                      borderColor: '#FF5C5C',
-                    },
-                  ]}
-                
-            accessibilityRole="button"
-            accessibilityLabel="Unfriend"
-            hitSlop={8}>
-                  <UserMinus size={16} color="#FF5C5C" />
-                  <Text
-                    style={{
-                      color: '#FF5C5C',
-                      fontWeight: '800',
-                      fontSize: 15,
-                    }}
-                  >
-                    Unfriend
-                  </Text>
-                </TouchableOpacity>
-              </>
-            ) : pendingSent ? (
-              <View
-                style={[
-                  styles.previewBtn,
-                  { backgroundColor: theme.colors.border },
-                ]}
-              >
-                <Text style={{ color: theme.colors.muted, fontWeight: '700' }}>
-                  Request Pending
-                </Text>
-              </View>
-            ) : isBlocked ? (
-              <View
-                style={[
-                  styles.previewBtn,
-                  { backgroundColor: theme.colors.border },
-                ]}
-              >
-                <Text style={{ color: theme.colors.muted, fontWeight: '700' }}>
-                  User Blocked
-                </Text>
-              </View>
-            ) : (
-              <TouchableOpacity
-                onPress={() => {
-                  onAdd(user);
-                  onClose();
-                }}
-                style={[
-                  styles.previewBtn,
-                  { backgroundColor: theme.colors.primary },
-                ]}
-              
-            accessibilityRole="button"
-            accessibilityLabel="Add Friend"
-            hitSlop={8}>
-                <UserPlus size={18} color="#fff" />
-                <Text style={styles.previewBtnText}>Add Friend</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Block is always available (unless already blocked) */}
-            {!isBlocked && (
-              <TouchableOpacity
-                onPress={() => {
-                  onBlock(user);
-                  onClose();
-                }}
-                style={[
-                  styles.previewDangerBtn,
-                  { borderColor: theme.colors.border },
-                ]}
-              
-            accessibilityRole="button"
-            accessibilityLabel="Block User"
-            hitSlop={8}>
-                <ShieldOff size={14} color={theme.colors.muted} />
-                <Text
-                  style={{
-                    color: theme.colors.muted,
-                    fontWeight: '600',
-                    fontSize: 13,
-                  }}
-                >
-                  Block User
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              onPress={onClose}
-              style={[
-                styles.previewCancelBtn,
-                { borderColor: theme.colors.border },
-              ]}
-            
-            accessibilityRole="button"
-            accessibilityLabel="Cancel"
-            hitSlop={8}>
-              <Text style={{ color: theme.colors.muted, fontWeight: '600' }}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
-  );
-}
-
 /* ─── MAIN SCREEN ─── */
 export default function FriendsScreen() {
   const theme = useTheme();
@@ -444,11 +125,14 @@ export default function FriendsScreen() {
     message: '',
     type: 'success' as 'success' | 'error',
   });
-  const [previewUser, setPreviewUser] = useState<SearchUser | null>(null);
+  /** Whose profile sheet is open, by id — the sheet loads the rest. */
+  const [previewUser, setPreviewUser] = useState<string | null>(null);
   /** Who we are about to challenge, while the terms sheet is open. */
-  const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(
-    null,
-  );
+  const [challengeTarget, setChallengeTarget] = useState<{
+    id: string;
+    name: string;
+    status?: 'in_game' | 'online' | 'away';
+  } | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -528,20 +212,6 @@ export default function FriendsScreen() {
   }, [searchQuery]);
 
   // ── Actions ────────────────────────────────────────────────────────────────
-
-  const addFriend = async (u: SearchUser) => {
-    try {
-      await api.post('/friends/request', { targetUserId: u._id });
-      setSearchResults((prev) =>
-        prev.map((r) =>
-          r._id === u._id ? { ...r, friendStatus: 'pending_sent' } : r,
-        ),
-      );
-      showToast(`Friend request sent to ${u.username}!`);
-    } catch (e: any) {
-      showToast(e?.response?.data?.message || 'Failed', 'error');
-    }
-  };
 
   const acceptRequest = async (req: FriendRequest) => {
     try {
@@ -630,7 +300,11 @@ export default function FriendsScreen() {
    */
   /** Opens the terms sheet; the challenge goes out when they confirm. */
   const challengeUser = (u: SearchUser | Friend) =>
-    setChallengeTarget({ id: u._id, name: u.username ?? 'them' });
+    setChallengeTarget({
+      id: u._id,
+      name: u.username ?? 'them',
+      status: u.isInGame ? 'in_game' : u.isOnline ? 'online' : 'away',
+    });
 
   const sendChallenge = (category: string, wager: number) => {
     const target = challengeTarget;
@@ -655,6 +329,7 @@ export default function FriendsScreen() {
       <ChallengeSheet
         visible={!!challengeTarget}
         opponentName={challengeTarget?.name ?? ''}
+        opponentStatus={challengeTarget?.status ?? null}
         mode="send"
         onCancel={() => setChallengeTarget(null)}
         onConfirm={sendChallenge}
@@ -664,14 +339,25 @@ export default function FriendsScreen() {
         onHide={() => setToast((t) => ({ ...t, visible: false }))}
       />
 
-      <ProfilePreview
-        user={previewUser}
+      {/* One sheet for every list that shows a player — it fetches the
+          player it is showing, so level, rank, games and the head-to-head
+          record are real rather than the em dashes these lists could not
+          supply. */}
+      <PlayerProfileSheet
+        userId={previewUser}
         onClose={() => setPreviewUser(null)}
-        onAdd={addFriend}
-        onChallenge={challengeUser}
-        onUnfriend={unfriendUser}
-        onBlock={blockUser}
-        theme={theme}
+        onChallenge={(p) => {
+          setPreviewUser(null);
+          challengeUser({ _id: p.userId, username: p.username } as any);
+        }}
+        onUnfriend={(p) => {
+          setPreviewUser(null);
+          unfriendUser({ _id: p.userId, username: p.username } as any);
+        }}
+        onBlock={(p) => {
+          setPreviewUser(null);
+          blockUser({ _id: p.userId, username: p.username } as any);
+        }}
       />
 
       {/* HEADER */}
@@ -834,7 +520,7 @@ export default function FriendsScreen() {
                 <TouchableOpacity
                   key={f._id}
                   onPress={() =>
-                    setPreviewUser({ ...f, friendStatus: 'accepted' })
+                    setPreviewUser(f._id)
                   }
                   style={[
                     styles.friendRow,
@@ -977,7 +663,7 @@ export default function FriendsScreen() {
               const isBlocked = u.friendStatus === 'blocked';
               return (
                 <TouchableOpacity
-                  onPress={() => !isBlocked && setPreviewUser(u)}
+                  onPress={() => !isBlocked && setPreviewUser(u._id)}
                   style={[
                     styles.searchResult,
                     {

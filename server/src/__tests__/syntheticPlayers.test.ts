@@ -23,8 +23,11 @@ import {
   seedSyntheticDaily,
   seedSyntheticLadder,
   trickleSyntheticActivity,
+  seedSyntheticLeague,
 } from '../services/syntheticPlayers';
 import { generateNicknames } from '../services/nicknames';
+import { LeagueGroup, LeagueMember } from '../models/League';
+import { currentWeek, GROUP_SIZE } from '../services/leagueService';
 import { currentPeriodLabel } from '../utils/dateRanges';
 
 beforeEach(async () => {
@@ -213,9 +216,35 @@ describe('daily growth', () => {
     expect(res.grown).toBeGreaterThan(0);
 
     const after = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+
+    // The board as a whole moves up. Not every row: each account has its own
+    // ceiling, and one already at it stops there — which is what lets a real
+    // player overtake rather than chase a number that keeps running away.
+    const sum = (rows: { points: number }[]) => rows.reduce((a, r) => a + r.points, 0);
+    expect(sum(after)).toBeGreaterThan(sum(before));
     for (let i = 0; i < before.length; i++) {
-      expect(after[i].points).toBeGreaterThan(before[i].points);
+      expect(after[i].points).toBeGreaterThanOrEqual(before[i].points);
     }
+  });
+
+  it('never lifts an account past its own ceiling, however many days pass', async () => {
+    // The drift used to be a bare $inc, so it walked accounts straight past
+    // the cap that the seed and the trickle both respect — the live weekly
+    // board had entries above it.
+    const ceiling = 100;
+    let at = new Date();
+    for (let day = 0; day < 40; day++) {
+      at = new Date(at.getTime() + 86_400_000);
+      await growSyntheticLadder(at);
+    }
+
+    const rows = await SyntheticScore.find({ type: 'weekly' }).lean();
+    for (const r of rows) expect(r.points).toBeLessThanOrEqual(ceiling);
+
+    // And they must not all pile onto the same number: a wall of identical
+    // scores at the top is the thing that reads as generated.
+    const top = rows.map((r) => r.points).sort((a, b) => b - a).slice(0, 8);
+    expect(new Set(top).size).toBeGreaterThan(1);
   });
 
   it('grows once a day however often it runs', async () => {
@@ -238,8 +267,10 @@ describe('daily growth', () => {
     expect(res.grown).toBeGreaterThan(0);
 
     const day2 = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+    const sum = (rows: { points: number }[]) => rows.reduce((a, r) => a + r.points, 0);
+    expect(sum(day2)).toBeGreaterThan(sum(day1));
     for (let i = 0; i < day1.length; i++) {
-      expect(day2[i].points).toBeGreaterThan(day1[i].points);
+      expect(day2[i].points).toBeGreaterThanOrEqual(day1[i].points);
     }
   });
 
@@ -308,5 +339,51 @@ describe('arrivals between the daily seeds', () => {
 
     // The whole point of these accounts is being overtakeable.
     for (const row of after) expect(row.points).toBeLessThanOrEqual(ceiling);
+  });
+});
+
+describe('leagues', () => {
+  it('fills the weekly group, so a new player is not alone in Bronze', async () => {
+    // Leagues fill through addLeagueXp, which only real play triggers — so
+    // house accounts never joined one and Bronze held five people.
+    await ensureSyntheticPool(40);
+
+    const res = await seedSyntheticLeague(new Date(), 26);
+    expect(res.joined).toBeGreaterThan(20);
+
+    const { week } = currentWeek();
+    const members = await LeagueMember.find({ week }).lean();
+    expect(members.length).toBeGreaterThan(20);
+
+    // Groups are capped, and the seat count must match the memberships —
+    // this goes through the real join path precisely so that holds.
+    const groups = await LeagueGroup.find({ week }).lean();
+    const seats = groups.reduce((a, g) => a + g.size, 0);
+    expect(seats).toBe(members.length);
+    for (const g of groups) expect(g.size).toBeLessThanOrEqual(GROUP_SIZE);
+  });
+
+  it('leaves the podium winnable', async () => {
+    await ensureSyntheticPool(40);
+    await seedSyntheticLeague(new Date(), 26);
+
+    const { week } = currentWeek();
+    const xp = (await LeagueMember.find({ week }).select('xp').lean()).map((m) => m.xp);
+
+    // A real player has to be able to reach the top three. Nobody parked at
+    // an unreachable number, and not everyone on the same one.
+    expect(Math.max(...xp)).toBeLessThan(1000);
+    expect(new Set(xp).size).toBeGreaterThan(5);
+  });
+
+  it('does not seat the same account twice however often it runs', async () => {
+    await ensureSyntheticPool(40);
+    await seedSyntheticLeague(new Date(), 26);
+    const first = await LeagueMember.countDocuments({});
+
+    await seedSyntheticLeague(new Date(), 26);
+    await seedSyntheticLeague(new Date(), 26);
+
+    expect(await LeagueMember.countDocuments({})).toBe(first);
   });
 });

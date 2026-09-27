@@ -24,6 +24,7 @@ import {
   growSyntheticLadder,
   seedSyntheticDaily,
   seedSyntheticLadder,
+  seedSyntheticLeague,
   trickleSyntheticActivity,
 } from '../services/syntheticPlayers';
 import { utcDateKey } from '../services/dailyService';
@@ -183,17 +184,22 @@ export function startLeaderboardCron(io?: Server) {
       // Seed tomorrow too, so players east of UTC never open a bare board.
       const ahead = await seedSyntheticDaily(tomorrow);
       const ladder = await seedSyntheticLadder();
+      // Leagues were the one board house accounts never reached, so a new
+      // player landed in a Bronze group of five.
+      const league = await seedSyntheticLeague();
       // Standings drift up once a day, so an active player always has
       // something just ahead of them rather than a frozen board.
       const grown = await growSyntheticLadder();
 
-      const changed = daily.seeded + ahead.seeded + ladder.seeded + grown.grown;
+      const changed =
+        daily.seeded + ahead.seeded + ladder.seeded + grown.grown + league.joined;
       return changed
         ? {
             daily: daily.seeded,
             ahead: ahead.seeded,
             ladder: ladder.seeded,
             grown: grown.grown,
+            league: league.joined,
           }
         : undefined;
     }),

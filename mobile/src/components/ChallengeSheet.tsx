@@ -20,6 +20,7 @@ export const WAGER_OPTIONS = [0, 10, 25, 50, 100, 200, 500];
 export function ChallengeSheet({
   visible,
   opponentName,
+  opponentStatus,
   mode,
   initialCategory,
   initialWager,
@@ -28,6 +29,12 @@ export function ChallengeSheet({
 }: {
   visible: boolean;
   opponentName: string;
+  /**
+   * Whether they can actually take it right now. Worth knowing before you
+   * spend the thought on a category and a stake — and the home carousel is
+   * the one place you can open this without having seen their status first.
+   */
+  opponentStatus?: 'in_game' | 'online' | 'away' | 'offline' | null;
   /** 'send' for a new challenge, 'counter' when answering one. */
   mode: 'send' | 'counter';
   initialCategory?: string | null;
@@ -62,6 +69,41 @@ export function ChallengeSheet({
               ? 'Change the terms and send it back.'
               : 'They can accept, decline, or send different terms back.'}
           </Text>
+
+          {mode === 'send' && opponentStatus ? (
+            <View
+              style={[
+                styles.status,
+                {
+                  borderColor:
+                    opponentStatus === 'in_game'
+                      ? '#FF6B00'
+                      : opponentStatus === 'online'
+                        ? '#22C55E'
+                        : theme.colors.border,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  fontWeight: '800',
+                  fontSize: 12,
+                  color:
+                    opponentStatus === 'in_game'
+                      ? '#FF6B00'
+                      : opponentStatus === 'online'
+                        ? '#22C55E'
+                        : theme.colors.muted,
+                }}
+              >
+                {opponentStatus === 'in_game'
+                  ? '🎮 In a game — they may not see this yet'
+                  : opponentStatus === 'online'
+                    ? '🟢 Online now'
+                    : '⚪️ Not online — they will get a notification'}
+              </Text>
+            </View>
+          ) : null}
 
           <Text style={[styles.label, { color: theme.colors.muted }]}>CATEGORY</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }}>
@@ -167,6 +209,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '900' },
   sub: { fontSize: 13, marginTop: 4, lineHeight: 19 },
   label: { fontSize: 11, fontWeight: '900', letterSpacing: 1, marginTop: 20, marginBottom: 10 },
+  status: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1 },
   send: { marginTop: 22, paddingVertical: 15, borderRadius: 16, alignItems: 'center' },

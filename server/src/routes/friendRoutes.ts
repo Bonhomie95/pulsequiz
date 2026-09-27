@@ -13,6 +13,7 @@ import {
   getMyFriends,
   getPendingRequests,
   getHeadToHead,
+  getPlayerProfile,
 } from '../controllers/friendController';
 
 const router = Router();
@@ -24,6 +25,8 @@ router.get('/search', requireAuth, sensitiveActionLimiter, searchUsers);
 router.get('/requests', requireAuth, getPendingRequests);
 // Your record against each friend, pair by pair — not a ranked board.
 router.get('/head-to-head', requireAuth, getHeadToHead);
+// Everything the profile sheet shows, for one player.
+router.get('/:userId/profile', requireAuth, getPlayerProfile);
 
 // Every mutating action is rate limited — sending requests spams other
 // people's devices, and the rest write to shared state.

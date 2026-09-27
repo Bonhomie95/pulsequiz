@@ -296,12 +296,21 @@ export async function rebuildLeaderboardSnapshots(
   const startedAt = new Date();
 
   if (!options.force && since) {
-    const [newSessions, progressChanges] = await Promise.all([
+    const [newSessions, progressChanges, syntheticChanges] = await Promise.all([
       QuizSession.countDocuments({ createdAt: { $gt: since } }),
       Progress.countDocuments({ updatedAt: { $gt: since } }),
+      // House accounts count as activity.
+      //
+      // They were left out, so on a quiet board — which is exactly when the
+      // padding matters — nothing had "changed" and the snapshot was never
+      // rebuilt. New arrivals and the points drift landed in SyntheticScore
+      // and stayed there: weekly, monthly and all-time looked frozen for as
+      // long as no real player finished a quiz. The Daily board reads its
+      // rows directly, which is why only it appeared to work.
+      SyntheticScore.countDocuments({ updatedAt: { $gt: since } }),
     ]);
 
-    if (newSessions === 0 && progressChanges === 0) {
+    if (newSessions === 0 && progressChanges === 0 && syntheticChanges === 0) {
       return { rebuilt: false, reason: 'no_activity' };
     }
   }
@@ -312,4 +321,38 @@ export async function rebuildLeaderboardSnapshots(
 
   lastRebuildAt = startedAt;
   return { rebuilt: true };
+}
+
+
+/**
+ * A player's true all-time rank, including everyone below the top 100.
+ *
+ * `getUserStanding` reads position out of the stored snapshot, which only
+ * holds the top TOP_N — outside it the rank is null, which is right for "am I
+ * on the board" and useless for "what number am I". Counting who is ahead is
+ * one indexed count on the same ordering the board uses.
+ *
+ * House accounts are excluded, exactly as they are from the paying ranks: a
+ * real player's position should not move because padding was seeded.
+ */
+let syntheticIdCache: { at: number; ids: Types.ObjectId[] } | null = null;
+
+async function syntheticUserIds(): Promise<Types.ObjectId[]> {
+  if (syntheticIdCache && Date.now() - syntheticIdCache.at < 60_000) {
+    return syntheticIdCache.ids;
+  }
+  const rows = await User.find({ isSynthetic: true }).select('_id').lean();
+  const ids = rows.map((r) => r._id as Types.ObjectId);
+  syntheticIdCache = { at: Date.now(), ids };
+  return ids;
+}
+
+/** 0 means unranked — they have not scored yet. */
+export async function trueAllTimeRank(points: number): Promise<number> {
+  if (!points || points <= 0) return 0;
+  const ahead = await Progress.countDocuments({
+    points: { $gt: points },
+    userId: { $nin: await syntheticUserIds() },
+  });
+  return ahead + 1;
 }

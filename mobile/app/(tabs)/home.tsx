@@ -392,12 +392,18 @@ export default function HomeScreen() {
    * way to read it to them. The challenge goes straight to them now; being on
    * this list is their opt-in to receiving one.
    */
-  const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(
-    null,
-  );
+  const [challengeTarget, setChallengeTarget] = useState<{
+    id: string;
+    name: string;
+    status?: ReadyPlayer['status'];
+  } | null>(null);
 
   const handleCarouselChallenge = (player: ReadyPlayer) =>
-    setChallengeTarget({ id: player._id, name: player.username ?? 'them' });
+    setChallengeTarget({
+      id: player._id,
+      name: player.username ?? 'them',
+      status: player.status,
+    });
 
   const sendChallenge = (category: string, wager: number) => {
     const target = challengeTarget;
@@ -421,6 +427,7 @@ export default function HomeScreen() {
       <ChallengeSheet
         visible={!!challengeTarget}
         opponentName={challengeTarget?.name ?? ''}
+        opponentStatus={challengeTarget?.status ?? null}
         mode="send"
         onCancel={() => setChallengeTarget(null)}
         onConfirm={sendChallenge}

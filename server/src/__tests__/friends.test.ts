@@ -10,6 +10,8 @@ import Friend from '../models/Friend';
 import User from '../models/User';
 import QuizSession from '../models/QuizSession';
 import PvPMatch from '../models/PvPMatch';
+import { SyntheticScore } from '../models/SyntheticScore';
+import { ensureSyntheticPool } from '../services/syntheticPlayers';
 import Progress from '../models/Progress';
 import {
   searchUsers,
@@ -22,6 +24,7 @@ import {
   getPendingRequests,
   getMyFriends,
   getHeadToHead,
+  getPlayerProfile,
 } from '../controllers/friendController';
 import { ensureIndexes } from './setup';
 
@@ -396,5 +399,60 @@ describe('head to head', () => {
 
     expect(r.body.records).toHaveLength(1);
     expect(r.body.records[0]).toMatchObject({ played: 0, wins: 0, losses: 0 });
+  });
+});
+
+describe('player profile', () => {
+  it('reports a real player’s level, points and games', async () => {
+    const me = await makeUser('profme');
+    const them = await makeUser('profthem');
+    await Progress.updateOne({ userId: them._id }, { $set: { points: 240, level: 7 } });
+
+    const r = res();
+    await getPlayerProfile(
+      { userId: me._id.toString(), params: { userId: them._id.toString() } } as any,
+      r as any,
+    );
+
+    expect(r.statusCode).toBe(200);
+    expect(r.body).toMatchObject({ level: 7, points: 240, friendStatus: 'none' });
+    // Nothing to show against someone you cannot play.
+    expect(r.body.headToHead).toBeNull();
+  });
+
+  it('gives a house account a standing instead of an empty profile', async () => {
+    // They have no Progress row — they never play — so reading it straight
+    // rendered every one of them as level 1 with nothing to their name,
+    // which is exactly how a fake profile gives itself away.
+    const me = await makeUser('profme');
+    await ensureSyntheticPool(4);
+    const ghost = await User.findOne({ isSynthetic: true }).lean();
+    await SyntheticScore.create({
+      userId: ghost!._id,
+      type: 'all',
+      periodLabel: 'all',
+      points: 480,
+    });
+
+    const r = res();
+    await getPlayerProfile(
+      { userId: me._id.toString(), params: { userId: String(ghost!._id) } } as any,
+      r as any,
+    );
+
+    expect(r.statusCode).toBe(200);
+    expect(r.body.points).toBe(480);
+    expect(r.body.level).toBeGreaterThan(1);
+    expect(r.body.gamesPlayed).toBeGreaterThan(0);
+  });
+
+  it('refuses an id that is not a player', async () => {
+    const me = await makeUser('profme');
+    const r = res();
+    await getPlayerProfile(
+      { userId: me._id.toString(), params: { userId: 'not-an-id' } } as any,
+      r as any,
+    );
+    expect(r.statusCode).toBe(400);
   });
 });

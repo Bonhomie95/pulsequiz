@@ -14,6 +14,10 @@ import {
   sendFriendAcceptedNotification,
   sendFriendRequestNotification,
 } from '../services/notificationService';
+import { trueAllTimeRank } from '../services/leaderboardService';
+import { SyntheticScore } from '../models/SyntheticScore';
+import { DailyAttempt } from '../models/DailyQuiz';
+import { getLevelFromPoints } from '../utils/level';
 import { logger } from '../utils/logger';
 
 const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
@@ -552,4 +556,119 @@ export async function getHeadToHead(req: AuthRequest, res: Response) {
     .sort((a, b) => b.played - a.played || b.wins - a.wins || a.username.localeCompare(b.username));
 
   return res.json({ records });
+}
+
+/**
+ * GET /friends/:userId/profile
+ *
+ * Everything the profile sheet shows about one player, in one call.
+ *
+ * The sheet already had places for level, rank and games, but the lists it
+ * opens from never carried them — the friends list selects a username and an
+ * avatar — so every one of them rendered as an em dash. Rather than widening
+ * three list endpoints with fields only this sheet wants, it asks for the
+ * player it is showing.
+ *
+ * `headToHead` is only filled in for a friend: a record against someone you
+ * have never been able to play is noise, and the sheet hides it.
+ */
+export async function getPlayerProfile(req: AuthRequest, res: Response) {
+  const meId = req.userId!;
+  const targetId = req.params.userId;
+  if (!Types.ObjectId.isValid(targetId)) {
+    return res.status(400).json({ message: 'Unknown player' });
+  }
+
+  const user = await User.findById(targetId)
+    .select('username avatar publicProfile lastSeenAt deletedAt isBanned isSynthetic')
+    .lean();
+  if (!user || user.deletedAt || user.isBanned) {
+    return res.status(404).json({ message: 'That player is no longer available' });
+  }
+
+  const [progress, link, games, inGame] = await Promise.all([
+    Progress.findOne({ userId: targetId }).select('level points').lean(),
+    Friend.findOne({
+      $or: [
+        { requesterId: meId, recipientId: targetId },
+        { requesterId: targetId, recipientId: meId },
+      ],
+    })
+      .select('status requesterId')
+      .lean(),
+    QuizSession.countDocuments({ userId: targetId }),
+    PvPMatch.exists({
+      'players.userId': new Types.ObjectId(targetId),
+      state: { $in: [...IN_GAME_STATES] },
+    }),
+  ]);
+
+  // House accounts have no Progress row — they never play — so read their
+  // standing from where it actually lives. Without this they all render as
+  // level 1 with nothing to their name, which is exactly how you spot a fake
+  // profile. They stay out of Progress on purpose: that collection feeds the
+  // real all-time board and the payout ranking.
+  let points = progress?.points ?? 0;
+  let level = progress?.level ?? 1;
+  let gamesPlayed = games;
+
+  if ((user as { isSynthetic?: boolean }).isSynthetic) {
+    const [allTime, dailies] = await Promise.all([
+      SyntheticScore.findOne({ userId: targetId, type: 'all' }).select('points').lean(),
+      DailyAttempt.countDocuments({ userId: targetId }),
+    ]);
+    points = allTime?.points ?? 0;
+    level = getLevelFromPoints(points);
+    // Every Daily they played, plus the quizzes those points imply.
+    gamesPlayed = dailies + Math.round(points / 12);
+  }
+
+  // Their record against you, from settled matches — the same source the
+  // head-to-head list uses, so the two can never disagree.
+  let headToHead: { wins: number; losses: number; draws: number; played: number } | null = null;
+  if (link?.status === 'accepted') {
+    const matches = await PvPMatch.find({
+      settledAt: { $ne: null },
+      'players.userId': { $all: [new Types.ObjectId(meId), new Types.ObjectId(targetId)] },
+    })
+      .select('winnerUserId')
+      .limit(2000)
+      .lean();
+
+    let wins = 0;
+    let losses = 0;
+    let draws = 0;
+    for (const m of matches) {
+      const winner = m.winnerUserId ? String(m.winnerUserId) : null;
+      if (!winner) draws += 1;
+      else if (winner === meId) wins += 1;
+      else losses += 1;
+    }
+    headToHead = { wins, losses, draws, played: matches.length };
+  }
+
+  const friendStatus =
+    !link
+      ? 'none'
+      : link.status === 'pending'
+        ? String(link.requesterId) === meId
+          ? 'pending_sent'
+          : 'pending_received'
+        : link.status;
+
+  return res.json({
+    userId: targetId,
+    username: user.username ?? 'Player',
+    avatar: user.avatar ?? '',
+    level,
+    points,
+    allTimeRank: await trueAllTimeRank(points),
+    gamesPlayed,
+    isOnline: isOnline(user.lastSeenAt, Date.now()),
+    isInGame: !!inGame,
+    isReadyToPlay: !!user.publicProfile,
+    friendStatus,
+    headToHead,
+    isSelf: targetId === meId,
+  });
 }
