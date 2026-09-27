@@ -26,6 +26,17 @@ export const SOCKET_EVENTS = {
   ANSWER: 'match:answer',
 
   /* ---------------- REMATCH ---------------- */
+  /* ---------------- DIRECT CHALLENGE ---------------- */
+  /** Challenge a named friend. No room, no code. */
+  CHALLENGE_SEND: 'challenge:send',
+  CHALLENGE_INCOMING: 'challenge:incoming',
+  CHALLENGE_ACCEPT: 'challenge:accept',
+  CHALLENGE_DECLINE: 'challenge:decline',
+  /** Declined, expired, or they were never reachable. */
+  CHALLENGE_CANCELLED: 'challenge:cancelled',
+  /** Delivered to the challenger once the invite is out. */
+  CHALLENGE_SENT: 'challenge:sent',
+
   REMATCH_REQUEST: 'rematch:request',
   REMATCH_ACCEPTED: 'rematch:accepted',
   REMATCH_DECLINED: 'rematch:declined',

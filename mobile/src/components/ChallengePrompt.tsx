@@ -1,0 +1,177 @@
+import { useEffect, useRef, useState } from 'react';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+
+import { getSocket } from '@/src/socket/socket';
+import { SOCKET_EVENTS } from '@/src/socket/events';
+import { UserAvatar } from '@/src/components/UserAvatar';
+import { useTheme } from '@/src/theme/useTheme';
+import { soundManager } from '@/src/audio/SoundManager';
+
+/**
+ * "X wants to play you" — wherever you are in the app.
+ *
+ * Mounted at the root rather than on one screen, because a challenge is only
+ * worth sending if it can reach someone mid-quiz or sitting on the home tab.
+ * A push goes out too, for when the app is closed; this is the other half.
+ *
+ * Nothing is polled: the invite arrives on the socket that is already open.
+ * Accepting does not navigate — the server builds the match and the app-wide
+ * MATCH_FOUND listener carries both players into it, the same path a rematch
+ * takes.
+ */
+type Incoming = {
+  challengeId: string;
+  fromUsername: string;
+  fromAvatar?: string;
+  category?: string;
+  wager?: number;
+  expiresInMs?: number;
+};
+
+const cap = (v?: string) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : '');
+
+export function ChallengePrompt() {
+  const theme = useTheme();
+  const router = useRouter();
+  const [invite, setInvite] = useState<Incoming | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const onIncoming = (p: Incoming) => {
+      if (!p?.challengeId) return;
+      setInvite(p);
+      setSecondsLeft(Math.max(1, Math.round((p.expiresInMs ?? 90_000) / 1000)));
+      soundManager.play('match_found');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    };
+
+    // The challenger pulled out, it ran out of time, or they went offline.
+    const onCancelled = () => setInvite(null);
+    // We accepted and the match exists — the VS screen takes it from here.
+    const onMatchFound = () => setInvite(null);
+
+    socket.on(SOCKET_EVENTS.CHALLENGE_INCOMING, onIncoming);
+    socket.on(SOCKET_EVENTS.CHALLENGE_CANCELLED, onCancelled);
+    socket.on(SOCKET_EVENTS.MATCH_FOUND, onMatchFound);
+    return () => {
+      socket.off(SOCKET_EVENTS.CHALLENGE_INCOMING, onIncoming);
+      socket.off(SOCKET_EVENTS.CHALLENGE_CANCELLED, onCancelled);
+      socket.off(SOCKET_EVENTS.MATCH_FOUND, onMatchFound);
+    };
+  }, []);
+
+  // Count it down rather than letting it hang there dead: the server drops
+  // the invite on the same clock.
+  useEffect(() => {
+    if (!invite) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+    timerRef.current = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          setInvite(null);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [invite]);
+
+  if (!invite) return null;
+
+  const respond = (accept: boolean) => {
+    const socket = getSocket();
+    socket.emit(
+      accept ? SOCKET_EVENTS.CHALLENGE_ACCEPT : SOCKET_EVENTS.CHALLENGE_DECLINE,
+      { challengeId: invite.challengeId },
+    );
+    setInvite(null);
+    if (accept) {
+      // Somewhere to look while the server pairs us. MATCH_FOUND replaces this
+      // with the real versus screen a moment later.
+      router.push('/quiz/pvp/vs');
+    }
+  };
+
+  return (
+    <Modal transparent animationType="fade" visible onRequestClose={() => respond(false)}>
+      <View style={styles.backdrop}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+          ]}
+        >
+          <UserAvatar avatar={invite.fromAvatar ?? ''} size={64} />
+
+          <Text style={[styles.title, { color: theme.colors.text }]}>
+            {invite.fromUsername} wants to play
+          </Text>
+          <Text style={[styles.body, { color: theme.colors.muted }]}>
+            {cap(invite.category) || '1v1'}
+            {invite.wager ? ` · ${invite.wager} coins staked` : ' · friendly'}
+          </Text>
+          <Text style={[styles.body, { color: theme.colors.muted }]}>
+            Expires in {secondsLeft}s
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => respond(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Accept the challenge from ${invite.fromUsername}`}
+            style={[styles.accept, { backgroundColor: theme.colors.primary }]}
+          >
+            <Text style={styles.acceptLabel}>Accept</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => respond(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Decline"
+            style={styles.decline}
+            hitSlop={8}
+          >
+            <Text style={{ color: theme.colors.muted, fontWeight: '700' }}>Not now</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: '#000000aa',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 28,
+  },
+  card: {
+    width: '100%',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+  },
+  title: { marginTop: 14, fontSize: 19, fontWeight: '900', textAlign: 'center' },
+  body: { marginTop: 4, fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  accept: {
+    marginTop: 18,
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  acceptLabel: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  decline: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 16 },
+});

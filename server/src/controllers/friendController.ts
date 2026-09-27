@@ -450,3 +450,106 @@ export async function getPendingRequests(req: AuthRequest, res: Response) {
       .filter(Boolean),
   });
 }
+
+/**
+ * GET /friends/head-to-head
+ *
+ * Your record against each friend, one pair at a time.
+ *
+ * A ranked board of friends answered the wrong question: it told you who has
+ * the most points overall, which is mostly a measure of who plays the most.
+ * What people actually want to know about a friend is "have I beaten them",
+ * and that only means anything pair by pair — your record against A is a
+ * different thing from your record against B, and neither is a position in a
+ * table.
+ *
+ * Computed from settled matches rather than kept in a counter, so it is always
+ * consistent with the matches themselves and needs no backfill.
+ */
+export async function getHeadToHead(req: AuthRequest, res: Response) {
+  const userId = req.userId!;
+
+  const links = await Friend.find({
+    status: 'accepted',
+    $or: [{ requesterId: userId }, { recipientId: userId }],
+  })
+    .select('requesterId recipientId')
+    .lean();
+
+  const friendIds = links.map((f) =>
+    f.requesterId.toString() === userId ? f.recipientId.toString() : f.requesterId.toString(),
+  );
+  if (!friendIds.length) return res.json({ records: [] });
+
+  const [users, matches] = await Promise.all([
+    User.find({ _id: { $in: friendIds }, deletedAt: null, isBanned: { $ne: true } })
+      .select('username avatar lastSeenAt')
+      .lean(),
+    // Only matches this player actually finished, newest first. Capped: a
+    // record is a summary, and nobody needs the tail of it re-counted.
+    PvPMatch.find({ settledAt: { $ne: null }, 'players.userId': userId })
+      .select('players winnerUserId settledAt category')
+      .sort({ settledAt: -1 })
+      .limit(2000)
+      .lean(),
+  ]);
+
+  const friendSet = new Set(friendIds);
+  type Rec = {
+    wins: number;
+    losses: number;
+    draws: number;
+    lastPlayedAt: Date | null;
+    lastCategory: string | null;
+  };
+  const tally = new Map<string, Rec>();
+
+  for (const m of matches) {
+    const opponent = (m.players as any[]).find((p) => String(p.userId) !== userId);
+    if (!opponent) continue;
+    const oppId = String(opponent.userId);
+    if (!friendSet.has(oppId)) continue;
+
+    const rec =
+      tally.get(oppId) ??
+      ({ wins: 0, losses: 0, draws: 0, lastPlayedAt: null, lastCategory: null } as Rec);
+
+    const winner = m.winnerUserId ? String(m.winnerUserId) : null;
+    if (!winner) rec.draws += 1;
+    else if (winner === userId) rec.wins += 1;
+    else rec.losses += 1;
+
+    // Matches arrive newest first, so the first one seen is the latest.
+    if (!rec.lastPlayedAt) {
+      rec.lastPlayedAt = (m.settledAt as Date) ?? null;
+      rec.lastCategory = (m.category as string) ?? null;
+    }
+
+    tally.set(oppId, rec);
+  }
+
+  const now = Date.now();
+  const records = users
+    .map((u) => {
+      const id = u._id.toString();
+      const r =
+        tally.get(id) ?? { wins: 0, losses: 0, draws: 0, lastPlayedAt: null, lastCategory: null };
+      return {
+        userId: id,
+        username: u.username ?? 'Player',
+        avatar: u.avatar ?? '',
+        isOnline: isOnline(u.lastSeenAt, now),
+        wins: r.wins,
+        losses: r.losses,
+        draws: r.draws,
+        played: r.wins + r.losses + r.draws,
+        lastPlayedAt: r.lastPlayedAt,
+        lastCategory: r.lastCategory,
+      };
+    })
+    // People you actually play come first; then the closest rivalries; then
+    // friends you have never faced, who are the ones worth challenging.
+    .sort((a, b) => b.played - a.played || b.wins - a.wins || a.username.localeCompare(b.username));
+
+  return res.json({ records });
+}

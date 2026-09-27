@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import Friend from '../models/Friend';
 import User from '../models/User';
 import QuizSession from '../models/QuizSession';
+import PvPMatch from '../models/PvPMatch';
 import Progress from '../models/Progress';
 import {
   searchUsers,
@@ -20,6 +21,7 @@ import {
   unblockUser,
   getPendingRequests,
   getMyFriends,
+  getHeadToHead,
 } from '../controllers/friendController';
 import { ensureIndexes } from './setup';
 
@@ -315,5 +317,84 @@ describe('getMyFriends', () => {
 
     expect(r.statusCode).toBe(200);
     expect(await Friend.countDocuments({})).toBe(0);
+  });
+});
+
+describe('head to head', () => {
+  /**
+   * A record against a friend is a pair, not a position in a table.
+   *
+   * The Friends tab used to rank everyone you know by total points, which
+   * mostly measures who plays the most. A beat B twice and lost to C once —
+   * those are two separate facts, and neither is a rank.
+   */
+  it('keeps each pair separate and counts only settled matches', async () => {
+    const a = await makeUser('h2ha');
+    const b = await makeUser('h2hb');
+    const c = await makeUser('h2hc');
+    const aId = a._id.toString();
+
+    await Friend.create({ requesterId: a._id, recipientId: b._id, status: 'accepted' });
+    await Friend.create({ requesterId: a._id, recipientId: c._id, status: 'accepted' });
+
+    const side = (userId: any) => ({
+      userId,
+      usernameSnapshot: 'p',
+      avatarSnapshot: 'avatar0',
+      levelSnapshot: 1,
+      allTimeRankSnapshot: 0,
+      currentIndex: 10,
+      furthestIndex: 10,
+      answers: [],
+      answeredMs: 1000,
+    });
+    const settled = (x: any, y: any, winner: any) =>
+      PvPMatch.create({
+        category: 'math',
+        mode: 'single',
+        state: 'FINISHED',
+        wager: 0,
+        questionSet: [],
+        matchmakingExpiresAt: new Date(Date.now() + 120_000),
+        players: [side(x), side(y)],
+        winnerUserId: winner,
+        settledAt: new Date(),
+      });
+
+    await settled(a._id, b._id, a._id);
+    await settled(a._id, b._id, b._id);
+    await settled(a._id, b._id, a._id);
+    await settled(a._id, c._id, c._id);
+    // Still being played, so it counts for nobody yet.
+    await PvPMatch.create({
+      category: 'math',
+      mode: 'single',
+      state: 'ACTIVE',
+      wager: 0,
+      questionSet: [],
+      matchmakingExpiresAt: new Date(Date.now() + 120_000),
+      players: [side(a._id), side(b._id)],
+    });
+
+    const r = res();
+    await getHeadToHead({ userId: aId } as any, r as any);
+
+    const vsB = r.body.records.find((x: any) => x.userId === b._id.toString());
+    const vsC = r.body.records.find((x: any) => x.userId === c._id.toString());
+
+    expect(vsB).toMatchObject({ wins: 2, losses: 1, draws: 0, played: 3 });
+    expect(vsC).toMatchObject({ wins: 0, losses: 1, played: 1 });
+  });
+
+  it('lists a friend you have never played, since those are the ones to challenge', async () => {
+    const a = await makeUser('h2ha');
+    const b = await makeUser('h2hb');
+    await Friend.create({ requesterId: a._id, recipientId: b._id, status: 'accepted' });
+
+    const r = res();
+    await getHeadToHead({ userId: a._id.toString() } as any, r as any);
+
+    expect(r.body.records).toHaveLength(1);
+    expect(r.body.records[0]).toMatchObject({ played: 0, wins: 0, losses: 0 });
   });
 });

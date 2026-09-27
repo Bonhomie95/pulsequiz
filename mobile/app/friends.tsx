@@ -31,6 +31,9 @@ import {
   RadioTower,
 } from 'lucide-react-native';
 import { api } from '@/src/api/api';
+import { getSocket } from '@/src/socket/socket';
+import { connectSocket } from '@/src/socket/connect';
+import { SOCKET_EVENTS } from '@/src/socket/events';
 import { useTheme } from '@/src/theme/useTheme';
 import { Toast } from '@/src/components/Toast';
 import { UserAvatar } from '@/src/components/UserAvatar';
@@ -444,6 +447,26 @@ export default function FriendsScreen() {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // A challenge that is declined, ignored or sent to someone who has closed
+  // the app should say so, rather than leaving you wondering.
+  useEffect(() => {
+    const socket = getSocket();
+    const onCancelled = (p: { reason?: string }) =>
+      showToast(
+        p?.reason === 'declined'
+          ? 'They declined the challenge'
+          : p?.reason === 'offline'
+            ? 'They are no longer online'
+            : 'That challenge expired',
+        'error',
+      );
+    socket.on(SOCKET_EVENTS.CHALLENGE_CANCELLED, onCancelled);
+    return () => {
+      socket.off(SOCKET_EVENTS.CHALLENGE_CANCELLED, onCancelled);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') =>
     setToast({ visible: true, message, type });
 
@@ -597,7 +620,24 @@ export default function FriendsScreen() {
       params: { invite: userId, inviteName: name ?? '' },
     } as any);
 
-  const challengeUser = (u: SearchUser | Friend) => inviteToRoom(u._id, u.username);
+  /**
+   * Challenge a friend directly. No room, no code.
+   *
+   * This used to open the create-a-room screen and hand you a code to read
+   * out — to someone whose username you had just tapped, inside the app you
+   * are both signed into. The code still exists for inviting someone you
+   * cannot reach here; it has no place in this path.
+   */
+  const challengeUser = (u: SearchUser | Friend) => {
+    const socket = getSocket();
+    connectSocket();
+    socket.emit(SOCKET_EVENTS.CHALLENGE_SEND, {
+      opponentId: u._id,
+      category: 'general knowledge',
+      wager: 0,
+    });
+    showToast(`Challenge sent to ${u.username ?? 'them'}`);
+  };
 
   // ── Render ────────────────────────────────────────────────────────────────
 

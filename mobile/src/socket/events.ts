@@ -23,6 +23,17 @@ export const SOCKET_EVENTS = {
   HINT: 'match:hint',
   HINT_RESULT: 'match:hint_result',
 
+  /* ---------------- DIRECT CHALLENGE ---------------- */
+  /** Challenge a named friend. No room, no code. */
+  CHALLENGE_SEND: 'challenge:send',
+  CHALLENGE_INCOMING: 'challenge:incoming',
+  CHALLENGE_ACCEPT: 'challenge:accept',
+  CHALLENGE_DECLINE: 'challenge:decline',
+  /** Declined, expired, or they were never reachable. */
+  CHALLENGE_CANCELLED: 'challenge:cancelled',
+  /** Delivered to the challenger once the invite is out. */
+  CHALLENGE_SENT: 'challenge:sent',
+
   /* -------- REMATCH -------- */
   REMATCH_REQUEST: 'rematch:request',
   REMATCH_ACCEPTED: 'rematch:accepted',
@@ -46,6 +57,7 @@ export type PvPPlayer = {
   avatar: string;
   level: number;
   allTimeRank: number;
+  points?: number;
 };
 
 export type MatchFoundPayload = {
@@ -88,7 +100,21 @@ export type PlayerUpdatePayload = {
   /** Server deadline for the next question, ISO string. */
   deadlineAt?: string | null;
 };
-export type MatchFinishedPayload = { winnerUserId: string };
+export type ScorelineEntry = {
+  userId: string;
+  username: string;
+  correct: number;
+  answered: number;
+  /** Server-measured total answering time — the tiebreak. */
+  timeMs: number;
+};
+
+export type MatchFinishedPayload = {
+  winnerUserId: string;
+  scoreline?: ScorelineEntry[];
+  /** Equal scores, so the clock decided it. */
+  decidedByTime?: boolean;
+};
 export type RoomGuestJoinedPayload = {
   matchId: string;
   players?: PvPPlayer[];

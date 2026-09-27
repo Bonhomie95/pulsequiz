@@ -97,7 +97,9 @@ export function registerPvPSocketListeners() {
   });
 
   socket.on(SOCKET_EVENTS.MATCH_FINISHED, (payload: MatchFinishedPayload) => {
-    usePvPStore.getState().finishMatch(payload.winnerUserId);
+    usePvPStore
+      .getState()
+      .finishMatch(payload.winnerUserId, payload.scoreline, payload.decidedByTime);
   });
 
   socket.on(SOCKET_EVENTS.ERROR, (e: SocketErrorPayload) => {

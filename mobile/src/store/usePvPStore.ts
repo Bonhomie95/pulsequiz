@@ -6,6 +6,8 @@ type PlayerSnapshot = {
   avatar: string;
   level: number;
   allTimeRank: number;
+  /** All-time points at pairing. Sent with every pairing event. */
+  points?: number;
 };
 
 type Question = {
@@ -37,6 +39,16 @@ type PvPState = {
   currentIndex: number;
 
   winnerUserId: string | null;
+  /** Both players' score and time, sent with the result. */
+  scoreline: {
+    userId: string;
+    username: string;
+    correct: number;
+    answered: number;
+    timeMs: number;
+  }[];
+  /** Equal scores — the clock decided it. */
+  decidedByTime: boolean;
   opponentIndex: number;
   opponentFurthest: number;
 
@@ -81,7 +93,11 @@ type PvPState = {
   lastAnswer: { questionIndex: number; correct: boolean; correctIndex: number } | null;
   clearLastAnswer: () => void;
   setWaiting: () => void;
-  finishMatch: (winnerUserId: string) => void;
+  finishMatch: (
+    winnerUserId: string,
+    scoreline?: PvPState['scoreline'],
+    decidedByTime?: boolean,
+  ) => void;
   setError: (message: string | null) => void;
   setDeadline: (deadlineAt: string | number | null | undefined) => void;
   reset: () => void;
@@ -101,6 +117,8 @@ export const usePvPStore = create<PvPState>((set, get) => ({
   questions: [],
   currentIndex: 0,
   winnerUserId: null,
+  scoreline: [],
+  decidedByTime: false,
   lastAnswer: null,
   opponentIndex: 0,
   opponentFurthest: 0,
@@ -132,6 +150,8 @@ export const usePvPStore = create<PvPState>((set, get) => ({
       opponentIndex: 0,
       opponentFurthest: 0,
       winnerUserId: null,
+      scoreline: [],
+      decidedByTime: false,
       deadlineAt: null,
       error: null,
     });
@@ -185,7 +205,13 @@ export const usePvPStore = create<PvPState>((set, get) => ({
       deadlineAt: deadlineAt ? new Date(deadlineAt).getTime() : null,
     }),
 
-  finishMatch: (winnerUserId) => set({ status: 'finished', winnerUserId }),
+  finishMatch: (winnerUserId, scoreline, decidedByTime) =>
+    set({
+      status: 'finished',
+      winnerUserId,
+      ...(scoreline ? { scoreline } : {}),
+      decidedByTime: !!decidedByTime,
+    }),
 
   reset: () =>
     set({
@@ -200,6 +226,8 @@ export const usePvPStore = create<PvPState>((set, get) => ({
       questions: [],
       currentIndex: 0,
       winnerUserId: null,
+      scoreline: [],
+      decidedByTime: false,
       lastAnswer: null,
     }),
 }));

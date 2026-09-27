@@ -14,6 +14,7 @@ import { registerAndSyncPushToken } from '@/src/utils/push';
 import { reconcilePendingPurchases } from '@/src/iap/verify';
 import { logger } from '@/src/utils/logger';
 import { initSentry, setSentryUser, wrapWithSentry } from '@/src/utils/sentry';
+import { ChallengePrompt } from '@/src/components/ChallengePrompt';
 import { ErrorBoundary } from '@/src/components/ErrorBoundary';
 import SplashLoader from '@/src/components/SplashLoader';
 
@@ -207,6 +208,9 @@ function RootLayout() {
   return (
     <ErrorBoundary>
       <Stack screenOptions={{ headerShown: false }} />
+      {/* Rooted here, not on a screen: a challenge has to be able to reach
+          someone mid-quiz, not only on the home tab. */}
+      {user && !needsIdentity && <ChallengePrompt />}
       {redirect && <Redirect href={redirect as any} />}
     </ErrorBoundary>
   );

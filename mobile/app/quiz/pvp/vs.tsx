@@ -257,8 +257,14 @@ export default function PvPVsScreen() {
             <Text style={{ fontWeight: '800', color: theme.colors.text }}>
               {me.username}
             </Text>
+            {/* Real numbers. The rank here was hardcoded to 0 on the
+                server, so every player was introduced as "#0". */}
             <Text style={{ color: theme.colors.muted, fontSize: 12 }}>
-              Lv {me.level} • #{me.allTimeRank}
+              Lv {me.level}
+              {me.allTimeRank ? ` • #${me.allTimeRank}` : ''}
+            </Text>
+            <Text style={{ color: theme.colors.muted, fontSize: 11 }}>
+              {me.points ?? 0} pts
             </Text>
           </Animated.View>
 
@@ -290,7 +296,11 @@ export default function PvPVsScreen() {
               {opponent.username}
             </Text>
             <Text style={{ color: theme.colors.muted, fontSize: 12 }}>
-              Lv {opponent.level} • #{opponent.allTimeRank}
+              Lv {opponent.level}
+              {opponent.allTimeRank ? ` • #${opponent.allTimeRank}` : ''}
+            </Text>
+            <Text style={{ color: theme.colors.muted, fontSize: 11 }}>
+              {opponent.points ?? 0} pts
             </Text>
           </Animated.View>
         </View>

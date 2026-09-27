@@ -23,6 +23,12 @@ import { getSocket } from '@/src/socket/socket';
 import { SOCKET_EVENTS } from '@/src/socket/events';
 import { UserAvatar } from '@/src/components/UserAvatar';
 
+/** "1:24" — how long their ten questions actually took them. */
+function formatDuration(ms: number) {
+  const secs = Math.max(0, Math.round((Number(ms) || 0) / 1000));
+  return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+}
+
 export default function PvPResultScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -255,6 +261,9 @@ export default function PvPResultScreen() {
     router.replace('/friends');
   };
 
+  const mine = store.scoreline.find((r) => r.userId === myUserId) ?? null;
+  const theirs = store.scoreline.find((r) => r.userId !== myUserId) ?? null;
+
   const winCoins = isWinner ? 50 : 20;
   const winPts = isWinner ? 50 : 0;
 
@@ -294,6 +303,48 @@ export default function PvPResultScreen() {
               </Text>
             </Animated.View>
           </View>
+
+          {/* THE NUMBERS
+              "You won" on its own leaves the loser guessing whether they were
+              outscored or just slower — and a win decided on the clock looks
+              arbitrary without them. Both players' score and time, always,
+              with the deciding one called out. */}
+          {mine && theirs && (
+            <View
+              style={[
+                styles.scoreline,
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              ]}
+            >
+              <View style={styles.scorelineRow}>
+                <Text style={[styles.scorelineName, { color: theme.colors.text }]}>You</Text>
+                <Text style={[styles.scorelineValue, { color: theme.colors.text }]}>
+                  {mine.correct}/{mine.answered || 10}
+                </Text>
+                <Text style={[styles.scorelineTime, { color: theme.colors.muted }]}>
+                  {formatDuration(mine.timeMs)}
+                </Text>
+              </View>
+              <View
+                style={[styles.scorelineRow, { borderTopWidth: 1, borderTopColor: theme.colors.border }]}
+              >
+                <Text numberOfLines={1} style={[styles.scorelineName, { color: theme.colors.text }]}>
+                  {theirs.username}
+                </Text>
+                <Text style={[styles.scorelineValue, { color: theme.colors.text }]}>
+                  {theirs.correct}/{theirs.answered || 10}
+                </Text>
+                <Text style={[styles.scorelineTime, { color: theme.colors.muted }]}>
+                  {formatDuration(theirs.timeMs)}
+                </Text>
+              </View>
+              <Text style={[styles.scorelineNote, { color: theme.colors.muted }]}>
+                {store.decidedByTime || mine.correct === theirs.correct
+                  ? 'Same score — decided on time'
+                  : 'Decided on score'}
+              </Text>
+            </View>
+          )}
 
           {/* VS PLAYER CARDS */}
           <View style={styles.versusRow}>
@@ -595,6 +646,30 @@ function PlayerCard({
 }
 
 const styles = StyleSheet.create({
+  scoreline: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  scorelineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  scorelineName: { flex: 1, fontWeight: '800', fontSize: 14 },
+  scorelineValue: { fontWeight: '900', fontSize: 16, minWidth: 52, textAlign: 'right' },
+  scorelineTime: { fontWeight: '700', fontSize: 13, minWidth: 48, textAlign: 'right' },
+  scorelineNote: {
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '700',
+    paddingBottom: 10,
+  },
+
   scroll: { padding: 20, paddingBottom: 60, flexGrow: 1 },
   heroSection: { alignItems: 'center', paddingVertical: 24 },
   resultEmoji: { fontSize: 64, textAlign: 'center', marginBottom: 8 },

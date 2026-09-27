@@ -229,9 +229,22 @@ export async function settleMatch(
   }
 
   // ── Notify ────────────────────────────────────────────────────────────────
+  //
+  // The scoreline goes out with the result. "You won" on its own leaves the
+  // loser guessing whether they were outscored or just slower, and a win on
+  // the time tiebreak looks arbitrary without the numbers behind it.
+  const scoreline = (match.players as any[]).map((p) => ({
+    userId: p.userId.toString(),
+    username: p.usernameSnapshot ?? 'Player',
+    correct: (p.answers ?? []).filter((a: any) => a.isCorrect).length,
+    answered: (p.answers ?? []).length,
+    /** Server-measured, the same number the tiebreak uses. */
+    timeMs: p.answeredMs ?? 0,
+  }));
+
   const room = `pvp:${matchId}`;
   if (outcome.kind === 'draw') {
-    io.to(room).emit(SOCKET_EVENTS.MATCH_DRAW, { matchId });
+    io.to(room).emit(SOCKET_EVENTS.MATCH_DRAW, { matchId, scoreline });
   } else if (outcome.kind === 'cancelled') {
     io.to(room).emit(SOCKET_EVENTS.MATCH_CANCELLED, { matchId, reason: outcome.reason });
   } else {
@@ -239,6 +252,11 @@ export async function settleMatch(
       matchId,
       winnerUserId: outcome.winnerUserId,
       reason: outcome.reason,
+      scoreline,
+      // Equal scores means the clock decided it — say so rather than leaving
+      // the loser to work it out.
+      decidedByTime:
+        scoreline.length === 2 && scoreline[0].correct === scoreline[1].correct,
     });
   }
 

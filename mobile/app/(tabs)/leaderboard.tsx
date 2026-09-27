@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useMemo} from 'react';
 import {
+  Alert,
   Animated,
   ActivityIndicator,
   FlatList,
@@ -22,6 +23,19 @@ import { UserAvatar } from '@/src/components/UserAvatar';
 import { RulesSheet } from '@/src/components/RulesSheet';
 
 type Tab = 'weekly' | 'monthly' | 'all' | 'friends';
+
+type H2HRecord = {
+  userId: string;
+  username: string;
+  avatar: string;
+  isOnline: boolean;
+  wins: number;
+  losses: number;
+  draws: number;
+  played: number;
+  lastPlayedAt: string | null;
+  lastCategory: string | null;
+};
 
 type Entry = {
   userId: string;
@@ -253,6 +267,35 @@ function AvatarBubble({
 export default function LeaderboardScreen() {
   const theme = useTheme();
   const userId = useAuthStore((s) => s.user?.id);
+
+  /**
+   * Tap anyone on the board to send them a friend request.
+   *
+   * Deliberately not filtered to people likely to say yes. Plenty of real
+   * requests go unanswered, so an unanswered one is not a tell — and a board
+   * you cannot act on is just a list.
+   */
+  const addFriend = useCallback(async (targetId: string, username: string) => {
+    if (!targetId || targetId === userId) return;
+    Alert.alert(
+      'Add friend',
+      `Send ${username} a friend request?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send',
+          onPress: async () => {
+            try {
+              await api.post('/friends/request', { targetUserId: targetId });
+              Alert.alert('Request sent', `${username} can accept it from their Friends tab.`);
+            } catch (err) {
+              Alert.alert('Could not send', errorMessage(err));
+            }
+          },
+        },
+      ],
+    );
+  }, [userId]);
   const prizes = usePrizesAvailable();
   const listRef = useRef<FlatList<Entry>>(null);
 
@@ -276,6 +319,16 @@ export default function LeaderboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Your record against each friend, pair by pair.
+   *
+   * The Friends tab used to be a ranked table of everyone you know, which
+   * mostly measured who plays the most. What you actually want to know about
+   * a friend is whether you have beaten them — and that only means something
+   * one pair at a time.
+   */
+  const [h2h, setH2h] = useState<H2HRecord[]>([]);
+
   // When the current board closes, straight from the server.
   const [periodEndsAt, setPeriodEndsAt] = useState<string | null>(null);
   const [prizeInfo, setPrizeInfo] = useState<{
@@ -312,13 +365,9 @@ export default function LeaderboardScreen() {
         let standing = null;
 
         if (tab === 'friends') {
-          // Ranked server-side among you and your friends. This used to filter
-          // the global all-time top 100 down to friends, which dropped anyone
-          // outside it — and once the global board filled with house accounts,
-          // that meant every real friend.
-          const res = await api.get('/leaderboard/friends');
-          list = res.data?.data ?? [];
-          standing = res.data?.me ?? null;
+          const res = await api.get('/friends/head-to-head');
+          setH2h(res.data?.records ?? []);
+          list = [];
         } else {
           const res = await api.get(`/leaderboard/${tab}`);
           list = res.data?.data ?? [];
@@ -493,8 +542,8 @@ export default function LeaderboardScreen() {
           ))}
         </View>
 
-        {/* PODIUM */}
-        {!loading && !error && data.length > 0 && (
+        {/* PODIUM — a head-to-head record has no podium. */}
+        {!loading && !error && tab !== 'friends' && data.length > 0 && (
         <View style={styles.podium}>
           {podium[1] && (
             <AnimatedPodiumCard
@@ -653,7 +702,7 @@ export default function LeaderboardScreen() {
         )}
 
         {/* EMPTY FRIENDS */}
-        {!loading && !error && tab === 'friends' && data.length === 0 && (
+        {!loading && !error && tab === 'friends' && h2h.length === 0 && (
           <View style={{ alignItems: 'center', padding: 24 }}>
             <Text style={{ fontSize: 40, marginBottom: 12 }}>👥</Text>
             <Text
@@ -678,7 +727,85 @@ export default function LeaderboardScreen() {
           </View>
         )}
 
+        {/* HEAD TO HEAD — one card per friend, not a table. */}
+        {!loading && !error && tab === 'friends' && h2h.length > 0 && (
+          <FlatList
+            data={h2h}
+            keyExtractor={(r) => r.userId}
+            contentContainerStyle={{ paddingBottom: 80, gap: 10 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => {
+                  setRefreshing(true);
+                  load({ silent: true });
+                }}
+                tintColor={theme.colors.primary}
+              />
+            }
+            renderItem={({ item }) => {
+              const leading = item.wins > item.losses;
+              const level = item.wins === item.losses;
+              return (
+                <View
+                  accessible
+                  accessibilityLabel={`Against ${item.username}: ${item.wins} wins, ${item.losses} losses, ${item.draws} draws`}
+                  style={[
+                    styles.h2hCard,
+                    { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                  ]}
+                >
+                  <AvatarBubble avatar={item.avatar} size={40} />
+
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{ color: theme.colors.text, fontWeight: '800', fontSize: 15 }}
+                    >
+                      {item.username}
+                    </Text>
+                    <Text style={{ color: theme.colors.muted, fontSize: 12, marginTop: 2 }}>
+                      {item.played === 0
+                        ? 'Never played — challenge them'
+                        : level
+                          ? `All square after ${item.played}`
+                          : leading
+                            ? `You lead ${item.wins}–${item.losses}`
+                            : `They lead ${item.losses}–${item.wins}`}
+                    </Text>
+                  </View>
+
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text
+                      style={{
+                        fontWeight: '900',
+                        fontSize: 18,
+                        color:
+                          item.played === 0
+                            ? theme.colors.muted
+                            : leading
+                              ? theme.colors.success
+                              : level
+                                ? theme.colors.muted
+                                : theme.colors.danger,
+                      }}
+                    >
+                      {item.wins}–{item.losses}
+                    </Text>
+                    {item.draws > 0 && (
+                      <Text style={{ color: theme.colors.muted, fontSize: 11 }}>
+                        {item.draws} drawn
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              );
+            }}
+          />
+        )}
+
         {/* LIST */}
+        {tab !== 'friends' && (
         <FlatList
           ref={listRef}
           data={loading || error ? [] : rest}
@@ -724,9 +851,11 @@ export default function LeaderboardScreen() {
               else if (item.previousRank < rank) delta = '↓';
             }
             return (
-              <View
-                accessible
-                accessibilityLabel={`Rank ${rank}, ${item.username}, ${item.points} points${isMe ? ', this is you' : ''}`}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`Rank ${rank}, ${item.username}, ${item.points} points${isMe ? ', this is you' : ', tap to add as a friend'}`}
+                disabled={isMe}
+                onPress={() => addFriend(item.userId, item.username)}
                 style={[
                   styles.row,
                   {
@@ -761,10 +890,11 @@ export default function LeaderboardScreen() {
                 <Text style={{ color: theme.colors.coin, fontWeight: '800' }}>
                   {item.points}
                 </Text>
-              </View>
+              </TouchableOpacity>
             );
           }}
         />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -858,6 +988,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 40,
     paddingHorizontal: 24,
+  },
+  h2hCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1,
   },
   retryBtn: {
     marginTop: 14,

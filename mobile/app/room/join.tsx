@@ -1,12 +1,13 @@
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  InteractionManager,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Hash } from 'lucide-react-native';
 import { useTheme } from '@/src/theme/useTheme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '@/src/api/api';
 import { getSocket } from '@/src/socket/socket';
 import { SOCKET_EVENTS } from '@/src/socket/events';
@@ -24,6 +25,7 @@ export default function JoinRoomScreen() {
   const router = useRouter();
   // A `code` param can arrive from a room-invite push notification deep link.
   const { code: codeParam } = useLocalSearchParams<{ code?: string }>();
+  const inputRef = useRef<TextInput>(null);
   const [code, setCode] = useState(
     typeof codeParam === 'string' ? codeParam.toUpperCase().slice(0, ROOM_CODE_LENGTH) : '',
   );
@@ -77,6 +79,23 @@ export default function JoinRoomScreen() {
     }
   };
 
+  /**
+   * Focus once the push animation has finished, not during it.
+   *
+   * `autoFocus` fires as the screen mounts, which is mid-transition: the
+   * screen paints keyboardless, then the keyboard slides up and the centred
+   * layout jumps to make room. Two frames apart, it reads as two screens
+   * opening. Waiting for the transition means one movement instead of two,
+   * and anchoring the content to the top means it does not jump when the
+   * keyboard arrives.
+   */
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      inputRef.current?.focus();
+    });
+    return () => task.cancel();
+  }, []);
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
@@ -108,7 +127,7 @@ export default function JoinRoomScreen() {
             placeholderTextColor={theme.colors.muted}
             maxLength={ROOM_CODE_LENGTH}
             autoCapitalize='characters'
-            autoFocus
+            ref={inputRef}
             style={[styles.input, {
               backgroundColor: theme.colors.surface,
               color: theme.colors.text,
@@ -142,7 +161,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 8 },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 20, fontWeight: '800' },
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  body: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 32, padding: 24 },
   iconContainer: { width: 96, height: 96, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
   heading: { fontSize: 24, fontWeight: '900', marginBottom: 8 },
   sub: { fontSize: 14, textAlign: 'center', marginBottom: 32, lineHeight: 20 },

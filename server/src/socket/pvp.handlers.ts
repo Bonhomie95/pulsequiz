@@ -2,6 +2,8 @@ import type { Server, Socket } from 'socket.io';
 import { Types } from 'mongoose';
 
 import User from '../models/User';
+import Friend from '../models/Friend';
+import { sendPvpChallenge } from '../services/notificationService';
 import Progress from '../models/Progress';
 import QuizQuestion from '../models/QuizQuestion';
 import UserQuestion from '../models/UserQuestion';
@@ -45,6 +47,14 @@ const MAX_SEEN_EXCLUSIONS = 300;
 const readyTimers = new Map<string, NodeJS.Timeout>();      // matchId -> timer
 const liveByUser = new Map<string, { matchId: string }>();   // userId -> live match
 const disconnectTimers = new Map<string, NodeJS.Timeout>();  // userId -> timer
+
+/** Live direct challenges, keyed by challenge id. */
+const pendingChallenges = new Map<
+  string,
+  { fromUserId: string; toUserId: string; category: string; wager: number; expiresAt: number }
+>();
+/** Long enough to notice a push, short enough not to arrive out of nowhere. */
+const CHALLENGE_TTL_MS = 90_000;
 /**
  * Below this, no human has read the question — reflex alone is around 200ms
  * and these are four-option multiple choice.
@@ -288,6 +298,125 @@ export function registerPvpHandlers(io: Server, socket: Socket) {
 
   const on = (event: string, fn: (...args: any[]) => Promise<void> | void) =>
     socket.on(event, safeHandler(socket, event, fn));
+
+  /* ---------- DIRECT CHALLENGE ---------- */
+
+  /**
+   * Challenge a friend by name. No room, no code.
+   *
+   * The room code exists for inviting someone you cannot reach in the app —
+   * you read it out, or paste it into a message. It has no business standing
+   * between two people who are already friends here, which is what it did:
+   * "challenge" opened the create-a-room screen and handed you a code to
+   * dictate to someone whose username you had just tapped.
+   *
+   * The invite goes over the socket when they are online and as a push when
+   * they are not, so a challenge reaches them either way. Accepting builds
+   * the match through the same path a rematch uses, so everything downstream
+   * — questions, readiness, settlement — is the code that already works.
+   */
+  on(SOCKET_EVENTS.CHALLENGE_SEND, async ({ opponentId, category, wager }: any) => {
+    if (typeof opponentId !== 'string' || !Types.ObjectId.isValid(opponentId)) return;
+    if (opponentId === userId) return;
+
+    // Friends only, and only if they have not blocked you.
+    const link = await Friend.findOne({
+      status: 'accepted',
+      $or: [
+        { requesterId: userId, recipientId: opponentId },
+        { requesterId: opponentId, recipientId: userId },
+      ],
+    }).lean();
+    if (!link) {
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'You can only challenge a friend.' });
+      return;
+    }
+
+    const [me, them] = await Promise.all([
+      User.findById(userId).select('username avatar').lean(),
+      User.findById(opponentId).select('username').lean(),
+    ]);
+    if (!them) return;
+
+    const challengeId = new Types.ObjectId().toHexString();
+    const cat = String(category ?? 'general knowledge').trim().toLowerCase();
+    const stake = Math.max(0, Number(wager) || 0);
+
+    pendingChallenges.set(challengeId, {
+      fromUserId: userId,
+      toUserId: opponentId,
+      category: cat,
+      wager: stake,
+      expiresAt: Date.now() + CHALLENGE_TTL_MS,
+    });
+    setTimeout(() => pendingChallenges.delete(challengeId), CHALLENGE_TTL_MS).unref?.();
+
+    const theirSocket = userSocketMap.get(opponentId);
+    if (theirSocket) {
+      io.to(theirSocket).emit(SOCKET_EVENTS.CHALLENGE_INCOMING, {
+        challengeId,
+        fromUserId: userId,
+        fromUsername: me?.username ?? 'A friend',
+        fromAvatar: me?.avatar ?? '',
+        category: cat,
+        wager: stake,
+        expiresInMs: CHALLENGE_TTL_MS,
+      });
+    }
+
+    // Sent either way: they may have the app backgrounded with a live socket,
+    // or be away from it entirely.
+    sendPvpChallenge(opponentId, me?.username ?? 'A friend').catch(() => {});
+
+    socket.emit(SOCKET_EVENTS.CHALLENGE_SENT, {
+      challengeId,
+      opponentId,
+      opponentUsername: them.username ?? 'Player',
+      online: !!theirSocket,
+      expiresInMs: CHALLENGE_TTL_MS,
+    });
+  });
+
+  on(SOCKET_EVENTS.CHALLENGE_ACCEPT, async ({ challengeId }: any) => {
+    const invite = typeof challengeId === 'string' ? pendingChallenges.get(challengeId) : undefined;
+    if (!invite || invite.toUserId !== userId) {
+      socket.emit(SOCKET_EVENTS.CHALLENGE_CANCELLED, { reason: 'expired' });
+      return;
+    }
+    pendingChallenges.delete(challengeId);
+
+    const challengerSocket = userSocketMap.get(invite.fromUserId);
+    if (!challengerSocket) {
+      socket.emit(SOCKET_EVENTS.CHALLENGE_CANCELLED, { reason: 'offline' });
+      return;
+    }
+
+    const created = await createRematch(
+      io,
+      { userId: invite.fromUserId, socketId: challengerSocket, rating: 1000 },
+      { userId, socketId: socket.id, rating: 1000 },
+      invite.category,
+      invite.wager,
+    );
+    if (!created) {
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Could not start that match.' });
+      io.to(challengerSocket).emit(SOCKET_EVENTS.ERROR, { message: 'Could not start that match.' });
+    }
+  });
+
+  on(SOCKET_EVENTS.CHALLENGE_DECLINE, async ({ challengeId }: any) => {
+    const invite = typeof challengeId === 'string' ? pendingChallenges.get(challengeId) : undefined;
+    if (!invite || invite.toUserId !== userId) return;
+    pendingChallenges.delete(challengeId);
+
+    const challengerSocket = userSocketMap.get(invite.fromUserId);
+    if (challengerSocket) {
+      io.to(challengerSocket).emit(SOCKET_EVENTS.CHALLENGE_CANCELLED, {
+        challengeId,
+        reason: 'declined',
+      });
+    }
+  });
 
   /* ---------- HINT ---------- */
 
