@@ -87,7 +87,7 @@ export default function Purchases() {
     <div className="text-white">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold">Coin Purchases</h1>
+          <h1 className="text-2xl font-extrabold">PulseCoin Purchases</h1>
           <p className="text-gray-400 text-sm mt-1">In-app purchase history</p>
         </div>
         <div className="flex gap-2">

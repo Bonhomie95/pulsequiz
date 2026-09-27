@@ -210,7 +210,7 @@ export default function CreateRoomScreen() {
             </ScrollView>
 
             <Text style={[styles.label, { color: theme.colors.text }]}>
-              Coin Wager
+              PulseCoin Wager
             </Text>
             <Text style={[styles.sublabel, { color: theme.colors.muted }]}>
               Winner takes both stakes. Set 0 for free play. You have {coins}{' '}

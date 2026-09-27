@@ -207,7 +207,7 @@ export default function WalletScreen() {
             {coins}
           </Text>
           <Text style={[styles.label, { color: theme.colors.muted }]}>
-            Available Coins
+            Available PulseCoins
           </Text>
         </View>
 
@@ -316,7 +316,7 @@ export default function WalletScreen() {
 
         {/* ACTIONS */}
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-          Earn Coins
+          Earn PulseCoins
         </Text>
         <View style={styles.actions}>
           {rewardedAdsAvailable && <TouchableOpacity
@@ -329,7 +329,7 @@ export default function WalletScreen() {
             disabled={adLoading}
           
             accessibilityRole="button"
-            accessibilityLabel="Watch a video to earn free coins"
+            accessibilityLabel="Watch a video to earn free PulseCoins"
             accessibilityState={{ disabled: adLoading, busy: adLoading }}
             hitSlop={8}>
             {adLoading ? (
@@ -339,7 +339,7 @@ export default function WalletScreen() {
             )}
             <View style={{ flex: 1 }}>
               <Text style={styles.actionTitle}>Watch Video</Text>
-              <Text style={styles.actionSub}>Earn free coins (max 5/day)</Text>
+              <Text style={styles.actionSub}>Earn free PulseCoins (max 5/day)</Text>
             </View>
           </TouchableOpacity>}
 
@@ -356,12 +356,12 @@ export default function WalletScreen() {
             onPress={() => router.push('/earn/buy')}
           
             accessibilityRole="button"
-            accessibilityLabel="Buy Coins"
+            accessibilityLabel="Buy PulseCoins"
             hitSlop={8}>
             <ShoppingBag size={22} color={theme.colors.primary} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.actionTitle, { color: theme.colors.text }]}>
-                Buy Coins
+                Buy PulseCoins
               </Text>
               <Text style={[styles.actionSub, { color: theme.colors.muted }]}>
                 Unlock hints & wager power
@@ -443,7 +443,7 @@ export default function WalletScreen() {
         )}
 
         <Text style={[styles.footerNote, { color: theme.colors.muted }]}>
-          💡 Coins are for hints, wagers & boosts and have no cash value.
+          💡 PulseCoins are for hints, wagers & boosts and have no cash value.
           {prizes ? ' Prizes (USDT/USDC) come only from your leaderboard rank.' : ''}{' '}
           <Text
             onPress={() => setRulesOpen(true)}

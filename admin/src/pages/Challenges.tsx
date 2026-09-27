@@ -193,7 +193,7 @@ export default function Challenges() {
                   {c.progress ?? 0} / {c.targetValue}
                 </td>
                 <td className="px-4 py-3 text-yellow-400">
-                  {c.rewardCoins ? `${c.rewardCoins} coins` : ''}
+                  {c.rewardCoins ? `${c.rewardCoins} PulseCoins` : ''}
                   {c.rewardCoins && c.rewardPoints ? ' · ' : ''}
                   {c.rewardPoints ? `${c.rewardPoints} pts` : ''}
                   {!c.rewardCoins && !c.rewardPoints ? '—' : ''}
@@ -308,7 +308,7 @@ export default function Challenges() {
                     className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm outline-none border border-gray-700"
                   />
                 </Field>
-                <Field label="Coins">
+                <Field label="PulseCoins">
                   <input
                     type="number"
                     value={form.rewardCoins}

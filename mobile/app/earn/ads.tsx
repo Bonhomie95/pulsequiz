@@ -223,7 +223,7 @@ export default function EarnAdsScreen() {
           <>
             <View style={[styles.infoCard, { backgroundColor: theme.colors.surface }]}>
               <Text style={{ fontSize: 44, marginBottom: 12 }}>📺</Text>
-              <Text style={[styles.heading, { color: theme.colors.text }]}>Earn free coins</Text>
+              <Text style={[styles.heading, { color: theme.colors.text }]}>Earn free PulseCoins</Text>
               <Text style={[styles.sub, { color: theme.colors.muted }]}>
                 Watch a short video to earn coins. You can watch up to{' '}
                 {config?.dailyMax} {config?.dailyMax === 1 ? 'ad' : 'ads'} a day.

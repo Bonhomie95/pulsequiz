@@ -105,7 +105,16 @@ export default function SettingsScreen() {
   const [currency, setCurrency] = useState<PayoutCurrency>(
     user?.payoutCurrency ?? 'USDC',
   );
-  const [usdtType, setUsdtType] = useState<UsdtType | undefined>(user?.usdtType);
+  /**
+   * Preselect the only network we pay on.
+   *
+   * With Solana the sole enabled option, making people open a picker to
+   * choose it is a step that can only be got wrong — and leaving it blank is
+   * what makes the save fail with "select a network".
+   */
+  const [usdtType, setUsdtType] = useState<UsdtType | undefined>(
+    user?.usdtType ?? PAYOUT_NETWORKS[user?.payoutCurrency ?? 'USDC'][0],
+  );
   const [address, setAddress] = useState(user?.usdtAddress ?? '');
   const networks = PAYOUT_NETWORKS[currency];
   const [networkOpen, setNetworkOpen] = useState(false);
@@ -124,8 +133,11 @@ export default function SettingsScreen() {
 
   const pickCurrency = (c: PayoutCurrency) => {
     setCurrency(c);
-    // A network valid for one coin may not exist for the other.
-    if (usdtType && !PAYOUT_NETWORKS[c].includes(usdtType)) setUsdtType(undefined);
+    // A network valid for one payout coin may not exist for the other. Fall
+    // back to that coin's first enabled network rather than to nothing.
+    if (!usdtType || !PAYOUT_NETWORKS[c].includes(usdtType)) {
+      setUsdtType(PAYOUT_NETWORKS[c][0]);
+    }
   };
 
   const submitWallet = async (trimmed: string) => {
@@ -153,7 +165,7 @@ export default function SettingsScreen() {
     // Crypto sent to the wrong chain is gone for good — make the user read it back.
     Alert.alert(
       'Confirm payout wallet',
-      `Coin: ${currency}\nNetwork: ${NETWORK_LABELS[usdtType]}\nAddress: ${trimmed}\n\nPrizes sent to a wrong address or network cannot be recovered. Payouts pause for 72 hours after any change.\n\nBy saving, you confirm you are 18 or older and that receiving crypto prizes is legal where you live.`,
+      `Payout coin: ${currency}\nNetwork: ${NETWORK_LABELS[usdtType]}\nAddress: ${trimmed}\n\nPrizes sent to a wrong address or network cannot be recovered. Payouts pause for 72 hours after any change.\n\nBy saving, you confirm you are 18 or older and that receiving crypto prizes is legal where you live.`,
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'I confirm — Save', onPress: () => submitWallet(trimmed) },
@@ -319,7 +331,7 @@ export default function SettingsScreen() {
           icon={<Wallet2 size={15} color={theme.colors.muted} />}
         />
         <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          {/* Coin picker */}
+          {/* Payout coin picker */}
           <View
             accessibilityRole="radiogroup"
             style={[styles.cardRow, styles.rowBorder, { borderBottomColor: theme.colors.border }]}
@@ -680,7 +692,7 @@ export default function SettingsScreen() {
             </Text>
             <Text style={[styles.modalBody, { color: theme.colors.muted }]}>
               This permanently deletes your profile, quiz history, streak,
-              friends and challenges. Any coin balance and unpaid prize winnings
+              friends and challenges. Any PulseCoin balance and unpaid prize winnings
               are forfeited. This cannot be undone.
             </Text>
             <Text style={[styles.modalBody, { color: theme.colors.muted }]}>

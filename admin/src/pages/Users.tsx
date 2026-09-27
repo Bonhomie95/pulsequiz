@@ -415,7 +415,7 @@ export default function Users() {
               <th className="px-4 py-3 text-left">User</th>
               <th className="px-4 py-3 text-left">Status</th>
               <th className="px-4 py-3 text-left">Premium</th>
-              <th className="px-4 py-3 text-left">Coins</th>
+              <th className="px-4 py-3 text-left">PulseCoins</th>
               <th className="px-4 py-3 text-left">Score</th>
               <th className="px-4 py-3 text-left">Streak</th>
               <th className="px-4 py-3 text-left">Online</th>
@@ -574,7 +574,7 @@ export default function Users() {
           <Row label="Email" value={viewUser.email} />
           <Row label="Status" value={<StatusBadge user={viewUser} />} />
           <Row
-            label="Coins"
+            label="PulseCoins"
             value={
               <span className="text-yellow-400">
                 {viewUser.coins.toLocaleString()}
@@ -707,7 +707,7 @@ export default function Users() {
                 }
               />
 
-              <SectionHeading>Coin Ledger</SectionHeading>
+              <SectionHeading>PulseCoin Ledger</SectionHeading>
               <Row
                 label="Ledger Total"
                 value={(detail.user.ledger?.total ?? 0).toLocaleString()}
@@ -814,7 +814,7 @@ export default function Users() {
             </div>
             <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-3">
               <label className="text-xs text-gray-400 block mb-1">
-                Adjust coin balance
+                Adjust PulseCoin balance
               </label>
               <p className="mb-2 text-[11px] leading-relaxed text-gray-500">
                 Current balance:{' '}
@@ -873,7 +873,7 @@ export default function Users() {
             <p className="font-bold text-lg mb-4">@{deleteUser.username}</p>
             <p className="text-gray-500 text-sm mb-6">
               This anonymises the account and deletes their quiz history,
-              challenges, friendships and devices. The coin ledger, purchases
+              challenges, friendships and devices. The PulseCoin ledger, purchases
               sessions are preserved for audit.
             </p>
             <div className="flex gap-3">

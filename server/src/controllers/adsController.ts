@@ -118,7 +118,7 @@ export async function rewardAd(req: AuthRequest, res: Response) {
 
   if (isSsvEnabled()) {
     const [wallet, watchedToday] = await Promise.all([
-      CoinWallet.findOne({ userId }).select('PulseCoins').lean(),
+      CoinWallet.findOne({ userId }).select('coins').lean(),
       todaysRewardCount(userId),
     ]);
 

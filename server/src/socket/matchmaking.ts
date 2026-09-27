@@ -360,7 +360,7 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
         // cancelling it — the old flow told the player "match cancelled" when
         // the real problem was their own balance.
         if (safeWager > 0) {
-          const wallet = await CoinWallet.findOne({ userId }).select('PulseCoins').lean();
+          const wallet = await CoinWallet.findOne({ userId }).select('coins').lean();
           if ((wallet?.coins ?? 0) < safeWager) {
             socket.emit(SOCKET_EVENTS.ERROR, {
               message: `You need ${safeWager} PulseCoins to stake this wager. You have ${wallet?.coins ?? 0}.`,

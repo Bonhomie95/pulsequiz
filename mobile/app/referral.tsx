@@ -119,7 +119,7 @@ export default function ReferralScreen() {
           style={styles.hero}
         >
           <Gift size={36} color="#fff" />
-          <Text style={styles.heroTitle}>Earn 100 Coins Per Referral</Text>
+          <Text style={styles.heroTitle}>Earn 100 PulseCoins Per Referral</Text>
           <Text style={styles.heroSub}>
             Share your code. When your friend completes their first quiz, you both get rewarded!
           </Text>
@@ -131,7 +131,7 @@ export default function ReferralScreen() {
           <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
           <StatItem label="Rewarded" value={stats.rewarded} icon="✅" />
           <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-          <StatItem label="Coins Earned" value={stats.coinsEarned} icon="🪙" />
+          <StatItem label="PulseCoins Earned" value={stats.coinsEarned} icon="🪙" />
         </View>
 
         {/* My code */}
@@ -174,7 +174,7 @@ export default function ReferralScreen() {
           <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
             <Text style={[styles.sectionLabel, { color: theme.colors.muted }]}>Enter a Referral Code</Text>
             <Text style={{ color: theme.colors.muted, fontSize: 12, marginBottom: 12 }}>
-              Have a friend&apos;s code? Enter it below and they&apos;ll get coins when you finish your first quiz.
+              Have a friend&apos;s code? Enter it below and they&apos;ll get PulseCoins when you finish your first quiz.
             </Text>
             <View style={styles.inputRow}>
               <TextInput

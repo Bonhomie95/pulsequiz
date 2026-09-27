@@ -139,7 +139,7 @@ export default function Dashboard() {
           icon={<Users size={20} />}
         />
         <StatCard
-          title="Coins Circulating"
+          title="PulseCoins Circulating"
           value={stats.coins?.toLocaleString() ?? '—'}
           icon={<Coins size={20} />}
         />

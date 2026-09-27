@@ -125,7 +125,7 @@ export default function LeagueScreen() {
                 </Text>
                 {data.lastResult.reward > 0 && (
                   <Text style={{ color: theme.colors.coin, marginTop: 4, fontWeight: '700' }}>
-                    +{data.lastResult.reward} coins for the podium
+                    +{data.lastResult.reward} PulseCoins for the podium
                   </Text>
                 )}
               </View>

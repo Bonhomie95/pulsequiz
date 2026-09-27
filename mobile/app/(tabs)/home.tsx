@@ -532,7 +532,7 @@ export default function HomeScreen() {
                 {coins.toLocaleString()}
               </Text>
               <Text style={[styles.statLabel, { color: theme.colors.muted }]}>
-                Coins
+                PulseCoins
               </Text>
             </TouchableOpacity>
             <View

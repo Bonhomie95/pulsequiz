@@ -151,7 +151,7 @@ export function CheckInModal({ visible, streak, coinsAdded, milestoneBonus, onCl
           ]}>
             <Text style={styles.coinEmoji}>🪙</Text>
             <View>
-              <Text style={[styles.rewardLabel, { color: theme.colors.muted }]}>Coins Earned</Text>
+              <Text style={[styles.rewardLabel, { color: theme.colors.muted }]}>PulseCoins Earned</Text>
               <Text style={[styles.rewardAmount, { color: theme.colors.coin }]}>+{coinsAdded}</Text>
             </View>
             {milestoneBonus > 0 && (

@@ -31,22 +31,22 @@ const SETTING_META: Record<
   }
 > = {
   referral_coin_referrer: {
-    label: 'Referral Coins — Referrer',
-    description: 'Coins given to the person who referred a new user',
+    label: 'Referral PulseCoins — Referrer',
+    description: 'PulseCoins given to the person who referred a new user',
     type: 'number',
     group: 'Referral',
     min: 0,
   },
   referral_coin_new_user: {
-    label: 'Referral Coins — New User',
-    description: 'Coins given to the new user who used a referral code',
+    label: 'Referral PulseCoins — New User',
+    description: 'PulseCoins given to the new user who used a referral code',
     type: 'number',
     group: 'Referral',
     min: 0,
   },
   daily_ad_reward_coins: {
-    label: 'Rewarded Ad — Coins Per View',
-    description: 'Coins awarded each time a user watches a rewarded video ad',
+    label: 'Rewarded Ad — PulseCoins Per View',
+    description: 'PulseCoins awarded each time a user watches a rewarded video ad',
     type: 'number',
     group: 'Ads',
     min: 1,
@@ -60,15 +60,15 @@ const SETTING_META: Record<
     max: 20,
   },
   daily_checkin_coins: {
-    label: 'Daily Check-In Coins',
-    description: 'Coins given for each daily streak check-in',
+    label: 'Daily Check-In PulseCoins',
+    description: 'PulseCoins given for each daily streak check-in',
     type: 'number',
-    group: 'Coins',
+    group: 'PulseCoins',
     min: 0,
   },
   max_pvp_wager: {
     label: 'Max PvP Wager',
-    description: 'Maximum coins a player can stake in a single PvP match',
+    description: 'Maximum PulseCoins a player can stake in a single PvP match',
     type: 'number',
     group: 'PvP',
     min: 50,
@@ -126,7 +126,7 @@ const SETTING_META: Record<
 const GROUP_ICONS: Record<string, React.ReactNode> = {
   Referral: <Gift size={16} />,
   Ads: <Bell size={16} />,
-  Coins: <Coins size={16} />,
+  PulseCoins: <Coins size={16} />,
   PvP: <SettingsIcon size={16} />,
   'Anti-Cheat': <Shield size={16} />,
   Payouts: <Coins size={16} />,
