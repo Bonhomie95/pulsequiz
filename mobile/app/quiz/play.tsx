@@ -977,6 +977,17 @@ export default function QuizPlay() {
             ]}
             accessibilityLiveRegion="polite"
           >
+            {reveal.action === 'finish' ? null : (
+              <TouchableOpacity
+                onPress={() => setReveal(null)}
+                style={styles.revealClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close explanation"
+                hitSlop={12}
+              >
+                <Text style={{ color: theme.colors.muted, fontSize: 18, fontWeight: '700' }}>✕</Text>
+              </TouchableOpacity>
+            )}
             <Text
               style={{
                 fontWeight: '900',
@@ -1000,23 +1011,17 @@ export default function QuizPlay() {
                 💡 {reveal.explanation}
               </Text>
             ) : null}
-            {reveal.action ? (
+            {reveal.action === 'finish' ? (
               <TouchableOpacity
-                onPress={reveal.action === 'finish' ? finishQuiz : advance}
+                onPress={finishQuiz}
                 style={[styles.primaryBtn, { backgroundColor: theme.colors.primary, marginTop: 12 }]}
                 accessibilityRole="button"
-                accessibilityLabel={reveal.action === 'finish' ? 'See results' : 'Next question'}
+                accessibilityLabel="See results"
                 hitSlop={8}
               >
-                <Text style={{ color: '#fff', fontWeight: '800' }}>
-                  {reveal.action === 'finish' ? 'See results' : 'Next question'}
-                </Text>
+                <Text style={{ color: '#fff', fontWeight: '800' }}>See results</Text>
               </TouchableOpacity>
-            ) : (
-              <Text style={{ color: theme.colors.muted, marginTop: 10, fontSize: 12 }}>
-                Next question in a moment…
-              </Text>
-            )}
+            ) : null}
           </View>
         ) : (
         <View style={styles.footer}>
@@ -1308,7 +1313,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     padding: 16,
+    paddingRight: 44,
   },
+  revealClose: { position: 'absolute', top: 8, right: 8, padding: 8 },
 
   overlay: {
     position: 'absolute',

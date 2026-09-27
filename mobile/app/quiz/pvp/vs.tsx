@@ -129,7 +129,22 @@ export default function PvPVsScreen() {
     return () => sub.remove();
   }, []);
 
-  if (!me || !opponent) return null;
+  // Never `return null` here: an empty render is a white screen with no way
+  // out, which is how a missing pairing used to look to the player.
+  if (!me || !opponent) {
+    return (
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: theme.colors.background,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ color: theme.colors.muted }}>Getting the match ready…</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView

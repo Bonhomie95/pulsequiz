@@ -118,8 +118,18 @@ export default function PvPSearchScreen() {
     socket.on(SOCKET_EVENTS.ERROR, onError);
 
     return () => {
-      socket.emit(SOCKET_EVENTS.LEAVE_QUEUE);
-      usePvPStore.getState().reset();
+      // Only tear the store down if we are leaving the search itself.
+      //
+      // This screen unmounts two ways: the player backs out, or a match was
+      // found and we replaced ourselves with the VS screen. It used to reset
+      // unconditionally, so the successful case wiped `me`, `opponent` and
+      // `matchId` microseconds after setting them — VS renders nothing without
+      // a pairing, which was the blank screen, and the play screen then
+      // submitted answers with a null matchId, which was the dead taps.
+      if (usePvPStore.getState().status === 'searching') {
+        socket.emit(SOCKET_EVENTS.LEAVE_QUEUE);
+        usePvPStore.getState().reset();
+      }
 
       socket.off(SOCKET_EVENTS.MATCH_FOUND, onMatchFound);
       socket.off(SOCKET_EVENTS.QUEUE_TIMEOUT, onTimeout);
