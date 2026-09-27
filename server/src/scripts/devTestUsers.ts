@@ -14,6 +14,7 @@ import mongoose from 'mongoose';
 import User from '../models/User';
 import Progress from '../models/Progress';
 import CoinWallet from '../models/CoinWallet';
+import Streak from '../models/Streak';
 import { issueSession } from '../utils/jwt';
 
 const TAGS = ['devtester1', 'devtester2'];
@@ -28,6 +29,7 @@ async function main() {
     await Promise.all([
       Progress.deleteMany({ userId: { $in: ids } }),
       CoinWallet.deleteMany({ userId: { $in: ids } }),
+      Streak.deleteMany({ userId: { $in: ids } }),
       User.deleteMany({ _id: { $in: ids } }),
     ]);
     console.log(`removed ${ids.length} dev test users`);
@@ -47,9 +49,12 @@ async function main() {
         hasCompletedFirstQuiz: true,
         publicProfile: false,
       });
+      // Everything a real sign-up creates — a test account that is missing
+      // one of these is not testing the same app.
       await Promise.all([
         Progress.create({ userId: user._id, points: 0 }),
         CoinWallet.create({ userId: user._id, coins: 1000 }),
+        Streak.create({ userId: user._id }),
       ]);
     }
     const { token } = issueSession(user._id.toString(), 0);

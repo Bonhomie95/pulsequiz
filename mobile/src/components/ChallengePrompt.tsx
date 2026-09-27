@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 
 import { getSocket } from '@/src/socket/socket';
 import { SOCKET_EVENTS } from '@/src/socket/events';
@@ -39,6 +39,13 @@ const cap = (v?: string) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : '');
 export function ChallengePrompt() {
   const theme = useTheme();
   const router = useRouter();
+  // Read inside a socket handler that is registered once, so it has to be a
+  // ref rather than the captured value.
+  const pathname = usePathname();
+  const pathRef = useRef(pathname);
+  useEffect(() => {
+    pathRef.current = pathname;
+  }, [pathname]);
   const [invite, setInvite] = useState<Incoming | null>(null);
   /** The terms sheet, open while countering. */
   const [countering, setCountering] = useState<Incoming | null>(null);
@@ -61,10 +68,25 @@ export function ChallengePrompt() {
       setInvite(null);
       setCountering(null);
     };
-    // We accepted and the match exists — the VS screen takes it from here.
+    /**
+     * The match exists — get whoever is holding this screen into it.
+     *
+     * Navigating on MATCH_FOUND lived only on the search and result screens,
+     * so the accepting player moved and the challenger did not: they had sent
+     * the invite from the friends list or the home tab, where nothing was
+     * listening, and sat there while their opponent was already answering.
+     * This is mounted at the root, so it covers every case — including a
+     * counter-offer, where the roles are the other way round.
+     *
+     * Guarded on the current route: the search screen does its own replace,
+     * and pushing a second VS screen on top would leave one behind.
+     */
     const onMatchFound = () => {
       setInvite(null);
       setCountering(null);
+      if (!pathRef.current.startsWith('/quiz/pvp')) {
+        router.push('/quiz/pvp/vs');
+      }
     };
 
     socket.on(SOCKET_EVENTS.CHALLENGE_INCOMING, onIncoming);

@@ -50,7 +50,18 @@ export async function checkInStreak(
   userId: string,
   timezoneName?: string | null,
 ): Promise<CheckInResult> {
-  const streak = await Streak.findOne({ userId });
+  // Created on demand rather than demanded to exist.
+  //
+  // Sign-up creates one, so a missing streak means something went wrong
+  // earlier — a partial signup, an account older than this model. Throwing
+  // turned that into a 500 on every app open, with "Server error" on the home
+  // screen and no way out. A streak is a derived record with an obvious empty
+  // state, so the honest answer to "there isn't one" is to start one.
+  const streak = await Streak.findOneAndUpdate(
+    { userId },
+    { $setOnInsert: { userId } },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
   if (!streak) throw new Error('Streak missing');
 
   // The zone is pinned on the streak. The client's value is only adopted the

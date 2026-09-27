@@ -15,6 +15,8 @@ import { reconcilePendingPurchases } from '@/src/iap/verify';
 import { logger } from '@/src/utils/logger';
 import { initSentry, setSentryUser, wrapWithSentry } from '@/src/utils/sentry';
 import { ChallengePrompt } from '@/src/components/ChallengePrompt';
+import { connectSocket } from '@/src/socket/connect';
+import { registerPvPSocketListeners } from '@/src/socket/registerListeners';
 import { ErrorBoundary } from '@/src/components/ErrorBoundary';
 import SplashLoader from '@/src/components/SplashLoader';
 
@@ -55,6 +57,22 @@ function RootLayout() {
     initAdsWithConsent();
     hydrateOnboarding();
   }, [hydrateOnboarding]);
+
+  /**
+   * The socket follows the session, not the first screen.
+   *
+   * Connecting lived in the index route, which runs once at cold start —
+   * before anyone has signed in, so the connection was refused, and nothing
+   * reconnected it afterwards. A player who signed in during that launch had
+   * no live socket until the next one: challenges never arrived, and the
+   * app-wide match listeners were never even registered. Keyed on the user,
+   * so it also reconnects after a sign-out and back in.
+   */
+  useEffect(() => {
+    if (!user) return;
+    registerPvPSocketListeners();
+    connectSocket();
+  }, [user]);
 
   // Tag crash reports with the signed-in user (and clear on logout).
   useEffect(() => {

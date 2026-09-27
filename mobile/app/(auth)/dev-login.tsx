@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { api } from '@/src/api/api';
+import { api, setAuthToken } from '@/src/api/api';
 import { connectSocket } from '@/src/socket/connect';
 import { storage } from '@/src/utils/storage';
 import { useAuthStore } from '@/src/store/useAuthStore';
@@ -32,6 +32,10 @@ export default function DevLogin() {
     (async () => {
       try {
         await storage.setSession(token);
+        // Storing it is not enough: there is deliberately no async request
+        // interceptor, so the header has to be set explicitly or the next
+        // call still carries whatever was there before.
+        setAuthToken(token);
         const me: any = await api.get('/auth/me');
         useAuthStore.getState().setUser(me.data.user);
         connectSocket();
