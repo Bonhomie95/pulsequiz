@@ -24,6 +24,8 @@ import {
   seedSyntheticLadder,
   trickleSyntheticActivity,
   seedSyntheticLeague,
+  respreadSyntheticLadder,
+  reconcileSyntheticBoards,
 } from '../services/syntheticPlayers';
 import { generateNicknames } from '../services/nicknames';
 import { LeagueGroup, LeagueMember } from '../models/League';
@@ -385,5 +387,89 @@ describe('leagues', () => {
     await seedSyntheticLeague(new Date(), 26);
 
     expect(await LeagueMember.countDocuments({})).toBe(first);
+  });
+});
+
+describe('board reconciliation', () => {
+  it('puts every account on every board', async () => {
+    // Arrivals used to join one period at a time, so 72 accounts held a
+    // monthly standing with no all-time row — one sat 3rd for the month
+    // while their profile showed no all-time rank and three games played.
+    await ensureSyntheticPool(30);
+    await seedSyntheticLadder();
+
+    // Strand someone who is on a board, the way the old arrival path did.
+    const seeded = await SyntheticScore.findOne({ type: 'monthly' }).lean();
+    const orphanId = seeded!.userId;
+    await SyntheticScore.deleteMany({ userId: orphanId, type: { $in: ['all', 'weekly'] } });
+    expect(await SyntheticScore.countDocuments({ userId: orphanId })).toBe(1);
+
+    await respreadSyntheticLadder();
+
+    const types = (await SyntheticScore.find({ userId: orphanId }).lean()).map((r) => r.type);
+    expect(types.sort()).toEqual(['all', 'monthly', 'weekly']);
+  });
+
+  it('spreads the top instead of stacking it on one number', async () => {
+    // Thirteen accounts sat on exactly 1,120 under a single global cap, so
+    // the board listed them 2nd to 14th while every profile said "#2".
+    await ensureSyntheticPool(40);
+    await seedSyntheticLadder();
+    await SyntheticScore.updateMany({ type: 'all' }, { $set: { points: 1120 } });
+
+    await respreadSyntheticLadder();
+
+    const top = (
+      await SyntheticScore.find({ type: 'all' }).sort({ points: -1 }).limit(10).lean()
+    ).map((r) => r.points);
+    expect(new Set(top).size).toBeGreaterThan(6);
+  });
+
+  it('converges rather than drifting when run repeatedly', async () => {
+    await ensureSyntheticPool(20);
+    await seedSyntheticLadder();
+    const ceiling = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING, 140));
+
+    for (let i = 0; i < 5; i++) await respreadSyntheticLadder();
+
+    // Still under the ceiling the whole scheme exists to respect.
+    const weekly = await SyntheticScore.find({ type: 'weekly' }).lean();
+    for (const r of weekly) expect(r.points).toBeLessThanOrEqual(ceiling);
+  });
+});
+
+describe('the hourly reconcile', () => {
+  it('leaves standings where the drift put them', async () => {
+    // This runs every hour. A full respread here would overwrite the drift
+    // each time and the board would jump about instead of creeping up, which
+    // is the whole point of the drift.
+    await ensureSyntheticPool(20);
+    await seedSyntheticLadder();
+
+    const before = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+    await reconcileSyntheticBoards();
+    const after = await SyntheticScore.find({ type: 'weekly' }).sort({ _id: 1 }).lean();
+
+    expect(after.map((r) => r.points)).toEqual(before.map((r) => r.points));
+  });
+
+  it('still fills a missing board and clamps an over-ceiling row', async () => {
+    await ensureSyntheticPool(20);
+    await seedSyntheticLadder();
+    const ceiling = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING, 140));
+
+    const seeded = await SyntheticScore.findOne({ type: 'monthly' }).lean();
+    await SyntheticScore.deleteMany({ userId: seeded!.userId, type: 'weekly' });
+    await SyntheticScore.updateOne({ _id: seeded!._id }, { $set: { points: 99_999 } });
+
+    const res = await reconcileSyntheticBoards();
+    expect(res.filled).toBeGreaterThan(0);
+    expect(res.clamped).toBeGreaterThan(0);
+
+    const fixed = await SyntheticScore.findOne({ _id: seeded!._id }).lean();
+    expect(fixed!.points).toBeLessThanOrEqual(Math.round(ceiling * 3.5));
+    expect(
+      await SyntheticScore.countDocuments({ userId: seeded!.userId, type: 'weekly' }),
+    ).toBe(1);
   });
 });

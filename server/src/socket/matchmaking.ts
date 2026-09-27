@@ -182,7 +182,7 @@ export async function snapshotPlayer(userId: string) {
   // The real all-time rank, not a placeholder. Shared with the profile
   // sheet, so the number a player sees about themselves and the number their
   // opponent sees are computed once.
-  const allTimeRank = await trueAllTimeRank(points);
+  const allTimeRank = await trueAllTimeRank(points, userId);
 
   return {
     userId: new Types.ObjectId(userId),

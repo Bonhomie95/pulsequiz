@@ -672,7 +672,7 @@ export async function getPlayerProfile(req: AuthRequest, res: Response) {
     avatar: user.avatar ?? '',
     level,
     points,
-    allTimeRank: await trueAllTimeRank(points),
+    allTimeRank: await trueAllTimeRank(points, targetId),
     gamesPlayed,
     isOnline: isOnline(user.lastSeenAt, Date.now()),
     isInGame: !!inGame,

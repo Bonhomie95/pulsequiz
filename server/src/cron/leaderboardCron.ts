@@ -25,6 +25,7 @@ import {
   seedSyntheticDaily,
   seedSyntheticLadder,
   seedSyntheticLeague,
+  reconcileSyntheticBoards,
   trickleSyntheticActivity,
 } from '../services/syntheticPlayers';
 import { utcDateKey } from '../services/dailyService';
@@ -187,12 +188,16 @@ export function startLeaderboardCron(io?: Server) {
       // Leagues were the one board house accounts never reached, so a new
       // player landed in a Bronze group of five.
       const league = await seedSyntheticLeague();
+      // Only the two invariants: everyone on every board, nobody above
+      // their own ceiling. A full respread here would overwrite the drift
+      // each hour and the board would jump instead of creeping.
+      const spread = await reconcileSyntheticBoards();
       // Standings drift up once a day, so an active player always has
       // something just ahead of them rather than a frozen board.
       const grown = await growSyntheticLadder();
 
       const changed =
-        daily.seeded + ahead.seeded + ladder.seeded + grown.grown + league.joined;
+        daily.seeded + ahead.seeded + ladder.seeded + grown.grown + league.joined + spread.filled + spread.clamped;
       return changed
         ? {
             daily: daily.seeded,

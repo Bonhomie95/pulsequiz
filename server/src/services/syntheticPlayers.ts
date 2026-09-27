@@ -221,6 +221,10 @@ export async function seedSyntheticLadder(
     .lean();
   if (!cohort.length) return { seeded: 0 };
 
+  // Ranked place in the pack, so the ceiling a row is seeded under is the
+  // same one the drift will later respect.
+  const factors = await strengthByUser();
+
   const periods: { type: 'weekly' | 'monthly' | 'all'; label: string; scale: number }[] = [
     { type: 'weekly', label: currentPeriodLabel('weekly', at), scale: 1 },
     { type: 'monthly', label: currentPeriodLabel('monthly', at), scale: 3.5 },
@@ -240,7 +244,7 @@ export async function seedSyntheticLadder(
       // scores reachable. Jitter must not lift an account over it.
       // The same per-account ceiling the drift uses, so nothing is seeded
       // above the point it is allowed to grow to.
-      const cap = personalCeiling(strength, period.scale, ceiling);
+      const cap = personalCeiling(factors.get(String(u._id)) ?? 0.5, period.scale, ceiling);
       const points = Math.min(cap, Math.max(1, Math.round(strength * jitter * ceiling * period.scale)));
 
       return {
@@ -374,17 +378,32 @@ export async function growSyntheticLadder(
  * ceiling — which is the point of the ceiling: a target a real player can
  * reach and overtake.
  */
-function personalCeiling(strength: number, scale: number, ceiling: number): number {
-  const s = Math.min(1, Math.max(0, Number(strength) || 0));
-  return Math.max(1, Math.round(ceiling * scale * (0.35 + s * 0.65)));
+function personalCeiling(factor: number, scale: number, ceiling: number): number {
+  const f = Math.min(1, Math.max(0, Number(factor) || 0));
+  return Math.max(1, Math.round(ceiling * scale * (0.35 + f * 0.65)));
 }
 
-/** Strength per house account, for the cap above. */
+/**
+ * Each account's place in the pack, 0 (weakest) to 1 (strongest).
+ *
+ * Not the raw strength: that is drawn with a heavy bias to the low end, so
+ * hardly anyone is near 1 and the ceilings derived from it bunched the whole
+ * population into the bottom of the range — the weekly board topped out at
+ * 58 when the ceiling was 140, which a real player passes in an afternoon.
+ *
+ * Ranking them spreads the population evenly whatever the draw looks like,
+ * and guarantees the strongest account actually reaches the ceiling, which is
+ * the number chosen to be worth chasing.
+ */
 async function strengthByUser(): Promise<Map<string, number>> {
   const rows = await User.find({ isSynthetic: true })
     .select('_id syntheticStrength')
+    .sort({ syntheticStrength: 1 })
     .lean();
-  return new Map(rows.map((r) => [String(r._id), Number(r.syntheticStrength) || 0.1]));
+  if (!rows.length) return new Map();
+
+  const last = Math.max(1, rows.length - 1);
+  return new Map(rows.map((r, i) => [String(r._id), i / last]));
 }
 
 /* ───────────────────── Arrivals between the daily seeds ────────────────── */
@@ -479,39 +498,58 @@ async function trickleLadder(at: Date): Promise<{ bumped: number; added: number 
       bumped += res.modifiedCount ?? 0;
     }
 
-    // Room on the board? Bring one or two more in, entering low the way a new
-    // player would rather than landing near the top.
-    if (rows.length < ladderSize) {
-      const present = new Set(rows.map((r) => String((r as any).userId)));
-      const onBoard = await SyntheticScore.find({ type: period.type, periodLabel: period.label })
-        .select('userId')
-        .lean();
-      for (const r of onBoard) present.add(String(r.userId));
+  }
 
-      const candidates = shuffled((await syntheticIds()).filter((id) => !present.has(String(id))));
-      const wanted = Math.min(candidates.length, ladderSize - rows.length, randInt(1, 2));
+  // New arrivals join every board at once.
+  //
+  // They used to be added per period, independently, so an account could
+  // enter Monthly and appear nowhere else: 72 of them had a monthly standing
+  // and no all-time row at all. One of them was 3rd on the monthly board
+  // while their profile said no all-time rank and three games played. A
+  // person who is third this month has been playing.
+  const onAnyBoard = new Set(
+    (await SyntheticScore.distinct('userId')).map((id) => String(id)),
+  );
+  const candidates = shuffled((await syntheticIds()).filter((id) => !onAnyBoard.has(String(id))));
+  const room = Math.max(
+    0,
+    ladderSize -
+      (await SyntheticScore.countDocuments({
+        type: 'all',
+        periodLabel: 'all',
+      })),
+  );
+  const joining = candidates.slice(0, Math.min(room, randInt(1, 2)));
 
-      const inserts = candidates.slice(0, wanted).map((userId) => ({
-        updateOne: {
-          filter: { userId, type: period.type, periodLabel: period.label },
-          update: {
-            $setOnInsert: {
-              userId,
-              type: period.type,
-              periodLabel: period.label,
-              // Entering, not arriving at the top: the low end of the range.
-              points: Math.max(1, Math.round(skewedUnit() * 0.35 * cap)),
+  if (joining.length) {
+    const factors = await strengthByUser();
+    const inserts: any[] = [];
+    for (const userId of joining) {
+      for (const period of periods) {
+        const cap = personalCeiling(
+          factors.get(String(userId)) ?? 0.5,
+          period.scale,
+          ceiling,
+        );
+        inserts.push({
+          updateOne: {
+            filter: { userId, type: period.type, periodLabel: period.label },
+            update: {
+              $setOnInsert: {
+                userId,
+                type: period.type,
+                periodLabel: period.label,
+                // Entering, not arriving at the top.
+                points: Math.max(1, Math.round(cap * (0.15 + Math.random() * 0.3))),
+              },
             },
+            upsert: true,
           },
-          upsert: true,
-        },
-      }));
-
-      if (inserts.length) {
-        const res = await SyntheticScore.bulkWrite(inserts, { ordered: false });
-        added += res.upsertedCount ?? 0;
+        });
       }
     }
+    const res = await SyntheticScore.bulkWrite(inserts, { ordered: false });
+    added += res.upsertedCount ?? 0;
   }
 
   return { bumped, added };
@@ -633,4 +671,137 @@ export async function trickleSyntheticLeague(at: Date = new Date()): Promise<num
     bumped += 1;
   }
   return bumped;
+}
+
+/**
+ * Reconcile the standing boards with the rules they are supposed to follow.
+ *
+ * Two things had gone wrong and neither self-corrects:
+ *
+ * Under the old single global cap everyone strong piled onto the same value —
+ * thirteen accounts on exactly 1,120 at the top of all-time — and the drift
+ * skips anything already at its ceiling, so the tie was permanent.
+ *
+ * And arrivals used to join one period at a time, so 72 accounts held a
+ * monthly standing with no all-time row: one of them sat 3rd on the monthly
+ * board while their profile showed no all-time rank and three games played.
+ *
+ * So this gives every participating account a row on every board, and sets
+ * each row to a spread value under that account's own ceiling — up as well as
+ * down, since the earlier squeeze left the weekly board topping out at 58
+ * against a ceiling of 140. Safe to re-run: it is a recomputation, not a
+ * drift, so it converges rather than accumulating.
+ */
+export async function respreadSyntheticLadder(
+  at: Date = new Date(),
+): Promise<{ moved: number; filled: number }> {
+  const ceiling = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING, 140));
+  const factors = await strengthByUser();
+
+  const periods: { type: 'weekly' | 'monthly' | 'all'; label: string; scale: number }[] = [
+    { type: 'weekly', label: currentPeriodLabel('weekly', at), scale: 1 },
+    { type: 'monthly', label: currentPeriodLabel('monthly', at), scale: 3.5 },
+    { type: 'all', label: 'all', scale: 8 },
+  ];
+
+  // Everyone already on any board belongs on all of them.
+  const participants = (await SyntheticScore.distinct('userId')).map((id) => String(id));
+  const existing = await SyntheticScore.find({}).select('_id userId type').lean();
+  const have = new Set(existing.map((r) => `${String(r.userId)}:${r.type}`));
+
+  const ops: any[] = [];
+  let filled = 0;
+
+  for (const userId of participants) {
+    const factor = factors.get(userId) ?? 0.5;
+    for (const period of periods) {
+      const cap = personalCeiling(factor, period.scale, ceiling);
+      // Spread across the top two-thirds of their own range, so neighbouring
+      // ceilings do not collapse onto the same integer.
+      const points = Math.max(1, Math.round(cap * (0.62 + Math.random() * 0.38)));
+
+      if (!have.has(`${userId}:${period.type}`)) filled += 1;
+      ops.push({
+        updateOne: {
+          filter: { userId, type: period.type, periodLabel: period.label },
+          update: { $set: { points } },
+          upsert: true,
+        },
+      });
+    }
+  }
+
+  if (!ops.length) return { moved: 0, filled: 0 };
+  const res = await SyntheticScore.bulkWrite(ops, { ordered: false });
+  const moved = (res.modifiedCount ?? 0) + (res.upsertedCount ?? 0);
+  logger.info('Respread synthetic ladder', { moved, filled });
+  return { moved, filled };
+}
+
+/**
+ * The safe part of the respread, for the cron.
+ *
+ * A full respread re-randomises every row, which is right once — to undo the
+ * single-global-cap damage — and wrong on a schedule: it would overwrite the
+ * drift every hour and the board would jump about instead of creeping.
+ *
+ * So this only does the two things that are always true: every account on any
+ * board belongs on all of them, and no row may sit above its own ceiling.
+ * Existing, valid standings are left exactly where the drift put them.
+ */
+export async function reconcileSyntheticBoards(
+  at: Date = new Date(),
+): Promise<{ filled: number; clamped: number }> {
+  const ceiling = Number(await getSetting(SETTINGS_KEYS.SYNTHETIC_POINTS_CEILING, 140));
+  const factors = await strengthByUser();
+
+  const periods: { type: 'weekly' | 'monthly' | 'all'; label: string; scale: number }[] = [
+    { type: 'weekly', label: currentPeriodLabel('weekly', at), scale: 1 },
+    { type: 'monthly', label: currentPeriodLabel('monthly', at), scale: 3.5 },
+    { type: 'all', label: 'all', scale: 8 },
+  ];
+
+  const rows = await SyntheticScore.find({}).select('_id userId type points').lean();
+  const have = new Set(rows.map((r) => `${String(r.userId)}:${r.type}`));
+  const participants = [...new Set(rows.map((r) => String(r.userId)))];
+
+  const ops: any[] = [];
+  let filled = 0;
+  let clamped = 0;
+
+  for (const userId of participants) {
+    const factor = factors.get(userId) ?? 0.5;
+    for (const period of periods) {
+      if (have.has(`${userId}:${period.type}`)) continue;
+      const cap = personalCeiling(factor, period.scale, ceiling);
+      filled += 1;
+      ops.push({
+        updateOne: {
+          filter: { userId, type: period.type, periodLabel: period.label },
+          update: {
+            $setOnInsert: {
+              userId,
+              type: period.type,
+              periodLabel: period.label,
+              points: Math.max(1, Math.round(cap * (0.35 + Math.random() * 0.4))),
+            },
+          },
+          upsert: true,
+        },
+      });
+    }
+  }
+
+  for (const row of rows) {
+    const scale = { weekly: 1, monthly: 3.5, all: 8 }[row.type] ?? 1;
+    const cap = personalCeiling(factors.get(String(row.userId)) ?? 0.5, scale, ceiling);
+    if ((row.points ?? 0) <= cap) continue;
+    clamped += 1;
+    ops.push({ updateOne: { filter: { _id: row._id }, update: { $set: { points: cap } } } });
+  }
+
+  if (!ops.length) return { filled: 0, clamped: 0 };
+  await SyntheticScore.bulkWrite(ops, { ordered: false });
+  logger.info('Reconciled synthetic boards', { filled, clamped });
+  return { filled, clamped };
 }

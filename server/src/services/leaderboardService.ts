@@ -348,18 +348,33 @@ async function syntheticUserIds(): Promise<Types.ObjectId[]> {
 }
 
 /**
- * 0 means unranked — they have not scored yet.
+ * The player's position on the all-time board, as the board shows it.
  *
- * Counted against the same population the board shows, house accounts
- * included. Excluding them made the profile disagree with the leaderboard it
- * was opened from: a player with 156 points was told "#1" while the visible
- * all-time board, full of house accounts on 1,100+, did not list them at all.
+ * Counting "how many have more points, plus one" is competition ranking, and
+ * it disagrees with a list the moment there is a tie: thirteen house accounts
+ * sat on exactly 1,120, so the board listed them 2nd through 14th while every
+ * one of their profiles said "#2". A rank that contradicts the screen you
+ * tapped it from is worse than no rank.
  *
- * They are excluded from the *paying* ranks, which is a different question
- * and is handled where prizes are decided.
+ * So the position comes from the snapshot the board is rendered from. Only
+ * outside it — where there is no row to point at — does this fall back to
+ * counting, which is exact enough for "you are somewhere around #340".
  */
-export async function trueAllTimeRank(points: number): Promise<number> {
+export async function trueAllTimeRank(
+  points: number,
+  userId?: string,
+): Promise<number> {
   if (!points || points <= 0) return 0;
+
+  if (userId) {
+    const snapshot = await LeaderboardSnapshot.findOne({ type: 'all' })
+      .select('data')
+      .lean();
+    const board = (snapshot?.data ?? []) as { userId: string }[];
+    const at = board.findIndex((e) => String(e.userId) === String(userId));
+    if (at >= 0) return at + 1;
+  }
+
   const [realAhead, syntheticAhead] = await Promise.all([
     Progress.countDocuments({
       points: { $gt: points },
